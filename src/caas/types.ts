@@ -206,22 +206,3 @@ export interface Section<Data = ObjectMap<any>, Meta = ObjectMap<any>> {
   data: Data;
   meta: Meta;
 }
-
-export enum Resolutions {
-  ORIGINAL = "ORIGINAL",
-  product_detail = "product_detail",
-  header_banner = "header_banner",
-  big_welcome_slider = "big_welcome_slider",
-  product_teaser = "product_teaser",
-  small_blog_picture = "small_blog_picture",
-  big_blog_picture = "big_blog_picture",
-  experts_picture_small = "experts_picture_small",
-  experts_picture_big = "experts_picture_big",
-  carousel_picture = "carousel_picture",
-  post_detail_picture = "post_detail_picture",
-  gallery_pictures_small = "gallery_pictures_small",
-  echo_show5 = "echo_show5",
-  echo_spot = "echo_spot",
-  interesting_facts_banner = "interesting_facts_banner",
-  header_banner_mobile = "header_banner_mobile",
-}

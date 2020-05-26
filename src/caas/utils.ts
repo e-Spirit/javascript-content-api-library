@@ -7,17 +7,9 @@ import {
   Section,
   ObjectMap,
   CAASDataEntry,
-  Resolutions,
 } from "./types";
-import { AxiosStatic } from "axios";
-
-export interface AxiosConfig {
-  axiosToUse: AxiosStatic;
-  headers: ObjectMap<string>;
-}
 
 export const mapDataEntryValue = async (
-  config: AxiosConfig,
   entry: CAASDataEntry,
   locale: string
 ): Promise<any> => {
@@ -28,7 +20,7 @@ export const mapDataEntryValue = async (
     case "CMS_INPUT_TEXTAREA":
       return entry.value;
     case "CMS_INPUT_LINK":
-      const data = await mapDataEntries(config, entry.value.formData, locale);
+      const data = await mapDataEntries(entry.value.formData, locale);
       return {
         layout: entry.value.template.uid,
         data,
@@ -45,13 +37,6 @@ export const mapDataEntryValue = async (
         url: entry.value.url,
       };
     case "FS_REFERENCE":
-      if (
-        entry.value?.fsType === "Media" &&
-        entry.value.mediaType === "PICTURE"
-      ) {
-        const images = await fetchImages(config, entry.value.url);
-        console.log("Fetched Images", images);
-      }
       return entry.value
         ? {
             referenceType: entry.value.fsType === "Media" ? "media" : "blakeks",
@@ -64,7 +49,7 @@ export const mapDataEntryValue = async (
         entry.value.map(async (value) => ({
           previewId: [value.identifier, locale].join("."),
           identifier: value.identifier,
-          data: await mapDataEntries(config, value.formData, locale),
+          data: await mapDataEntries(value.formData, locale),
         }))
       );
     default:
@@ -74,7 +59,6 @@ export const mapDataEntryValue = async (
 };
 
 export const mapDataEntries = async (
-  config: AxiosConfig,
   entries: ObjectMap<CAASDataEntry>,
   locale: string
 ): Promise<ObjectMap<any>> => {
@@ -82,19 +66,18 @@ export const mapDataEntries = async (
   const result: ObjectMap<any> = {};
   for (let i = 0; i < keys.length; i++) {
     const entry = entries[keys[i]];
-    const mappedValue = await mapDataEntryValue(config, entry, locale);
+    const mappedValue = await mapDataEntryValue(entry, locale);
     result[keys[i]] = mappedValue;
   }
   return result;
 };
 
 export const mapPageSection = async (
-  config: AxiosConfig,
   section: CAASPageSection,
   locale: string
 ): Promise<Section> => {
-  const data = await mapDataEntries(config, section.formData, locale);
-  const meta = await mapDataEntries(config, section.metaFormData, locale);
+  const data = await mapDataEntries(section.formData, locale);
+  const meta = await mapDataEntries(section.metaFormData, locale);
   return {
     id: section.identifier,
     previewId: [section.identifier, locale].join("."),
@@ -105,12 +88,11 @@ export const mapPageSection = async (
 };
 
 export const mapPageBody = async (
-  config: AxiosConfig,
   body: CAASPageBody,
   locale: string
 ): Promise<Body> => {
   const children = await Promise.all(
-    body.children.map((child) => mapPageSection(config, child, locale))
+    body.children.map((child) => mapPageSection(child, locale))
   );
   return {
     name: body.name,
@@ -119,44 +101,14 @@ export const mapPageBody = async (
   };
 };
 
-export const fetchImages = async (
-  config: AxiosConfig,
-  url: string,
-  resolutions: Resolutions[] = Object.keys(Resolutions) as Resolutions[]
-): Promise<ObjectMap<string>> => {
-  const result: ObjectMap<string> = {};
-  const images = await Promise.all(
-    resolutions.map((resolution) =>
-      fetchImage(config, url.replace(/ORIGINAL$/, resolution))
-    )
-  );
-  for (let i = 0; i < resolutions.length; i++)
-    result[resolutions[i]] = images[i];
-  return result;
-};
-
-export const fetchImage = async (
-  config: AxiosConfig,
-  url: string
-): Promise<string> => {
-  const result = await config.axiosToUse.get(url, {
-    responseType: "blob",
-    timeout: 3000,
-    headers: config.headers,
-  });
-  console.log("FETCHED IMAGE");
-  return URL.createObjectURL(result);
-};
-
 export const mapPage = async (
-  config: AxiosConfig,
   pageRef: CAASPageRef,
   locale: string
 ): Promise<Page> => {
-  const data = await mapDataEntries(config, pageRef.page.formData, locale);
-  const meta = await mapDataEntries(config, pageRef.page.metaFormData, locale);
+  const data = await mapDataEntries(pageRef.page.formData, locale);
+  const meta = await mapDataEntries(pageRef.page.metaFormData, locale);
   const children = await Promise.all(
-    pageRef.page.children.map((child) => mapPageBody(config, child, locale))
+    pageRef.page.children.map((child) => mapPageBody(child, locale))
   );
   return {
     id: pageRef.page.identifier,
