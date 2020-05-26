@@ -1,5 +1,7 @@
 import { fetchNavigation, NavigationItem, NavigationData } from "./navigation";
 import axios, { AxiosStatic } from "axios";
+import { fetchPage } from "./caas";
+import { Page } from "./caas/types";
 
 export interface FSXAConfiguration {
   apiKey: string;
@@ -26,6 +28,20 @@ export default class FSXAApi {
       this.config.navigationService,
       this.config.locale
     );
+  }
+
+  async fetchPage(pageId: string): Promise<Page | null> {
+    if (!this.config)
+      throw new Error(
+        "Please specify a FSXAConfiguration via constructor or setConfiguration"
+      );
+    return fetchPage({
+      apiKey: this.config.apiKey,
+      axiosToUse: this.axios,
+      caasURI: this.config.caas,
+      locale: this.config.locale,
+      pageId
+    });
   }
 
   setConfiguration(fsxaConfiguration: FSXAConfiguration): void {
