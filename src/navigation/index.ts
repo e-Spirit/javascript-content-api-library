@@ -1,5 +1,27 @@
 import { AxiosStatic } from "axios";
 
+export interface MappedNavigationItem {
+  id: string;
+  parentIds: string[];
+  label: string;
+  path: string;
+  contentReferenceId: string;
+  customData: any;
+}
+
+export interface MappedStructureItem {
+  id: string;
+  label: string;
+  path: string;
+  children: MappedStructureItem[];
+}
+
+export interface StructureItem {
+  id: string;
+  children: NavigationItem[];
+  visible: boolean;
+}
+
 export interface NavigationItem {
   id: string;
   label: string;
@@ -7,72 +29,134 @@ export interface NavigationItem {
   contentReference: string;
   visible: boolean;
   children: NavigationItem[] | null;
-}
-
-export interface NavigationStructureItem {
-  id: string;
-  children: NavigationStructureItem[];
+  customData: any;
 }
 
 export interface NavigationMapping<T> {
   [key: string]: T;
 }
 
-export type NavigationItemMapper<T> = (item: NavigationItem) => T;
-
-export interface NavigationData<T = NavigationItem> {
-  raw: NavigationItem;
-  idMap: NavigationMapping<T>;
-  pathMap: NavigationMapping<T>;
-  structure: NavigationStructureItem[];
-  data: T[];
-}
-
-export function generateMap<T>(
-  item: NavigationItem,
-  key: Exclude<keyof NavigationItem, "children">,
-  map: NavigationMapping<T> = {},
-  mapNavigationItem?: NavigationItemMapper<T>
-): NavigationMapping<T> {
-  const mapKey = item[key].toString();
-  return {
-    ...map,
-    [mapKey]: mapNavigationItem ? mapNavigationItem(item) : item,
-    ...(item.children || []).reduce(
-      (result, child) => generateMap(child, key, result, mapNavigationItem),
-      {}
-    ),
+export interface NavigationData {
+  pathMap: NavigationMapping<string>;
+  idMap: NavigationMapping<MappedNavigationItem>;
+  structure: MappedStructureItem[];
+  indexPage: {
+    id: string;
+    path: string;
   };
 }
 
-export function generateNavigationStructure(
-  item: NavigationItem
-): NavigationStructureItem {
+export const mapNavigation = (item: NavigationItem): NavigationData => {
+  // Folder --> Pages
+  // Folder zeigt auf Page als startseite
+  /**
+   * {
+   *  id: string;
+   *  seoRoute: string;
+   *  contentReference: string;
+   *  children: []
+   *  visible: boolean;
+   * }
+   * PathMap zeigt auf Folder (wir ersetzen also nicht das bisherige element in einer Map)
+   * IdMap enthält alle Elemente (Folder + Pages)
+   * structure enthält nur die elemente der main-nav
+   */
+  const idMap = generateIdMap(item, [], {}, true);
+  const pathMap = generatePathMap(item, {});
+  const indexPath = idMap[item.id].path;
   return {
+    idMap,
+    pathMap,
+    structure: generateStructure(item),
+    indexPage: {
+      path: indexPath,
+      id: pathMap[indexPath],
+    },
+  };
+};
+
+const extractContentUuid = (value: string): string => {
+  const elements = value.split("/");
+  return elements[elements.length - 1].split(".")[0];
+};
+
+export const generateStructure = (
+  item: NavigationItem,
+): MappedStructureItem[] => {
+  // we extract the index page
+  const childReference =
+    item.children?.find(
+      (child) => child.contentReference === item.contentReference,
+    ) || null;
+  const rootElement: MappedStructureItem = {
+    id: extractContentUuid(item.contentReference),
+    children: [],
+    label: childReference?.label || item.label || "",
+    path: item.seoRoute,
+  };
+  const children = item.children?.filter(removeInvisible);
+  if (!children?.length) return [rootElement];
+  const elements = [];
+  for (let i = 0; i < children?.length; i++) {
+    elements.push(generateStructureForChild(children[i]));
+  }
+  return [rootElement, ...elements];
+};
+
+export const generateStructureForChild = (
+  item: NavigationItem,
+): MappedStructureItem => {
+  return {
+    id: extractContentUuid(item.contentReference),
+    children: (item.children || [])
+      .filter(removeInvisible)
+      .map(generateStructureForChild),
+    label: item.label,
+    path: item.seoRoute,
+  };
+};
+
+export const generatePathMap = (
+  item: NavigationItem,
+  map: NavigationMapping<string> = {},
+): NavigationMapping<string> => {
+  let result = { ...map };
+  const seoRoute = item.seoRoute;
+  if (typeof result[seoRoute] === "undefined") result[seoRoute] = item.id;
+  item.children?.map((child) => {
+    result = generatePathMap(child, result);
+  });
+  return result;
+};
+
+export const generateIdMap = (
+  item: NavigationItem,
+  parentIds: string[],
+  map: NavigationMapping<MappedNavigationItem> = {},
+  isRoot = false,
+): NavigationMapping<MappedNavigationItem> => {
+  let result = { ...map };
+  const childReference =
+    item.children?.find(
+      (child) => child.contentReference === item.contentReference,
+    ) || null;
+  result[item.id] = {
     id: item.id,
-    children: (item.children || [])
-      .filter(({ visible }) => visible === true)
-      .map((child) => generateNavigationStructure(child)),
+    parentIds,
+    label: isRoot && childReference?.label ? childReference.label : item.label,
+    path: item.seoRoute,
+    contentReferenceId: mapContentReference(item.contentReference),
+    customData: item.customData,
   };
-}
+  item.children?.map((child) => {
+    result = generateIdMap(child, [...parentIds, item.id], result);
+  });
+  return result;
+};
 
-export function generateNavigationTree<T>(
-  item: NavigationItem,
-  mapNavigationItem?: NavigationItemMapper<T>
-): T {
-  const mappedItem = mapNavigationItem ? mapNavigationItem(item) : item;
-  return {
-    ...mappedItem,
-    children: (item.children || [])
-      .filter(({ visible }) => visible === true)
-      .map((child) => generateNavigationTree(child, mapNavigationItem)),
-  } as T;
-}
-
-export const mapNavigationStructure = (
-  data: NavigationItem
-): NavigationItem[] | null => {
-  return data.children;
+const mapContentReference = (url: string): string => {
+  const parts = url.split("/");
+  return parts[parts.length - 1].split(".")[0];
 };
 
 /**
@@ -81,30 +165,25 @@ export const mapNavigationStructure = (
  * @param locale locale of language that should be fetched
  * @param mapNavigationItem You can pass this callback to directly map the generic NavigationItem to match your needed structure
  */
-export async function fetchNavigation<T = NavigationItem>(
-  axios: AxiosStatic,
+export async function fetchNavigation(
+  axiosToUse: AxiosStatic,
   url: string,
   locale: string,
-  mapNavigationItem?: NavigationItemMapper<T>
-): Promise<NavigationData<T>> {
-  // TODO: Should the depth be a parameter too?
-  const response = await axios.get<NavigationItem>(
-    `${url}?language=${locale}&depth=99`
-  );
-  if (response.status === 200) {
-    return {
-      idMap: generateMap<T>(response.data, "id", {}, mapNavigationItem),
-      pathMap: generateMap<T>(response.data, "seoRoute", {}, mapNavigationItem),
-      raw: response.data,
-      structure: (response.data.children || []).map(
-        generateNavigationStructure
-      ),
-      data: (response.data.children || []).map((item) =>
-        generateNavigationTree<T>(item, mapNavigationItem)
-      ),
-    };
+): Promise<NavigationData | null> {
+  try {
+    const response = await axiosToUse.get<NavigationItem>(
+      `${url}?language=${locale}&depth=99`,
+    );
+    if (response.status === 200) {
+      return mapNavigation(response.data);
+    }
+    throw new Error(
+      `Unable to fetch Navigation. HTTP response status=${response.status}, statusText="${response.statusText}"`,
+    );
+  } catch (error) {
+    return null;
   }
-  throw new Error(
-    `Unable to fetch Navigation. HTTP response status=${response.status}, statusText="${response.statusText}"`
-  );
 }
+
+const removeInvisible = (item: NavigationItem): boolean =>
+  item.visible === true;

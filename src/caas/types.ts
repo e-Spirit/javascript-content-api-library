@@ -21,11 +21,23 @@ export interface CAASPageSection {
   metaFormData: ObjectMap<CAASDataEntry>;
 }
 
+export interface CAASDatasetReference {
+  fsType: "DatasetReference";
+  target: {
+    entityType: string;
+    fsType: string;
+    identifier: string;
+    schema: string;
+  };
+}
+
+export type CAASPageBodyContent = CAASPageSection | CAASDatasetReference;
+
 export interface CAASPageBody {
   fsType: "Body";
   name: string;
   identifier: string;
-  children: CAASPageSection[];
+  children: CAASPageBodyContent[];
 }
 
 export interface CAASPage {
@@ -80,7 +92,7 @@ export interface CMSInputLink {
   value: {
     template: CAASTemplate;
     formData: ObjectMap<CAASDataEntry>;
-  };
+  } | null;
 }
 export interface CMSInputTextarea {
   fsType: "CMS_INPUT_TEXTAREA";
@@ -102,7 +114,17 @@ export interface CMSInputCombobox {
     fsType: "Option";
     label: string;
     identifier: string;
-  };
+  } | null;
+}
+export interface CMSInputDate {
+  fsType: "CMS_INPUT_DATE";
+  name: string;
+  value: string;
+}
+export interface FSMarkdown {
+  fsType: "FS_MARKDOWN";
+  name: string;
+  value: string;
 }
 export interface FSReference {
   fsType: "FS_REFERENCE";
@@ -131,12 +153,12 @@ export interface FSReference {
 export interface FSButton {
   fsType: "FS_BUTTON";
   name: string;
-  value: {};
+  value: {} | null;
 }
 export interface FSCatalog {
   fsType: "FS_CATALOG";
   name: string;
-  value: FSCard[];
+  value: FSCard[] | null;
 }
 export interface FSDataset {
   fsType: "FS_DATASET";
@@ -150,7 +172,7 @@ export interface FSDataset {
       identifier: string;
     };
     url: string;
-  };
+  } | null;
 }
 export interface FSCard {
   fsType: "Card";
@@ -163,7 +185,7 @@ export interface FSIndex<Type = any> {
   fsType: "FS_INDEX";
   name: string;
   dapType: string;
-  value: Type[];
+  value: Type[] | null;
 }
 
 export type CAASDataEntry =
@@ -175,11 +197,13 @@ export type CAASDataEntry =
   | CMSInputTextarea
   | CMSInputLink
   | CMSInputCombobox
+  | CMSInputDate
   | FSReference
   | FSButton
   | FSCatalog
   | FSDataset
-  | FSIndex;
+  | FSIndex
+  | FSMarkdown;
 
 export interface Page {
   id: string;
@@ -196,13 +220,69 @@ export interface Page {
 export interface Body {
   previewId: string;
   name: string;
-  children: Section[];
+  children: BodyContent[];
 }
+
+export type BodyContent = Section | DatasetReference;
 
 export interface Section<Data = ObjectMap<any>, Meta = ObjectMap<any>> {
   id: string;
+  type: "Section";
   previewId: string;
   sectionType: string;
   data: Data;
   meta: Meta;
+}
+
+export interface DatasetReference {
+  id: string;
+  previewId: string;
+  type: "DatasetReference";
+  entityType: string;
+  schema: string;
+}
+
+export interface Fragment {
+  data: ObjectMap<any>;
+  meta: ObjectMap<any>;
+  previewId: string;
+  type: string;
+  id: string;
+}
+
+export interface GCAPage<Data = {}, Meta = {}> {
+  id: string;
+  name: string;
+  uid: string;
+  data: Data;
+  meta: Meta;
+}
+
+export interface CAASGCAPage {
+  _id: string;
+  fsType: "GCAPage";
+  name: string;
+  uid: string;
+  template: CAASTemplate;
+  formData: ObjectMap<CAASDataEntry>;
+  metaData: ObjectMap<CAASDataEntry>;
+}
+
+export interface CAASGCAPageResponse {
+  _embedded: {
+    "rh:doc": CAASGCAPage[];
+  };
+}
+
+export interface CAASImageReference {
+  identifier: string;
+  previewId: string;
+  resolutions: ObjectMap<{
+    extension: string;
+    fileSize: number;
+    height: number;
+    width: number;
+    mimeType: string;
+    url: string;
+  }>;
 }
