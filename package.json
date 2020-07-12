@@ -18,7 +18,7 @@
     "name": "Tobias Golbs",
     "email": "golbs@e-spirit.com"
   },
-  "license": "ISC",
+  "license": "Apache-2.0",
   "files": [
     "dist",
     "package.json"
