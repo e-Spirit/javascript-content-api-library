@@ -43,51 +43,47 @@ export async function fetchGCAPages({
   apiKey,
   uid,
 }: FetchGCAPagesParams): Promise<GCAPage[]> {
-  try {
-    const andFilter: any = [
-      {
-        fsType: {
-          $eq: "GCAPage",
-        },
+  const andFilter: any = [
+    {
+      fsType: {
+        $eq: "GCAPage",
       },
-      {
-        "locale.language": {
-          $eq: locale.split("_")[0],
-        },
+    },
+    {
+      "locale.language": {
+        $eq: locale.split("_")[0],
       },
-    ];
-    if (uid) andFilter.unshift({ uid: { $eq: uid } });
-    const response = await axiosToUse.get<CAASGCAPageResponse>(uri, {
-      params: {
-        filter: {
-          $and: andFilter,
-        },
+    },
+  ];
+  if (uid) andFilter.unshift({ uid: { $eq: uid } });
+  const response = await axiosToUse.get<CAASGCAPageResponse>(uri, {
+    params: {
+      filter: {
+        $and: andFilter,
       },
-      headers: getAxiosHeaders(apiKey),
-    });
-    if (response.status === 200) {
-      return await Promise.all(
-        response.data._embedded["rh:doc"].map(async (gcaPage) => ({
-          id: gcaPage._id,
-          data: await mapDataEntries(
-            gcaPage.formData,
-            locale,
-            axiosToUse,
-            apiKey,
-          ),
-          meta: await mapDataEntries(
-            gcaPage.metaData,
-            locale,
-            axiosToUse,
-            apiKey,
-          ),
-          name: gcaPage.name,
-          uid: gcaPage.uid,
-        })),
-      );
-    }
-    return [];
-  } catch (error) {
-    return [];
+    },
+    headers: getAxiosHeaders(apiKey),
+  });
+  if (response.status === 200) {
+    return await Promise.all(
+      response.data._embedded["rh:doc"].map(async (gcaPage) => ({
+        id: gcaPage._id,
+        data: await mapDataEntries(
+          gcaPage.formData,
+          locale,
+          axiosToUse,
+          apiKey,
+        ),
+        meta: await mapDataEntries(
+          gcaPage.metaData,
+          locale,
+          axiosToUse,
+          apiKey,
+        ),
+        name: gcaPage.name,
+        uid: gcaPage.uid,
+      })),
+    );
   }
+  return [];
 }

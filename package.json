@@ -1,6 +1,6 @@
 {
   "name": "fsxa-api",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "",
   "main": "dist/fsxa-api.umd.js",
   "module": "dist/fsxa-api.es5.js",

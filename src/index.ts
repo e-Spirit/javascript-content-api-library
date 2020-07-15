@@ -69,19 +69,25 @@ export default class FSXAApi {
       });
       return response[0];
     } catch (error) {
+      console.log("Error fetching GCAPage", error);
       return null;
     }
   }
 
   async fetchGCAPages(locale: string, uid?: string): Promise<GCAPage[]> {
     if (!this.config) throw new Error(ERROR_MISSING_CONFIG);
-    return fetchGCAPages({
-      axiosToUse: this.axios,
-      uri: `${this.config.caas}/${this.config.projectId}/${this.config.mode}.content`,
-      apiKey: this.config.apiKey,
-      locale,
-      uid,
-    });
+    try {
+      return fetchGCAPages({
+        axiosToUse: this.axios,
+        uri: `${this.config.caas}/${this.config.projectId}/${this.config.mode}.content`,
+        apiKey: this.config.apiKey,
+        locale,
+        uid,
+      });
+    } catch (error) {
+      console.log("Error fetching GCAPage", error);
+      return [];
+    }
   }
 
   async fetchFragments(
