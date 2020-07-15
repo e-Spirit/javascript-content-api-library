@@ -31,10 +31,6 @@ export default class FSXAApi {
     this.axios = axiosToUse;
   }
 
-  private checkConfig(): void {
-    if (!this.config) throw new Error(ERROR_MISSING_CONFIG);
-  }
-
   async fetchNavigation(locale: string): Promise<NavigationData | null> {
     if (!this.config)
       throw new Error(
@@ -59,35 +55,25 @@ export default class FSXAApi {
 
   async fetchGCAPage(locale: string, uid: string): Promise<GCAPage | null> {
     if (!this.config) throw new Error(ERROR_MISSING_CONFIG);
-    try {
-      const response = await fetchGCAPages({
-        axiosToUse: this.axios,
-        uri: `${this.config.caas}/${this.config.projectId}/${this.config.mode}.content`,
-        apiKey: this.config.apiKey,
-        locale,
-        uid,
-      });
-      return response[0];
-    } catch (error) {
-      console.log("Error fetching GCAPage", error);
-      return null;
-    }
+    const response = await fetchGCAPages({
+      axiosToUse: this.axios,
+      uri: `${this.config.caas}/${this.config.projectId}/${this.config.mode}.content`,
+      apiKey: this.config.apiKey,
+      locale,
+      uid,
+    });
+    return response[0];
   }
 
   async fetchGCAPages(locale: string, uid?: string): Promise<GCAPage[]> {
     if (!this.config) throw new Error(ERROR_MISSING_CONFIG);
-    try {
-      return fetchGCAPages({
-        axiosToUse: this.axios,
-        uri: `${this.config.caas}/${this.config.projectId}/${this.config.mode}.content`,
-        apiKey: this.config.apiKey,
-        locale,
-        uid,
-      });
-    } catch (error) {
-      console.log("Error fetching GCAPage", error);
-      return [];
-    }
+    return fetchGCAPages({
+      axiosToUse: this.axios,
+      uri: `${this.config.caas}/${this.config.projectId}/${this.config.mode}.content`,
+      apiKey: this.config.apiKey,
+      locale,
+      uid,
+    });
   }
 
   async fetchFragments(
