@@ -26,7 +26,7 @@ export interface NavigationItem {
   id: string;
   label: string;
   seoRoute: string;
-  contentReference: string;
+  contentReference: string | null;
   visible: boolean;
   children: NavigationItem[] | null;
   customData: any;
@@ -88,6 +88,7 @@ export const generateStructure = (
     item.children?.find(
       (child) => child.contentReference === item.contentReference,
     ) || null;
+  if (item.contentReference === null) return [];
   const rootElement: MappedStructureItem = {
     id: extractContentUuid(item.contentReference),
     children: [],
@@ -100,17 +101,19 @@ export const generateStructure = (
   for (let i = 0; i < children?.length; i++) {
     elements.push(generateStructureForChild(children[i]));
   }
-  return [rootElement, ...elements];
+  return [rootElement, ...(elements.filter(Boolean) as MappedStructureItem[])];
 };
 
 export const generateStructureForChild = (
   item: NavigationItem,
-): MappedStructureItem => {
+): MappedStructureItem | null => {
+  if (item.contentReference === null) return null;
   return {
     id: extractContentUuid(item.contentReference),
     children: (item.children || [])
       .filter(removeInvisible)
-      .map(generateStructureForChild),
+      .map(generateStructureForChild)
+      .filter(Boolean) as MappedStructureItem[],
     label: item.label,
     path: item.seoRoute,
   };
@@ -136,6 +139,7 @@ export const generateIdMap = (
   isRoot = false,
 ): NavigationMapping<MappedNavigationItem> => {
   let result = { ...map };
+  if (item.contentReference === null) return result;
   const childReference =
     item.children?.find(
       (child) => child.contentReference === item.contentReference,
@@ -181,6 +185,7 @@ export async function fetchNavigation(
       `Unable to fetch Navigation. HTTP response status=${response.status}, statusText="${response.statusText}"`,
     );
   } catch (error) {
+    console.log("Error fetching Navigation", error);
     return null;
   }
 }
