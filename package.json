@@ -15,7 +15,7 @@
     "type": "git",
     "url": "https://github.com/e-Spirit/fsxa-api"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=6.0.0"
   },
