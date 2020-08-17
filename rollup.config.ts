@@ -1,40 +1,43 @@
-import resolve from "@rollup/plugin-node-resolve";
-import babel from "@rollup/plugin-babel";
-import camelCase from "lodash.camelcase";
-import commonjs from "@rollup/plugin-commonjs";
-import json from "@rollup/plugin-json";
-import pkg from "./package.json";
+import resolve from 'rollup-plugin-node-resolve'
+import commonjs from 'rollup-plugin-commonjs'
+import sourceMaps from 'rollup-plugin-sourcemaps'
+import camelCase from 'lodash.camelcase'
+import typescript from 'rollup-plugin-typescript2'
+import json from 'rollup-plugin-json'
 
-const name = pkg.name;
-const extensions = [".js", ".ts"];
+const pkg = require('./package.json')
+
+const libraryName = 'fsxa-api'
 
 export default {
-  input: "src/index.ts",
+  input: `src/${libraryName}.ts`,
   output: [
-    {
-      file: pkg.main,
-      name: camelCase(name),
-      exports: "named",
-      format: "umd",
-      sourcemap: true,
-    },
-    { file: pkg.module, format: "es", sourcemap: true },
+    { file: pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: true },
+    { file: pkg.module, format: 'es', sourcemap: true }
   ],
+  // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
   external: [],
   watch: {
-    include: "src/**",
+    include: 'src/**'
   },
   plugins: [
-    resolve({ extensions, preferBuiltins: true, browser: true }),
+    // Allow json resolution
     json(),
-    // Allow bundling cjs modules. Rollup doesn't understand cjs
-    commonjs(),
-    // Allows node_modules resolution
-    // Compile TypeScript/JavaScript files
-    babel({
-      extensions,
-      babelHelpers: "bundled",
-      include: ["src/**/*"],
+    // Compile TypeScript files
+    typescript({ useTsconfigDeclarationDir: true }),
+    // Allow node_modules resolution, so you can use 'external' to control
+    // which external modules to include in the bundle
+    // https://github.com/rollup/rollup-plugin-node-resolve#usage
+    resolve({
+      preferBuiltins: true,
+      module: true,
+      jsnext: true,
+      main: true,
+      browser: true
     }),
-  ],
-};
+    // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
+    commonjs(),
+    // Resolve source maps to the original source
+    sourceMaps()
+  ]
+}

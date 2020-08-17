@@ -1,89 +1,76 @@
-import { Page, CAASPageRef, GCAPage, CAASGCAPageResponse } from "./types";
-import { mapPage, getAxiosHeaders, mapDataEntries } from "./utils";
-import { AxiosStatic } from "axios";
+import { Page, CAASPageRef, GCAPage, CAASGCAPageResponse } from './types'
+import { mapPage, getAxiosHeaders, mapDataEntries } from './utils'
+import { encodeQueryParams } from '../utils'
 
 export interface FetchPageParams {
-  axiosToUse: AxiosStatic;
-  uri: string;
-  locale: string;
-  apiKey: string;
+  uri: string
+  locale: string
+  apiKey: string
 }
-export async function fetchPage({
-  axiosToUse,
-  apiKey,
-  locale,
-  uri,
-}: FetchPageParams): Promise<Page | null> {
+export async function fetchPage({ apiKey, locale, uri }: FetchPageParams): Promise<Page | null> {
   try {
-    const response = await axiosToUse.get<CAASPageRef>(uri, {
-      headers: { Authorization: `apikey="${apiKey}"` },
-    });
+    const response = await fetch(uri, {
+      headers: getAxiosHeaders(apiKey)
+    })
     if (response.status === 200) {
       // map response
-      return await mapPage(response.data, locale, axiosToUse, apiKey);
+      const data = await response.json()
+      return await mapPage(data, locale, apiKey)
     }
   } catch (error) {
-    console.log("Error fetching Page", error);
-    return null;
+    console.log('Error fetching Page', error)
+    return null
   }
-  return null;
+  return null
 }
 
 export interface FetchGCAPagesParams {
-  axiosToUse: AxiosStatic;
-  locale: string;
-  apiKey: string;
-  uri: string;
-  uid?: string;
+  locale: string
+  apiKey: string
+  uri: string
+  uid?: string
 }
 export async function fetchGCAPages({
-  axiosToUse,
   uri,
   locale,
   apiKey,
-  uid,
+  uid
 }: FetchGCAPagesParams): Promise<GCAPage[]> {
   const andFilter: any = [
     {
       fsType: {
-        $eq: "GCAPage",
-      },
+        $eq: 'GCAPage'
+      }
     },
     {
-      "locale.language": {
-        $eq: locale.split("_")[0],
-      },
-    },
-  ];
-  if (uid) andFilter.unshift({ uid: { $eq: uid } });
-  const response = await axiosToUse.get<CAASGCAPageResponse>(uri, {
-    params: {
+      'locale.language': {
+        $eq: locale.split('_')[0]
+      }
+    }
+  ]
+  if (uid) andFilter.unshift({ uid: { $eq: uid } })
+  const response = await fetch(
+    `${uri}?${encodeQueryParams({
       filter: {
-        $and: andFilter,
-      },
-    },
-    headers: getAxiosHeaders(apiKey),
-  });
+        $and: andFilter
+      }
+    })}`,
+    {
+      headers: getAxiosHeaders(apiKey)
+    }
+  )
+
   if (response.status === 200) {
-    return await Promise.all(
-      response.data._embedded["rh:doc"].map(async (gcaPage) => ({
+    const data = await response.json()
+    return Promise.all(
+      data._embedded['rh:doc'].map(async (gcaPage: any) => ({
         id: gcaPage._id,
-        data: await mapDataEntries(
-          gcaPage.formData,
-          locale,
-          axiosToUse,
-          apiKey,
-        ),
-        meta: await mapDataEntries(
-          gcaPage.metaData,
-          locale,
-          axiosToUse,
-          apiKey,
-        ),
+        data: await mapDataEntries(gcaPage.formData, locale, apiKey),
+        meta: await mapDataEntries(gcaPage.metaData, locale, apiKey),
         name: gcaPage.name,
-        uid: gcaPage.uid,
-      })),
-    );
+        uid: gcaPage.uid
+      }))
+    )
   }
-  return [];
+  return []
 }
