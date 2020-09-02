@@ -16,6 +16,7 @@ export interface FSXAConfiguration {
   apiKey: string
   navigationService: string
   caas: string
+  tenantId: string
   projectId: string
   remotes?: ObjectMap<string>
 }
@@ -54,7 +55,7 @@ export default class FSXAApi {
     return fetchPage({
       apiKey: this.params.config.apiKey,
       locale,
-      uri: `${this.params.config.caas}/${this.params.config.projectId}/${this.mode}.content/${pageId}.${locale}`
+      uri: `${this.params.config.caas}/${this.params.config.tenantId}/${this.params.config.projectId}.${this.mode}.content/${pageId}.${locale}`
     })
   }
 
@@ -67,7 +68,7 @@ export default class FSXAApi {
       return response.json()
     }
     const response = await fetchGCAPages({
-      uri: `${this.params.config.caas}/${this.params.config.projectId}/${this.mode}.content`,
+      uri: `${this.params.config.caas}/${this.params.config.tenantId}/${this.params.config.projectId}.${this.mode}.content`,
       apiKey: this.params.config.apiKey,
       locale,
       uid
@@ -86,7 +87,7 @@ export default class FSXAApi {
       return response.json()
     }
     return fetchGCAPages({
-      uri: `${this.params.config.caas}/${this.params.config.projectId}/${this.mode}.content`,
+      uri: `${this.params.config.caas}/${this.params.config.tenantId}/${this.params.config.projectId}.${this.mode}.content`,
       apiKey: this.params.config.apiKey,
       locale
     })
