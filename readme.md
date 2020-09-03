@@ -1,5 +1,8 @@
 # FSXA-API
-The FSXA-API is... /toDo
+The FSXA-API is an interface handling the data coming from the FirstSpirit 
+[CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the 
+Navigation Service. The data is processed and transfomred to perfectly suit the needs of 
+the [FSXA-Pattern-Loibrary](https://github.com/e-Spirit/fsxa-pattern-library).
 
 ## Prerequisites
 /toDo
