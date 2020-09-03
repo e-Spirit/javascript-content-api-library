@@ -1,14 +1,19 @@
 # FSXA-API
 The FSXA-API is... /toDo
+
 ## Prerequisites
 /toDo
+
 ## Usage
 /toDo
+
 ## Developer Documentation
 /toDo
+
 ## Legal Notices
 FSXA-API is a product of e-Spirit AG, Dortmund, Germany.
-The FSXA API is subject to the Apache-2.0 license.
+The FSXA-API is subject to the Apache-2.0 license.
+
 ## Disclaimer
 This document is provided for information purposes only.
 e-Spirit may change the contents hereof without notice. 
