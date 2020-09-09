@@ -17,12 +17,27 @@ export interface FSXAConfiguration {
   navigationService: string
   caas: string
   projectId: string
+  tenantId?: string
   remotes?: ObjectMap<string>
 }
 export type FSXAContentMode = 'release' | 'preview'
 
 const ERROR_MISSING_CONFIG =
   'Please specify a FSXAConfiguration via constructor or setConfiguration'
+
+/**
+ * Construct caas-url out of given config
+ *
+ * The new caas-url schema introduced in Version 3.0.9 of the caas-connect module will be used if the tenantId is specified as well
+ * @param configuration
+ * @param mode
+ */
+const buildCaaSURI = (configuration: FSXAConfiguration, mode: FSXAContentMode): string => {
+  if (configuration.tenantId) {
+    return `${configuration.caas}/${configuration.tenantId}/${configuration.projectId}.${mode}.content`
+  }
+  return `${configuration.caas}/${configuration.projectId}/${mode}.content`
+}
 
 export default class FSXAApi {
   protected mode?: FSXAContentMode
@@ -34,7 +49,7 @@ export default class FSXAApi {
   }
 
   async fetchNavigation(locale: string): Promise<NavigationData | null> {
-    if (!this.params) throw new Error(ERROR_MISSING_CONFIG)
+    if (!this.params || !this.mode) throw new Error(ERROR_MISSING_CONFIG)
     if (this.params.mode === 'proxy') {
       const response = await fetch(this.params.baseUrl + '/navigation?language=' + locale)
       return response.json()
@@ -46,7 +61,7 @@ export default class FSXAApi {
   }
 
   async fetchPage(pageId: string, locale: string): Promise<Page | null> {
-    if (!this.params) throw new Error(ERROR_MISSING_CONFIG)
+    if (!this.params || !this.mode) throw new Error(ERROR_MISSING_CONFIG)
     if (this.params.mode === 'proxy') {
       const response = await fetch(this.params.baseUrl + '/pages/' + pageId + '?language=' + locale)
       return response.json()
@@ -54,12 +69,12 @@ export default class FSXAApi {
     return fetchPage({
       apiKey: this.params.config.apiKey,
       locale,
-      uri: `${this.params.config.caas}/${this.params.config.projectId}/${this.mode}.content/${pageId}.${locale}`
+      uri: `${buildCaaSURI(this.params.config, this.mode)}/${pageId}.${locale}`
     })
   }
 
   async fetchGCAPage(locale: string, uid: string): Promise<GCAPage | null> {
-    if (!this.params) throw new Error(ERROR_MISSING_CONFIG)
+    if (!this.params || !this.mode) throw new Error(ERROR_MISSING_CONFIG)
     if (this.params.mode === 'proxy') {
       const response = await fetch(
         this.params.baseUrl + '/gca-pages/' + uid + '?language=' + locale
@@ -67,7 +82,7 @@ export default class FSXAApi {
       return response.json()
     }
     const response = await fetchGCAPages({
-      uri: `${this.params.config.caas}/${this.params.config.projectId}/${this.mode}.content`,
+      uri: buildCaaSURI(this.params.config, this.mode),
       apiKey: this.params.config.apiKey,
       locale,
       uid
@@ -76,7 +91,7 @@ export default class FSXAApi {
   }
 
   async fetchGCAPages(locale: string): Promise<GCAPage[]> {
-    if (!this.params) throw new Error(ERROR_MISSING_CONFIG)
+    if (!this.params || !this.mode) throw new Error(ERROR_MISSING_CONFIG)
     if (this.params.mode === 'proxy') {
       console.log(
         'Proxy: Fetching from',
@@ -86,7 +101,7 @@ export default class FSXAApi {
       return response.json()
     }
     return fetchGCAPages({
-      uri: `${this.params.config.caas}/${this.params.config.projectId}/${this.mode}.content`,
+      uri: buildCaaSURI(this.params.config, this.mode),
       apiKey: this.params.config.apiKey,
       locale
     })
