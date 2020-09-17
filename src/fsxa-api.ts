@@ -48,15 +48,21 @@ export default class FSXAApi {
     this.params = params
   }
 
-  async fetchNavigation(locale: string): Promise<NavigationData | null> {
+  async fetchNavigation(
+    initialPath: string | null,
+    defaultLocale: string
+  ): Promise<NavigationData | null> {
     if (!this.params || !this.mode) throw new Error(ERROR_MISSING_CONFIG)
     if (this.params.mode === 'proxy') {
-      const response = await fetch(this.params.baseUrl + '/navigation?language=' + locale)
+      const response = await fetch(
+        `${this.params.baseUrl}/navigation?defaultLocale=${defaultLocale}&initialPath=${initialPath}`
+      )
       return response.json()
     }
     return fetchNavigation(
       `${this.params.config.navigationService}/${this.mode}.${this.params.config.projectId}`,
-      locale
+      initialPath,
+      defaultLocale
     )
   }
 
@@ -107,12 +113,5 @@ export default class FSXAApi {
     })
   }
 }
-export {
-  MappedNavigationItem,
-  MappedStructureItem,
-  NavigationData,
-  NavigationItem,
-  NavigationMapping,
-  StructureItem
-} from './navigation'
+export { NavigationData, NavigationItem, StructureItem } from './navigation'
 export * from './caas/types'
