@@ -1,3 +1,19 @@
+# [3.0.0](https://github.com/e-Spirit/fsxa-api/compare/v2.0.0...v3.0.0) (2020-10-12)
+
+
+### Features
+
+* **datasources, misc:** added datasource support + misc ([4f0c439](https://github.com/e-Spirit/fsxa-api/commit/4f0c4391045259ff7a9c4ff0431a4f88b712b224))
+
+
+### BREAKING CHANGES
+
+* **datasources, misc:** - tenantId in configuration object is now required
+- we slightly changed the
+interface of the urls used in remote / proxy mode for compatibility reasons and a better integration
+into the express router. Please use the exposed routes and route-generators in future
+implementations
+
 # [2.0.0](https://github.com/e-Spirit/fsxa-api/compare/v1.1.0...v2.0.0) (2020-09-17)
 
 
