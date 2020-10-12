@@ -1,1 +1,0 @@
-export { fetchPage } from "./page";
