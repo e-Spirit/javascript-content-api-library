@@ -1,44 +1,37 @@
-import FSXAApi from './FSXAApi'
-import { ComparisonQueryOperatorEnum, QueryBuilderQuery } from './types/QueryBuilder'
-import {
-  Content2Section,
-  DataEntries,
-  DataEntry,
-  Dataset,
-  GCAPage,
-  Image,
-  Page,
-  PageBody,
-  Section
-} from './types/APIResponse'
+import set from 'lodash.set'
+import { FSXAApi, ComparisonQueryOperatorEnum } from './'
 import {
   CaaSApi_Body,
   CaaSApi_Content2Section,
   CaaSApi_DataEntries,
   CaaSApi_DataEntry,
   CaaSApi_Dataset,
+  CaaSApi_GCAPage,
   CaaSApi_Media,
   CaaSApi_Media_Picture,
   CaaSApi_PageRef,
-  CaaSApi_Section
-} from './types/CaaSApi'
-
-import set from 'lodash.set'
-import { ObjectMap } from './types'
+  CaaSApi_Section,
+  Content2Section,
+  DataEntries,
+  DataEntry,
+  Dataset,
+  GCAPage,
+  Image,
+  NestedPath,
+  Page,
+  PageBody,
+  PageBodyContent,
+  QueryBuilderQuery,
+  RegisteredDatasetQuery,
+  Section
+} from '../types'
+import { LogicalQueryOperatorEnum } from './QueryBuilder'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.'
 }
 
-export interface RegisteredDatasetQuery {
-  name: string
-  filterParams: ObjectMap<string>
-  ordering: ObjectMap<any>
-  path: NestedPath
-}
-export type NestedPath = (string | number)[]
-
-class CaaSMapper {
+export class CaaSMapper {
   api: FSXAApi
   locale: string
   mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
@@ -46,7 +39,8 @@ class CaaSMapper {
   constructor(
     api: FSXAApi,
     locale: string,
-    mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
+    mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[],
+    fetchNested: boolean = false
   ) {
     this.api = api
     this.locale = locale
@@ -68,8 +62,13 @@ class CaaSMapper {
 
   registerDatasetQuery(
     name: string,
-    filterParams: ObjectMap<string>,
-    ordering: ObjectMap,
+    filterParams: Record<string, string>,
+    ordering: {
+      attribute: string
+      ascending: boolean
+    }[],
+    schema: string,
+    entityType: string,
     path: NestedPath
   ) {
     const id = name + '-' + JSON.stringify(filterParams)
@@ -77,7 +76,9 @@ class CaaSMapper {
       name,
       filterParams,
       ordering,
-      path
+      path,
+      schema,
+      entityType
     }
     return `[REFERENCED-DATASET-QUERY-${id}]`
   }
@@ -121,13 +122,18 @@ class CaaSMapper {
         if (!entry.value) return null
         if (entry.value.fsType === 'Media') {
           return this.registerReferencedItem(entry.value.identifier, path)
+        } else if (entry.value.fsType === 'PageRef') {
+          return {
+            referenceId: 'ef7eb160-9fc9-4970-8c65-2f1125b0086c',
+            referenceType: 'PageRef'
+          }
         }
     }
     return null
   }
 
   mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): DataEntries {
-    return Object.keys(entries).reduce(
+    return Object.keys(entries || {}).reduce(
       (result, key) => ({
         ...result,
         [key]: this.mapDataEntry(entries[key], [...path, key])
@@ -139,20 +145,34 @@ class CaaSMapper {
   mapSection(section: CaaSApi_Section, path: NestedPath): Section {
     return {
       id: section.identifier,
+      type: 'Section',
+      sectionType: section.template.uid,
       previewId: this.buildPreviewId(section.identifier),
-      type: section.template.uid,
-      data: this.mapDataEntries(section.formData, [...path, 'data'])
+      data: this.mapDataEntries(section.formData, [...path, 'data']),
+      children: []
     }
   }
 
   mapContent2Section(content2Section: CaaSApi_Content2Section, path: NestedPath): Content2Section {
     return {
-      template: content2Section.template.uid,
+      type: 'Content2Section',
+      data: {
+        entityType: content2Section.entityType,
+        filterParams: content2Section.filterParams,
+        maxPageCount: content2Section.maxPageCount,
+        ordering: content2Section.ordering,
+        query: content2Section.query,
+        recordCountPerPage: content2Section.recordCountPerPage,
+        schema: content2Section.schema
+      },
+      sectionType: content2Section.template.uid,
       children: content2Section.query
         ? (this.registerDatasetQuery(
             content2Section.query,
             content2Section.filterParams,
             content2Section.ordering,
+            content2Section.schema,
+            content2Section.entityType,
             [...path, 'children']
           ) as any)
         : []
@@ -162,7 +182,7 @@ class CaaSMapper {
   mapBodyContent(
     content: CaaSApi_Content2Section | CaaSApi_Section,
     path: NestedPath
-  ): Content2Section | Section {
+  ): PageBodyContent {
     switch (content.fsType) {
       case 'Content2Section':
         return this.mapContent2Section(content, path)
@@ -198,21 +218,35 @@ class CaaSMapper {
     }
   }
 
+  mapGCAPage(gcaPage: CaaSApi_GCAPage, path: NestedPath = []): GCAPage {
+    return {
+      id: gcaPage.identifier,
+      previewId: this.buildPreviewId(gcaPage.identifier),
+      name: gcaPage.name,
+      layout: gcaPage.template.uid,
+      data: this.mapDataEntries(gcaPage.formData, [...path, 'data']),
+      meta: this.mapDataEntries(gcaPage.metaFormData, [...path, 'meta'])
+    }
+  }
+
   mapDataset(dataset: CaaSApi_Dataset, path: NestedPath = []): Dataset {
     return {
       id: dataset.identifier,
       previewId: this.buildPreviewId(dataset.identifier),
+      type: 'Dataset',
       schema: dataset.schema,
       entityType: dataset.entityType,
       data: this.mapDataEntries(dataset.formData, [...path, 'data']),
       route: dataset.route,
-      template: dataset.template.uid
+      template: dataset.template.uid,
+      children: []
     }
   }
 
   mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath): Image {
     return {
       id: item.identifier,
+      previewId: this.buildPreviewId(item.identifier),
       resolutions: item.resolutionsMetaData
     }
   }
@@ -232,7 +266,7 @@ class CaaSMapper {
   }
 
   async mapFilterResponse(
-    items: (CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media)[]
+    items: (CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage)[]
   ): Promise<(Page | GCAPage | Dataset | Image)[]> {
     const mappedItems = items
       .map((item, index) => {
@@ -243,6 +277,8 @@ class CaaSMapper {
             return this.mapPageRef(item, [index])
           case 'Media':
             return this.mapMedia(item, [index])
+          case 'GCAPage':
+            return this.mapGCAPage(item, [index])
         }
       })
       .filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
@@ -288,8 +324,28 @@ class CaaSMapper {
     return data
   }
 
-  async resolveDatasetQuery<Type extends {}>(query: RegisteredDatasetQuery): Promise<Dataset[]> {
-    return (await this.api.fetchByFilter(this.mapDatasetQuery(query), this.locale)) as Dataset[]
+  async resolveDatasetQuery(query: RegisteredDatasetQuery): Promise<Dataset[]> {
+    return (await this.api.fetchByFilter(
+      [
+        {
+          operator: LogicalQueryOperatorEnum.AND,
+          filters: [
+            {
+              operator: ComparisonQueryOperatorEnum.EQUALS,
+              field: 'schema',
+              value: query.schema
+            },
+            {
+              operator: ComparisonQueryOperatorEnum.EQUALS,
+              field: 'entityType',
+              value: query.entityType
+            },
+            ...this.mapDatasetQuery(query)
+          ]
+        }
+      ],
+      this.locale,
+      false
+    )) as Dataset[]
   }
 }
-export default CaaSMapper

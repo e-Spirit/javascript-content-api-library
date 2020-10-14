@@ -1,13 +1,38 @@
-import {
-  ArrayQueryOperatorEnum,
-  ComparisonQueryOperatorEnum,
-  LogicalQueryOperatorEnum,
-  MappedFilter,
-  QueryBuilderErrors,
-  QueryBuilderQuery
-} from './types/QueryBuilder'
+import { MappedFilter, QueryBuilderQuery } from '../types'
 
-class QueryBuilder {
+export enum ComparisonQueryOperatorEnum {
+  GREATER_THAN_EQUALS = '$gte',
+  GREATER_THAN = '$gt',
+  EQUALS = '$eq',
+  IN = '$in',
+  LESS_THAN = '$lt',
+  LESS_THAN_EQUALS = '$lte',
+  NOT_EQUALS = '$ne',
+  NOT_IN = '$nin'
+}
+
+export enum LogicalQueryOperatorEnum {
+  AND = '$and',
+  NOT = '$not',
+  NOR = '$nor',
+  OR = '$or'
+}
+
+export enum ArrayQueryOperatorEnum {
+  ALL = '$all'
+}
+
+export enum QueryBuilderErrors {
+  MISSING_OPERATOR = 'You have to specify an operator',
+  UNKNOWN_OPERATOR = 'Unknown operator passed',
+  MISSING_FIELD = 'The filter query requires a field',
+  MISSING_VALUE = 'The filter query requires a value',
+  MISSING_FILTERS = 'No filters property was specified',
+  NOT_A_NUMBER = 'This filter requires a number as value',
+  NOT_AN_ARRAY = 'This filter requires an array as value'
+}
+
+export class QueryBuilder {
   buildAll(filters: QueryBuilderQuery[]): MappedFilter[] {
     return filters.map(this.build).filter(Boolean) as MappedFilter[]
   }
@@ -84,4 +109,3 @@ class QueryBuilder {
     throw new Error(QueryBuilderErrors.UNKNOWN_OPERATOR)
   }
 }
-export default QueryBuilder

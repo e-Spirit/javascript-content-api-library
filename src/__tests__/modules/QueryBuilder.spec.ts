@@ -1,11 +1,11 @@
-import QueryBuilder from '../QueryBuilder'
 import {
+  QueryBuilder,
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
-  MappedFilter,
   QueryBuilderErrors
-} from '../types/QueryBuilder'
+} from '../../modules'
+import { MappedFilter } from '../../types'
 
 const builder = new QueryBuilder()
 

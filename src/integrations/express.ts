@@ -1,5 +1,4 @@
 import express from 'express'
-import FSXAApi from '../FSXAApi'
 import {
   FetchByFilterQuery,
   FetchGCAPagesRouteParams,
@@ -11,7 +10,9 @@ import {
   FETCH_PAGE_ROUTE,
   LocaleQuery
 } from '../routes'
-import { QueryBuilderQuery } from '../types/QueryBuilder'
+import { FSXAApi } from './../modules'
+import { QueryBuilderQuery } from '../types'
+import { parse } from 'qs'
 
 export interface GetExpressRouterContext {
   api: FSXAApi
@@ -80,10 +81,10 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 }
 export default getExpressRouter
 
-export const getMappedFilters = (filters: string | string[]): QueryBuilderQuery[] => {
-  return Array.isArray(filters)
-    ? filters.map(filter => JSON.parse(filter))
+export const getMappedFilters = (filters: any | any[]): QueryBuilderQuery[] => {
+  return ((Array.isArray(filters)
+    ? filters
     : filters
-    ? [JSON.parse(filters)]
-    : []
+    ? [filters]
+    : []) as any) as QueryBuilderQuery[]
 }

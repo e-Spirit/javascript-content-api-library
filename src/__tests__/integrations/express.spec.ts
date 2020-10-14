@@ -1,6 +1,11 @@
 import express from 'express'
 import { Server } from 'http'
-import FSXAApi from '../../FSXAApi'
+import {
+  FSXAApi,
+  FSXAContentMode,
+  ComparisonQueryOperatorEnum,
+  LogicalQueryOperatorEnum
+} from '../../modules'
 import getExpressRouter, {
   ExpressRouterIntegrationErrors,
   getMappedFilters
@@ -12,16 +17,9 @@ import {
   FETCH_PAGE_ROUTE
 } from '../../routes'
 import 'cross-fetch/polyfill'
-import { Page } from '../../types/APIResponse'
-import { NavigationData } from '../../types/NavigationServiceApi'
-import { FSXAContentMode } from '../../types'
-import {
-  ComparisonQueryOperatorEnum,
-  LogicalQueryOperatorEnum,
-  QueryBuilderQuery
-} from '../../types/QueryBuilder'
+import { Page, QueryBuilderQuery, NavigationData } from '../../types'
 
-const PORT = 8080
+const PORT = 3125
 
 describe('Express-Integration', () => {
   const app = express()
@@ -82,7 +80,7 @@ describe('Express-Integration', () => {
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:8080/pages/foobar`)).json()).toEqual({
+      expect(await (await fetch(`http://localhost:${PORT}/pages/foobar`)).json()).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
@@ -103,7 +101,7 @@ describe('Express-Integration', () => {
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:8080/gca-pages/foobar`)).json()).toEqual({
+      expect(await (await fetch(`http://localhost:${PORT}/gca-pages/foobar`)).json()).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
@@ -131,7 +129,7 @@ describe('Express-Integration', () => {
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:8080/navigation`)).json()).toEqual({
+      expect(await (await fetch(`http://localhost:${PORT}/navigation`)).json()).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
@@ -179,7 +177,7 @@ describe('Express-Integration', () => {
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:8080/filter`)).json()).toEqual({
+      expect(await (await fetch(`http://localhost:${PORT}/filter`)).json()).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
@@ -187,7 +185,7 @@ describe('Express-Integration', () => {
 
   describe('catch all route', () => {
     it('should return an error, when unknown route is called', async () => {
-      expect(await (await fetch(`http://localhost:8080/foobar`)).json()).toEqual({
+      expect(await (await fetch(`http://localhost:${PORT}/foobar`)).json()).toEqual({
         error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE
       })
     })
@@ -196,13 +194,11 @@ describe('Express-Integration', () => {
   describe('getMappedFilters', () => {
     it('should return an array when only a string is passed', () => {
       expect(
-        getMappedFilters(
-          JSON.stringify({
-            operator: '$and',
-            value: 'bar',
-            field: 'foo'
-          })
-        )
+        getMappedFilters({
+          operator: '$and',
+          value: 'bar',
+          field: 'foo'
+        })
       ).toEqual([
         {
           operator: '$and',
@@ -215,16 +211,16 @@ describe('Express-Integration', () => {
     it('should return an array when only an array of strings is passed', () => {
       expect(
         getMappedFilters([
-          JSON.stringify({
+          {
             operator: '$and',
             value: 'bar',
             field: 'foo'
-          }),
-          JSON.stringify({
+          },
+          {
             operator: '$and',
             value: 'bar',
             field: 'foo'
-          })
+          }
         ])
       ).toEqual([
         {

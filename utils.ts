@@ -1,6 +1,5 @@
-import { ObjectMap } from './caas/types'
 import { stringify } from 'qs'
 
-export const encodeQueryParams = (params: ObjectMap<any>) => {
+export const encodeQueryParams = (params: Record<string, unknown>) => {
   return stringify(params)
 }

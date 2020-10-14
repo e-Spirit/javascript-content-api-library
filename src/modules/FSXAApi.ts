@@ -1,22 +1,43 @@
-import { FSXAApiErrors, FSXAApiParams, FSXAConfiguration, FSXAContentMode } from './types'
-import Logger, { LogLevel } from './Logger'
-import { getFetchPageRoute, getFetchGCAPagesRoute, FETCH_BY_FILTER_ROUTE } from './routes'
 import {
+  CaaSMapper,
+  QueryBuilder,
   ComparisonQueryOperatorEnum,
-  LogicalFilter,
   LogicalQueryOperatorEnum,
+  Logger,
+  LogLevel
+} from './'
+import { getFetchPageRoute, getFetchGCAPagesRoute, FETCH_BY_FILTER_ROUTE } from '../routes'
+import {
+  CaasApi_FilterResponse,
+  Dataset,
+  FSXAApiParams,
+  FSXAConfiguration,
+  GCAPage,
+  Image,
+  LogicalFilter,
+  NavigationData,
+  Page,
   QueryBuilderQuery
-} from './types/QueryBuilder'
-import QueryBuilder from './QueryBuilder'
-import CaaSMapper from './CaaSMapper'
-import { Dataset, GCAPage, Image, Page } from './types/APIResponse'
-import { CaasApi_FilterResponse } from './types/CaaSApi'
-import { NavigationData } from './types/NavigationServiceApi'
-import { buildURI, encodeQueryParams } from './utils'
+} from '../types'
+import { stringify } from 'qs'
 
-export { default as getExpressRouter, GetExpressRouterContext } from './integrations/express'
+export enum FSXAContentMode {
+  PREVIEW = 'preview',
+  RELEASE = 'release'
+}
 
-class FSXAApi {
+export enum FSXAApiErrors {
+  UNKNOWN_CONTENT_MODE = 'The content mode must be preview or release.',
+  UNKNOWN_API_MODE = 'The api mode must be remote or proxy.',
+  MISSING_BASE_URL = 'You do need to specify a baseUrl in proxy mode.',
+  MISSING_API_KEY = 'No CaaS-ApiKey was passed via the configuration. [apiKey]',
+  MISSING_CAAS_URL = 'No CaaS-URL was passed via the configuration. [caas]',
+  MISSING_NAVIGATION_SERVICE_URL = 'No CaaS-URL was passed via the configuration. [navigationService]',
+  MISSING_PROJECT_ID = 'No projectId was passed via the configuration. [projectId]',
+  MISSING_TENANT_ID = 'No tenantId was passed via the configuration. [tenantId]'
+}
+
+export class FSXAApi {
   public mode!: FSXAContentMode
   protected params!: FSXAApiParams
   protected logger: Logger
@@ -127,25 +148,38 @@ class FSXAApi {
 
   async fetchByFilter(
     filters: QueryBuilderQuery[],
-    locale: string
+    locale: string,
+    fetchNested: boolean = true
   ): Promise<(Page | GCAPage | Image | Dataset)[]> {
     if (this.params.mode === 'proxy') {
       const response = await fetch(
-        buildURI(this.params.baseUrl + FETCH_BY_FILTER_ROUTE, { locale, filter: filters })
+        `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}?${stringify({
+          locale,
+          filter: filters,
+          fetchNested
+        })}`
       )
       return (await response.json()) as (Page | GCAPage | Image | Dataset)[]
     }
-    const url = buildURI(this.buildCaaSUrl(), {
-      filter: [
-        ...filters.map(filter => JSON.stringify(this.queryBuilder.build(filter))),
-        JSON.stringify({ 'locale.language': locale.split('_')[0] })
-      ]
-    })
-    console.log(url)
+    const url = `${this.buildCaaSUrl()}?${stringify(
+      {
+        filter: [
+          ...filters.map(filter => JSON.stringify(this.queryBuilder.build(filter))),
+          {
+            operator: ComparisonQueryOperatorEnum.EQUALS,
+            value: locale.split('–')[0],
+            field: 'locale.language'
+          }
+        ]
+      },
+      {
+        arrayFormat: 'repeat'
+      }
+    )}`
     const response = await fetch(url, {
       headers: this.buildAuthorizationHeaders()
     })
-    const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery)
+    const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery, fetchNested)
     const data: CaasApi_FilterResponse = await response.json()
     return mapper.mapFilterResponse(data._embedded['rh:doc'])
   }
@@ -187,4 +221,3 @@ class FSXAApi {
     return response.json()
   }
 }
-export default FSXAApi

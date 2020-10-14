@@ -1,3 +1,9 @@
+import {
+  ArrayQueryOperatorEnum,
+  ComparisonQueryOperatorEnum,
+  LogicalQueryOperatorEnum
+} from './modules/QueryBuilder'
+
 export interface CaaSApi_Template {
   fsType: 'PageTemplate'
   name: string
@@ -172,6 +178,7 @@ export interface CaaSApi_DataEntries {
 
 export interface CaaSApi_Content2Section {
   fsType: 'Content2Section'
+  identifier: string
   schema: string
   entityType: string
   name: string
@@ -225,6 +232,7 @@ export interface CaaSApi_GCAPage {
   identifier: string
   uid: string
   uidType: string
+  template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   metaFormData: CaaSApi_DataEntries
 }
@@ -299,6 +307,243 @@ export interface CaasApi_FilterResponse {
   _etag: { $oid: string }
   _returned: number
   _embedded: {
-    'rh:doc': (CaaSApi_PageRef | CaaSApi_Dataset | CaaSApi_Media | any)[]
+    'rh:doc': (CaaSApi_PageRef | CaaSApi_Dataset | CaaSApi_Media | CaaSApi_GCAPage | any)[]
   }
+}
+
+export type DataEntry = any
+
+export interface DataEntries {
+  [key: string]: DataEntry
+}
+
+export type PageBodyContent = Section | Content2Section | Dataset
+
+export interface PageBody {
+  name: string
+  previewId: string
+  children: PageBodyContent[]
+}
+
+export interface Page {
+  id: string
+  refId: string
+  previewId: string
+  name: string
+  layout: string
+  children: PageBody[]
+  data: DataEntries
+  meta: DataEntries
+}
+
+export interface Option {
+  key: string
+  value: string
+}
+
+export interface Link {
+  template: string
+  data: DataEntries
+  meta: DataEntries
+}
+
+export interface Card {
+  id: string
+  previewId: string
+  template: string
+  data: DataEntries
+}
+
+export interface Media {}
+
+export interface GCAPage {
+  id: string
+  previewId: string
+  name: string
+  layout: string
+  data: DataEntries
+  meta: DataEntries
+}
+
+export interface Content2Section {
+  type: 'Content2Section'
+  sectionType: string
+  data: {
+    schema: string
+    entityType: string
+    query: string | null
+    recordCountPerPage: number
+    maxPageCount: number
+    filterParams: Record<string, any>
+    ordering: {
+      attribute: string
+      ascending: boolean
+    }[]
+  }
+  children: Dataset[]
+}
+
+export interface Section {
+  id: string
+  previewId: string
+  type: 'Section'
+  sectionType: string
+  data: DataEntries
+  children: Section[]
+}
+
+export interface Dataset {
+  id: string
+  previewId: string
+  schema: string
+  type: 'Dataset'
+  entityType: string
+  template: string
+  children: Section[]
+  data: DataEntries
+  route: string
+}
+
+export interface Image {
+  id: string
+  previewId: string
+  resolutions: {
+    [resolution: string]: {
+      fileSize: number
+      extension: string
+      mimeType: string
+      width: number
+      height: number
+      url: string
+    }
+  }
+}
+
+export interface RegisteredDatasetQuery {
+  name: string
+  filterParams: Record<string, string>
+  ordering: {
+    attribute: string
+    ascending: boolean
+  }[]
+  path: NestedPath
+  schema: string
+  entityType: string
+}
+export type NestedPath = (string | number)[]
+
+export type FSXAApiParams =
+  | {
+      mode: 'proxy'
+      baseUrl: string
+    }
+  | {
+      mode: 'remote'
+      config: FSXAConfiguration
+    }
+
+export interface FSXAConfiguration {
+  apiKey: string
+  navigationService: string
+  caas: string
+  projectId: string
+  tenantId: string
+  mapDataQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
+  remotes?: Record<string, string>
+}
+
+export interface ObjectMap<ValueType = any> {
+  [key: string]: ValueType
+}
+
+export interface StructureItem {
+  id: string
+  children: StructureItem[]
+}
+
+export interface NavigationItem {
+  id: string
+  parentIds: string[]
+  label: string
+  contentReference: string | null
+  caasDocumentId: string
+  seoRoute: string
+  customData: any
+}
+
+export interface NavigationData {
+  idMap: {
+    [id: string]: NavigationItem
+  }
+  seoRouteMap: {
+    [route: string]: string
+  }
+  structure: StructureItem[]
+  pages: {
+    index: string
+  }
+  meta: {
+    identifier: {
+      tenantId: string
+      navigationId: string
+      languageId: string
+    }
+  }
+}
+
+export type ComparisonFilterValue = string | number | RegExp
+
+export type ComparisonFilter =
+  | {
+      field: string
+      operator:
+        | ComparisonQueryOperatorEnum.GREATER_THAN
+        | ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS
+        | ComparisonQueryOperatorEnum.LESS_THAN
+        | ComparisonQueryOperatorEnum.LESS_THAN_EQUALS
+      value: number
+    }
+  | {
+      field: string
+      operator: ComparisonQueryOperatorEnum.IN | ComparisonQueryOperatorEnum.NOT_IN
+      value: ComparisonFilterValue[]
+    }
+  | {
+      field: string
+      operator: ComparisonQueryOperatorEnum.EQUALS | ComparisonQueryOperatorEnum.NOT_EQUALS
+      value: ComparisonFilterValue | ComparisonFilterValue[]
+    }
+
+export type LogicalFilter =
+  | {
+      operator: LogicalQueryOperatorEnum.AND
+      filters: (LogicalFilter | ComparisonFilter | ArrayFilter)[]
+    }
+  | {
+      field: string
+      operator: LogicalQueryOperatorEnum.NOT
+      filter: {
+        operator: ComparisonQueryOperatorEnum
+        value: any
+      }
+    }
+  | {
+      operator: LogicalQueryOperatorEnum.NOR
+      filters: (LogicalFilter | ComparisonFilter | ArrayFilter)[]
+    }
+  | {
+      operator: LogicalQueryOperatorEnum.OR
+      filters: (LogicalFilter | ComparisonFilter | ArrayFilter)[]
+    }
+
+export type ArrayFilter = {
+  field: string
+  operator: ArrayQueryOperatorEnum.ALL
+  value: string[] | number[]
+}
+
+export type QueryBuilderQuery = LogicalFilter | ComparisonFilter | ArrayFilter
+
+export interface MappedFilter {
+  [key: string]: MappedFilter | MappedFilter[] | ComparisonFilterValue | ComparisonFilterValue[]
 }

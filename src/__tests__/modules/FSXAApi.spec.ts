@@ -1,7 +1,6 @@
-import FSXAApi from '../FSXAApi'
-import { FSXAApiErrors, FSXAConfiguration, FSXAContentMode } from '../types'
+import { FSXAApi, FSXAApiErrors, FSXAContentMode } from '../../modules'
 import fetchMock, { FetchMock } from 'jest-fetch-mock'
-import { getFetchPageRoute } from '../routes'
+import { FSXAConfiguration } from '../../types'
 
 const configuration: FSXAConfiguration = {
   apiKey: 'apiKey',

@@ -5,7 +5,7 @@ export enum LogLevel {
   WARNING = 2,
   ERROR = 3
 }
-class Logger {
+export class Logger {
   logLevel: LogLevel
 
   constructor(logLevel: LogLevel) {
@@ -28,4 +28,3 @@ class Logger {
     if (this.logLevel >= LogLevel.ERROR) console.error(...args)
   }
 }
-export default Logger
