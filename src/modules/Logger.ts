@@ -5,6 +5,11 @@ export enum LogLevel {
   WARNING = 2,
   ERROR = 3
 }
+
+const formatOutput = (...args: any[]) => {
+  if (typeof window !== 'undefined') return args
+  return require('util').inspect(args, false, null, true)
+}
 export class Logger {
   logLevel: LogLevel
 
@@ -13,18 +18,18 @@ export class Logger {
   }
 
   info(...args: any[]) {
-    if (this.logLevel >= LogLevel.INFO) console.info(...args)
+    if (this.logLevel <= LogLevel.INFO) console.info(formatOutput(...args))
   }
 
   log(...args: any[]) {
-    if (this.logLevel >= LogLevel.LOG) console.log(...args)
+    if (this.logLevel <= LogLevel.LOG) console.log(formatOutput(...args))
   }
 
   warn(...args: any[]) {
-    if (this.logLevel >= LogLevel.WARNING) console.warn(...args)
+    if (this.logLevel <= LogLevel.WARNING) console.warn(formatOutput(...args))
   }
 
   error(...args: any[]) {
-    if (this.logLevel >= LogLevel.ERROR) console.error(...args)
+    if (this.logLevel <= LogLevel.ERROR) console.error(formatOutput(...args))
   }
 }

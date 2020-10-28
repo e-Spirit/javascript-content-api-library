@@ -86,6 +86,18 @@ export interface CaaSApi_CMSInputCombobox {
   value: CaaSApi_Option | null
 }
 
+export interface CaaSApi_CMSInputRadioButton {
+  fsType: 'CMS_INPUT_RADIOBUTTON'
+  name: string
+  value: CaaSApi_Option | null
+}
+
+export interface CaaSApi_CMSInputDate {
+  fsType: 'CMS_INPUT_DATE'
+  name: string
+  value: string | null
+}
+
 export interface CaaSApi_FSDataset {
   fsType: 'FS_DATASET'
   name: string
@@ -134,6 +146,7 @@ export interface CaaSApi_MediaRef {
 export interface CaaSApi_Record {
   fsType: 'Record'
   identifier: string
+  value: any
 }
 
 export interface CaaSApi_FSIndex {
@@ -171,6 +184,8 @@ export type CaaSApi_DataEntry =
   | CaaSApi_FSDataset
   | CaaSApi_FSIndex
   | CaaSApi_FSReference
+  | CaaSApi_CMSInputRadioButton
+  | CaaSApi_CMSInputDate
 
 export interface CaaSApi_DataEntries {
   [key: string]: CaaSApi_DataEntry

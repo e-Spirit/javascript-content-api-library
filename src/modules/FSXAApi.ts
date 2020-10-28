@@ -38,9 +38,9 @@ export enum FSXAApiErrors {
 }
 
 export class FSXAApi {
+  public logger: Logger
   public mode!: FSXAContentMode
   protected params!: FSXAApiParams
-  protected logger: Logger
   protected queryBuilder: QueryBuilder = new QueryBuilder()
 
   constructor(mode: FSXAContentMode, params: FSXAApiParams, logLevel: LogLevel = LogLevel.ERROR) {
@@ -97,19 +97,24 @@ export class FSXAApi {
      * If we are in proxy mode (client-side), we only want to pipe the input through to the "local" api (server-side) that is able to
      * request and map data from the caas
      */
-    if (this.params.mode === 'proxy')
-      return (await fetch(`${this.params.baseUrl}${getFetchPageRoute(pageId, locale)}`)).json()
+    if (this.params.mode === 'proxy') {
+      const url = `${this.params.baseUrl}${getFetchPageRoute(pageId, locale)}`
+      this.logger.info('[Proxy][fetchPage] Requesting:', url, { pageId, locale })
+      return (await fetch(url)).json()
+    }
 
     const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery)
     try {
-      const response = await fetch(`${this.buildCaaSUrl()}/${pageId}.${locale}`, {
+      const url = `${this.buildCaaSUrl()}/${pageId}.${locale}`
+      this.logger.info('[Remote][fetchPage] Requesting: ', url, { pageId, locale })
+      const response = await fetch(url, {
         headers: this.buildAuthorizationHeaders()
       })
       if (response.status === 200) {
         return mapper.mapPageRefResponse(await response.json())
       }
     } catch (error) {
-      this.logger.error('Error fetching page', error)
+      this.logger.error(`[Remote][fetchPage] Error:`, error, { pageId, locale })
       return null
     }
     return null
@@ -120,19 +125,17 @@ export class FSXAApi {
      * If we are in proxy mode (client-side), we only want to pipe the input through to the "local" api (server-side) that is able to
      * request and map data from the caas
      */
-    if (this.params.mode === 'proxy')
-      return (await fetch(`${this.params.baseUrl}${getFetchGCAPagesRoute(locale, uid)}`)).json()
+    if (this.params.mode === 'proxy') {
+      const url = `${this.params.baseUrl}${getFetchGCAPagesRoute(locale, uid)}`
+      this.logger.info('[Proxy][fetchGCAPages] Requesting:', url, { locale, uid })
+      return (await fetch(url)).json()
+    }
     const filter: LogicalFilter = {
       operator: LogicalQueryOperatorEnum.AND,
       filters: [
         {
           field: 'fsType',
           value: 'GCAPage',
-          operator: ComparisonQueryOperatorEnum.EQUALS
-        },
-        {
-          field: 'locale.language',
-          value: locale.split('_')[0],
           operator: ComparisonQueryOperatorEnum.EQUALS
         }
       ]
@@ -143,6 +146,7 @@ export class FSXAApi {
         operator: ComparisonQueryOperatorEnum.EQUALS,
         value: uid
       })
+    this.logger.info('[Remote][fetchGCAPages] Build Filters:', [filter], { locale, uid })
     return await this.fetchByFilter([filter], locale)
   }
 
@@ -152,72 +156,78 @@ export class FSXAApi {
     fetchNested: boolean = true
   ): Promise<(Page | GCAPage | Image | Dataset)[]> {
     if (this.params.mode === 'proxy') {
-      const response = await fetch(
-        `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}?${stringify({
-          locale,
-          filter: filters,
-          fetchNested
-        })}`
-      )
-      return (await response.json()) as (Page | GCAPage | Image | Dataset)[]
+      const url = `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}?${stringify({
+        locale,
+        filter: filters,
+        fetchNested
+      })}`
+      this.logger.info('[Proxy][fetchByFilter] Requesting:', url, { filters, locale, fetchNested })
+      return (await (await fetch(url)).json()) as (Page | GCAPage | Image | Dataset)[]
     }
+    const buildFilters = [
+      ...filters.map(filter => JSON.stringify(this.queryBuilder.build(filter))),
+      JSON.stringify(
+        this.queryBuilder.build({
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+          value: locale.split('_')[0],
+          field: 'locale.language'
+        })
+      )
+    ]
     const url = `${this.buildCaaSUrl()}?${stringify(
       {
-        filter: [
-          ...filters.map(filter => JSON.stringify(this.queryBuilder.build(filter))),
-          {
-            operator: ComparisonQueryOperatorEnum.EQUALS,
-            value: locale.split('–')[0],
-            field: 'locale.language'
-          }
-        ]
+        filter: buildFilters
       },
       {
         arrayFormat: 'repeat'
       }
     )}`
-    const response = await fetch(url, {
-      headers: this.buildAuthorizationHeaders()
-    })
-    const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery, fetchNested)
-    const data: CaasApi_FilterResponse = await response.json()
-    return mapper.mapFilterResponse(data._embedded['rh:doc'])
+    this.logger.info('[Remote][fetchByFilter] Constructed Filters:', buildFilters)
+    this.logger.info('[Remote][fetchByFilter] Requesting:', url, { filters, locale, fetchNested })
+    try {
+      const response = await fetch(url, {
+        headers: this.buildAuthorizationHeaders()
+      })
+      const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery, fetchNested)
+      const data: CaasApi_FilterResponse = await response.json()
+      return mapper.mapFilterResponse(data._embedded['rh:doc'])
+    } catch (error) {
+      this.logger.error('[Remote][fetchByFilter] Error:', error, { filters, locale, fetchNested })
+      return []
+    }
   }
 
   async fetchNavigation(
     initialPath: string | null,
     defaultLocale: string
-  ): Promise<NavigationData> {
+  ): Promise<NavigationData | null> {
     if (this.params.mode === 'proxy') {
-      return (
-        await fetch(
-          `${this.params.baseUrl}/navigation?locale=${defaultLocale}&initialPath=${initialPath ||
-            ''}`
-        )
-      ).json()
+      const url = `${
+        this.params.baseUrl
+      }/navigation?locale=${defaultLocale}&initialPath=${initialPath || ''}`
+      this.logger.info('[Proxy][fetchNavigation] Requesting:', url, { initialPath, defaultLocale })
+      return (await fetch(url)).json()
     }
-    const response = await fetch(
+    const url =
       !initialPath || initialPath === '/'
         ? `${this.buildNavigationServiceUrl()}?depth=99&format=caas&language=${defaultLocale}`
-        : `${this.buildNavigationServiceUrl()}/by-seo-route/${initialPath}?depth=99&format=caas&all`,
-      {
+        : `${this.buildNavigationServiceUrl()}/by-seo-route/${initialPath}?depth=99&format=caas&all`
+    this.logger.info('[Remote][fetchNavigation] Requesting:', url, { initialPath, defaultLocale })
+    try {
+      const response = await fetch(url, {
         headers: {
           'Accept-Language': '*'
         }
+      })
+      if (response.status === 200) {
+        return response.json()
       }
-    )
-    if (response.status === 200) {
-      return response.json()
+      throw new Error(
+        `Unable to fetch Navigation. HTTP response status=${response.status}, statusText="${response.statusText}"`
+      )
+    } catch (error) {
+      this.logger.info('[Remote][fetchNavigation]Error:', url, { initialPath, defaultLocale })
+      return null
     }
-    throw new Error(
-      `Unable to fetch Navigation. HTTP response status=${response.status}, statusText="${response.statusText}"`
-    )
-  }
-
-  async fetchMediaReference(url: string) {
-    const response = await fetch(url, {
-      headers: this.buildAuthorizationHeaders()
-    })
-    return response.json()
   }
 }

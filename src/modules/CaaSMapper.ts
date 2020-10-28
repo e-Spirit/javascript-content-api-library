@@ -26,6 +26,7 @@ import {
   Section
 } from '../types'
 import { LogicalQueryOperatorEnum } from './QueryBuilder'
+import { parseISO } from 'date-fns'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.'
@@ -96,6 +97,10 @@ export class CaaSMapper {
       case 'CMS_INPUT_TEXT':
       case 'CMS_INPUT_TEXTAREA':
         return entry.value
+      case 'CMS_INPUT_RADIOBUTTON':
+        return entry.value
+      case 'CMS_INPUT_DATE':
+        return entry.value ? parseISO(entry.value) : null
       case 'CMS_INPUT_LINK':
         return entry.value
           ? {
@@ -107,7 +112,6 @@ export class CaaSMapper {
       case 'CMS_INPUT_LIST':
       case 'FS_BUTTON':
       case 'FS_DATASET':
-        console.log('Found', entry.fsType, entry)
         return null
       case 'CMS_INPUT_TOGGLE':
         return entry.value || false
@@ -128,8 +132,17 @@ export class CaaSMapper {
             referenceType: 'PageRef'
           }
         }
+        return entry
+      case 'FS_INDEX':
+        if (entry.dapType === 'DatasetDataAccessPlugin') {
+          return entry.value.map((record, index) => {
+            return this.registerReferencedItem(record.value.target.identifier, [...path, index])
+          })
+        }
+        return entry
+      default:
+        return entry
     }
-    return null
   }
 
   mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): DataEntries {
@@ -316,8 +329,10 @@ export class CaaSMapper {
         ],
         this.locale
       )
-      ids.forEach((id, index) =>
-        this._referencedItems[id].forEach(path => set(data, path, response[index]))
+      ids.forEach(id =>
+        this._referencedItems[id].forEach(path =>
+          set(data, path, response.find(data => data.id === id) || null)
+        )
       )
       return data
     }
