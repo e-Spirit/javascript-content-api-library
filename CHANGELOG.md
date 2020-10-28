@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/e-Spirit/fsxa-api/compare/v3.0.1...v3.1.0) (2020-10-28)
+
+
+### Features
+
+* **logger, mapping:** enable setting loglevel from outside and add new mapped types ([0ab7cf6](https://github.com/e-Spirit/fsxa-api/commit/0ab7cf6273c34cb46a28a7c98300c6a4f76387fb))
+
 ## [3.0.1](https://github.com/e-Spirit/fsxa-api/compare/v3.0.0...v3.0.1) (2020-10-14)
 
 
