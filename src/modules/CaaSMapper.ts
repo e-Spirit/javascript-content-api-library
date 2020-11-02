@@ -11,6 +11,7 @@ import {
   CaaSApi_Media_Picture,
   CaaSApi_PageRef,
   CaaSApi_Section,
+  CaaSApi_SectionReference,
   Content2Section,
   DataEntries,
   DataEntry,
@@ -155,7 +156,7 @@ export class CaaSMapper {
     )
   }
 
-  mapSection(section: CaaSApi_Section, path: NestedPath): Section {
+  mapSection(section: CaaSApi_Section | CaaSApi_SectionReference, path: NestedPath): Section {
     return {
       id: section.identifier,
       type: 'Section',
@@ -193,13 +194,15 @@ export class CaaSMapper {
   }
 
   mapBodyContent(
-    content: CaaSApi_Content2Section | CaaSApi_Section,
+    content: CaaSApi_Content2Section | CaaSApi_Section | CaaSApi_SectionReference,
     path: NestedPath
   ): PageBodyContent {
     switch (content.fsType) {
       case 'Content2Section':
         return this.mapContent2Section(content, path)
       case 'Section':
+        return this.mapSection(content, path)
+      case 'SectionReference':
         return this.mapSection(content, path)
       default:
         throw new Error(CaaSMapperErrors.UNKNOWN_BODY_CONTENT)

@@ -232,11 +232,20 @@ export interface CaaSApi_Section {
   formData: CaaSApi_DataEntries
 }
 
+export interface CaaSApi_SectionReference {
+  fsType: 'SectionReference'
+  name: string
+  displayName: string
+  identifier: string
+  template: CaaSApi_Template
+  formData: CaaSApi_DataEntries
+}
+
 export interface CaaSApi_Body {
   fsType: 'Body'
   name: string
   identifier: string
-  children: (CaaSApi_Section | CaaSApi_Content2Section)[]
+  children: (CaaSApi_Section | CaaSApi_Content2Section | CaaSApi_SectionReference)[]
 }
 
 export interface CaaSApi_GCAPage {
