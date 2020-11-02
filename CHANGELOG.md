@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/e-Spirit/fsxa-api/compare/v3.1.0...v3.2.0) (2020-11-02)
+
+
+### Features
+
+* **sectionreference:** added SectionReference support ([0a78e98](https://github.com/e-Spirit/fsxa-api/commit/0a78e984bbfa8abf67a84067e33c629e79bd4b0b))
+
 # [3.1.0](https://github.com/e-Spirit/fsxa-api/compare/v3.0.1...v3.1.0) (2020-10-28)
 
 
