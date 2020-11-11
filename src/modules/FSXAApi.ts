@@ -190,6 +190,10 @@ export class FSXAApi {
       })
       const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery, fetchNested)
       const data: CaasApi_FilterResponse = await response.json()
+      if (!data._embedded) {
+        this.logger.error('[Remote][fetchByFilter] Returned empty result')
+        return []
+      }
       return mapper.mapFilterResponse(data._embedded['rh:doc'])
     } catch (error) {
       this.logger.error('[Remote][fetchByFilter] Error:', error, { filters, locale, fetchNested })
