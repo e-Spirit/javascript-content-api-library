@@ -13,6 +13,7 @@ import {
   CaaSApi_Section,
   CaaSApi_SectionReference,
   Content2Section,
+  CustomMapper,
   DataEntries,
   DataEntry,
   Dataset,
@@ -37,16 +38,20 @@ export class CaaSMapper {
   api: FSXAApi
   locale: string
   mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
+  customMapper?: CustomMapper
 
   constructor(
     api: FSXAApi,
     locale: string,
-    mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[],
-    fetchNested: boolean = false
+    utils: {
+      mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
+      customMapper?: CustomMapper
+    }
   ) {
     this.api = api
     this.locale = locale
-    this.mapDatasetQuery = mapDatasetQuery
+    this.mapDatasetQuery = utils.mapDatasetQuery
+    this.customMapper = utils.customMapper
   }
 
   _referencedItems: {
@@ -89,7 +94,14 @@ export class CaaSMapper {
     return [identifier, this.locale].join('.')
   }
 
-  mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): DataEntry {
+  async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
+    if (this.customMapper) {
+      const result = await this.customMapper(entry, {
+        registerReferencedItem: this.registerReferencedItem,
+        api: this.api
+      })
+      if (typeof result !== 'undefined') return result
+    }
     switch (entry.fsType) {
       case 'CMS_INPUT_COMBOBOX':
         return entry.value ? { key: entry.value.identifier, value: entry.value.label } : null
@@ -111,8 +123,24 @@ export class CaaSMapper {
             }
           : null
       case 'CMS_INPUT_LIST':
-      case 'FS_BUTTON':
+        if (!entry.value) return []
+        return entry.value.map((childEntry, index) =>
+          this.mapDataEntry(childEntry, [...path, index])
+        )
+      case 'CMS_INPUT_CHECKBOX':
+        if (!entry.value) return []
+        return entry.value.map((childEntry, index) =>
+          this.mapDataEntry(childEntry, [...path, index])
+        )
       case 'FS_DATASET':
+        if (!entry.value) return null
+        if (Array.isArray(entry.value)) {
+          return entry.value.map((childEntry, index) =>
+            this.mapDataEntry(childEntry, [...path, index])
+          )
+        } else if (entry.value.fsType === 'DatasetReference') {
+          return this.registerReferencedItem(entry.value.target.identifier, path)
+        }
         return null
       case 'CMS_INPUT_TOGGLE':
         return entry.value || false
@@ -141,33 +169,49 @@ export class CaaSMapper {
           })
         }
         return entry
+      case 'Option':
+        return {
+          key: entry.identifier,
+          value: entry.label
+        }
       default:
+        this.api.logger.log(
+          `[mapDataEntry]: Unknown Type ${entry.fsType}. Returning raw value:`,
+          entry.fsType,
+          entry
+        )
         return entry
     }
   }
 
-  mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): DataEntries {
+  async mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): Promise<DataEntries> {
     return Object.keys(entries || {}).reduce(
-      (result, key) => ({
+      async (result, key) => ({
         ...result,
-        [key]: this.mapDataEntry(entries[key], [...path, key])
+        [key]: await this.mapDataEntry(entries[key], [...path, key])
       }),
-      {}
+      Promise.resolve({})
     )
   }
 
-  mapSection(section: CaaSApi_Section | CaaSApi_SectionReference, path: NestedPath): Section {
+  async mapSection(
+    section: CaaSApi_Section | CaaSApi_SectionReference,
+    path: NestedPath
+  ): Promise<Section> {
     return {
       id: section.identifier,
       type: 'Section',
       sectionType: section.template.uid,
       previewId: this.buildPreviewId(section.identifier),
-      data: this.mapDataEntries(section.formData, [...path, 'data']),
+      data: await this.mapDataEntries(section.formData, [...path, 'data']),
       children: []
     }
   }
 
-  mapContent2Section(content2Section: CaaSApi_Content2Section, path: NestedPath): Content2Section {
+  async mapContent2Section(
+    content2Section: CaaSApi_Content2Section,
+    path: NestedPath
+  ): Promise<Content2Section> {
     return {
       type: 'Content2Section',
       data: {
@@ -193,66 +237,70 @@ export class CaaSMapper {
     }
   }
 
-  mapBodyContent(
+  async mapBodyContent(
     content: CaaSApi_Content2Section | CaaSApi_Section | CaaSApi_SectionReference,
     path: NestedPath
-  ): PageBodyContent {
+  ): Promise<PageBodyContent> {
     switch (content.fsType) {
       case 'Content2Section':
-        return this.mapContent2Section(content, path)
+        return await this.mapContent2Section(content, path)
       case 'Section':
-        return this.mapSection(content, path)
+        return await this.mapSection(content, path)
       case 'SectionReference':
-        return this.mapSection(content, path)
+        return await this.mapSection(content, path)
       default:
         throw new Error(CaaSMapperErrors.UNKNOWN_BODY_CONTENT)
     }
   }
 
-  mapPageBody(body: CaaSApi_Body, path: NestedPath): PageBody {
+  async mapPageBody(body: CaaSApi_Body, path: NestedPath): Promise<PageBody> {
     return {
       name: body.name,
       previewId: this.buildPreviewId(body.identifier),
-      children: body.children.map((child, index) =>
-        this.mapBodyContent(child, [...path, 'children', index])
+      children: await Promise.all(
+        body.children.map((child, index) =>
+          this.mapBodyContent(child, [...path, 'children', index])
+        )
       )
     }
   }
 
-  mapPageRef(pageRef: CaaSApi_PageRef, path: NestedPath = []): Page {
+  async mapPageRef(pageRef: CaaSApi_PageRef, path: NestedPath = []): Promise<Page> {
     return {
       id: pageRef.page.identifier,
       refId: pageRef.identifier,
       previewId: this.buildPreviewId(pageRef.page.identifier),
       name: pageRef.page.name,
       layout: pageRef.page.template.uid,
-      children: pageRef.page.children.map((child, index) =>
-        this.mapPageBody(child, [...path, 'children', index])
+      children: await Promise.all(
+        pageRef.page.children.map((child, index) =>
+          this.mapPageBody(child, [...path, 'children', index])
+        )
       ),
-      data: this.mapDataEntries(pageRef.page.formData, [...path, 'data']),
-      meta: this.mapDataEntries(pageRef.page.metaFormData, [...path, 'meta'])
+      data: await this.mapDataEntries(pageRef.page.formData, [...path, 'data']),
+      meta: await this.mapDataEntries(pageRef.page.metaFormData, [...path, 'meta'])
     }
   }
 
-  mapGCAPage(gcaPage: CaaSApi_GCAPage, path: NestedPath = []): GCAPage {
+  async mapGCAPage(gcaPage: CaaSApi_GCAPage, path: NestedPath = []): Promise<GCAPage> {
     return {
       id: gcaPage.identifier,
       previewId: this.buildPreviewId(gcaPage.identifier),
       name: gcaPage.name,
       layout: gcaPage.template.uid,
-      data: this.mapDataEntries(gcaPage.formData, [...path, 'data']),
-      meta: this.mapDataEntries(gcaPage.metaFormData, [...path, 'meta'])
+      data: await this.mapDataEntries(gcaPage.formData, [...path, 'data']),
+      meta: await this.mapDataEntries(gcaPage.metaFormData, [...path, 'meta'])
     }
   }
 
-  mapDataset(dataset: CaaSApi_Dataset, path: NestedPath = []): Dataset {
+  async mapDataset(dataset: CaaSApi_Dataset, path: NestedPath = []): Promise<Dataset> {
     return {
       id: dataset.identifier,
       previewId: this.buildPreviewId(dataset.identifier),
       type: 'Dataset',
       schema: dataset.schema,
       entityType: dataset.entityType,
-      data: this.mapDataEntries(dataset.formData, [...path, 'data']),
+      data: await this.mapDataEntries(dataset.formData, [...path, 'data']),
       route: dataset.route,
       template: dataset.template.uid,
       children: []

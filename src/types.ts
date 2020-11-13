@@ -1,3 +1,4 @@
+import { FSXAApi } from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
@@ -22,7 +23,7 @@ export interface CaaSApi_Option {
 export interface CaaSApi_CMSInputCheckbox {
   fsType: 'CMS_INPUT_CHECKBOX'
   name: string
-  value: CaaSApi_Option
+  value: CaaSApi_Option[]
 }
 
 export interface CaaSApi_CMSInputRadioButton {
@@ -57,6 +58,8 @@ export interface CaaSApi_CMSInputToggle {
   name: string
   value: boolean | null
 }
+
+export interface CaaSApi_CMSInputCheckbox {}
 
 export interface CaaSApi_CMSInputNumber {
   fsType: 'CMS_INPUT_NUMBER'
@@ -101,15 +104,18 @@ export interface CaaSApi_CMSInputDate {
 export interface CaaSApi_FSDataset {
   fsType: 'FS_DATASET'
   name: string
-  value: {
-    fsType: 'DatasetReference'
-    target: {
-      fsType: 'Dataset'
-      schema: string
-      entityType: string
-      identifier: string
-    }
-  } | null
+  value:
+    | {
+        fsType: 'DatasetReference'
+        target: {
+          fsType: 'Dataset'
+          schema: string
+          entityType: string
+          identifier: string
+        }
+      }
+    | CaaSApi_DataEntry[]
+    | null
 }
 
 export interface CaaSApi_FSButton {
@@ -171,6 +177,7 @@ export interface CaaSApi_FSReference {
 }
 
 export type CaaSApi_DataEntry =
+  | CaaSApi_CMSInputCheckbox
   | CaaSApi_CMSInputCombobox
   | CaaSApi_CMSInputDOM
   | CaaSApi_CMSInputLink
@@ -186,6 +193,7 @@ export type CaaSApi_DataEntry =
   | CaaSApi_FSReference
   | CaaSApi_CMSInputRadioButton
   | CaaSApi_CMSInputDate
+  | CaaSApi_Option
 
 export interface CaaSApi_DataEntries {
   [key: string]: CaaSApi_DataEntry
@@ -456,6 +464,14 @@ export interface RegisteredDatasetQuery {
 }
 export type NestedPath = (string | number)[]
 
+export type CustomMapper = (
+  entry: CaaSApi_DataEntry,
+  utils: {
+    api: FSXAApi
+    registerReferencedItem: (identifier: string, path: NestedPath) => string
+  }
+) => Promise<any | undefined>
+
 export type FSXAApiParams =
   | {
       mode: 'proxy'
@@ -473,6 +489,7 @@ export interface FSXAConfiguration {
   projectId: string
   tenantId: string
   mapDataQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
+  customMapper?: CustomMapper
   remotes?: Record<string, string>
 }
 

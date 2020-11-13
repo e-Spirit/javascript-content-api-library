@@ -103,7 +103,10 @@ export class FSXAApi {
       return (await fetch(url)).json()
     }
 
-    const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery)
+    const mapper = new CaaSMapper(this, locale, {
+      mapDatasetQuery: this.params.config.mapDataQuery,
+      customMapper: this.params.config.customMapper
+    })
     try {
       const url = `${this.buildCaaSUrl()}/${pageId}.${locale}`
       this.logger.info('[Remote][fetchPage] Requesting: ', url, { pageId, locale })
@@ -188,7 +191,10 @@ export class FSXAApi {
       const response = await fetch(url, {
         headers: this.buildAuthorizationHeaders()
       })
-      const mapper = new CaaSMapper(this, locale, this.params.config.mapDataQuery, fetchNested)
+      const mapper = new CaaSMapper(this, locale, {
+        mapDatasetQuery: this.params.config.mapDataQuery,
+        customMapper: this.params.config.customMapper
+      })
       const data: CaasApi_FilterResponse = await response.json()
       if (!data._embedded) {
         this.logger.error('[Remote][fetchByFilter] Returned empty result')
