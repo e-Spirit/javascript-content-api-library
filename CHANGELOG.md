@@ -1,3 +1,15 @@
+# [3.3.0](https://github.com/e-Spirit/fsxa-api/compare/v3.2.0...v3.3.0) (2020-11-13)
+
+
+### Bug Fixes
+
+* **fetchbyfilter:** fix warning about missing rh:doc property error ([ec00790](https://github.com/e-Spirit/fsxa-api/commit/ec007903fc078bcbe2f926f023237d3de7bf2644))
+
+
+### Features
+
+* **custom-mapper:** we've added a customMapper option that will override the default mapping ([0849e73](https://github.com/e-Spirit/fsxa-api/commit/0849e738dd878b8b8890a7f3564459e9b992a3ef))
+
 # [3.2.0](https://github.com/e-Spirit/fsxa-api/compare/v3.1.0...v3.2.0) (2020-11-02)
 
 
