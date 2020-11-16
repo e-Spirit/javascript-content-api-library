@@ -1,3 +1,10 @@
+## [3.3.1](https://github.com/e-Spirit/fsxa-api/compare/v3.3.0...v3.3.1) (2020-11-16)
+
+
+### Bug Fixes
+
+* **mapper:** fix error, where only one item per object was returned ([74e0f38](https://github.com/e-Spirit/fsxa-api/commit/74e0f38dd630a764bbc2965a846d886f876813b8))
+
 # [3.3.0](https://github.com/e-Spirit/fsxa-api/compare/v3.2.0...v3.3.0) (2020-11-13)
 
 
