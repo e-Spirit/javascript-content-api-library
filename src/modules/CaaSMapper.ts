@@ -118,25 +118,25 @@ export class CaaSMapper {
         return entry.value
           ? {
               template: entry.value.template.uid,
-              data: this.mapDataEntries(entry.value.formData, [...path, 'data']),
-              meta: this.mapDataEntries(entry.value.metaFormData, [...path, 'meta'])
+              data: await this.mapDataEntries(entry.value.formData, [...path, 'data']),
+              meta: await this.mapDataEntries(entry.value.metaFormData, [...path, 'meta'])
             }
           : null
       case 'CMS_INPUT_LIST':
         if (!entry.value) return []
-        return entry.value.map((childEntry, index) =>
-          this.mapDataEntry(childEntry, [...path, index])
+        return Promise.all(
+          entry.value.map((childEntry, index) => this.mapDataEntry(childEntry, [...path, index]))
         )
       case 'CMS_INPUT_CHECKBOX':
         if (!entry.value) return []
-        return entry.value.map((childEntry, index) =>
-          this.mapDataEntry(childEntry, [...path, index])
+        return Promise.all(
+          entry.value.map((childEntry, index) => this.mapDataEntry(childEntry, [...path, index]))
         )
       case 'FS_DATASET':
         if (!entry.value) return null
         if (Array.isArray(entry.value)) {
-          return entry.value.map((childEntry, index) =>
-            this.mapDataEntry(childEntry, [...path, index])
+          return Promise.all(
+            entry.value.map((childEntry, index) => this.mapDataEntry(childEntry, [...path, index]))
           )
         } else if (entry.value.fsType === 'DatasetReference') {
           return this.registerReferencedItem(entry.value.target.identifier, path)
@@ -145,12 +145,14 @@ export class CaaSMapper {
       case 'CMS_INPUT_TOGGLE':
         return entry.value || false
       case 'FS_CATALOG':
-        return (entry.value || []).map((card, index) => ({
-          id: card.identifier,
-          previewId: this.buildPreviewId(card.identifier),
-          template: card.template.uid,
-          data: this.mapDataEntries(card.formData, [...path, index, 'data'])
-        }))
+        return Promise.all(
+          (entry.value || []).map(async (card, index) => ({
+            id: card.identifier,
+            previewId: this.buildPreviewId(card.identifier),
+            template: card.template.uid,
+            data: await this.mapDataEntries(card.formData, [...path, index, 'data'])
+          }))
+        )
       case 'FS_REFERENCE':
         if (!entry.value) return null
         if (entry.value.fsType === 'Media') {
