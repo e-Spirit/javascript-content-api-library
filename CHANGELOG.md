@@ -1,3 +1,10 @@
+## [3.3.2](https://github.com/e-Spirit/fsxa-api/compare/v3.3.1...v3.3.2) (2020-11-16)
+
+
+### Bug Fixes
+
+* **mapper:** fix error, where Promise is returned for data-entries instead of resolved values ([20c17b7](https://github.com/e-Spirit/fsxa-api/commit/20c17b7eb20d5e093fddb72c50bc69937fc2f958))
+
 ## [3.3.1](https://github.com/e-Spirit/fsxa-api/compare/v3.3.0...v3.3.1) (2020-11-16)
 
 
