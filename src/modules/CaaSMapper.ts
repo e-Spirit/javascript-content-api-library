@@ -185,12 +185,16 @@ export class CaaSMapper {
   }
 
   async mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): Promise<DataEntries> {
-    return Object.keys(entries || {}).reduce(
-      async (result, key) => ({
+    const keys = Object.keys(entries || {})
+    const mappedEntries: any[] = await Promise.all(
+      Object.keys(entries || {}).map(key => this.mapDataEntry(entries[key], [...path, key]))
+    )
+    return keys.reduce(
+      (result, key, index) => ({
         ...result,
-        [key]: await this.mapDataEntry(entries[key], [...path, key])
+        [key]: mappedEntries[index]
       }),
-      Promise.resolve({})
+      {}
     )
   }
 
@@ -315,7 +319,7 @@ export class CaaSMapper {
     }
   }
 
-  mapMedia(item: CaaSApi_Media, path: NestedPath): Image | null {
+  async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | null> {
     switch (item.mediaType) {
       case 'PICTURE':
         return this.mapMediaPicture(item, path)
@@ -325,27 +329,29 @@ export class CaaSMapper {
   }
 
   async mapPageRefResponse(pageRef: CaaSApi_PageRef): Promise<Page> {
-    const mappedPage = this.mapPageRef(pageRef)
+    const mappedPage = await this.mapPageRef(pageRef)
     return this.resolveReferences(mappedPage)
   }
 
   async mapFilterResponse(
     items: (CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage)[]
   ): Promise<(Page | GCAPage | Dataset | Image)[]> {
-    const mappedItems = items
-      .map((item, index) => {
-        switch (item.fsType) {
-          case 'Dataset':
-            return this.mapDataset(item, [index])
-          case 'PageRef':
-            return this.mapPageRef(item, [index])
-          case 'Media':
-            return this.mapMedia(item, [index])
-          case 'GCAPage':
-            return this.mapGCAPage(item, [index])
-        }
-      })
-      .filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
+    const mappedItems = (
+      await Promise.all(
+        items.map((item, index) => {
+          switch (item.fsType) {
+            case 'Dataset':
+              return this.mapDataset(item, [index])
+            case 'PageRef':
+              return this.mapPageRef(item, [index])
+            case 'Media':
+              return this.mapMedia(item, [index]) as Promise<any>
+            case 'GCAPage':
+              return this.mapGCAPage(item, [index])
+          }
+        })
+      )
+    ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
     return this.resolveReferences(mappedItems)
   }
 
