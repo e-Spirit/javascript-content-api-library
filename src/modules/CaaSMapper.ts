@@ -35,6 +35,8 @@ export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.'
 }
 
+const REFERENCED_ITEMS_CHUNK_SIZE = 30
+
 export class CaaSMapper {
   api: FSXAApi
   locale: string
@@ -378,7 +380,7 @@ export class CaaSMapper {
     })
 
     const ids = Object.keys(this._referencedItems)
-    const idChunks = chunk(ids, 30)
+    const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
     if (ids.length > 0) {
       const response = await Promise.all(
         idChunks.map(ids =>
@@ -390,7 +392,9 @@ export class CaaSMapper {
                 field: 'identifier'
               }
             ],
-            this.locale
+            this.locale,
+            1,
+            REFERENCED_ITEMS_CHUNK_SIZE
           )
         )
       )
@@ -426,6 +430,8 @@ export class CaaSMapper {
         }
       ],
       this.locale,
+      1,
+      1000,
       false
     )) as Dataset[]
   }

@@ -27,4 +27,6 @@ export interface FetchNavigationQuery {
 export interface FetchByFilterQuery {
   locale: string
   filter: string | string[]
+  page?: string
+  pagesize?: string
 }

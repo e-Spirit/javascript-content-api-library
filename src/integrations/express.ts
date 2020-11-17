@@ -68,7 +68,12 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         })
       }
       const filters = getMappedFilters(req.query.filter)
-      const response = await api.fetchByFilter(filters, req.query.locale)
+      const response = await api.fetchByFilter(
+        filters,
+        req.query.locale,
+        req.query.page ? parseInt(req.query.page) : undefined,
+        req.query.pagesize ? parseInt(req.query.pagesize) : undefined
+      )
       return res.json(response)
     }
   )

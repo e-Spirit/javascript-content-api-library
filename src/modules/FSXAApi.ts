@@ -34,7 +34,9 @@ export enum FSXAApiErrors {
   MISSING_CAAS_URL = 'No CaaS-URL was passed via the configuration. [caas]',
   MISSING_NAVIGATION_SERVICE_URL = 'No CaaS-URL was passed via the configuration. [navigationService]',
   MISSING_PROJECT_ID = 'No projectId was passed via the configuration. [projectId]',
-  MISSING_TENANT_ID = 'No tenantId was passed via the configuration. [tenantId]'
+  MISSING_TENANT_ID = 'No tenantId was passed via the configuration. [tenantId]',
+  ILLEGAL_PAGE_SIZE = 'The pagesize parameter must be between 1 and 1000.',
+  ILLEGAL_PAGE_NUMBER = 'Given page number must be larger than 0'
 }
 
 export class FSXAApi {
@@ -157,12 +159,18 @@ export class FSXAApi {
   async fetchByFilter(
     filters: QueryBuilderQuery[],
     locale: string,
+    page = 1,
+    pagesize = 100,
     fetchNested: boolean = true
   ): Promise<(Page | GCAPage | Image | Dataset)[]> {
+    if (pagesize < 1 || pagesize > 1000) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_SIZE)
+    if (page < 1) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_NUMBER)
     if (this.params.mode === 'proxy') {
       const url = `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}?${stringify({
         locale,
         filter: filters,
+        page,
+        pagesize,
         fetchNested
       })}`
       this.logger.info('[Proxy][fetchByFilter] Requesting:', url, { filters, locale, fetchNested })
@@ -180,7 +188,9 @@ export class FSXAApi {
     ]
     const url = `${this.buildCaaSUrl()}?${stringify(
       {
-        filter: buildFilters
+        filter: buildFilters,
+        page,
+        pagesize
       },
       {
         arrayFormat: 'repeat'

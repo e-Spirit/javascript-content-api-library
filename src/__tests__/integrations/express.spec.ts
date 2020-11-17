@@ -143,7 +143,7 @@ describe('Express-Integration', () => {
     it('should correctly map function params', async () => {
       await proxyApi.fetchByFilter([], 'de_DE')
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(1)
-      expect(fetchByFilterSpy).toHaveBeenCalledWith([], 'de_DE')
+      expect(fetchByFilterSpy).toHaveBeenCalledWith([], 'de_DE', 1, 100)
       const filters_2: QueryBuilderQuery[] = [
         {
           operator: ComparisonQueryOperatorEnum.EQUALS,
@@ -174,6 +174,11 @@ describe('Express-Integration', () => {
       await proxyApi.fetchByFilter(filters_3, 'de_DE')
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(3)
       expect(fetchByFilterSpy.mock.calls[2][0]).toEqual(filters_3)
+
+      await proxyApi.fetchByFilter([], 'de_DE', 3, 30)
+      expect(fetchByFilterSpy).toHaveBeenCalledTimes(4)
+      expect(fetchByFilterSpy.mock.calls[3][2]).toEqual(3)
+      expect(fetchByFilterSpy.mock.calls[3][3]).toEqual(30)
     })
 
     it('should return an error, when locale is not specified', async () => {
