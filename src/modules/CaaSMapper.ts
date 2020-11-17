@@ -29,6 +29,7 @@ import {
 } from '../types'
 import { LogicalQueryOperatorEnum } from './QueryBuilder'
 import { parseISO } from 'date-fns'
+import { chunk } from 'lodash'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.'
@@ -377,20 +378,26 @@ export class CaaSMapper {
     })
 
     const ids = Object.keys(this._referencedItems)
+    const idChunks = chunk(ids, 30)
     if (ids.length > 0) {
-      const response = await this.api.fetchByFilter(
-        [
-          {
-            operator: ComparisonQueryOperatorEnum.IN,
-            value: Object.keys(this._referencedItems),
-            field: 'identifier'
-          }
-        ],
-        this.locale
+      const response = await Promise.all(
+        idChunks.map(ids =>
+          this.api.fetchByFilter(
+            [
+              {
+                operator: ComparisonQueryOperatorEnum.IN,
+                value: ids,
+                field: 'identifier'
+              }
+            ],
+            this.locale
+          )
+        )
       )
+      const fetchedItems = response.reduce((result, entries) => [...result, ...entries], [])
       ids.forEach(id =>
         this._referencedItems[id].forEach(path =>
-          set(data, path, response.find(data => data.id === id) || null)
+          set(data, path, fetchedItems.find(data => data.id === id) || null)
         )
       )
       return data
