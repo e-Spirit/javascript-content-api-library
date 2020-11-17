@@ -1,4 +1,5 @@
 import { MappedFilter, QueryBuilderQuery } from '../types'
+import { Logger } from './Logger'
 
 export enum ComparisonQueryOperatorEnum {
   GREATER_THAN_EQUALS = '$gte',
@@ -33,12 +34,19 @@ export enum QueryBuilderErrors {
 }
 
 export class QueryBuilder {
+  logger: Logger
+
+  constructor(logger: Logger) {
+    this.logger = logger
+  }
+
   buildAll(filters: QueryBuilderQuery[]): MappedFilter[] {
-    return filters.map(this.build).filter(Boolean) as MappedFilter[]
+    return filters.map(this.build.bind(this)).filter(Boolean) as MappedFilter[]
   }
 
   build(filter: QueryBuilderQuery): MappedFilter | null {
     // throw an error if no operator is specified
+    this.logger.log('[QueryBuilder.build]: Received Filter', filter)
     if (filter.operator == null) throw new Error(QueryBuilderErrors.MISSING_OPERATOR)
 
     switch (filter.operator) {

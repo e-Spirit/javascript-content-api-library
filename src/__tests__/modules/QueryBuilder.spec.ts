@@ -3,11 +3,13 @@ import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
-  QueryBuilderErrors
+  QueryBuilderErrors,
+  Logger,
+  LogLevel
 } from '../../modules'
 import { MappedFilter } from '../../types'
 
-const builder = new QueryBuilder()
+const builder = new QueryBuilder(new Logger(LogLevel.NONE))
 
 describe('QueryBuilder', () => {
   describe('build', () => {

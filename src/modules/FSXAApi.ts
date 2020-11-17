@@ -41,10 +41,11 @@ export class FSXAApi {
   public logger: Logger
   public mode!: FSXAContentMode
   protected params!: FSXAApiParams
-  protected queryBuilder: QueryBuilder = new QueryBuilder()
+  protected queryBuilder: QueryBuilder
 
   constructor(mode: FSXAContentMode, params: FSXAApiParams, logLevel: LogLevel = LogLevel.ERROR) {
     this.logger = new Logger(logLevel)
+    this.queryBuilder = new QueryBuilder(this.logger)
     this.setConfiguration(mode, params)
   }
 
