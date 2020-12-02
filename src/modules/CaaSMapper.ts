@@ -162,8 +162,8 @@ export class CaaSMapper {
           return this.registerReferencedItem(entry.value.identifier, path)
         } else if (entry.value.fsType === 'PageRef') {
           return {
-            referenceId: 'ef7eb160-9fc9-4970-8c65-2f1125b0086c',
-            referenceType: 'PageRef'
+            referenceId: entry.value.identifier,
+            referenceType: entry.value.fsType
           }
         }
         return entry
