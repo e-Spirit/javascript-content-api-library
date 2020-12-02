@@ -1,3 +1,16 @@
+# [3.4.0](https://github.com/e-Spirit/fsxa-api/compare/v3.3.2...v3.4.0) (2020-12-02)
+
+
+### Bug Fixes
+
+* **auto-resolve:** fix bug, where urls got too long, when referended items where batch loaded ([5a30ca6](https://github.com/e-Spirit/fsxa-api/commit/5a30ca6ed34640b9c5deaa235568050429e78781))
+* **mapper:** fix static referenceId in FS_REFERENCE ([dfdb397](https://github.com/e-Spirit/fsxa-api/commit/dfdb39737a795acdf09144c76af1b4328b889116))
+
+
+### Features
+
+* **pagination:** added pagination support in fetchByFilter-method ([631dd5b](https://github.com/e-Spirit/fsxa-api/commit/631dd5bd60f3090139f10cd75188d30ac9ea43e4))
+
 ## [3.3.2](https://github.com/e-Spirit/fsxa-api/compare/v3.3.1...v3.3.2) (2020-11-16)
 
 
