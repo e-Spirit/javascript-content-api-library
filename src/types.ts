@@ -439,6 +439,7 @@ export interface Dataset {
 export interface Image {
   id: string
   previewId: string
+  meta: DataEntries
   resolutions: {
     [resolution: string]: {
       fileSize: number

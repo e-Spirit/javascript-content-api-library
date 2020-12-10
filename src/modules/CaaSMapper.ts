@@ -316,10 +316,11 @@ export class CaaSMapper {
     }
   }
 
-  mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath): Image {
+  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath): Promise<Image> {
     return {
       id: item.identifier,
       previewId: this.buildPreviewId(item.identifier),
+      meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
       resolutions: item.resolutionsMetaData
     }
   }
