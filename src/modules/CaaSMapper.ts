@@ -12,7 +12,6 @@ import {
   CaaSApi_PageRef,
   CaaSApi_Section,
   CaaSApi_SectionReference,
-  Content2Section,
   CustomMapper,
   DataEntries,
   DataEntry,
@@ -23,13 +22,12 @@ import {
   Page,
   PageBody,
   PageBodyContent,
-  QueryBuilderQuery,
-  RegisteredDatasetQuery,
   Section
 } from '../types'
-import { LogicalQueryOperatorEnum } from './QueryBuilder'
 import { parseISO } from 'date-fns'
 import { chunk } from 'lodash'
+import XMLParser from './XMLParser'
+import { Logger } from './Logger'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.'
@@ -40,57 +38,30 @@ const REFERENCED_ITEMS_CHUNK_SIZE = 30
 export class CaaSMapper {
   api: FSXAApi
   locale: string
-  mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
+  xmlParser: XMLParser
   customMapper?: CustomMapper
 
   constructor(
     api: FSXAApi,
     locale: string,
     utils: {
-      mapDatasetQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
       customMapper?: CustomMapper
-    }
+    },
+    logger: Logger
   ) {
     this.api = api
     this.locale = locale
-    this.mapDatasetQuery = utils.mapDatasetQuery
     this.customMapper = utils.customMapper
+    this.xmlParser = new XMLParser(logger)
   }
 
   _referencedItems: {
     [identifier: string]: NestedPath[]
   } = {}
 
-  _referencedDatasetQueries: {
-    [identifier: string]: RegisteredDatasetQuery
-  } = {}
-
   registerReferencedItem(identifier: string, path: NestedPath): string {
     this._referencedItems[identifier] = [...(this._referencedItems[identifier] || []), path]
     return `[REFERENCED-ITEM-${identifier}]`
-  }
-
-  registerDatasetQuery(
-    name: string,
-    filterParams: Record<string, string>,
-    ordering: {
-      attribute: string
-      ascending: boolean
-    }[],
-    schema: string,
-    entityType: string,
-    path: NestedPath
-  ) {
-    const id = name + '-' + JSON.stringify(filterParams)
-    this._referencedDatasetQueries[id] = {
-      name,
-      filterParams,
-      ordering,
-      path,
-      schema,
-      entityType
-    }
-    return `[REFERENCED-DATASET-QUERY-${id}]`
   }
 
   buildPreviewId(identifier: string) {
@@ -109,6 +80,7 @@ export class CaaSMapper {
       case 'CMS_INPUT_COMBOBOX':
         return entry.value ? { key: entry.value.identifier, value: entry.value.label } : null
       case 'CMS_INPUT_DOM':
+        return entry.value ? await this.xmlParser.parse(entry.value, path.join('-')) : []
       case 'CMS_INPUT_NUMBER':
       case 'CMS_INPUT_TEXT':
       case 'CMS_INPUT_TEXTAREA':
@@ -217,12 +189,11 @@ export class CaaSMapper {
     }
   }
 
-  async mapContent2Section(
-    content2Section: CaaSApi_Content2Section,
-    path: NestedPath
-  ): Promise<Content2Section> {
+  async mapContent2Section(content2Section: CaaSApi_Content2Section): Promise<Section> {
     return {
-      type: 'Content2Section',
+      id: content2Section.identifier,
+      previewId: this.buildPreviewId(content2Section.identifier),
+      type: 'Section',
       data: {
         entityType: content2Section.entityType,
         filterParams: content2Section.filterParams,
@@ -233,16 +204,7 @@ export class CaaSMapper {
         schema: content2Section.schema
       },
       sectionType: content2Section.template.uid,
-      children: content2Section.query
-        ? (this.registerDatasetQuery(
-            content2Section.query,
-            content2Section.filterParams,
-            content2Section.ordering,
-            content2Section.schema,
-            content2Section.entityType,
-            [...path, 'children']
-          ) as any)
-        : []
+      children: []
     }
   }
 
@@ -252,7 +214,7 @@ export class CaaSMapper {
   ): Promise<PageBodyContent> {
     switch (content.fsType) {
       case 'Content2Section':
-        return await this.mapContent2Section(content, path)
+        return await this.mapContent2Section(content)
       case 'Section':
         return await this.mapSection(content, path)
       case 'SectionReference':
@@ -367,19 +329,6 @@ export class CaaSMapper {
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
   async resolveReferences<Type extends {}>(data: Type): Promise<Type> {
-    // we will resolve out dataset-queries first
-    // after that we will resolve other references as well
-    const datasetQueryIds = Object.keys(this._referencedDatasetQueries)
-    const queryResults = await Promise.all(
-      datasetQueryIds.map(queryId =>
-        this.resolveDatasetQuery(this._referencedDatasetQueries[queryId])
-      )
-    )
-    queryResults.forEach((queryResult, index) => {
-      const query = this._referencedDatasetQueries[datasetQueryIds[index]]
-      set(data, query.path, queryResult)
-    })
-
     const ids = Object.keys(this._referencedItems)
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
     if (ids.length > 0) {
@@ -408,32 +357,5 @@ export class CaaSMapper {
       return data
     }
     return data
-  }
-
-  async resolveDatasetQuery(query: RegisteredDatasetQuery): Promise<Dataset[]> {
-    return (await this.api.fetchByFilter(
-      [
-        {
-          operator: LogicalQueryOperatorEnum.AND,
-          filters: [
-            {
-              operator: ComparisonQueryOperatorEnum.EQUALS,
-              field: 'schema',
-              value: query.schema
-            },
-            {
-              operator: ComparisonQueryOperatorEnum.EQUALS,
-              field: 'entityType',
-              value: query.entityType
-            },
-            ...this.mapDatasetQuery(query)
-          ]
-        }
-      ],
-      this.locale,
-      1,
-      1000,
-      false
-    )) as Dataset[]
   }
 }

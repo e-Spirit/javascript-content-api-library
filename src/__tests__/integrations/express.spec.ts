@@ -28,7 +28,6 @@ describe('Express-Integration', () => {
     config: {
       apiKey: 'apiKey',
       caas: 'caas',
-      mapDataQuery: query => [],
       navigationService: 'navigationService',
       projectId: 'projectId',
       tenantId: 'tenantId'

@@ -489,7 +489,6 @@ export interface FSXAConfiguration {
   caas: string
   projectId: string
   tenantId: string
-  mapDataQuery: (query: RegisteredDatasetQuery) => QueryBuilderQuery[]
   customMapper?: CustomMapper
   remotes?: Record<string, string>
 }
@@ -588,4 +587,10 @@ export type QueryBuilderQuery = LogicalFilter | ComparisonFilter | ArrayFilter
 
 export interface MappedFilter {
   [key: string]: MappedFilter | MappedFilter[] | ComparisonFilterValue | ComparisonFilterValue[]
+}
+
+export interface RichTextElement {
+  type: 'text' | 'paragraph' | 'list' | 'listitem' | 'linebreak' | 'link' | string
+  content: RichTextElement[] | string
+  data: Record<string, any>
 }

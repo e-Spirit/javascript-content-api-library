@@ -36,7 +36,8 @@
     "travis-deploy-once": "travis-deploy-once",
     "prepush": "npm run build",
     "commitmsg": "commitlint -E HUSKY_GIT_PARAMS",
-    "dts": "./node_modules/.bin/npm-dts generate -e ./src/FSXAApi.ts"
+    "dts": "./node_modules/.bin/npm-dts generate -e ./src/FSXAApi.ts",
+    "internal": "node ./index.js"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
@@ -104,6 +105,7 @@
     "@semantic-release/release-notes-generator": "^9.0.1",
     "@types/express": "^4.17.8",
     "@types/jest": "^23.3.2",
+    "@types/lodash.get": "^4.4.6",
     "@types/lodash.set": "^4.3.6",
     "@types/node": "^10.11.0",
     "@types/qs": "^6.9.4",
@@ -141,8 +143,11 @@
   },
   "dependencies": {
     "date-fns": "^2.16.1",
+    "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",
-    "qs": "^6.9.4"
+    "qs": "^6.9.4",
+    "saxes": "^5.0.1",
+    "xml-js": "^1.6.11"
   },
   "peerDependencies": {
     "express": "^4.17.1"

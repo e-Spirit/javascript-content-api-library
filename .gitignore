@@ -12,3 +12,4 @@ compiled
 docs
 .env
 index.js
+examples/index.ts

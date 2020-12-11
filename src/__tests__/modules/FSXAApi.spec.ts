@@ -5,7 +5,6 @@ import { FSXAConfiguration } from '../../types'
 const configuration: FSXAConfiguration = {
   apiKey: 'apiKey',
   caas: 'caas',
-  mapDataQuery: () => [],
   navigationService: 'navigationService',
   projectId: 'projectId',
   tenantId: 'tenantId'
