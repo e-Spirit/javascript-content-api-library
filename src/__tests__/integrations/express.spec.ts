@@ -10,12 +10,7 @@ import getExpressRouter, {
   ExpressRouterIntegrationErrors,
   getMappedFilters
 } from '../../integrations/express'
-import {
-  FETCH_BY_FILTER_ROUTE,
-  FETCH_GCA_PAGES_ROUTE,
-  FETCH_NAVIGATION_ROUTE,
-  FETCH_ELEMENT_ROUTE
-} from '../../routes'
+import { FETCH_BY_FILTER_ROUTE, FETCH_NAVIGATION_ROUTE, FETCH_ELEMENT_ROUTE } from '../../routes'
 import 'cross-fetch/polyfill'
 import { Page, QueryBuilderQuery, NavigationData } from '../../types'
 
@@ -34,7 +29,6 @@ describe('Express-Integration', () => {
     }
   })
   let fetchElementSpy: jest.SpyInstance,
-    fetchGCAPagesSpy: jest.SpyInstance,
     fetchNavigationSpy: jest.SpyInstance,
     fetchByFilterSpy: jest.SpyInstance
 
@@ -42,9 +36,6 @@ describe('Express-Integration', () => {
     fetchElementSpy = jest
       .spyOn(remoteApi, 'fetchElement')
       .mockImplementation(async () => (({ foo: 'bar' } as any) as Page))
-    fetchGCAPagesSpy = jest
-      .spyOn(remoteApi, 'fetchGCAPages')
-      .mockImplementation(async (locale, uid) => (!uid ? [{ foo: 'bar' }] : { foo: 'bar' }))
     fetchNavigationSpy = jest
       .spyOn(remoteApi, 'fetchNavigation')
       .mockImplementation(async () => (({ foo: 'bar' } as any) as NavigationData))
@@ -88,28 +79,6 @@ describe('Express-Integration', () => {
     it('should pass through response data', async () => {
       expect(await proxyApi.fetchElement('FOOBAR', 'de_DE', { test: '1' })).toEqual({ foo: 'bar' })
       expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' })
-    })
-  })
-
-  describe(FETCH_GCA_PAGES_ROUTE, () => {
-    it('should correctly map function params', async () => {
-      await proxyApi.fetchGCAPages('de_DE')
-      expect(fetchGCAPagesSpy).toHaveBeenCalledTimes(1)
-      expect(fetchGCAPagesSpy).toHaveBeenCalledWith('de_DE', undefined)
-      await proxyApi.fetchGCAPages('de_DE', 'foo')
-      expect(fetchGCAPagesSpy).toHaveBeenCalledTimes(2)
-      expect(fetchGCAPagesSpy).toHaveBeenCalledWith('de_DE', 'foo')
-    })
-
-    it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:${PORT}/gca-pages/foobar`)).json()).toEqual({
-        error: ExpressRouterIntegrationErrors.MISSING_LOCALE
-      })
-    })
-
-    it('should pass through response data', async () => {
-      expect(await proxyApi.fetchGCAPages('de_DE')).toEqual([{ foo: 'bar' }])
-      expect(await proxyApi.fetchGCAPages('de_DE', 'foobar')).toEqual({ foo: 'bar' })
     })
   })
 

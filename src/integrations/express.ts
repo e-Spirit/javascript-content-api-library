@@ -73,28 +73,6 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     }
   )
   router.get(
-    FETCH_GCA_PAGES_ROUTE,
-    async (req: express.Request<FetchGCAPagesRouteParams, any, any, LocaleQuery>, res) => {
-      if (req.query.locale == null) {
-        return res.json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE
-        })
-      }
-      try {
-        const response = await api.fetchGCAPages(req.query.locale, req.params.uid)
-        return res.json(response)
-      } catch (err) {
-        if (err.message === FSXAApiErrors.NOT_FOUND) {
-          return res.status(404).send()
-        } else if (err.message === FSXAApiErrors.NOT_AUTHORIZED) {
-          return res.status(401).send()
-        } else {
-          return res.status(500).send()
-        }
-      }
-    }
-  )
-  router.get(
     FETCH_BY_FILTER_ROUTE,
     async (req: express.Request<any, any, any, FetchByFilterQuery>, res) => {
       if (req.query.locale == null) {

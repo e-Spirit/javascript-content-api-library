@@ -174,12 +174,6 @@ describe('FSXAApi', () => {
     })
   })
 
-  describe('fetchGCAPages', async () => {
-    it('should call local url in proxy-mode', async () => {
-      testForLocalUrl(api => api.fetchGCAPages('de_DE'))
-    })
-  })
-
   describe('fetchNavigation', async () => {
     it('should call local url in proxy-mode', async () => {
       testForLocalUrl(api => api.fetchNavigation(null, 'de_DE'))

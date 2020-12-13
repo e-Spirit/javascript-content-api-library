@@ -180,55 +180,6 @@ export class FSXAApi {
       : mapper.mapElementResponse(await response.json())
   }
 
-  async fetchGCAPages(locale: string, uid?: string) {
-    /**
-     * If we are in proxy mode (client-side), we only want to pipe the input through to the "local" api (server-side) that is able to
-     * request and map data from the caas
-     */
-    if (this.params.mode === 'proxy') {
-      const url = `${this.params.baseUrl}${getFetchGCAPagesRoute(locale, uid)}`
-      this.logger.info('[Proxy][fetchGCAPages] Requesting:', url, { locale, uid })
-      const response = await fetch(url)
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.logger.error(`[Proxy][fetchGCAPages] Error: ${FSXAApiErrors.NOT_AUTHORIZED}.`)
-          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
-        } else {
-          this.logger.error(
-            `[Proxy][fetchGCAPages] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
-            response.status,
-            response.statusText,
-            await response.text()
-          )
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
-        }
-      }
-      return response.json()
-    }
-    const filter: LogicalFilter = {
-      operator: LogicalQueryOperatorEnum.AND,
-      filters: [
-        {
-          field: 'fsType',
-          value: 'GCAPage',
-          operator: ComparisonQueryOperatorEnum.EQUALS
-        }
-      ]
-    }
-    if (uid)
-      filter.filters.unshift({
-        field: 'uid',
-        operator: ComparisonQueryOperatorEnum.EQUALS,
-        value: uid
-      })
-    this.logger.info('[Remote][fetchGCAPages] Build Filters:', [filter], { locale, uid })
-    try {
-      return this.fetchByFilter([filter], locale)
-    } catch (err) {
-      throw err
-    }
-  }
-
   /**
    * Build your own custom query against the CaaS
    * @param filters your custom filter queries that will be transformed to restheart filters
@@ -426,29 +377,5 @@ export class FSXAApi {
       }
     })
     return result
-  }
-
-  private async throwErrorOnInvalidResponse(response: Response, isProxy: boolean) {
-    if (!response.ok) {
-      if (response.status === 404) {
-        this.logger.error(
-          `[${isProxy ? 'Proxy' : 'Remote'}][fetchElement] Error: Unable to find element`
-        )
-        throw new Error(FSXAApiErrors.NOT_FOUND)
-      } else if (response.status === 401) {
-        this.logger.error(
-          `[${isProxy ? 'Proxy' : 'Remote'}][fetchElement] Error: Unauthorized to access resource.`
-        )
-        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
-      } else {
-        this.logger.error(
-          `[${isProxy ? 'Proxy' : 'Remote'}][fetchElement] Error: Unknown error occured.`,
-          response.status,
-          response.statusText,
-          await response.text()
-        )
-        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
-      }
-    }
   }
 }
