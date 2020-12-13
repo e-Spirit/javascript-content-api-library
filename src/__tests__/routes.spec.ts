@@ -1,9 +1,11 @@
-import { getFetchGCAPagesRoute, getFetchPageRoute, getFetchNavigationRoute } from '../routes'
+import { getFetchGCAPagesRoute, getFetchElementRoute, getFetchNavigationRoute } from '../routes'
 
 describe('routes.ts', () => {
-  describe('getFetchPageRoute', () => {
-    it('should return mapped page route', () => {
-      expect(getFetchPageRoute('foobar', 'de_DE')).toEqual(`/pages/foobar?locale=de_DE`)
+  describe('getFetchElementRoute', () => {
+    it('should return mapped element route', () => {
+      expect(
+        getFetchElementRoute('foobar', { locale: 'de_DE', additionalParams: { test: 1 } })
+      ).toEqual(`/elements/foobar?locale=de_DE&additionalParams%5Btest%5D=1`)
     })
   })
 

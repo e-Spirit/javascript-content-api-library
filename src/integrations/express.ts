@@ -2,17 +2,17 @@ import express from 'express'
 import {
   FetchByFilterQuery,
   FetchGCAPagesRouteParams,
-  FetchNavigationQuery,
-  FetchPageRouteParams,
+  FetchElementRouteQuery,
+  FetchElementRouteParams,
+  FetchNavigationRouteQuery,
   FETCH_BY_FILTER_ROUTE,
   FETCH_GCA_PAGES_ROUTE,
   FETCH_NAVIGATION_ROUTE,
-  FETCH_PAGE_ROUTE,
+  FETCH_ELEMENT_ROUTE,
   LocaleQuery
 } from '../routes'
-import { FSXAApi } from './../modules'
+import { FSXAApi, FSXAApiErrors } from './../modules'
 import { QueryBuilderQuery } from '../types'
-import { parse } from 'qs'
 
 export interface GetExpressRouterContext {
   api: FSXAApi
@@ -24,27 +24,52 @@ export enum ExpressRouterIntegrationErrors {
 function getExpressRouter({ api }: GetExpressRouterContext) {
   const router = express.Router()
   router.get(
-    FETCH_PAGE_ROUTE,
-    async (req: express.Request<FetchPageRouteParams, any, any, LocaleQuery>, res) => {
+    FETCH_ELEMENT_ROUTE,
+    async (
+      req: express.Request<FetchElementRouteParams, any, any, FetchElementRouteQuery>,
+      res
+    ) => {
       if (req.query.locale == null) {
         return res.json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE
         })
       }
-      const response = await api.fetchPage(req.params.pageId, req.query.locale)
-      return res.send(response)
+      try {
+        const response = await api.fetchElement(
+          req.params.id,
+          req.query.locale,
+          req.query.additionalParams || {}
+        )
+        return res.json(response)
+      } catch (err) {
+        if (err.message === FSXAApiErrors.NOT_FOUND) {
+          return res.status(404).send()
+        } else if (err.message === FSXAApiErrors.NOT_AUTHORIZED) {
+          return res.status(401).send()
+        } else {
+          return res.status(500).send()
+        }
+      }
     }
   )
   router.get(
     FETCH_NAVIGATION_ROUTE,
-    async (req: express.Request<any, any, any, FetchNavigationQuery>, res) => {
+    async (req: express.Request<any, any, any, FetchNavigationRouteQuery>, res) => {
       if (req.query.locale == null) {
         return res.json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE
         })
       }
-      const response = await api.fetchNavigation(req.query.initialPath || null, req.query.locale)
-      return res.json(response)
+      try {
+        const response = await api.fetchNavigation(req.query.initialPath || null, req.query.locale)
+        return res.json(response)
+      } catch (err) {
+        if (err.message === FSXAApiErrors.NOT_FOUND) {
+          return res.status(404).send()
+        } else {
+          return res.status(500).send()
+        }
+      }
     }
   )
   router.get(
@@ -55,8 +80,18 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE
         })
       }
-      const response = await api.fetchGCAPages(req.query.locale, req.params.uid)
-      return res.json(response)
+      try {
+        const response = await api.fetchGCAPages(req.query.locale, req.params.uid)
+        return res.json(response)
+      } catch (err) {
+        if (err.message === FSXAApiErrors.NOT_FOUND) {
+          return res.status(404).send()
+        } else if (err.message === FSXAApiErrors.NOT_AUTHORIZED) {
+          return res.status(401).send()
+        } else {
+          return res.status(500).send()
+        }
+      }
     }
   )
   router.get(
@@ -67,14 +102,26 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE
         })
       }
-      const filters = getMappedFilters(req.query.filter)
-      const response = await api.fetchByFilter(
-        filters,
-        req.query.locale,
-        req.query.page ? parseInt(req.query.page) : undefined,
-        req.query.pagesize ? parseInt(req.query.pagesize) : undefined
-      )
-      return res.json(response)
+      try {
+        const filters = getMappedFilters(req.query.filter)
+        const additionalParams: Record<string, any> = req.query.additionalParams || {}
+        const response = await api.fetchByFilter(
+          filters,
+          req.query.locale,
+          req.query.page ? parseInt(req.query.page) : undefined,
+          req.query.pagesize ? parseInt(req.query.pagesize) : undefined,
+          additionalParams
+        )
+        return res.json(response)
+      } catch (err) {
+        if (err.message === FSXAApiErrors.NOT_FOUND) {
+          return res.status(404).send()
+        } else if (err.message === FSXAApiErrors.NOT_AUTHORIZED) {
+          return res.status(401).send()
+        } else {
+          return res.status(500).send()
+        }
+      }
     }
   )
   router.all('*', (_, res) => {

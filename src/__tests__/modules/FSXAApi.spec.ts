@@ -170,7 +170,7 @@ describe('FSXAApi', () => {
 
   describe('fetchPage', async () => {
     it('should call local url in proxy-mode', async () => {
-      testForLocalUrl(api => api.fetchPage('foobar', 'de_DE'))
+      testForLocalUrl(api => api.fetchElement('foobar', 'de_DE'))
     })
   })
 

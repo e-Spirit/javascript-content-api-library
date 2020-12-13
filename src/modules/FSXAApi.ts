@@ -6,7 +6,7 @@ import {
   Logger,
   LogLevel
 } from './'
-import { getFetchPageRoute, getFetchGCAPagesRoute, FETCH_BY_FILTER_ROUTE } from '../routes'
+import { getFetchElementRoute, getFetchGCAPagesRoute, FETCH_BY_FILTER_ROUTE } from '../routes'
 import {
   CaasApi_FilterResponse,
   Dataset,
@@ -29,6 +29,7 @@ export enum FSXAContentMode {
 export enum FSXAApiErrors {
   UNKNOWN_CONTENT_MODE = 'The content mode must be preview or release.',
   UNKNOWN_API_MODE = 'The api mode must be remote or proxy.',
+  UNKNOWN_ERROR = 'An unknown error occured. Please check the logs for more information',
   MISSING_BASE_URL = 'You do need to specify a baseUrl in proxy mode.',
   MISSING_API_KEY = 'No CaaS-ApiKey was passed via the configuration. [apiKey]',
   MISSING_CAAS_URL = 'No CaaS-URL was passed via the configuration. [caas]',
@@ -36,7 +37,9 @@ export enum FSXAApiErrors {
   MISSING_PROJECT_ID = 'No projectId was passed via the configuration. [projectId]',
   MISSING_TENANT_ID = 'No tenantId was passed via the configuration. [tenantId]',
   ILLEGAL_PAGE_SIZE = 'The pagesize parameter must be between 1 and 1000.',
-  ILLEGAL_PAGE_NUMBER = 'Given page number must be larger than 0'
+  ILLEGAL_PAGE_NUMBER = 'Given page number must be larger than 0',
+  NOT_AUTHORIZED = 'Your passed ApiKey has no access to the requested resource',
+  NOT_FOUND = 'Resource could not be found'
 }
 
 export class FSXAApi {
@@ -95,15 +98,44 @@ export class FSXAApi {
       : `${this.params.config.navigationService}/${this.mode}.${this.params.config.projectId}`
   }
 
-  async fetchPage(pageId: string, locale: string): Promise<Page | null> {
+  async fetchElement(
+    id: string,
+    locale: string,
+    additionalParams: Record<'keys' | string, any> = {}
+  ): Promise<Page | GCAPage | Dataset | Image | any | null> {
     /**
      * If we are in proxy mode (client-side), we only want to pipe the input through to the "local" api (server-side) that is able to
      * request and map data from the caas
      */
     if (this.params.mode === 'proxy') {
-      const url = `${this.params.baseUrl}${getFetchPageRoute(pageId, locale)}`
-      this.logger.info('[Proxy][fetchPage] Requesting:', url, { pageId, locale })
-      return (await fetch(url)).json()
+      const url = `${this.params.baseUrl}${getFetchElementRoute(id, {
+        locale,
+        additionalParams
+      })}`
+      this.logger.info('[Proxy][fetchElement] Requesting:', url, {
+        id,
+        locale,
+        additionalParams
+      })
+      const response = await fetch(url)
+      if (!response.ok) {
+        if (response.status === 404) {
+          this.logger.error(`[Proxy][fetchElement] Error: ${FSXAApiErrors.NOT_FOUND}`)
+          throw new Error(FSXAApiErrors.NOT_FOUND)
+        } else if (response.status === 401) {
+          this.logger.error(`[Proxy][fetchElement] Error: ${FSXAApiErrors.NOT_AUTHORIZED}.`)
+          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+        } else {
+          this.logger.error(
+            `[Proxy][fetchElement] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+            response.status,
+            response.statusText,
+            await response.text()
+          )
+          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        }
+      }
+      return response.json()
     }
 
     const mapper = new CaaSMapper(
@@ -114,20 +146,38 @@ export class FSXAApi {
       },
       this.logger
     )
-    try {
-      const url = `${this.buildCaaSUrl()}/${pageId}.${locale}`
-      this.logger.info('[Remote][fetchPage] Requesting: ', url, { pageId, locale })
-      const response = await fetch(url, {
-        headers: this.buildAuthorizationHeaders()
-      })
-      if (response.status === 200) {
-        return mapper.mapPageRefResponse(await response.json())
+    const url = `${this.buildCaaSUrl()}/${id}.${locale}?${
+      additionalParams ? stringify(this.buildRestheartParams(additionalParams)) : ''
+    }`
+    this.logger.info('[Remote][fetchElement] Requesting: ', url, {
+      id,
+      locale,
+      additionalParams
+    })
+    const response = await fetch(url, {
+      headers: this.buildAuthorizationHeaders()
+    })
+    if (!response.ok) {
+      if (response.status === 404) {
+        this.logger.error(`[Remote][fetchElement] Error: ${FSXAApiErrors.NOT_FOUND}`)
+        throw new Error(FSXAApiErrors.NOT_FOUND)
+      } else if (response.status === 401) {
+        this.logger.error(`[Remote][fetchElement] Error: ${FSXAApiErrors.NOT_AUTHORIZED}.`)
+        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+      } else {
+        this.logger.error(
+          `[Remote][fetchElement] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+          response.status,
+          response.statusText,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
-    } catch (error) {
-      this.logger.error(`[Remote][fetchPage] Error:`, error, { pageId, locale })
-      return null
     }
-    return null
+    // we only can map the response if the keys parameter is not specified
+    return additionalParams.keys
+      ? response.json()
+      : mapper.mapElementResponse(await response.json())
   }
 
   async fetchGCAPages(locale: string, uid?: string) {
@@ -138,7 +188,22 @@ export class FSXAApi {
     if (this.params.mode === 'proxy') {
       const url = `${this.params.baseUrl}${getFetchGCAPagesRoute(locale, uid)}`
       this.logger.info('[Proxy][fetchGCAPages] Requesting:', url, { locale, uid })
-      return (await fetch(url)).json()
+      const response = await fetch(url)
+      if (!response.ok) {
+        if (response.status === 401) {
+          this.logger.error(`[Proxy][fetchGCAPages] Error: ${FSXAApiErrors.NOT_AUTHORIZED}.`)
+          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+        } else {
+          this.logger.error(
+            `[Proxy][fetchGCAPages] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+            response.status,
+            response.statusText,
+            await response.text()
+          )
+          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        }
+      }
+      return response.json()
     }
     const filter: LogicalFilter = {
       operator: LogicalQueryOperatorEnum.AND,
@@ -157,15 +222,29 @@ export class FSXAApi {
         value: uid
       })
     this.logger.info('[Remote][fetchGCAPages] Build Filters:', [filter], { locale, uid })
-    return await this.fetchByFilter([filter], locale)
+    try {
+      return this.fetchByFilter([filter], locale)
+    } catch (err) {
+      throw err
+    }
   }
 
+  /**
+   * Build your own custom query against the CaaS
+   * @param filters your custom filter queries that will be transformed to restheart filters
+   * @param locale the locale the items should be queried in
+   * @param page page that should be fetched
+   * @param pagesize the number of elements that should be fetched
+   * @param additionalParams You can specify additional params that will be appended to the CaaS-Url. Be aware that the response is not mapped, if you pass the keys-parameter
+   */
   async fetchByFilter(
     filters: QueryBuilderQuery[],
     locale: string,
     page = 1,
     pagesize = 100,
-    fetchNested: boolean = true
+    // you can pass in all available restheart-parameters that are not available through our api
+    // Using the keys parameter will remove the default mapping mechanism
+    additionalParams: Record<'keys' | string, any> = {}
   ): Promise<(Page | GCAPage | Image | Dataset)[]> {
     if (pagesize < 1 || pagesize > 1000) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_SIZE)
     if (page < 1) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_NUMBER)
@@ -175,10 +254,31 @@ export class FSXAApi {
         filter: filters,
         page,
         pagesize,
-        fetchNested
+        additionalParams
       })}`
-      this.logger.info('[Proxy][fetchByFilter] Requesting:', url, { filters, locale, fetchNested })
-      return (await (await fetch(url)).json()) as (Page | GCAPage | Image | Dataset)[]
+      this.logger.info('[Proxy][fetchByFilter] Requesting:', url, {
+        filters,
+        locale,
+        page,
+        pagesize,
+        additionalParams
+      })
+      const response = await fetch(url)
+      if (!response.ok) {
+        if (response.status === 401) {
+          this.logger.error(`[Proxy][fetchByFilter] Error: ${FSXAApiErrors.NOT_AUTHORIZED}.`)
+          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+        } else {
+          this.logger.error(
+            `[Proxy][fetchByFilter] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+            response.status,
+            response.statusText,
+            await response.text()
+          )
+          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        }
+      }
+      return response.json()
     }
     const buildFilters = [
       ...filters.map(filter => JSON.stringify(this.queryBuilder.build(filter))),
@@ -190,40 +290,70 @@ export class FSXAApi {
         })
       )
     ]
+    const buildAdditionalParams: Record<string, any> = {}
+    Object.keys(additionalParams).forEach(key => {
+      if (Array.isArray(additionalParams[key])) {
+        buildAdditionalParams[key] = additionalParams[key].map(JSON.stringify)
+      } else {
+        buildAdditionalParams[key] = additionalParams[key]
+      }
+    })
+    // we need to encode array
     const url = `${this.buildCaaSUrl()}?${stringify(
       {
         filter: buildFilters,
         page,
-        pagesize
+        pagesize,
+        ...buildAdditionalParams
       },
       {
         arrayFormat: 'repeat'
       }
     )}`
     this.logger.info('[Remote][fetchByFilter] Constructed Filters:', buildFilters)
-    this.logger.info('[Remote][fetchByFilter] Requesting:', url, { filters, locale, fetchNested })
-    try {
-      const response = await fetch(url, {
-        headers: this.buildAuthorizationHeaders()
-      })
-      const mapper = new CaaSMapper(
-        this,
-        locale,
-        {
-          customMapper: this.params.config.customMapper
-        },
-        this.logger
-      )
-      const data: CaasApi_FilterResponse = await response.json()
-      if (!data._embedded) {
-        this.logger.error('[Remote][fetchByFilter] Returned empty result')
-        return []
+    this.logger.info('[Remote][fetchByFilter] Requesting:', url, {
+      filters,
+      locale,
+      page,
+      pagesize,
+      additionalParams
+    })
+    const response = await fetch(url, {
+      headers: this.buildAuthorizationHeaders()
+    })
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.logger.error(`[Remote][fetchByFilter] Error: ${FSXAApiErrors.NOT_AUTHORIZED}.`)
+        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+      } else {
+        this.logger.error(
+          `[Remote][fetchByFilter] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+          response.status,
+          response.statusText,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
-      return mapper.mapFilterResponse(data._embedded['rh:doc'])
-    } catch (error) {
-      this.logger.error('[Remote][fetchByFilter] Error:', error, { filters, locale, fetchNested })
+    }
+    const mapper = new CaaSMapper(
+      this,
+      locale,
+      {
+        customMapper: this.params.config.customMapper
+      },
+      this.logger
+    )
+    const data: CaasApi_FilterResponse = await response.json()
+    if (!data._embedded) {
+      this.logger.error('[Remote][fetchByFilter] Returned empty result')
       return []
     }
+    // we cannot ensure that the response can be mapped through or mapping algorithm if the keys attribute is set
+    // so we will disable it
+    if (additionalParams.keys) {
+      return data._embedded['rh:doc']
+    }
+    return mapper.mapFilterResponse(data._embedded['rh:doc'])
   }
 
   async fetchNavigation(
@@ -234,29 +364,91 @@ export class FSXAApi {
       const url = `${
         this.params.baseUrl
       }/navigation?locale=${defaultLocale}&initialPath=${initialPath || ''}`
-      this.logger.info('[Proxy][fetchNavigation] Requesting:', url, { initialPath, defaultLocale })
-      return (await fetch(url)).json()
+      this.logger.info('[Proxy][fetchNavigation] Requesting:', url, {
+        initialPath,
+        defaultLocale
+      })
+      const response = await fetch(url)
+      if (!response.ok) {
+        if (response.status === 404) {
+          this.logger.error(`[Proxy][fetchNavigation] Error: ${FSXAApiErrors.NOT_FOUND}.`)
+          throw new Error(FSXAApiErrors.NOT_FOUND)
+        } else {
+          this.logger.error(
+            `[Proxy][fetchNavigation] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+            response.status,
+            response.statusText,
+            await response.text()
+          )
+          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        }
+      }
+      return response.json()
     }
     const url =
       !initialPath || initialPath === '/'
         ? `${this.buildNavigationServiceUrl()}?depth=99&format=caas&language=${defaultLocale}`
         : `${this.buildNavigationServiceUrl()}/by-seo-route/${initialPath}?depth=99&format=caas&all`
-    this.logger.info('[Remote][fetchNavigation] Requesting:', url, { initialPath, defaultLocale })
-    try {
-      const response = await fetch(url, {
-        headers: {
-          'Accept-Language': '*'
-        }
-      })
-      if (response.status === 200) {
-        return response.json()
+    this.logger.info('[Remote][fetchNavigation] Requesting:', url, {
+      initialPath,
+      defaultLocale
+    })
+    const response = await fetch(url, {
+      headers: {
+        'Accept-Language': '*'
       }
-      throw new Error(
-        `Unable to fetch Navigation. HTTP response status=${response.status}, statusText="${response.statusText}"`
-      )
-    } catch (error) {
-      this.logger.info('[Remote][fetchNavigation]Error:', url, { initialPath, defaultLocale })
-      return null
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        this.logger.error(`[Remote][fetchNavigation] Error: ${FSXAApiErrors.NOT_FOUND}.`)
+        throw new Error(FSXAApiErrors.NOT_FOUND)
+      } else {
+        this.logger.error(
+          `[Remote][fetchNavigation] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+          response.status,
+          response.statusText,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+      }
+    }
+    return response.json()
+  }
+
+  private buildRestheartParams(params: Record<'keys' | string, any>) {
+    const result: Record<string, any> = {}
+    Object.keys(params).forEach(key => {
+      if (Array.isArray(params[key])) {
+        result[key] = params[key].map(JSON.stringify)
+      } else {
+        result[key] = params[key]
+      }
+    })
+    return result
+  }
+
+  private async throwErrorOnInvalidResponse(response: Response, isProxy: boolean) {
+    if (!response.ok) {
+      if (response.status === 404) {
+        this.logger.error(
+          `[${isProxy ? 'Proxy' : 'Remote'}][fetchElement] Error: Unable to find element`
+        )
+        throw new Error(FSXAApiErrors.NOT_FOUND)
+      } else if (response.status === 401) {
+        this.logger.error(
+          `[${isProxy ? 'Proxy' : 'Remote'}][fetchElement] Error: Unauthorized to access resource.`
+        )
+        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+      } else {
+        this.logger.error(
+          `[${isProxy ? 'Proxy' : 'Remote'}][fetchElement] Error: Unknown error occured.`,
+          response.status,
+          response.statusText,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+      }
     }
   }
 }

@@ -18,6 +18,7 @@ import {
   Dataset,
   GCAPage,
   Image,
+  Media,
   NestedPath,
   Page,
   PageBody,
@@ -273,7 +274,7 @@ export class CaaSMapper {
       entityType: dataset.entityType,
       data: await this.mapDataEntries(dataset.formData, [...path, 'data']),
       route: dataset.route,
-      template: dataset.template.uid,
+      template: dataset.template?.uid,
       children: []
     }
   }
@@ -293,6 +294,24 @@ export class CaaSMapper {
         return this.mapMediaPicture(item, path)
       default:
         return null
+    }
+  }
+
+  async mapElementResponse(
+    element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any
+  ): Promise<Dataset | Page | Image | GCAPage | null | any> {
+    switch (element.fsType) {
+      case 'Dataset':
+        return this.mapDataset(element, [])
+      case 'PageRef':
+        return this.mapPageRef(element, [])
+      case 'Media':
+        return this.mapMedia(element, [])
+      case 'GCAPage':
+        return this.mapGCAPage(element, [])
+      default:
+        // we could not map the element --> just returning the raw values
+        return element
     }
   }
 

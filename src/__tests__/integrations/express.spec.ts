@@ -14,7 +14,7 @@ import {
   FETCH_BY_FILTER_ROUTE,
   FETCH_GCA_PAGES_ROUTE,
   FETCH_NAVIGATION_ROUTE,
-  FETCH_PAGE_ROUTE
+  FETCH_ELEMENT_ROUTE
 } from '../../routes'
 import 'cross-fetch/polyfill'
 import { Page, QueryBuilderQuery, NavigationData } from '../../types'
@@ -33,14 +33,14 @@ describe('Express-Integration', () => {
       tenantId: 'tenantId'
     }
   })
-  let fetchPageSpy: jest.SpyInstance,
+  let fetchElementSpy: jest.SpyInstance,
     fetchGCAPagesSpy: jest.SpyInstance,
     fetchNavigationSpy: jest.SpyInstance,
     fetchByFilterSpy: jest.SpyInstance
 
   beforeEach(() => {
-    fetchPageSpy = jest
-      .spyOn(remoteApi, 'fetchPage')
+    fetchElementSpy = jest
+      .spyOn(remoteApi, 'fetchElement')
       .mockImplementation(async () => (({ foo: 'bar' } as any) as Page))
     fetchGCAPagesSpy = jest
       .spyOn(remoteApi, 'fetchGCAPages')
@@ -71,21 +71,23 @@ describe('Express-Integration', () => {
     server.close()
   })
 
-  describe(FETCH_PAGE_ROUTE, () => {
+  describe(FETCH_ELEMENT_ROUTE, () => {
     it('should correctly map function params', async () => {
-      await proxyApi.fetchPage('FOOBAR', 'de_DE')
-      expect(fetchPageSpy).toHaveBeenCalledTimes(1)
-      expect(fetchPageSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE')
+      await proxyApi.fetchElement('FOOBAR', 'de_DE')
+      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', {})
+      await proxyApi.fetchElement('FOOBAR', 'de_DE', { test: '1' })
+      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' })
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:${PORT}/pages/foobar`)).json()).toEqual({
+      expect(await (await fetch(`http://localhost:${PORT}/elements/foobar`)).json()).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
 
     it('should pass through response data', async () => {
-      expect(await proxyApi.fetchPage('FOOBAR', 'de_DE')).toEqual({ foo: 'bar' })
+      expect(await proxyApi.fetchElement('FOOBAR', 'de_DE', { test: '1' })).toEqual({ foo: 'bar' })
+      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' })
     })
   })
 
@@ -142,7 +144,7 @@ describe('Express-Integration', () => {
     it('should correctly map function params', async () => {
       await proxyApi.fetchByFilter([], 'de_DE')
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(1)
-      expect(fetchByFilterSpy).toHaveBeenCalledWith([], 'de_DE', 1, 100)
+      expect(fetchByFilterSpy).toHaveBeenCalledWith([], 'de_DE', 1, 100, {})
       const filters_2: QueryBuilderQuery[] = [
         {
           operator: ComparisonQueryOperatorEnum.EQUALS,
@@ -178,6 +180,11 @@ describe('Express-Integration', () => {
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(4)
       expect(fetchByFilterSpy.mock.calls[3][2]).toEqual(3)
       expect(fetchByFilterSpy.mock.calls[3][3]).toEqual(30)
+
+      const additionalParams = { keys: ['1', '2', '3'], sort: '-age' }
+      await proxyApi.fetchByFilter([], 'de_DE', 3, 30, additionalParams)
+      expect(fetchByFilterSpy).toHaveBeenCalledTimes(5)
+      expect(fetchByFilterSpy.mock.calls[4][4]).toEqual(additionalParams)
     })
 
     it('should return an error, when locale is not specified', async () => {
