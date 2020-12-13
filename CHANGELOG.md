@@ -1,3 +1,29 @@
+# [4.0.0](https://github.com/e-Spirit/fsxa-api/compare/v3.4.0...v4.0.0) (2020-12-13)
+
+
+### Code Refactoring
+
+* **removed fetchgcapages:** we removed fetchGCAPages to remove redundancy in our API ([dbeabbc](https://github.com/e-Spirit/fsxa-api/commit/dbeabbc2775598c6c795a1ca3e9287cc1b848d06))
+
+
+### Features
+
+* **caas-mapper:** meta-data from images is now available ([23458b2](https://github.com/e-Spirit/fsxa-api/commit/23458b288c91a442f14b181f0f18410fa0ceca25))
+* **errors:** we are now throwing 404 and 401 errors / renamed fetchPage to fetchElement ([48cde97](https://github.com/e-Spirit/fsxa-api/commit/48cde9783adc0f8f425300677e81c3fe1cf6dc77))
+* **richtext / dataset-query:** richText will now be returned as json, obsolete mapDataQuery removed ([82743df](https://github.com/e-Spirit/fsxa-api/commit/82743dff2c6203737309a5d4aed89a9637be158f))
+
+
+### BREAKING CHANGES
+
+* **removed fetchgcapages:** - removed fetchGCAPages, use fetchByFilter instead
+* **errors:** - renamed fetchPage to fetchElement. This method will now return mapped GCAPage /
+Image / Dataset as well
+-Methods will now throw errors, when an element is not found or the request
+was not authorized
+* **richtext / dataset-query:** - RichText values are now returned as JSON
+- Configuration Parameter
+`mapDataQuery` was removed
+
 # [3.4.0](https://github.com/e-Spirit/fsxa-api/compare/v3.3.2...v3.4.0) (2020-12-02)
 
 
