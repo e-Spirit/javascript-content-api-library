@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/e-Spirit/fsxa-api/compare/v4.0.0...v4.0.1) (2020-12-14)
+
+
+### Bug Fixes
+
+* **references:** fix unresolved referenes issue, when using fetchElement ([6c26854](https://github.com/e-Spirit/fsxa-api/commit/6c268541c4f06ba908033e424e71c851fa95043d))
+
 # [4.0.0](https://github.com/e-Spirit/fsxa-api/compare/v3.4.0...v4.0.0) (2020-12-13)
 
 
