@@ -1,3 +1,10 @@
+## [4.0.2](https://github.com/e-Spirit/fsxa-api/compare/v4.0.1...v4.0.2) (2020-12-14)
+
+
+### Bug Fixes
+
+* **fetchnavigation:** we fixed an error, where special chars in the initialPath would lead to errors ([2cebd30](https://github.com/e-Spirit/fsxa-api/commit/2cebd30d1106c93fe951046beebc2788230b5018))
+
 ## [4.0.1](https://github.com/e-Spirit/fsxa-api/compare/v4.0.0...v4.0.1) (2020-12-14)
 
 
