@@ -300,19 +300,25 @@ export class CaaSMapper {
   async mapElementResponse(
     element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any
   ): Promise<Dataset | Page | Image | GCAPage | null | any> {
+    let response
     switch (element.fsType) {
       case 'Dataset':
-        return this.mapDataset(element, [])
+        response = await this.mapDataset(element, [])
+        break
       case 'PageRef':
-        return this.mapPageRef(element, [])
+        response = await this.mapPageRef(element, [])
+        break
       case 'Media':
-        return this.mapMedia(element, [])
+        response = await this.mapMedia(element, [])
+        break
       case 'GCAPage':
-        return this.mapGCAPage(element, [])
+        response = await this.mapGCAPage(element, [])
+        break
       default:
         // we could not map the element --> just returning the raw values
         return element
     }
+    return this.resolveReferences(response as {})
   }
 
   async mapPageRefResponse(pageRef: CaaSApi_PageRef): Promise<Page> {
