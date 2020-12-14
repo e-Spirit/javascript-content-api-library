@@ -311,12 +311,13 @@ export class FSXAApi {
     initialPath: string | null,
     defaultLocale: string
   ): Promise<NavigationData | null> {
+    const encodedInitialPath = initialPath ? encodeURI(initialPath) : null
     if (this.params.mode === 'proxy') {
       const url = `${
         this.params.baseUrl
-      }/navigation?locale=${defaultLocale}&initialPath=${initialPath || ''}`
+      }/navigation?locale=${defaultLocale}&initialPath=${encodedInitialPath || ''}`
       this.logger.info('[Proxy][fetchNavigation] Requesting:', url, {
-        initialPath,
+        encodedInitialPath,
         defaultLocale
       })
       const response = await fetch(url)
@@ -337,11 +338,11 @@ export class FSXAApi {
       return response.json()
     }
     const url =
-      !initialPath || initialPath === '/'
+      !encodedInitialPath || encodedInitialPath === '/'
         ? `${this.buildNavigationServiceUrl()}?depth=99&format=caas&language=${defaultLocale}`
-        : `${this.buildNavigationServiceUrl()}/by-seo-route/${initialPath}?depth=99&format=caas&all`
+        : `${this.buildNavigationServiceUrl()}/by-seo-route/${encodedInitialPath}?depth=99&format=caas&all`
     this.logger.info('[Remote][fetchNavigation] Requesting:', url, {
-      initialPath,
+      encodedInitialPath,
       defaultLocale
     })
     const response = await fetch(url, {
