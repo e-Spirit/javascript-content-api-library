@@ -197,13 +197,13 @@ export class FSXAApi {
     if (pagesize < 1 || pagesize > 1000) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_SIZE)
     if (page < 1) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_NUMBER)
     if (this.params.mode === 'proxy') {
-      const url = `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}?${stringify({
-        locale,
-        filter: JSON.stringify(filters),
-        page,
-        pagesize,
-        additionalParams: JSON.stringify(additionalParams)
-      })}`
+      const url = `${
+        this.params.baseUrl
+      }${FETCH_BY_FILTER_ROUTE}?locale=${locale}&filter=${encodeURIComponent(
+        JSON.stringify(filters)
+      )}&page=${page}&pagesize=${pagesize}&additionalParams=${encodeURIComponent(
+        JSON.stringify(additionalParams)
+      )}`
       this.logger.info('[Proxy][fetchByFilter] Requesting:', url, {
         filters,
         locale,

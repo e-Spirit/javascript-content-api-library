@@ -38,7 +38,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         const response = await api.fetchElement(
           req.params.id,
           req.query.locale,
-          JSON.parse(req.query.additionalParams || '{}')
+          JSON.parse(decodeURIComponent(req.query.additionalParams || '{}'))
         )
         return res.json(response)
       } catch (err) {
@@ -81,8 +81,10 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         })
       }
       try {
-        const filters = JSON.parse(req.query.filter as string) as QueryBuilderQuery[]
-        const additionalParams = JSON.parse(req.query.additionalParams || '{}')
+        const filters = JSON.parse(
+          decodeURIComponent(req.query.filter as string)
+        ) as QueryBuilderQuery[]
+        const additionalParams = JSON.parse(decodeURIComponent(req.query.additionalParams || '{}'))
         const response = await api.fetchByFilter(
           filters,
           req.query.locale,
