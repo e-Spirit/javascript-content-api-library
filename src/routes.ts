@@ -1,44 +1,28 @@
+import { QueryBuilderQuery } from './types'
+
 export const FETCH_ELEMENT_ROUTE = '/elements/:id'
-export const FETCH_GCA_PAGES_ROUTE = '/gca-pages/:uid?'
 export const FETCH_NAVIGATION_ROUTE = '/navigation'
 export const FETCH_BY_FILTER_ROUTE = '/filter'
 
-export const getFetchElementRoute = (
-  id: string,
-  locale: string,
-  additionalParams: Record<string, any>
-) =>
-  `${FETCH_ELEMENT_ROUTE.replace(':id', id)}?locale=${locale}&additionalParams=${JSON.stringify(
-    additionalParams
-  )}`
-export const getFetchGCAPagesRoute = (locale: string, uid?: string) =>
-  `${FETCH_GCA_PAGES_ROUTE.replace('/:uid?', uid ? '/' + uid : '')}?locale=${locale}`
-export const getFetchNavigationRoute = (initialPath: string | null, locale: string) =>
-  `${FETCH_NAVIGATION_ROUTE}?initialPath=${encodeURIComponent(initialPath || '')}&locale=${locale}`
+export const getFetchElementRoute = (id: string) => `${FETCH_ELEMENT_ROUTE.replace(':id', id)}`
 
 export interface FetchElementRouteParams {
   id: string
 }
-export interface FetchGCAPagesRouteParams {
-  uid?: string
-}
-export interface LocaleQuery {
-  locale?: string
-}
-export interface FetchNavigationRouteQuery {
+export interface FetchNavigationRouteBody {
   initialPath?: string
   locale?: string
 }
 
-export interface FetchElementRouteQuery {
+export interface FetchElementRouteBody {
   locale: string
-  additionalParams: string
+  additionalParams: Record<string, any>
 }
 
-export interface FetchByFilterQuery {
+export interface FetchByFilterBody {
   locale: string
-  filter: string
-  page?: string
-  pagesize?: string
-  additionalParams: string
+  filter: QueryBuilderQuery[]
+  page?: number
+  pagesize?: number
+  additionalParams: Record<string, any>
 }

@@ -71,7 +71,9 @@ describe('Express-Integration', () => {
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:${PORT}/elements/foobar`)).json()).toEqual({
+      expect(
+        await (await fetch(`http://localhost:${PORT}/elements/foobar`, { method: 'POST' })).json()
+      ).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
@@ -99,7 +101,9 @@ describe('Express-Integration', () => {
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:${PORT}/navigation`)).json()).toEqual({
+      expect(
+        await (await fetch(`http://localhost:${PORT}/navigation`, { method: 'POST' })).json()
+      ).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
@@ -157,7 +161,9 @@ describe('Express-Integration', () => {
     })
 
     it('should return an error, when locale is not specified', async () => {
-      expect(await (await fetch(`http://localhost:${PORT}/filter`)).json()).toEqual({
+      expect(
+        await (await fetch(`http://localhost:${PORT}/filter`, { method: 'POST' })).json()
+      ).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE
       })
     })
@@ -165,7 +171,9 @@ describe('Express-Integration', () => {
 
   describe('catch all route', () => {
     it('should return an error, when unknown route is called', async () => {
-      expect(await (await fetch(`http://localhost:${PORT}/foobar`)).json()).toEqual({
+      expect(
+        await (await fetch(`http://localhost:${PORT}/foobar`, { method: 'POST' })).json()
+      ).toEqual({
         error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE
       })
     })

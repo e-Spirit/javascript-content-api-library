@@ -1,15 +1,13 @@
 import express from 'express'
+import bodyParser from 'body-parser'
 import {
-  FetchByFilterQuery,
-  FetchGCAPagesRouteParams,
-  FetchElementRouteQuery,
   FetchElementRouteParams,
-  FetchNavigationRouteQuery,
   FETCH_BY_FILTER_ROUTE,
-  FETCH_GCA_PAGES_ROUTE,
   FETCH_NAVIGATION_ROUTE,
   FETCH_ELEMENT_ROUTE,
-  LocaleQuery
+  FetchByFilterBody,
+  FetchNavigationRouteBody,
+  FetchElementRouteBody
 } from '../routes'
 import { FSXAApi, FSXAApiErrors } from './../modules'
 import { QueryBuilderQuery } from '../types'
@@ -23,13 +21,11 @@ export enum ExpressRouterIntegrationErrors {
 }
 function getExpressRouter({ api }: GetExpressRouterContext) {
   const router = express.Router()
-  router.get(
+  router.use(bodyParser.json())
+  router.post(
     FETCH_ELEMENT_ROUTE,
-    async (
-      req: express.Request<FetchElementRouteParams, any, any, FetchElementRouteQuery>,
-      res
-    ) => {
-      if (req.query.locale == null) {
+    async (req: express.Request<FetchElementRouteParams, any, FetchElementRouteBody>, res) => {
+      if (!req.body || req.body.locale == null) {
         return res.json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE
         })
@@ -37,8 +33,8 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       try {
         const response = await api.fetchElement(
           req.params.id,
-          req.query.locale,
-          JSON.parse(decodeURIComponent(req.query.additionalParams || '{}'))
+          req.body.locale,
+          req.body?.additionalParams
         )
         return res.json(response)
       } catch (err) {
@@ -52,16 +48,16 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
     }
   )
-  router.get(
+  router.post(
     FETCH_NAVIGATION_ROUTE,
-    async (req: express.Request<any, any, any, FetchNavigationRouteQuery>, res) => {
-      if (req.query.locale == null) {
+    async (req: express.Request<any, any, FetchNavigationRouteBody>, res) => {
+      if (req.body.locale == null) {
         return res.json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE
         })
       }
       try {
-        const response = await api.fetchNavigation(req.query.initialPath || null, req.query.locale)
+        const response = await api.fetchNavigation(req.body.initialPath || null, req.body.locale)
         return res.json(response)
       } catch (err) {
         if (err.message === FSXAApiErrors.NOT_FOUND) {
@@ -72,25 +68,21 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
     }
   )
-  router.get(
+  router.post(
     FETCH_BY_FILTER_ROUTE,
-    async (req: express.Request<any, any, any, FetchByFilterQuery>, res) => {
-      if (req.query.locale == null) {
+    async (req: express.Request<any, any, FetchByFilterBody>, res) => {
+      if (!req.body || req.body.locale == null) {
         return res.json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE
         })
       }
       try {
-        const filters = JSON.parse(
-          decodeURIComponent(req.query.filter as string)
-        ) as QueryBuilderQuery[]
-        const additionalParams = JSON.parse(decodeURIComponent(req.query.additionalParams || '{}'))
         const response = await api.fetchByFilter(
-          filters,
-          req.query.locale,
-          req.query.page ? parseInt(req.query.page) : undefined,
-          req.query.pagesize ? parseInt(req.query.pagesize) : undefined,
-          additionalParams
+          req.body.filter || [],
+          req.body.locale,
+          req.body.page ? req.body.page : undefined,
+          req.body.pagesize ? req.body.pagesize : undefined,
+          req.body.additionalParams || {}
         )
         return res.json(response)
       } catch (err) {
