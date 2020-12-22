@@ -1,3 +1,10 @@
+## [4.0.4](https://github.com/e-Spirit/fsxa-api/compare/v4.0.3...v4.0.4) (2020-12-22)
+
+
+### Bug Fixes
+
+* **proxy:** fix error, where stringified JSON was not encoded ([bdb4b4f](https://github.com/e-Spirit/fsxa-api/commit/bdb4b4fb105943198d76e38acb61b1673711c202))
+
 ## [4.0.3](https://github.com/e-Spirit/fsxa-api/compare/v4.0.2...v4.0.3) (2020-12-22)
 
 
