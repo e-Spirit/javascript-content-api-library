@@ -108,10 +108,7 @@ export class FSXAApi {
      * request and map data from the caas
      */
     if (this.params.mode === 'proxy') {
-      const url = `${this.params.baseUrl}${getFetchElementRoute(id, {
-        locale,
-        additionalParams
-      })}`
+      const url = `${this.params.baseUrl}${getFetchElementRoute(id, locale, additionalParams)}`
       this.logger.info('[Proxy][fetchElement] Requesting:', url, {
         id,
         locale,
@@ -202,10 +199,10 @@ export class FSXAApi {
     if (this.params.mode === 'proxy') {
       const url = `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}?${stringify({
         locale,
-        filter: filters,
+        filter: JSON.stringify(filters),
         page,
         pagesize,
-        additionalParams
+        additionalParams: JSON.stringify(additionalParams)
       })}`
       this.logger.info('[Proxy][fetchByFilter] Requesting:', url, {
         filters,

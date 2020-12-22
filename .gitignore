@@ -12,4 +12,5 @@ compiled
 docs
 .env
 index.js
+validate.js
 examples/index.ts
