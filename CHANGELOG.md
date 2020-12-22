@@ -1,3 +1,10 @@
+## [4.0.5](https://github.com/e-Spirit/fsxa-api/compare/v4.0.4...v4.0.5) (2020-12-22)
+
+
+### Bug Fixes
+
+* **proxy:** switch to POST-Requests to fix encoding issues. Parameters will be transferred as body ([62b8a83](https://github.com/e-Spirit/fsxa-api/commit/62b8a8334a351e42f0027655921791ada0f87d0b))
+
 ## [4.0.4](https://github.com/e-Spirit/fsxa-api/compare/v4.0.3...v4.0.4) (2020-12-22)
 
 
