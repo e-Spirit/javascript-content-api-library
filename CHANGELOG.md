@@ -1,3 +1,10 @@
+## [4.0.3](https://github.com/e-Spirit/fsxa-api/compare/v4.0.2...v4.0.3) (2020-12-22)
+
+
+### Bug Fixes
+
+* **proxy:** fix bug, where params will all be stringified, when proxy mode is used ([23c512a](https://github.com/e-Spirit/fsxa-api/commit/23c512a6ad110318091b4827b27f3258e2aca86d))
+
 ## [4.0.2](https://github.com/e-Spirit/fsxa-api/compare/v4.0.1...v4.0.2) (2020-12-14)
 
 
