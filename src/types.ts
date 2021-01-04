@@ -440,6 +440,7 @@ export interface Image {
   id: string
   previewId: string
   meta: DataEntries
+  description: string | null
   resolutions: {
     [resolution: string]: {
       fileSize: number

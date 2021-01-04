@@ -284,6 +284,7 @@ export class CaaSMapper {
       id: item.identifier,
       previewId: this.buildPreviewId(item.identifier),
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
+      description: item.description,
       resolutions: item.resolutionsMetaData
     }
   }
