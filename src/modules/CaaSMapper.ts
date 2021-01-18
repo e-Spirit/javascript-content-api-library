@@ -288,12 +288,12 @@ export class CaaSMapper {
     }
   }
 
-  async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | null> {
+  async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | any | null> {
     switch (item.mediaType) {
       case 'PICTURE':
         return this.mapMediaPicture(item, path)
       default:
-        return null
+        return item
     }
   }
 
