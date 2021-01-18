@@ -1,3 +1,10 @@
+## [4.0.6](https://github.com/e-Spirit/fsxa-api/compare/v4.0.5...v4.0.6) (2021-01-18)
+
+
+### Bug Fixes
+
+* **caasmapper:** pass through unknown media-types as is ([d85f2e7](https://github.com/e-Spirit/fsxa-api/commit/d85f2e71f6bc65a6f187da6c67fd7344e1851ef3))
+
 ## [4.0.5](https://github.com/e-Spirit/fsxa-api/compare/v4.0.4...v4.0.5) (2020-12-22)
 
 
