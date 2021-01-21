@@ -1,3 +1,10 @@
+# [4.1.0](https://github.com/e-Spirit/fsxa-api/compare/v4.0.7...v4.1.0) (2021-01-21)
+
+
+### Features
+
+* Add description to Image when mapping CaaS data ([#3](https://github.com/e-Spirit/fsxa-api/issues/3)) ([428e8fd](https://github.com/e-Spirit/fsxa-api/commit/428e8fddbb203ce7b4c86282836e61bacb29a4ac))
+
 ## [4.0.7](https://github.com/e-Spirit/fsxa-api/compare/v4.0.6...v4.0.7) (2021-01-21)
 
 
