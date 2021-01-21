@@ -1,3 +1,10 @@
+## [4.0.7](https://github.com/e-Spirit/fsxa-api/compare/v4.0.6...v4.0.7) (2021-01-21)
+
+
+### Bug Fixes
+
+* Add seoRouteRegex to interface of NavigationItem ([#4](https://github.com/e-Spirit/fsxa-api/issues/4)) ([1e42b9a](https://github.com/e-Spirit/fsxa-api/commit/1e42b9a1c1730e563e8d4072dca2413bc11355af))
+
 ## [4.0.6](https://github.com/e-Spirit/fsxa-api/compare/v4.0.5...v4.0.6) (2021-01-18)
 
 
