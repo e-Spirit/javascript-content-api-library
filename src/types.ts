@@ -509,6 +509,7 @@ export interface NavigationItem {
   contentReference: string | null
   caasDocumentId: string
   seoRoute: string
+  seoRouteRegex: string | null
   customData: any
 }
 
