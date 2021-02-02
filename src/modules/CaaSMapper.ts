@@ -9,6 +9,7 @@ import {
   CaaSApi_GCAPage,
   CaaSApi_Media,
   CaaSApi_Media_Picture,
+  CaaSApi_Media_File,
   CaaSApi_PageRef,
   CaaSApi_Section,
   CaaSApi_SectionReference,
@@ -18,6 +19,7 @@ import {
   Dataset,
   GCAPage,
   Image,
+  File,
   Media,
   NestedPath,
   Page,
@@ -289,10 +291,23 @@ export class CaaSMapper {
     }
   }
 
-  async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | any | null> {
+  async mapMediaFile(item: CaaSApi_Media_File, path: NestedPath): Promise<File> {
+    return {
+      id: item.identifier,
+      previewId: this.buildPreviewId(item.identifier),
+      meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
+      fileName: item.fileName,
+      fileMetaData: item.fileMetaData,
+      url: item.url
+    }
+  }
+
+  async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | File | null> {
     switch (item.mediaType) {
       case 'PICTURE':
         return this.mapMediaPicture(item, path)
+      case 'FILE':
+        return this.mapMediaFile(item, path)
       default:
         return item
     }

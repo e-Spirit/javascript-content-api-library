@@ -453,6 +453,20 @@ export interface Image {
   }
 }
 
+export interface File {
+  id: string
+  previewId: string
+  meta: DataEntries
+  fileName: string
+  url: string
+  fileMetaData: {
+    fileSize: number
+    extension: string
+    mimeType: string
+    encoding: string | null
+  }
+}
+
 export interface RegisteredDatasetQuery {
   name: string
   filterParams: Record<string, string>
