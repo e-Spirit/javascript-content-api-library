@@ -1,5 +1,5 @@
 import set from 'lodash.set'
-import { FSXAApi, ComparisonQueryOperatorEnum } from './'
+import { ComparisonQueryOperatorEnum, FSXAApi } from './'
 import {
   CaaSApi_Body,
   CaaSApi_Content2Section,
@@ -23,6 +23,7 @@ import {
   Page,
   PageBody,
   PageBodyContent,
+  RichTextElement,
   Section
 } from '../types'
 import { parseISO } from 'date-fns'
@@ -69,6 +70,40 @@ export class CaaSMapper {
     return [identifier, this.locale].join('.')
   }
 
+  async prepareRichtext(value: string, path: NestedPath): Promise<RichTextElement[]> {
+    const richtexts = await this.xmlParser.parse(value, path.join('-'))
+    return this.registerRichtextReferences(richtexts, path)
+  }
+
+  async registerRichtextReferences(
+    richtexts: RichTextElement[],
+    path: NestedPath
+  ): Promise<RichTextElement[]> {
+    return Promise.all(
+      richtexts.map(async (richtext, index) => {
+        const result = {
+          ...richtext
+        }
+        if (Array.isArray(richtext.content)) {
+          result.content = await this.registerRichtextReferences(richtext.content, [
+            ...path,
+            index,
+            'content'
+          ])
+        }
+        if (richtext?.data?.data) {
+          result.data.data = await this.mapDataEntries(richtext.data.data, [
+            ...path,
+            index,
+            'data',
+            'data'
+          ])
+        }
+        return result
+      })
+    )
+  }
+
   async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
     if (this.customMapper) {
       const result = await this.customMapper(entry, {
@@ -81,7 +116,7 @@ export class CaaSMapper {
       case 'CMS_INPUT_COMBOBOX':
         return entry.value ? { key: entry.value.identifier, value: entry.value.label } : null
       case 'CMS_INPUT_DOM':
-        return entry.value ? await this.xmlParser.parse(entry.value, path.join('-')) : []
+        return entry.value ? this.prepareRichtext(entry.value, path) : []
       case 'CMS_INPUT_NUMBER':
       case 'CMS_INPUT_TEXT':
       case 'CMS_INPUT_TEXTAREA':
@@ -299,7 +334,8 @@ export class CaaSMapper {
   }
 
   async mapElementResponse(
-    element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any
+    element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any,
+    maxReferenceDepth: number
   ): Promise<Dataset | Page | Image | GCAPage | null | any> {
     let response
     switch (element.fsType) {
@@ -319,16 +355,17 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
-    return this.resolveReferences(response as {})
+    return this.resolveReferences(response as {}, maxReferenceDepth)
   }
 
-  async mapPageRefResponse(pageRef: CaaSApi_PageRef): Promise<Page> {
+  async mapPageRefResponse(pageRef: CaaSApi_PageRef, maxReferenceDepth: number): Promise<Page> {
     const mappedPage = await this.mapPageRef(pageRef)
-    return this.resolveReferences(mappedPage)
+    return this.resolveReferences(mappedPage, maxReferenceDepth)
   }
 
   async mapFilterResponse(
-    items: (CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage)[]
+    items: (CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage)[],
+    maxReferenceDepth: number
   ): Promise<(Page | GCAPage | Dataset | Image)[]> {
     const mappedItems = (
       await Promise.all(
@@ -346,7 +383,9 @@ export class CaaSMapper {
         })
       )
     ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
-    return this.resolveReferences(mappedItems)
+    return maxReferenceDepth > 0
+      ? this.resolveReferences(mappedItems, maxReferenceDepth)
+      : mappedItems
   }
 
   /**
@@ -354,7 +393,7 @@ export class CaaSMapper {
    * and fetch them in a single CaaS-Request
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferences<Type extends {}>(data: Type): Promise<Type> {
+  async resolveReferences<Type extends {}>(data: Type, maxReferenceDepth: number): Promise<Type> {
     const ids = Object.keys(this._referencedItems)
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
     if (ids.length > 0) {
@@ -370,7 +409,9 @@ export class CaaSMapper {
             ],
             this.locale,
             1,
-            REFERENCED_ITEMS_CHUNK_SIZE
+            REFERENCED_ITEMS_CHUNK_SIZE,
+            {},
+            maxReferenceDepth - 1
           )
         )
       )

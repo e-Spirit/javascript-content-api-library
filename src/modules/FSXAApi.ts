@@ -94,7 +94,8 @@ export class FSXAApi {
   async fetchElement(
     id: string,
     locale: string,
-    additionalParams: Record<'keys' | string, any> = {}
+    additionalParams: Record<'keys' | string, any> = {},
+    maxReferenceDepth: number = 3
   ): Promise<Page | GCAPage | Dataset | Image | any | null> {
     /**
      * If we are in proxy mode (client-side), we only want to pipe the input through to the "local" api (server-side) that is able to
@@ -176,7 +177,7 @@ export class FSXAApi {
     // we only can map the response if the keys parameter is not specified
     return additionalParams.keys
       ? response.json()
-      : mapper.mapElementResponse(await response.json())
+      : mapper.mapElementResponse(await response.json(), maxReferenceDepth)
   }
 
   /**
@@ -186,6 +187,7 @@ export class FSXAApi {
    * @param page page that should be fetched
    * @param pagesize the number of elements that should be fetched
    * @param additionalParams You can specify additional params that will be appended to the CaaS-Url. Be aware that the response is not mapped, if you pass the keys-parameter
+   * @param maxReferenceDepth how many levels of references should be resolved, 0=none
    */
   async fetchByFilter(
     filters: QueryBuilderQuery[],
@@ -194,7 +196,8 @@ export class FSXAApi {
     pagesize = 100,
     // you can pass in all available restheart-parameters that are not available through our api
     // Using the keys parameter will remove the default mapping mechanism
-    additionalParams: Record<'keys' | string, any> = {}
+    additionalParams: Record<'keys' | string, any> = {},
+    maxReferenceDepth: number = 3
   ): Promise<(Page | GCAPage | Image | Dataset)[]> {
     if (pagesize < 1 || pagesize > 1000) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_SIZE)
     if (page < 1) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_NUMBER)
@@ -309,7 +312,7 @@ export class FSXAApi {
     if (additionalParams.keys) {
       return data._embedded['rh:doc']
     }
-    return mapper.mapFilterResponse(data._embedded['rh:doc'])
+    return mapper.mapFilterResponse(data._embedded['rh:doc'], maxReferenceDepth)
   }
 
   async fetchNavigation(
