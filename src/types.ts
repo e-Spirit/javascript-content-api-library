@@ -592,7 +592,7 @@ export interface MappedFilter {
 }
 
 export interface RichTextElement {
-  type: 'text' | 'paragraph' | 'list' | 'listitem' | 'linebreak' | 'link' | string
+  type: 'block' | 'text' | 'paragraph' | 'list' | 'listitem' | 'linebreak' | 'link' | string
   content: RichTextElement[] | string
   data: Record<string, any>
 }

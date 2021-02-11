@@ -125,11 +125,16 @@ class XMLParser {
           type: 'linebreak'
         }
       case 'p':
-      case 'div':
         return {
           data: tag.attributes,
           content: [],
           type: 'paragraph'
+        }
+      case 'div':
+        return {
+          data: tag.attributes,
+          content: [],
+          type: 'block'
         }
       case 'link':
         const data = tag.attributes
