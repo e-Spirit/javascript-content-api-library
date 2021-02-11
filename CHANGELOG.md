@@ -1,3 +1,12 @@
+## [4.1.1](https://github.com/e-Spirit/fsxa-api/compare/v4.1.0...v4.1.1) (2021-02-11)
+
+
+### Bug Fixes
+
+* **xml-parser:** add block type to RichTextElement ([a261bd5](https://github.com/e-Spirit/fsxa-api/commit/a261bd5ef05fb70b62be959f9a9174a5d3547149))
+* **xml-parser:** map div tag to block type ([4467e83](https://github.com/e-Spirit/fsxa-api/commit/4467e833d8c348af004a56f339d3485051165784))
+* **xml-parser:** map div tag to block type ([f0ced59](https://github.com/e-Spirit/fsxa-api/commit/f0ced5954c7adb169c9e26c8ef5bfd5bc07628f9))
+
 # [4.1.0](https://github.com/e-Spirit/fsxa-api/compare/v4.0.7...v4.1.0) (2021-01-21)
 
 
