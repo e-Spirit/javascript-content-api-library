@@ -2,18 +2,18 @@ import {inspect} from "util";
 import dotenv from "dotenv"
 import express from "express";
 import {FSXAApi, FSXAContentMode} from "../src"
-const expressIntegration = require('../dist/lib/integrations/express').default
+import {default as expressIntegration} from "../src/integrations/express"
 require('cross-fetch/polyfill')
 
 dotenv.config({path: './dev/.env'})
 const app = express()
 
-const {API_MODE, API_API_KEY, API_NAVIGATION_SERVICE, API_CAAS, API_PROJECT_ID, API_TENANT_ID} = process.env
+const {API_API_KEY, API_NAVIGATION_SERVICE, API_CAAS, API_PROJECT_ID, API_TENANT_ID} = process.env
 
 const remoteApi = new FSXAApi(
   FSXAContentMode.PREVIEW,
   {
-    mode: API_MODE as any,
+    mode: "remote", // we want to test against the 'remote' mode to ensure that it works with both modes.
     config: {
       apiKey: API_API_KEY!,
       navigationService: API_NAVIGATION_SERVICE!,
@@ -40,8 +40,7 @@ app.listen(3001, async () => {
   try {
     const response = await proxyApi.fetchProjectProperties('de')
     console.log(inspect(response, false, null, true))
- } catch (err) {
+  } catch (err) {
     console.log('ERROR', err)
   }
-
 })

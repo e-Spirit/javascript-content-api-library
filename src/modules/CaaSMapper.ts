@@ -136,12 +136,7 @@ export class CaaSMapper {
         if (!entry.value) return null
         if (entry.value.fsType === 'Media') {
           return this.registerReferencedItem(entry.value.identifier, path)
-        } else if (entry.value.fsType === 'PageRef') {
-          return {
-            referenceId: entry.value.identifier,
-            referenceType: entry.value.fsType
-          }
-        } else if (entry.value.fsType === 'GCAPage') {
+        } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
           return {
             referenceId: entry.value.identifier,
             referenceType: entry.value.fsType
