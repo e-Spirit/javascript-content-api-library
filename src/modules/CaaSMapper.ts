@@ -10,6 +10,7 @@ import {
   CaaSApi_Media,
   CaaSApi_Media_Picture,
   CaaSApi_PageRef,
+  CaaSApi_ProjectProperties,
   CaaSApi_Section,
   CaaSApi_SectionReference,
   CustomMapper,
@@ -23,6 +24,7 @@ import {
   Page,
   PageBody,
   PageBodyContent,
+  ProjectProperties,
   Section
 } from '../types'
 import { parseISO } from 'date-fns'
@@ -31,7 +33,8 @@ import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 
 export enum CaaSMapperErrors {
-  UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.'
+  UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
+  UNKNOWN_FSTYPE = 'Unknown fsType could not be mapped'
 }
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
@@ -133,7 +136,7 @@ export class CaaSMapper {
         if (!entry.value) return null
         if (entry.value.fsType === 'Media') {
           return this.registerReferencedItem(entry.value.identifier, path)
-        } else if (entry.value.fsType === 'PageRef') {
+        } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
           return {
             referenceId: entry.value.identifier,
             referenceType: entry.value.fsType
@@ -254,6 +257,20 @@ export class CaaSMapper {
     }
   }
 
+  async mapProjectProperties(
+    properties: CaaSApi_ProjectProperties,
+    path: NestedPath = []
+  ): Promise<ProjectProperties> {
+    return {
+      data: await this.mapDataEntries(properties.formData, [...path, 'data']),
+      layout: properties.template.uid,
+      meta: await this.mapDataEntries(properties.metaFormData, [...path, 'meta']),
+      name: properties.name,
+      previewId: this.buildPreviewId(properties.identifier),
+      id: properties.identifier
+    }
+  }
+
   async mapGCAPage(gcaPage: CaaSApi_GCAPage, path: NestedPath = []): Promise<GCAPage> {
     return {
       id: gcaPage.identifier,
@@ -328,7 +345,13 @@ export class CaaSMapper {
   }
 
   async mapFilterResponse(
-    items: (CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage)[]
+    items: (
+      | CaaSApi_Dataset
+      | CaaSApi_PageRef
+      | CaaSApi_Media
+      | CaaSApi_GCAPage
+      | CaaSApi_ProjectProperties
+    )[]
   ): Promise<(Page | GCAPage | Dataset | Image)[]> {
     const mappedItems = (
       await Promise.all(
@@ -342,6 +365,10 @@ export class CaaSMapper {
               return this.mapMedia(item, [index]) as Promise<any>
             case 'GCAPage':
               return this.mapGCAPage(item, [index])
+            case 'ProjectProperties':
+              return this.mapProjectProperties(item, [index])
+            default:
+              throw new Error(CaaSMapperErrors.UNKNOWN_FSTYPE)
           }
         })
       )

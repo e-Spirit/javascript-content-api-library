@@ -1,5 +1,5 @@
-import { CaaSMapper, QueryBuilder, ComparisonQueryOperatorEnum, Logger, LogLevel } from './'
-import { getFetchElementRoute, FETCH_BY_FILTER_ROUTE } from '../routes'
+import { CaaSMapper, ComparisonQueryOperatorEnum, Logger, LogLevel, QueryBuilder } from './'
+import { FETCH_BY_FILTER_ROUTE, getFetchElementRoute } from '../routes'
 import {
   CaasApi_FilterResponse,
   Dataset,
@@ -7,7 +7,6 @@ import {
   FSXAConfiguration,
   GCAPage,
   Image,
-  LogicalFilter,
   NavigationData,
   Page,
   QueryBuilderQuery
@@ -378,6 +377,45 @@ export class FSXAApi {
       }
     }
     return response.json()
+  }
+
+  /**
+   * Gets the project setting of the given language. Works with CaaSConnect > 3
+   * @param locale Language abbreviation like `en` or `de`
+   */
+  async fetchProjectProperties(locale: string) {
+    this.logger.info(`Requesting ProjectProperties for language ${locale}`)
+    const response = await this.fetchByFilter(
+      [
+        {
+          field: 'fsType',
+          value: 'ProjectProperties',
+          operator: ComparisonQueryOperatorEnum.EQUALS
+        }
+      ],
+      locale
+    )
+    const page = (response[0] as Page)?.data
+    if (!page) {
+      this.logger.error('There are no project settings available for this language')
+      return
+    }
+    for (const key in page) {
+      if (['GCAPage'].includes(page[key]?.referenceType)) {
+        const filteredResponse = await this.fetchByFilter(
+          [
+            {
+              field: 'identifier',
+              value: page[key].referenceId,
+              operator: ComparisonQueryOperatorEnum.EQUALS
+            }
+          ],
+          locale
+        )
+        page[key] = (filteredResponse[0] as GCAPage).data
+      }
+    }
+    return response
   }
 
   private buildRestheartParams(params: Record<'keys' | string, any>) {

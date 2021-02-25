@@ -268,6 +268,16 @@ export interface CaaSApi_GCAPage {
   formData: CaaSApi_DataEntries
   metaFormData: CaaSApi_DataEntries
 }
+export interface CaaSApi_ProjectProperties {
+  _id: string
+  fsType: 'ProjectProperties'
+  name: string
+  displayName: string
+  identifier: string
+  template: CaaSApi_Template
+  formData: CaaSApi_DataEntries
+  metaFormData: CaaSApi_DataEntries
+}
 
 export interface CaaSApi_Page {
   fsType: 'Page'
@@ -389,6 +399,15 @@ export interface Card {
 export interface Media {}
 
 export interface GCAPage {
+  id: string
+  previewId: string
+  name: string
+  layout: string
+  data: DataEntries
+  meta: DataEntries
+}
+
+export interface ProjectProperties {
   id: string
   previewId: string
   name: string
