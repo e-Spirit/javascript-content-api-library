@@ -1,3 +1,15 @@
+# [5.0.0](https://github.com/e-Spirit/fsxa-api/compare/v4.1.1...v5.0.0) (2021-02-25)
+
+
+### Features
+
+* **fetchprojectproperties:** added fetchProjectProperties method and better development enviroment ([7e15cf4](https://github.com/e-Spirit/fsxa-api/commit/7e15cf4e45fcb1d655b3e2394d23c3abe55e5fff))
+
+
+### BREAKING CHANGES
+
+* **fetchprojectproperties:** - This version only works with CaaSConnect module version 3.3.0 onwards.
+
 ## [4.1.1](https://github.com/e-Spirit/fsxa-api/compare/v4.1.0...v4.1.1) (2021-02-11)
 
 
