@@ -5,21 +5,22 @@ Navigation Service. The data is processed and transformed to perfectly suit the 
 the [FSXA-Pattern-Library](https://github.com/e-Spirit/fsxa-pattern-library).
 
 - [1. About the FSXA](#about-the-fsxa)
-- [2. Legal Noices](#legal-notices)
+- [2. Legal Notices](#legal-notices)
 - [3. Methods](#methods)
-  - [3.1. Constructor](#constructor)
-  - [3.2. setConfiguration](#setconfiguration)
-  - [3.3. config](#config)
-  - [3.4. buildAuthorizationHeaders](#buildauthorizationheaders)
-  - [3.5. buildCaaSURL](#buildcaasurl)
-  - [3.6. buildNavigationServiceUrl](#buildnavigationserviceurl)
-  - [3.7. fetchByFilter](#fetchbyfilter)
-  - [3.8. fetchElement](#fetchelement)
-  - [3.8. fetchProjectProperties](#fetchprojectproperties)
+  - [Constructor](#constructor)
+  - [setConfiguration](#setconfiguration)
+  - [config](#config)
+  - [buildAuthorizationHeaders](#buildauthorizationheaders)
+  - [buildCaaSURL](#buildcaasurl)
+  - [buildNavigationServiceUrl](#buildnavigationserviceurl)
+  - [fetchElement](#fetchelement)
+  - [fetchByFilter](#fetchbyfilter)
+  - [fetchProjectProperties](#fetchprojectproperties)
 - [4. Filter](#filter)
-  - [4.1. LogicalFilter](#logicalfilter)
-  - [4.2. ComparisonFilter](#comparisonfilter)
-  - [4.3. ArrayFilter](#arrayfilter)
+  - [LogicalFilter](#logicalfilter)
+  - [ComparisonFilter](#comparisonfilter)
+  - [ArrayFilter](#arrayfilter)
+- [5. Disclaimer](#disclaimer)
 
 ### About the FSXA
 The FirstSpirit Experience Accelerator (FSXA) is the hybrid solution of a digital 
@@ -190,7 +191,9 @@ fsxaApi.setConfiguration({
 
 ### config
 
-
+Returns the current configuration when the mode is set to `remote`.
+<br />
+If the mode is set to `proxy`, this method returns `null`.
 
 Example:
 ```typescript
@@ -199,12 +202,23 @@ fsxaApi.config()
 
 ### buildAuthorizationHeaders
 
+Returns the build authorization header in the following format when mode is set to `remote`: 
+```typescript
+{ authorization: 'apikey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"' }
+```
+
+Returns an empty object when mode is set to `proxy`.
+
 Example:
 ```typescript
 fsxaApi.buildAuthorizationHeaders()
 ```
  
 ### buildCaaSURL 
+
+Returns the build CaaS url when mode is set to `remote`:
+
+Returns an empty string when mode is set to `proxy`.
 
 Example:
 ```typescript
@@ -214,16 +228,50 @@ fsxaApi.buildCaaSUrl()
 
 ### buildNavigationServiceUrl
 
+Returns the build navigation-service url when mode is set to `remote`:
+
+Returns an empty string when mode is set to `proxy`.
+
 Example:
 ```typescript
 fsxaApi.buildNavigationServiceUrl()
 ```
 
-### fetchByFilter
+### fetchElement
 
-[More to Filter](#filter)
+Returns the corresponding CaaS data entry. 
+
+Expects as input parameter an id, which is described in CaaS as 'identifier' and a language abbreviation.
+<br />
+Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped, if you pass the keys-parameter. 
 
 Example:
+```typescript
+fsxaApi.fetchElement(
+    "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "en-EN"
+)
+```
+
+### fetchByFilter
+Returns the matching CaaS data entries.
+
+Expects as input parameter an array of filters and a language abbreviation.
+Optionally a page number, page size and additional parameters can be passed.
+
+Several filter objects can be specified in the filter array, the results will then correspond to all specified filters.
+
+One filter object must have a:
+<br />
+`field` which specifies the searched key,
+<br />
+`operator` which specifies the search operation,
+<br />
+`value` which specifies the value that is looked for. 
+
+[More information to the filters](#filter)
+
+In this example we search for all elements with the `fsType` equals `Example`. We want the `2nd` page with a maximum of `50` entries. However, we do not want the `identifier` to appear:
 ```typescript
 fsxaApi.fetchByFilter(
     [
@@ -236,46 +284,59 @@ fsxaApi.fetchByFilter(
     "en",
     2,
     50,
-    additionalParams // TODO
+    {"keys": JSON.stringify({"identifier": 0})}
 )
 ```
 
-### fetchElement
-
-Example:
-```typescript
-fsxaApi.fetchElement(
-    "abcd-efgh-ijkl",
-    "en",
-    additionalParameters //TODO
-)
-```
 
 ### fetchProjectProperties
 
+Returns the project properties of the given language.
+
+Expects as input parameter the language abbreviation.
+
+ATTENTION: Works only with CaaSConnect module version 3 onwards.
+
 Example:
 ```typescript
-fsxaApi.fetchProjectProperties("en")
+fsxaApi.fetchProjectProperties("en_EN")
 ```
 
 ## Filter
 
-### LogicalFilter
+To customize your queries in the [fetchByFilter](#fetchbyfilter) method with these operations. For more info you can click on the respective links.
+
+### Logical Query Operators
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
+
+| Enum | Operation |
+| --- | --- |
+|LogicalQueryOperatorEnum.AND | $and |
+|LogicalQueryOperatorEnum.NOT | $not |
+|LogicalQueryOperatorEnum.NOR | $nor |
+|LogicalQueryOperatorEnum.OR | $or |
 
 ### ComparisonFilter
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
+| Enum | Operation |
+| --- | --- |
+|LogicalQueryOperatorEnum.GREATER_THAN_EQUALS | $gte |
+|LogicalQueryOperatorEnum.GREATER_THAN | $gt | 
+|LogicalQueryOperatorEnum.EQUALS | $eq | 
+|LogicalQueryOperatorEnum.IN | $in | 
+|LogicalQueryOperatorEnum.LESS_THAN | $lt | 
+|LogicalQueryOperatorEnum.LESS_THAN_EQUALS | $lte |
+|LogicalQueryOperatorEnum.NOT_EQUALS | $ne |
+|LogicalQueryOperatorEnum.NOT_IN | $nin |
+
+
 ### ArrayFilter
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
 
-## Modes
-
-The FSXA-API can be used in two different modes.
-
-### proxy
-
-### remote
+| Enum | Operation |
+| --- | --- |
+|ArrayQueryOperatorEnum.ALL | $all |
 
 ## Disclaimer
 This document is provided for information purposes only.
