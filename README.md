@@ -17,9 +17,9 @@ the [FSXA-Pattern-Library](https://github.com/e-Spirit/fsxa-pattern-library).
   - [fetchByFilter](#fetchbyfilter)
   - [fetchProjectProperties](#fetchprojectproperties)
 - [4. Filter](#filter)
-  - [LogicalFilter](#logicalfilter)
-  - [ComparisonFilter](#comparisonfilter)
-  - [ArrayFilter](#arrayfilter)
+  - [LogicalFilter](#logical-query-operators)
+  - [ComparisonFilter](#comparison-query-operators)
+  - [ArrayFilter](#array-query-operators)
 - [5. Disclaimer](#disclaimer)
 
 ### About the FSXA
@@ -316,7 +316,7 @@ To customize your queries in the [fetchByFilter](#fetchbyfilter) method with the
 |LogicalQueryOperatorEnum.NOR | $nor |
 |LogicalQueryOperatorEnum.OR | $or |
 
-### ComparisonFilter
+### Comparison Query Operators
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
 | Enum | Operation |
@@ -331,7 +331,7 @@ To customize your queries in the [fetchByFilter](#fetchbyfilter) method with the
 |LogicalQueryOperatorEnum.NOT_IN | $nin |
 
 
-### ArrayFilter
+### Array Query Operators
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
 
 | Enum | Operation |
