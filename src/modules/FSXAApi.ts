@@ -250,7 +250,7 @@ export class FSXAApi {
       if (Array.isArray(additionalParams[key])) {
         buildAdditionalParams[key] = additionalParams[key].map(JSON.stringify)
       } else {
-        buildAdditionalParams[key] = additionalParams[key]
+        buildAdditionalParams[key] = JSON.stringify(additionalParams[key])
       }
     })
     // we need to encode array
