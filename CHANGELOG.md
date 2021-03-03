@@ -1,3 +1,12 @@
+## [5.0.1](https://github.com/e-Spirit/fsxa-api/compare/v5.0.0...v5.0.1) (2021-03-03)
+
+
+### Bug Fixes
+
+* **caasmapper:** enable RichText mapping for the CMS_INPUT_DOMTABLE as well ([#14](https://github.com/e-Spirit/fsxa-api/issues/14)) ([31436ed](https://github.com/e-Spirit/fsxa-api/commit/31436edcb8c19d7259e6995fdeca10ba5ab3bb21))
+* 🐛 fixed additionalParams for fetchByFilter ([#12](https://github.com/e-Spirit/fsxa-api/issues/12)) ([7d694c8](https://github.com/e-Spirit/fsxa-api/commit/7d694c8d83564d157105f98413d49f75f113af1c))
+* **caasmapper:** map FILE entries ([#5](https://github.com/e-Spirit/fsxa-api/issues/5)) ([33872d8](https://github.com/e-Spirit/fsxa-api/commit/33872d815728754c1611a4af33a285a02042eec7))
+
 # [5.0.0](https://github.com/e-Spirit/fsxa-api/compare/v4.1.1...v5.0.0) (2021-02-25)
 
 
