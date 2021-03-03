@@ -48,7 +48,16 @@ export interface CaaSApi_CMSInputDOM {
   fsType: 'CMS_INPUT_DOM'
   name: string
   /**
-   * This contains html
+   * This contains xml
+   */
+  value: string
+}
+
+export interface CaaSApi_CMSInputDOMTable {
+  fsType: 'CMS_INPUT_DOMTABLE'
+  name: string
+  /**
+   * This contains xml
    */
   value: string
 }
@@ -180,6 +189,7 @@ export type CaaSApi_DataEntry =
   | CaaSApi_CMSInputCheckbox
   | CaaSApi_CMSInputCombobox
   | CaaSApi_CMSInputDOM
+  | CaaSApi_CMSInputDOMTable
   | CaaSApi_CMSInputLink
   | CaaSApi_CMSInputList
   | CaaSApi_CMSInputNumber

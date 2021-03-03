@@ -86,6 +86,7 @@ export class CaaSMapper {
       case 'CMS_INPUT_COMBOBOX':
         return entry.value ? { key: entry.value.identifier, value: entry.value.label } : null
       case 'CMS_INPUT_DOM':
+      case 'CMS_INPUT_DOMTABLE':
         return entry.value ? await this.xmlParser.parse(entry.value, path.join('-')) : []
       case 'CMS_INPUT_NUMBER':
       case 'CMS_INPUT_TEXT':
