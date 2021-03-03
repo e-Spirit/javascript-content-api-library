@@ -249,6 +249,8 @@ export class FSXAApi {
     Object.keys(additionalParams).forEach(key => {
       if (Array.isArray(additionalParams[key])) {
         buildAdditionalParams[key] = additionalParams[key].map(JSON.stringify)
+      } else if (typeof additionalParams[key] === 'object') {
+        buildAdditionalParams[key] = JSON.stringify(additionalParams[key])
       } else {
         buildAdditionalParams[key] = additionalParams[key]
       }
