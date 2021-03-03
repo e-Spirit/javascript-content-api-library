@@ -1,7 +1,8 @@
 # FSXA-API
-The FSXA-API is an interface handling the data coming from the FirstSpirit 
-[CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the 
-Navigation Service. The data is processed and transformed to perfectly suit the needs of 
+
+The FSXA-API is an interface handling data coming from the FirstSpirit
+[CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
+Navigation Service. The data is processed and transformed to suit the needs of
 the [FSXA-Pattern-Library](https://github.com/e-Spirit/fsxa-pattern-library).
 
 - [1. About the FSXA](#about-the-fsxa)
@@ -22,20 +23,22 @@ the [FSXA-Pattern-Library](https://github.com/e-Spirit/fsxa-pattern-library).
   - [ArrayFilter](#array-query-operators)
 - [5. Disclaimer](#disclaimer)
 
-### About the FSXA
-The FirstSpirit Experience Accelerator (FSXA) is the hybrid solution of a digital 
-experience platform, combining a headless approach with enterprise capabilities. 
-If you are interested in the FSXA check this 
-[Overview](https://docs.e-spirit.com/module/fsxa/overview/benefits-hybrid/index.html). You can order 
+## About the FSXA
+
+The FirstSpirit Experience Accelerator (FSXA) is the hybrid solution of a digital
+experience platform, combining a headless approach with enterprise capabilities.
+If you are interested in the FSXA check this
+[Overview](https://docs.e-spirit.com/module/fsxa/overview/benefits-hybrid/index.html). You can order
 a demo [online](https://www.e-spirit.com/us/specialpages/forms/on-demand-demo/).
 
 ## Legal Notices
+
 FSXA-API is a product of [e-Spirit AG](http://www.e-spirit.com), Dortmund, Germany.
 The FSXA-API is subject to the Apache-2.0 license.
 
 ## Methods
 
-In this section all available methods are explained and provided with an example.
+In this section all available methods will be explained using examples.
 
 ### Constructor
 
@@ -45,9 +48,9 @@ How you create the object depends on how you want to use the FSXA-API.
 If you want to use the information provided by the CaaS in your frontend, you have to use the `proxy` mode.  
 If you want to use it in your server, you have to use the `remote` mode.
 
-However, to have a fully running application, it makes most sense to use the FSXA-API in your server and in your frontend.
+However, to have a fully running application, we recommend using the FSXA-API in your server as well as in your frontend.
 
-In all cases you have to specify the content mode, the config data and optionally the log level.
+In each case you have to specify the content mode, the configuration and optionally the log level.
 
 The config mode can be `preview` or `release`. It depends on which information you want to get.
 <br />
@@ -57,10 +60,10 @@ There is an enum to use these modes.
 <br />
 `FSXAContentMode.RELEASE` for `release`
 
-
-The config data depends on which in which mode you want to run the FSXA-API.
+The configuration depends on which in which mode you want to run the FSXA-API.
 
 If you want to use the `remote` mode, you have to specify all authorization keys:
+
 ````typescript
 {
     mode: "remote",
@@ -75,12 +78,15 @@ If you want to use the `remote` mode, you have to specify all authorization keys
 ````
 
 If you want to use the `proxy` mode, you have to specify the baseURL:
+
 ```typescript
 {
     mode: 'proxy',
     baseUrl: 'http://localhost:3001/api'
 }
 ```
+
+Be aware that in the case of `proxy` mode the baseURL should point to a proxy server that knows and appends the apikey of the FirstSpirit CaaS.
 
 The log level can be:
 `0` = Info
@@ -89,8 +95,9 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
-Here is an example how the FSXA-API could be used with an [Express.js](https://expressjs.com/) backend.
+Here is an example of how the FSXA-API could be used with an [Express.js](https://expressjs.com/) backend.
 Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
+
 ```typescript
 require("cross-fetch/polyfill")
 const express = require('express')
@@ -151,6 +158,7 @@ There is an enum to use these modes.
 The config data depends on which in which mode you want to run the FSXA-API.
 
 If you want to use the `remote` mode, you have to specify all authorization keys:
+
 ````typescript
 {
     mode: "remote",
@@ -165,6 +173,7 @@ If you want to use the `remote` mode, you have to specify all authorization keys
 ````
 
 If you want to use the `proxy` mode, you have to specify the baseURL:
+
 ```typescript
 {
     mode: 'proxy',
@@ -172,7 +181,10 @@ If you want to use the `proxy` mode, you have to specify the baseURL:
 }
 ```
 
+Be aware that in the case of `proxy` mode the baseURL should point to a proxy server that knows and appends the apikey of the FirstSpirit CaaS.
+
 Example:
+
 ```typescript
 fsxaApi.setConfiguration({
   FSXAContentMode.RELEASE,
@@ -196,13 +208,15 @@ Returns the current configuration when the mode is set to `remote`.
 If the mode is set to `proxy`, this method returns `null`.
 
 Example:
+
 ```typescript
 fsxaApi.config()
 ```
 
 ### buildAuthorizationHeaders
 
-Returns the build authorization header in the following format when mode is set to `remote`: 
+Returns the build authorization header in the following format when mode is set to `remote`:
+
 ```typescript
 { authorization: 'apikey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"' }
 ```
@@ -210,21 +224,22 @@ Returns the build authorization header in the following format when mode is set 
 Returns an empty object when mode is set to `proxy`.
 
 Example:
+
 ```typescript
 fsxaApi.buildAuthorizationHeaders()
 ```
- 
-### buildCaaSURL 
+
+### buildCaaSURL
 
 Returns the build CaaS url when mode is set to `remote`:
 
 Returns an empty string when mode is set to `proxy`.
 
 Example:
+
 ```typescript
 fsxaApi.buildCaaSUrl()
 ```
-
 
 ### buildNavigationServiceUrl
 
@@ -233,19 +248,23 @@ Returns the build navigation-service url when mode is set to `remote`:
 Returns an empty string when mode is set to `proxy`.
 
 Example:
+
 ```typescript
 fsxaApi.buildNavigationServiceUrl()
 ```
 
 ### fetchElement
 
-Returns the corresponding CaaS data entry. 
+Returns the corresponding CaaS data entry.
 
 Expects as input parameter an id, which is described in CaaS as 'identifier' and a language abbreviation.
 <br />
-Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped, if you pass the keys-parameter. 
+Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys-parameter.
+
+[//]: # (TODO: provide an example for passing additional parameters plus maybe a link to the documentation of what these may be)
 
 Example:
+
 ```typescript
 fsxaApi.fetchElement(
     "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
@@ -254,6 +273,7 @@ fsxaApi.fetchElement(
 ```
 
 ### fetchByFilter
+
 Returns the matching CaaS data entries.
 
 Expects as input parameter an array of filters and a language abbreviation.
@@ -267,7 +287,7 @@ One filter object must have a:
 <br />
 `operator` which specifies the search operation,
 <br />
-`value` which specifies the value that is looked for. 
+`value` which specifies the value that is looked for.
 
 [More information to the filters](#filter)
 
@@ -288,7 +308,6 @@ fsxaApi.fetchByFilter(
 )
 ```
 
-
 ### fetchProjectProperties
 
 Returns the project properties of the given language.
@@ -298,15 +317,17 @@ Expects as input parameter the language abbreviation.
 ATTENTION: Works only with CaaSConnect module version 3 onwards.
 
 Example:
+
 ```typescript
 fsxaApi.fetchProjectProperties("en_EN")
 ```
 
 ## Filter
 
-To customize your queries in the [fetchByFilter](#fetchbyfilter) method with these operations. For more info you can click on the respective links.
+You can customize your queries in the [fetchByFilter](#fetchbyfilter) method with these operations. For more information please refer to the MongoDB documentation. Links are provided in each section.
 
 ### Logical Query Operators
+
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
 
 | Enum | Operation |
@@ -317,21 +338,22 @@ To customize your queries in the [fetchByFilter](#fetchbyfilter) method with the
 |LogicalQueryOperatorEnum.OR | $or |
 
 ### Comparison Query Operators
+
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
 | Enum | Operation |
 | --- | --- |
 |LogicalQueryOperatorEnum.GREATER_THAN_EQUALS | $gte |
-|LogicalQueryOperatorEnum.GREATER_THAN | $gt | 
-|LogicalQueryOperatorEnum.EQUALS | $eq | 
-|LogicalQueryOperatorEnum.IN | $in | 
-|LogicalQueryOperatorEnum.LESS_THAN | $lt | 
+|LogicalQueryOperatorEnum.GREATER_THAN | $gt |
+|LogicalQueryOperatorEnum.EQUALS | $eq |
+|LogicalQueryOperatorEnum.IN | $in |
+|LogicalQueryOperatorEnum.LESS_THAN | $lt |
 |LogicalQueryOperatorEnum.LESS_THAN_EQUALS | $lte |
 |LogicalQueryOperatorEnum.NOT_EQUALS | $ne |
 |LogicalQueryOperatorEnum.NOT_IN | $nin |
 
-
 ### Array Query Operators
+
 [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
 
 | Enum | Operation |
@@ -339,6 +361,7 @@ To customize your queries in the [fetchByFilter](#fetchbyfilter) method with the
 |ArrayQueryOperatorEnum.ALL | $all |
 
 ## Disclaimer
+
 This document is provided for information purposes only.
 e-Spirit may change the contents hereof without notice. 
 This document is not warranted to be error-free, nor subject to any 
