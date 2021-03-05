@@ -95,7 +95,7 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
-Here is an example of how the FSXA-API could be used with an <a href="https://expressjs.com/" target="_blank">Express.js</a> backend.
+Here is an example of how the FSXA-API could be used with an [Express.js](https://expressjs.com/) backend.
 Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
 
 ```typescript
@@ -259,10 +259,10 @@ Returns the corresponding CaaS data entry.
 
 Expects as input parameter an id, which is described in CaaS as 'identifier' and a language abbreviation.
 <br />
-Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys-parameter. <a href="https://restheart.org/docs/read-docs/#projection" target="_blank">More information</a>.
+Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys-parameter. For more information please refer to the [restheart documentation](https://restheart.org/docs/read-docs/#projection).
 
+In this example the additional parameters ensure that only the fields `identifier` and `displayName` are in the result set:
 
-In this example the additional parameters ensures that only the `identifier` and `displayName` is displayed:
 ```typescript
 fsxaApi.fetchElement(
     "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
@@ -291,6 +291,7 @@ One filter object must have a:
 [More information to the filters](#filter)
 
 In this example we search for all elements with the `fsType` equals `Example`. We want the `2nd` page with a maximum of `50` entries. However, we do not want the `identifier` to appear:
+
 ```typescript
 fsxaApi.fetchByFilter(
     [
@@ -327,7 +328,7 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 ### Logical Query Operators
 
-<a href="https://docs.mongodb.com/manual/reference/operator/query-logical/" target="_blank">MongoDB Documentation</a>
+These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
 
 | Enum | Operation |
 | --- | --- |
@@ -338,7 +339,7 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 ### Comparison Query Operators
 
-<a href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank">MongoDB Documentation</a>
+These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
 | Enum | Operation |
 | --- | --- |
@@ -353,7 +354,7 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 ### Array Query Operators
 
-<a href="https://docs.mongodb.com/manual/reference/operator/query-array/" target="_blank">MongoDB Documentation</a>
+These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
 
 | Enum | Operation |
 | --- | --- |
@@ -362,12 +363,12 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 ## Disclaimer
 
 This document is provided for information purposes only.
-e-Spirit may change the contents hereof without notice. 
-This document is not warranted to be error-free, nor subject to any 
-other warranties or conditions, whether expressed orally or 
-implied in law, including implied warranties and conditions of 
-merchantability or fitness for a particular purpose. e-Spirit 
-specifically disclaims any liability with respect to this document 
-and no contractual obligations are formed either directly or 
-indirectly by this document. The technologies, functionality, services, 
+e-Spirit may change the contents hereof without notice.
+This document is not warranted to be error-free, nor subject to any
+other warranties or conditions, whether expressed orally or
+implied in law, including implied warranties and conditions of
+merchantability or fitness for a particular purpose. e-Spirit
+specifically disclaims any liability with respect to this document
+and no contractual obligations are formed either directly or
+indirectly by this document. The technologies, functionality, services,
 and processes described herein are subject to change without notice.
