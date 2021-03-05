@@ -95,7 +95,7 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
-Here is an example of how the FSXA-API could be used with an [Express.js](https://expressjs.com/) backend.
+Here is an example of how the FSXA-API could be used with an <a href="https://expressjs.com/" target="_blank">Express.js</a> backend.
 Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
 
 ```typescript
@@ -259,16 +259,15 @@ Returns the corresponding CaaS data entry.
 
 Expects as input parameter an id, which is described in CaaS as 'identifier' and a language abbreviation.
 <br />
-Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys-parameter.
+Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys-parameter. <a href="https://restheart.org/docs/read-docs/#projection" target="_blank">More information</a>.
 
-[//]: # (TODO: provide an example for passing additional parameters plus maybe a link to the documentation of what these may be)
 
-Example:
-
+In this example the additional parameters ensures that only the `identifier` and `displayName` is displayed:
 ```typescript
 fsxaApi.fetchElement(
     "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    "en-EN"
+    "en-EN",
+    {"keys": [{'identifier': 1}, {'displayName': 1}]}
 )
 ```
 
@@ -304,7 +303,7 @@ fsxaApi.fetchByFilter(
     "en",
     2,
     50,
-    {"keys": JSON.stringify({"identifier": 0})}
+    {"keys": {"identifier": 0}}
 )
 ```
 
@@ -328,7 +327,7 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 ### Logical Query Operators
 
-[MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
+<a href="https://docs.mongodb.com/manual/reference/operator/query-logical/" target="_blank">MongoDB Documentation</a>
 
 | Enum | Operation |
 | --- | --- |
@@ -339,7 +338,7 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 ### Comparison Query Operators
 
-[MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
+<a href="https://docs.mongodb.com/manual/reference/operator/query-comparison/" target="_blank">MongoDB Documentation</a>
 
 | Enum | Operation |
 | --- | --- |
@@ -354,7 +353,7 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 ### Array Query Operators
 
-[MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
+<a href="https://docs.mongodb.com/manual/reference/operator/query-array/" target="_blank">MongoDB Documentation</a>
 
 | Enum | Operation |
 | --- | --- |
