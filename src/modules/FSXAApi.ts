@@ -145,7 +145,7 @@ export class FSXAApi {
       this.logger
     )
     const url = `${this.buildCaaSUrl()}/${id}.${locale}?${
-      additionalParams ? stringify(this.buildRestheartParams(additionalParams)) : ''
+      additionalParams ? this.buildRestheartParams(additionalParams) : ''
     }`
     this.logger.info('[Remote][fetchElement] Requesting: ', url, {
       id,
@@ -425,10 +425,12 @@ export class FSXAApi {
     Object.keys(params).forEach(key => {
       if (Array.isArray(params[key])) {
         result[key] = params[key].map(JSON.stringify)
+      } else if (typeof params[key] === 'object') {
+        result[key] = JSON.stringify(params[key])
       } else {
         result[key] = params[key]
       }
     })
-    return result
+    return stringify(result, { indices: false })
   }
 }
