@@ -1,3 +1,10 @@
+## [5.0.2](https://github.com/e-Spirit/fsxa-api/compare/v5.0.1...v5.0.2) (2021-03-09)
+
+
+### Bug Fixes
+
+* 🐛 fixed additionalParams in fetchElement ([#15](https://github.com/e-Spirit/fsxa-api/issues/15)) ([9d0ea37](https://github.com/e-Spirit/fsxa-api/commit/9d0ea37383d7daf8ce04344403d45844924aaff7))
+
 ## [5.0.1](https://github.com/e-Spirit/fsxa-api/compare/v5.0.0...v5.0.1) (2021-03-03)
 
 
