@@ -145,7 +145,9 @@ export class FSXAApi {
       this.logger
     )
     const url = `${this.buildCaaSUrl()}/${id}.${locale}?${
-      additionalParams ? this.buildRestheartParams(additionalParams) : ''
+      additionalParams
+        ? stringify(this.buildRestheartParams(additionalParams), { indices: false })
+        : ''
     }`
     this.logger.info('[Remote][fetchElement] Requesting: ', url, {
       id,
@@ -245,16 +247,7 @@ export class FSXAApi {
         })
       )
     ]
-    const buildAdditionalParams: Record<string, any> = {}
-    Object.keys(additionalParams).forEach(key => {
-      if (Array.isArray(additionalParams[key])) {
-        buildAdditionalParams[key] = additionalParams[key].map(JSON.stringify)
-      } else if (typeof additionalParams[key] === 'object') {
-        buildAdditionalParams[key] = JSON.stringify(additionalParams[key])
-      } else {
-        buildAdditionalParams[key] = additionalParams[key]
-      }
-    })
+    const buildAdditionalParams: Record<string, any> = this.buildRestheartParams(additionalParams)
     // we need to encode array
     const url = `${this.buildCaaSUrl()}?${stringify(
       {
@@ -431,6 +424,6 @@ export class FSXAApi {
         result[key] = params[key]
       }
     })
-    return stringify(result, { indices: false })
+    return result
   }
 }
