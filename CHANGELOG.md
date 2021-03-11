@@ -1,3 +1,10 @@
+# [5.1.0](https://github.com/e-Spirit/fsxa-api/compare/v5.0.2...v5.1.0) (2021-03-11)
+
+
+### Features
+
+* **caasmapper:** format section and link templates in FS_CATALOG entries to match section ([b19fd63](https://github.com/e-Spirit/fsxa-api/commit/b19fd6382ce2b3a6eba1e99f7596c42315a44257))
+
 ## [5.0.2](https://github.com/e-Spirit/fsxa-api/compare/v5.0.1...v5.0.2) (2021-03-09)
 
 
