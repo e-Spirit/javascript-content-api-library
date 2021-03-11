@@ -6,7 +6,7 @@ import {
 } from './modules/QueryBuilder'
 
 export interface CaaSApi_Template {
-  fsType: 'PageTemplate'
+  fsType: 'PageTemplate' | 'SectionTemplate' | 'LinkTemplate'
   name: string
   identifier: string
   uid: string
@@ -135,7 +135,6 @@ export interface CaaSApi_FSButton {
 
 export interface CaaSApi_Card {
   fsType: 'Card'
-  name: string
   identifier: string
   uuid: string
   template: CaaSApi_Template

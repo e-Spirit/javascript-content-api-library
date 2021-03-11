@@ -128,12 +128,30 @@ export class CaaSMapper {
         return entry.value || false
       case 'FS_CATALOG':
         return Promise.all(
-          (entry.value || []).map(async (card, index) => ({
-            id: card.identifier,
-            previewId: this.buildPreviewId(card.identifier),
-            template: card.template.uid,
-            data: await this.mapDataEntries(card.formData, [...path, index, 'data'])
-          }))
+          (entry.value || []).map(async (card, index) => {
+            switch (card.template.fsType) {
+              case 'SectionTemplate':
+              case 'LinkTemplate':
+                return this.mapSection(
+                  {
+                    ...card,
+                    fsType: 'Section',
+                    name: card.template.name,
+                    displayName: card.template.displayName
+                  },
+                  [...path, index]
+                )
+              case 'PageTemplate':
+                return {
+                  id: card.identifier,
+                  previewId: this.buildPreviewId(card.identifier),
+                  template: card.template.uid,
+                  data: await this.mapDataEntries(card.formData, [...path, index, 'data'])
+                }
+              default:
+                return card
+            }
+          })
         )
       case 'FS_REFERENCE':
         if (!entry.value) return null

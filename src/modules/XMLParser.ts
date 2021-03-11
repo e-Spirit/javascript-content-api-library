@@ -17,7 +17,7 @@ class XMLParser {
           // we will replace all non closing br tags, with self-closing once
           .replace(/<br>/gm, '<br />')
           .replace(/&/g, '&amp;')
-          .replace(/'/g, '&apos;')
+          .replace(/'(?=[^>]*<)/g, '&apos;')
           // we need to restructure the link structure into one single link element
           .replace(
             /<div data-fs-type="link\.(.*?)">\s*<script type="application\/json">(.*?)<\/script>\s*<a>(.*?)<\/a>\s*<\/div>/g,
@@ -35,6 +35,7 @@ class XMLParser {
   }
 
   parse(xml: string, identifier: string): Promise<RichTextElement[]> {
+    const sanitizedXml = this.sanitizeXml(xml)
     return new Promise(resolve => {
       // this will be the result, wrapped with a "root" node
       const result: RichTextElement = {
@@ -46,7 +47,7 @@ class XMLParser {
       // we will track the current nested node through the path property
       let path: string[] = []
 
-      const parser = new saxes.SaxesParser()
+      const parser = new saxes.SaxesParser(false as any)
       parser.on('error', err => {
         this.logger.error('[XMLParser]: Error parsing XML', err, xml)
       })
@@ -78,7 +79,7 @@ class XMLParser {
 
       // we will sanitize the incoming xml and wrap it with a root node, so we can be sure, that there will only be one root - node
       // this node will not be returned in the result
-      parser.write(`<root>${this.sanitizeXml(xml)}</root>`).close()
+      parser.write(`<root>${sanitizedXml}</root>`).close()
     })
   }
 
