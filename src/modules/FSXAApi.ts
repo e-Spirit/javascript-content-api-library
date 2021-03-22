@@ -382,7 +382,7 @@ export class FSXAApi {
   }
 
   /**
-   * Gets the project setting of the given language. Works with CaaSConnect > 3
+   * Gets the project setting of the given language. Works with CaaSConnect >= 3.3.0
    * @param locale Language abbreviation like `en` or `de`
    */
   async fetchProjectProperties(locale: string) {
