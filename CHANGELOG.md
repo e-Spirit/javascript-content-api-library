@@ -1,3 +1,10 @@
+## [5.1.1](https://github.com/e-Spirit/fsxa-api/compare/v5.1.0...v5.1.1) (2021-03-22)
+
+
+### Bug Fixes
+
+* **locale:** fix error, where country part of locale would not be used correctly ([77d976d](https://github.com/e-Spirit/fsxa-api/commit/77d976d2c2d7b7f39f0f7b359f4ef243be60c314))
+
 # [5.1.0](https://github.com/e-Spirit/fsxa-api/compare/v5.0.2...v5.1.0) (2021-03-11)
 
 
