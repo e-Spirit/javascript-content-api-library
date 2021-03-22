@@ -245,6 +245,13 @@ export class FSXAApi {
           value: locale.split('_')[0],
           field: 'locale.language'
         })
+      ),
+      JSON.stringify(
+        this.queryBuilder.build({
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+          value: locale.split('_')[1],
+          field: 'locale.country'
+        })
       )
     ]
     const buildAdditionalParams: Record<string, any> = this.buildRestheartParams(additionalParams)
