@@ -216,8 +216,8 @@ export class CaaSMapper {
 
   async mapContent2Section(content2Section: CaaSApi_Content2Section): Promise<Section> {
     return {
-      id: content2Section.identifier,
-      previewId: this.buildPreviewId(content2Section.identifier),
+      id: content2Section.template.identifier,
+      previewId: this.buildPreviewId(content2Section.template.identifier),
       type: 'Section',
       data: {
         entityType: content2Section.entityType,
