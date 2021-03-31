@@ -4,6 +4,7 @@ import {
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum
 } from './modules/QueryBuilder'
+import XMLParser from './modules/XMLParser'
 
 export interface CaaSApi_Template {
   fsType: 'PageTemplate' | 'SectionTemplate' | 'LinkTemplate'
@@ -510,11 +511,15 @@ export type NestedPath = (string | number)[]
 
 export type CustomMapper = (
   entry: CaaSApi_DataEntry,
+  entryPath: NestedPath,
   utils: {
     api: FSXAApi
+    xmlParser: XMLParser
     registerReferencedItem: (identifier: string, path: NestedPath) => string
+    buildPreviewId: (identifier: string) => string
+    mapDataEntries: (entries: CaaSApi_DataEntries, path: NestedPath) => Promise<DataEntries>
   }
-) => Promise<any | undefined>
+) => Promise<any>
 
 export type FSXAApiParams =
   | {
