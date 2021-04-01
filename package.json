@@ -37,7 +37,8 @@
     "prepush": "npm run build",
     "commitmsg": "commitlint -E HUSKY_GIT_PARAMS",
     "dts": "./node_modules/.bin/npm-dts generate -e ./src/FSXAApi.ts",
-    "dev": "npx nodemon dev/index.ts"
+    "dev": "npx nodemon dev/index.ts",
+    "prepare": "npm run build"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
