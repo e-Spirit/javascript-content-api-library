@@ -265,7 +265,7 @@ export class CaaSMapper {
     return {
       id: pageRef.page.identifier,
       refId: pageRef.identifier,
-      previewId: this.buildPreviewId(pageRef.page.identifier),
+      previewId: this.buildPreviewId(pageRef.identifier),
       name: pageRef.page.name,
       layout: pageRef.page.template.uid,
       children: await Promise.all(
