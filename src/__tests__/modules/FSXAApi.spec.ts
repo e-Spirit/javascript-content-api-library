@@ -170,18 +170,32 @@ describe('FSXAApi', () => {
 
   describe('fetchPage', async () => {
     it('should call local url in proxy-mode', async () => {
-      testForLocalUrl(api => api.fetchElement('foobar', 'de_DE'))
+      await testForLocalUrl(api => api.fetchElement('foobar', 'de_DE'))
     })
   })
 
   describe('fetchNavigation', async () => {
     it('should call local url in proxy-mode', async () => {
-      testForLocalUrl(api => api.fetchNavigation(null, 'de_DE'))
+      await testForLocalUrl(api => api.fetchNavigation(null, 'de_DE'))
+    })
+
+    it('should pass extraHeaders', async () => {
+      await testForLocalUrl(
+        api => api.fetchNavigation(null, 'de_DE', { 'x-test': 'foobar' }),
+        fetch => {
+          const request = fetch.mock.calls[0][1]
+          const headers = request && request['headers']
+          expect(headers && 'x-test' in headers && headers['x-test']).toBe('foobar')
+        }
+      )
     })
   })
 })
 
-const testForLocalUrl = async (method: (api: FSXAApi) => Promise<any>) => {
+const testForLocalUrl = async (
+  method: (api: FSXAApi) => Promise<any>,
+  validate?: (fetch: FetchMock) => void
+) => {
   fetchMock.enableMocks()
   const api = new FSXAApi(FSXAContentMode.PREVIEW, {
     mode: 'proxy',
@@ -193,5 +207,6 @@ const testForLocalUrl = async (method: (api: FSXAApi) => Promise<any>) => {
   await method(api)
   expect(mockedFetch).toHaveBeenCalledTimes(1)
   expect(mockedFetch.mock.calls[0][0]).toMatch(/localhost/g)
+  validate && validate(fetchMock)
   fetchMock.disableMocks()
 }
