@@ -7,7 +7,10 @@ const configuration: FSXAConfiguration = {
   caas: 'caas',
   navigationService: 'navigationService',
   projectId: 'projectId',
-  tenantId: 'tenantId'
+  tenantId: 'tenantId',
+  remotes: {
+    media: 'mediaProjectId'
+  }
 }
 
 describe('FSXAApi', () => {
@@ -124,6 +127,17 @@ describe('FSXAApi', () => {
         }).buildCaaSUrl()
       ).toEqual(
         `${configuration.caas}/tenantId/${configuration.projectId}.${FSXAContentMode.PREVIEW}.content`
+      )
+    })
+
+    it('should create correct caas url schema for Remote Projects', () => {
+      expect(
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          mode: 'remote',
+          config: configuration
+        }).buildCaaSUrl('media')
+      ).toEqual(
+        `${configuration.caas}/tenantId/${configuration.remotes?.media}.${FSXAContentMode.PREVIEW}.content`
       )
     })
   })
