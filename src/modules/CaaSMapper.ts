@@ -41,6 +41,10 @@ export enum CaaSMapperErrors {
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
 
+interface ReferencedItemsInfo {
+  [identifier: string]: NestedPath[]
+}
+
 export class CaaSMapper {
   api: FSXAApi
   locale: string
@@ -61,13 +65,35 @@ export class CaaSMapper {
     this.xmlParser = new XMLParser(logger)
   }
 
+  // stores references to items of current Project
   _referencedItems: {
     [identifier: string]: NestedPath[]
   } = {}
+  // stores References to remote Items
+  _remoteReferences: {
+    [projectId: string]: ReferencedItemsInfo
+  } = {}
 
-  registerReferencedItem(identifier: string, path: NestedPath): string {
-    this._referencedItems[identifier] = [...(this._referencedItems[identifier] || []), path]
-    return `[REFERENCED-ITEM-${identifier}]`
+  /**
+   * registers a referenced Item to be fetched later. If a remoteProjectId is passed,
+   * the item will be fetched from the remote Project. Multiple Calls for the same item
+   * with different paths are intended
+   * @param identifier item identifier
+   * @param path after fetch, items are inserted at all registered paths
+   * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
+   * @returns placeholder string
+   */
+  registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
+    if (!remoteProjectId) {
+      this._referencedItems[identifier] = [...(this._referencedItems[identifier] || []), path]
+      return `[REFERENCED-ITEM-${identifier}]`
+    } else {
+      this._remoteReferences[remoteProjectId][identifier] = [
+        ...(this._remoteReferences[remoteProjectId][identifier] || []),
+        path
+      ]
+      return `[REFERENCED-REMOTE-ITEM-${identifier}]`
+    }
   }
 
   buildPreviewId(identifier: string) {
@@ -370,12 +396,12 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
-    return this.resolveReferences(response as {})
+    return this.resolveAllReferences(response as {})
   }
 
   async mapPageRefResponse(pageRef: CaaSApi_PageRef): Promise<Page> {
     const mappedPage = await this.mapPageRef(pageRef)
-    return this.resolveReferences(mappedPage)
+    return this.resolveAllReferences(mappedPage)
   }
 
   async mapFilterResponse(
@@ -407,16 +433,39 @@ export class CaaSMapper {
         })
       )
     ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
-    return this.resolveReferences(mappedItems)
+    return this.resolveAllReferences(mappedItems)
+  }
+
+  /**
+   * Calls ResolveReferences for currentProject and each RemoteProject
+   *
+   * @param data
+   * @returns data
+   */
+  async resolveAllReferences<Type extends {}>(data: Type): Promise<Type> {
+    const remoteIds = Object.keys(this._remoteReferences)
+
+    await Promise.all([
+      this.resolveReferencesPerProject(data),
+      ...remoteIds.map(remoteId => this.resolveReferencesPerProject(data, remoteId))
+    ])
+
+    return data
   }
 
   /**
    * This method will create a filter for all referenced items that are registered inside of the referencedItems
-   * and fetch them in a single CaaS-Request
+   * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferences<Type extends {}>(data: Type): Promise<Type> {
-    const ids = Object.keys(this._referencedItems)
+  async resolveReferencesPerProject<Type extends {}>(
+    data: Type,
+    remoteProjectId?: string
+  ): Promise<Type> {
+    const referencedItems = remoteProjectId
+      ? this._remoteReferences[remoteProjectId]
+      : this._referencedItems
+    const ids = Object.keys(referencedItems)
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
     if (ids.length > 0) {
       const response = await Promise.all(
@@ -431,13 +480,15 @@ export class CaaSMapper {
             ],
             this.locale,
             1,
-            REFERENCED_ITEMS_CHUNK_SIZE
+            REFERENCED_ITEMS_CHUNK_SIZE,
+            undefined,
+            remoteProjectId
           )
         )
       )
       const fetchedItems = response.reduce((result, entries) => [...result, ...entries], [])
       ids.forEach(id =>
-        this._referencedItems[id].forEach(path =>
+        referencedItems[id].forEach(path =>
           set(data, path, fetchedItems.find(data => data.id === id) || null)
         )
       )
