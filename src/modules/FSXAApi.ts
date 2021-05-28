@@ -22,7 +22,6 @@ export enum FSXAApiErrors {
   UNKNOWN_CONTENT_MODE = 'The content mode must be preview or release.',
   UNKNOWN_API_MODE = 'The api mode must be remote or proxy.',
   UNKNOWN_ERROR = 'An unknown error occured. Please check the logs for more information',
-  UNKNOWN_REMOTE = 'The specified remote project was not found in the configuration. [remotes]',
   MISSING_BASE_URL = 'You do need to specify a baseUrl in proxy mode.',
   MISSING_API_KEY = 'No CaaS-ApiKey was passed via the configuration. [apiKey]',
   MISSING_CAAS_URL = 'No CaaS-URL was passed via the configuration. [caas]',
@@ -79,25 +78,10 @@ export class FSXAApi {
     }
   }
 
-  private getRemoteProjectId(remoteProject: string) {
-    if (this.params.mode === 'proxy') {
-      return ''
-    }
-    const projectId = this.params.config.remotes ? this.params.config.remotes[remoteProject] : null
-    if (!projectId) {
-      throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
-    }
-    return projectId
-  }
-
-  buildCaaSUrl(remoteProject?: string): string {
-    if (this.params.mode === 'proxy') {
-      return ''
-    }
-    const projectId = remoteProject
-      ? this.getRemoteProjectId(remoteProject)
-      : this.params.config.projectId
-    return `${this.params.config.caas}/${this.params.config.tenantId}/${projectId}.${this.mode}.content`
+  buildCaaSUrl(): string {
+    return this.params.mode === 'proxy'
+      ? ''
+      : `${this.params.config.caas}/${this.params.config.tenantId}/${this.params.config.projectId}.${this.mode}.content`
   }
 
   buildNavigationServiceUrl(): string {
@@ -109,8 +93,7 @@ export class FSXAApi {
   async fetchElement(
     id: string,
     locale: string,
-    additionalParams: Record<'keys' | string, any> = {},
-    remoteProject?: string
+    additionalParams: Record<'keys' | string, any> = {}
   ): Promise<Page | GCAPage | Dataset | Image | any | null> {
     /**
      * If we are in proxy mode (client-side), we only want to pipe the input through to the "local" api (server-side) that is able to
@@ -161,7 +144,7 @@ export class FSXAApi {
       },
       this.logger
     )
-    const url = `${this.buildCaaSUrl(remoteProject)}/${id}.${locale}?${
+    const url = `${this.buildCaaSUrl()}/${id}.${locale}?${
       additionalParams
         ? stringify(this.buildRestheartParams(additionalParams), { indices: false })
         : ''
@@ -212,8 +195,7 @@ export class FSXAApi {
     pagesize = 100,
     // you can pass in all available restheart-parameters that are not available through our api
     // Using the keys parameter will remove the default mapping mechanism
-    additionalParams: Record<'keys' | string, any> = {},
-    remoteProject?: string
+    additionalParams: Record<'keys' | string, any> = {}
   ): Promise<(Page | GCAPage | Image | Dataset)[]> {
     if (pagesize < 1 || pagesize > 1000) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_SIZE)
     if (page < 1) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_NUMBER)
@@ -274,7 +256,7 @@ export class FSXAApi {
     ]
     const buildAdditionalParams: Record<string, any> = this.buildRestheartParams(additionalParams)
     // we need to encode array
-    const url = `${this.buildCaaSUrl(remoteProject)}?${stringify(
+    const url = `${this.buildCaaSUrl()}?${stringify(
       {
         filter: buildFilters,
         page,
