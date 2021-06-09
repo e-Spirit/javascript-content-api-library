@@ -63,6 +63,9 @@ export class CaaSMapper {
     this.locale = locale
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
+    Object.keys(this.api.config?.remotes || {}).map((item: string) => {
+      this._remoteReferences[item] = [] as any
+    })
   }
 
   // stores references to items of current Project
@@ -182,7 +185,11 @@ export class CaaSMapper {
       case 'FS_REFERENCE':
         if (!entry.value) return null
         if (entry.value.fsType === 'Media') {
-          return this.registerReferencedItem(entry.value.identifier, path)
+          return this.registerReferencedItem(
+            entry.value.identifier,
+            path,
+            entry.value.remoteProject
+          )
         } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
           return {
             referenceId: entry.value.identifier,

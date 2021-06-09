@@ -181,6 +181,7 @@ export interface CaaSApi_FSReference {
     uidType: string
     mediaType: 'PICTURE'
     url: string
+    remoteProject: string
   } | null
 }
 
