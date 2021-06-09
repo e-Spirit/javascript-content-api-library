@@ -63,7 +63,7 @@ export class CaaSMapper {
     this.locale = locale
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
-    Object.keys(this.api.config?.remotes || {}).map((item: string) => {
+    Object.keys(this.api.config?.remotes || {}).forEach((item: string) => {
       this._remoteReferences[item] = [] as any
     })
   }
@@ -87,16 +87,19 @@ export class CaaSMapper {
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    if (!remoteProjectId) {
-      this._referencedItems[identifier] = [...(this._referencedItems[identifier] || []), path]
-      return `[REFERENCED-ITEM-${identifier}]`
-    } else {
+    remoteProjectId = Object.keys(this.api.config?.remotes || {}).find(
+      key => this.api.config?.remotes![key] === remoteProjectId
+    )
+    if (remoteProjectId) {
       this._remoteReferences[remoteProjectId][identifier] = [
         ...(this._remoteReferences[remoteProjectId][identifier] || []),
         path
       ]
       return `[REFERENCED-REMOTE-ITEM-${identifier}]`
     }
+
+    this._referencedItems[identifier] = [...(this._referencedItems[identifier] || []), path]
+    return `[REFERENCED-ITEM-${identifier}]`
   }
 
   buildPreviewId(identifier: string) {
