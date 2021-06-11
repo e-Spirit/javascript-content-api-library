@@ -21,7 +21,7 @@ export enum ExpressRouterIntegrationErrors {
 }
 function getExpressRouter({ api }: GetExpressRouterContext) {
   const router = express.Router()
-  router.use(bodyParser.json())
+  router.use(express.json())
   router.post(
     FETCH_ELEMENT_ROUTE,
     async (req: express.Request<FetchElementRouteParams, any, FetchElementRouteBody>, res) => {
