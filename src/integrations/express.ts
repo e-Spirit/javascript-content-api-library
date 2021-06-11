@@ -16,7 +16,7 @@ export interface GetExpressRouterContext {
   api: FSXAApi
 }
 export enum ExpressRouterIntegrationErrors {
-  MISSING_LOCALE = 'Please specify a locale through ?locale.',
+  MISSING_LOCALE = 'Please specify a locale in the body through: e.g. "locale": "de_DE" ',
   UNKNOWN_ROUTE = 'Could not map given route and method.'
 }
 function getExpressRouter({ api }: GetExpressRouterContext) {
