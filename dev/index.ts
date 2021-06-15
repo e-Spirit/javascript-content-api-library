@@ -46,26 +46,31 @@ app.listen(3001, async () => {
       mode: 'proxy',
       baseUrl: 'http://localhost:3001/api'
     },
-    3
+    0
   )
   try {
-    const response = await remoteApi.fetchByFilter(
-      [
-        { field: 'entityType', operator: ComparisonQueryOperatorEnum.EQUALS, value: 'product' },
-        { field: 'schema', operator: ComparisonQueryOperatorEnum.EQUALS, value: 'products' },
-        {
-          field: 'displayName',
-          operator: ComparisonQueryOperatorEnum.EQUALS,
-          value: 'Thermo NUK-33'
-        }
-      ],
-      'de_DE'
-    )
-    //console.log('tt_teaser_image', inspect(response, false, null, true))
+    const [respFetchByFilter, respFetchElement] = await Promise.all([
+      proxyApi.fetchByFilter(
+        [
+          {
+            field: 'identifier',
+            operator: ComparisonQueryOperatorEnum.EQUALS,
+            value: 'xxxxxxxxxxxxxxxxxxx'
+          }
+        ],
+        'en_EN'
+      ),
+      proxyApi.fetchElement('xxxxxxxxxxxxxxxxxxx', 'en_EN')
+    ])
     createFile({
       dirName: './dev/dist',
-      fileName: 'tt_teaser_image.json',
-      content: (response[0] as any).data.tt_teaser_image
+      fileName: 'fetchByFilter.json',
+      content: respFetchByFilter
+    })
+    createFile({
+      dirName: './dev/dist',
+      fileName: 'fetchElement.json',
+      content: respFetchElement
     })
   } catch (err) {
     console.log('ERROR', err)

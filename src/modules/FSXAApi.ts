@@ -12,6 +12,7 @@ import {
   QueryBuilderQuery
 } from '../types'
 import { stringify } from 'qs'
+import { clean } from '../utils'
 
 export enum FSXAContentMode {
   PREVIEW = 'preview',
@@ -118,11 +119,17 @@ export class FSXAApi {
      */
     if (this.params.mode === 'proxy') {
       const url = `${this.params.baseUrl}${getFetchElementRoute(id)}`
-      this.logger.info('[Proxy][fetchElement] Requesting:', url, {
-        id,
-        locale,
-        additionalParams
-      })
+      this.logger.info(
+        '[Proxy][fetchElement] Requesting:',
+        url,
+        clean({
+          id,
+          locale,
+          additionalParams,
+          remoteProject
+        })
+      )
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -130,9 +137,11 @@ export class FSXAApi {
         },
         body: JSON.stringify({
           locale,
-          additionalParams
+          additionalParams,
+          remote: remoteProject
         })
       })
+
       if (!response.ok) {
         if (response.status === 404) {
           this.logger.error(`[Proxy][fetchElement] Error: ${FSXAApiErrors.NOT_FOUND}`)
@@ -204,6 +213,7 @@ export class FSXAApi {
    * @param page page that should be fetched
    * @param pagesize the number of elements that should be fetched
    * @param additionalParams You can specify additional params that will be appended to the CaaS-Url. Be aware that the response is not mapped, if you pass the keys-parameter
+   * @param remoteProject id of the remote media project, where the data should be fetched of
    */
   async fetchByFilter(
     filters: QueryBuilderQuery[],
@@ -219,13 +229,18 @@ export class FSXAApi {
     if (page < 1) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_NUMBER)
     if (this.params.mode === 'proxy') {
       const url = `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}`
-      this.logger.info('[Proxy][fetchByFilter] Requesting:', url, {
-        filters,
-        locale,
-        page,
-        pagesize,
-        additionalParams
-      })
+      this.logger.info(
+        '[Proxy][fetchByFilter] Requesting:',
+        url,
+        clean({
+          filters,
+          locale,
+          page,
+          pagesize,
+          additionalParams,
+          remote: remoteProject
+        })
+      )
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -236,7 +251,8 @@ export class FSXAApi {
           locale,
           page,
           pagesize,
-          additionalParams
+          additionalParams,
+          remote: remoteProject
         })
       })
       if (!response.ok) {

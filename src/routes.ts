@@ -16,7 +16,8 @@ export interface FetchNavigationRouteBody {
 
 export interface FetchElementRouteBody {
   locale: string
-  additionalParams: Record<string, any>
+  additionalParams?: Record<string, any>
+  remote?: string
 }
 
 export interface FetchByFilterBody {
@@ -25,4 +26,5 @@ export interface FetchByFilterBody {
   page?: number
   pagesize?: number
   additionalParams: Record<string, any>
+  remote: string
 }

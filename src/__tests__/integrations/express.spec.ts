@@ -65,9 +65,11 @@ describe('Express-Integration', () => {
   describe(FETCH_ELEMENT_ROUTE, () => {
     it('should correctly map function params', async () => {
       await proxyApi.fetchElement('FOOBAR', 'de_DE')
-      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', {})
+      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', {}, undefined)
       await proxyApi.fetchElement('FOOBAR', 'de_DE', { test: '1' })
-      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' })
+      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' }, undefined)
+      await proxyApi.fetchElement('FOOBAR', 'de_DE', { test: '1' }, 'media')
+      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' }, 'media')
     })
 
     it('should return an error, when locale is not specified', async () => {
@@ -80,7 +82,7 @@ describe('Express-Integration', () => {
 
     it('should pass through response data', async () => {
       expect(await proxyApi.fetchElement('FOOBAR', 'de_DE', { test: '1' })).toEqual({ foo: 'bar' })
-      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' })
+      expect(fetchElementSpy).toHaveBeenCalledWith('FOOBAR', 'de_DE', { test: '1' }, undefined)
     })
   })
 
@@ -117,7 +119,7 @@ describe('Express-Integration', () => {
     it('should correctly map function params', async () => {
       await proxyApi.fetchByFilter([], 'de_DE')
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(1)
-      expect(fetchByFilterSpy).toHaveBeenCalledWith([], 'de_DE', 1, 100, {})
+      expect(fetchByFilterSpy).toHaveBeenCalledWith([], 'de_DE', 1, 100, {}, undefined)
       const filters_2: QueryBuilderQuery[] = [
         {
           operator: ComparisonQueryOperatorEnum.EQUALS,

@@ -13,105 +13,105 @@ const configuration: FSXAConfiguration = {
   }
 }
 
-describe('FSXAApi', () => {
-  describe('validate configuration', () => {
-    it('should throw an error if wrong content mode is set', () => {
-      expect(
-        () =>
-          // @ts-ignore
-          new FSXAApi('foobar', {
-            config: configuration,
-            mode: 'remote'
-          })
-      ).toThrowError(FSXAApiErrors.UNKNOWN_CONTENT_MODE)
-    })
-
-    it('should throw an error if an unknown api mode is passed', () => {
-      expect(
-        () =>
-          new FSXAApi(FSXAContentMode.PREVIEW, {
-            // @ts-ignore
-            mode: 'foobar'
-          })
-      ).toThrowError(FSXAApiErrors.UNKNOWN_API_MODE)
-    })
-
-    it('should throw an error if no base url is passed in proxy mode', () => {
-      expect(
-        () =>
-          // @ts-ignore
-          new FSXAApi(FSXAContentMode.PREVIEW, {
-            mode: 'proxy'
-          })
-      ).toThrowError(FSXAApiErrors.MISSING_BASE_URL)
-    })
-
-    it('should throw an error if no apiKey is passed via configuration', () => {
-      expect(
-        () =>
-          new FSXAApi(FSXAContentMode.PREVIEW, {
-            mode: 'remote',
-            config: {
-              ...configuration,
-              apiKey: ''
-            }
-          })
-      ).toThrowError(FSXAApiErrors.MISSING_API_KEY)
-    })
-
-    it('should throw an error if no caas url is passed via configuration', () => {
-      expect(
-        () =>
-          new FSXAApi(FSXAContentMode.PREVIEW, {
-            mode: 'remote',
-            config: {
-              ...configuration,
-              caas: ''
-            }
-          })
-      ).toThrowError(FSXAApiErrors.MISSING_CAAS_URL)
-    })
-
-    it('should throw an error if no navigationService url is passed via configuration', () => {
-      expect(
-        () =>
-          new FSXAApi(FSXAContentMode.PREVIEW, {
-            mode: 'remote',
-            config: {
-              ...configuration,
-              navigationService: ''
-            }
-          })
-      ).toThrowError(FSXAApiErrors.MISSING_NAVIGATION_SERVICE_URL)
-    })
-
-    it('should throw an error if no projectId is passed via configuration', () => {
-      expect(
-        () =>
-          new FSXAApi(FSXAContentMode.PREVIEW, {
-            mode: 'remote',
-            config: {
-              ...configuration,
-              projectId: ''
-            }
-          })
-      ).toThrowError(FSXAApiErrors.MISSING_PROJECT_ID)
-    })
-
-    it('should throw an error if no tenantId is passed via configuration', () => {
-      expect(
-        () =>
-          new FSXAApi(FSXAContentMode.PREVIEW, {
-            mode: 'remote',
-            config: {
-              ...configuration,
-              tenantId: ''
-            }
-          })
-      ).toThrowError(FSXAApiErrors.MISSING_TENANT_ID)
-    })
+describe('Configuration', () => {
+  it('should throw an error if wrong content mode is set', () => {
+    expect(
+      () =>
+        // @ts-ignore
+        new FSXAApi('foobar', {
+          config: configuration,
+          mode: 'remote'
+        })
+    ).toThrowError(FSXAApiErrors.UNKNOWN_CONTENT_MODE)
   })
 
+  it('should throw an error if an unknown api mode is passed', () => {
+    expect(
+      () =>
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          // @ts-ignore
+          mode: 'foobar'
+        })
+    ).toThrowError(FSXAApiErrors.UNKNOWN_API_MODE)
+  })
+
+  it('should throw an error if no base url is passed in proxy mode', () => {
+    expect(
+      () =>
+        // @ts-ignore
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          mode: 'proxy'
+        })
+    ).toThrowError(FSXAApiErrors.MISSING_BASE_URL)
+  })
+
+  it('should throw an error if no apiKey is passed via configuration', () => {
+    expect(
+      () =>
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          mode: 'remote',
+          config: {
+            ...configuration,
+            apiKey: ''
+          }
+        })
+    ).toThrowError(FSXAApiErrors.MISSING_API_KEY)
+  })
+
+  it('should throw an error if no caas url is passed via configuration', () => {
+    expect(
+      () =>
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          mode: 'remote',
+          config: {
+            ...configuration,
+            caas: ''
+          }
+        })
+    ).toThrowError(FSXAApiErrors.MISSING_CAAS_URL)
+  })
+
+  it('should throw an error if no navigationService url is passed via configuration', () => {
+    expect(
+      () =>
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          mode: 'remote',
+          config: {
+            ...configuration,
+            navigationService: ''
+          }
+        })
+    ).toThrowError(FSXAApiErrors.MISSING_NAVIGATION_SERVICE_URL)
+  })
+
+  it('should throw an error if no projectId is passed via configuration', () => {
+    expect(
+      () =>
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          mode: 'remote',
+          config: {
+            ...configuration,
+            projectId: ''
+          }
+        })
+    ).toThrowError(FSXAApiErrors.MISSING_PROJECT_ID)
+  })
+
+  it('should throw an error if no tenantId is passed via configuration', () => {
+    expect(
+      () =>
+        new FSXAApi(FSXAContentMode.PREVIEW, {
+          mode: 'remote',
+          config: {
+            ...configuration,
+            tenantId: ''
+          }
+        })
+    ).toThrowError(FSXAApiErrors.MISSING_TENANT_ID)
+  })
+})
+
+describe('FSXAApi', () => {
   describe('buildCaaSURl', () => {
     it('should return an empty string if proxy mode is set', () => {
       expect(
