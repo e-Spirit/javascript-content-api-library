@@ -38,7 +38,7 @@ app.listen(3001, async () => {
     3
   )
   try {
-    const response = await proxyApi.fetchProjectProperties('de')
+    const response = await proxyApi.fetchProjectProperties("de_DE")
     console.log(inspect(response, false, null, true))
   } catch (err) {
     console.log('ERROR', err)

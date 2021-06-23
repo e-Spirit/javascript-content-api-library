@@ -14,5 +14,7 @@ Make sure that the `.env` file is located in the `dev` folder.
 
 These will be loaded during execution.
 
+To install all needed dependencies run `npm install` before you start the service.
+
 To start the test environment, you can enter the `npm run dev` in the terminal.
 This command is started via [nodemon](https://www.npmjs.com/package/nodemon), so a hot-reload is included.
