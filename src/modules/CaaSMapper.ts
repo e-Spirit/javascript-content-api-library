@@ -46,6 +46,7 @@ interface ReferencedItemsInfo {
 }
 
 export class CaaSMapper {
+  public logger: Logger
   api: FSXAApi
   locale: string
   xmlParser: XMLParser
@@ -64,8 +65,9 @@ export class CaaSMapper {
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
     Object.keys(this.api.config?.remotes || {}).forEach((item: string) => {
-      this._remoteReferences[item] = [] as any
+      this._remoteReferences[item] = ([] as unknown) as ReferencedItemsInfo
     })
+    this.logger = logger
   }
 
   // stores references to items of current Project
@@ -83,16 +85,21 @@ export class CaaSMapper {
    * with different paths are intended
    * @param identifier item identifier
    * @param path after fetch, items are inserted at all registered paths
-   * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
+   * @param remoteProjectKey optional. If passed, the item will be fetched from the specified project
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    remoteProjectId = Object.keys(this.api.config?.remotes || {}).find(
+    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find(
       key => this.api.config?.remotes![key] === remoteProjectId
     )
-    if (remoteProjectId) {
-      this._remoteReferences[remoteProjectId][identifier] = [
-        ...(this._remoteReferences[remoteProjectId][identifier] || []),
+    if (remoteProjectId && !remoteProjectKey) {
+      this.logger.warn(
+        `Item with identifier '${identifier}' was tried to register from remoteProject '${remoteProjectId}' but no remote key was found in the config.`
+      )
+    }
+    if (remoteProjectKey) {
+      this._remoteReferences[remoteProjectKey][identifier] = [
+        ...(this._remoteReferences[remoteProjectKey][identifier] || []),
         path
       ]
       return `[REFERENCED-REMOTE-ITEM-${identifier}]`

@@ -79,7 +79,7 @@ If you want to use the `remote` mode, you have to specify all authorization keys
 
 You can also include remote projects if you want to use remote media.
 
-For this you can add another parameter called `remotes` to the config. There it expects an object, which requires a unique name as key and the corresponding project id as value. For example:
+For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and the corresponding project id as value. For example:
 
 ```typescript
 {
@@ -281,7 +281,7 @@ Returns the corresponding CaaS data entry.
 
 Expects as input parameter an id, which is described in CaaS as 'identifier' and a language abbreviation.
 <br />
-Optionally, additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys-parameter. For more information please refer to the [restheart documentation](https://restheart.org/docs/read-docs/#projection).
+Optionally, additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys. For more information please refer to the [restheart documentation](https://restheart.org/docs/read-docs/#projection).
 <br />
 Optionally, a remoteProject can be passed. If one is passed, the element will be fetched from this project instead of the default one.
 

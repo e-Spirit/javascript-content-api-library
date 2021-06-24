@@ -46,7 +46,7 @@ app.listen(3001, async () => {
       mode: 'proxy',
       baseUrl: 'http://localhost:3001/api'
     },
-    0
+    3
   )
   try {
     const [respFetchByFilter, respFetchElement] = await Promise.all([
