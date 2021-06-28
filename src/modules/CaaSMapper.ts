@@ -1,4 +1,3 @@
-import set from 'lodash.set'
 import { FSXAApi, ComparisonQueryOperatorEnum } from './'
 import {
   CaaSApi_Body,
@@ -30,7 +29,7 @@ import {
   Section
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk } from 'lodash'
+import { set, chunk } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 
@@ -116,9 +115,12 @@ export class CaaSMapper {
 
   async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
     if (this.customMapper) {
-      const result = await this.customMapper(entry, {
-        registerReferencedItem: this.registerReferencedItem,
-        api: this.api
+      const result = await this.customMapper(entry, path, {
+        api: this.api,
+        xmlParser: this.xmlParser,
+        registerReferencedItem: this.registerReferencedItem.bind(this),
+        buildPreviewId: this.buildPreviewId.bind(this),
+        mapDataEntries: this.mapDataEntries.bind(this)
       })
       if (typeof result !== 'undefined') return result
     }
@@ -285,7 +287,6 @@ export class CaaSMapper {
       case 'Content2Section':
         return await this.mapContent2Section(content)
       case 'Section':
-        return await this.mapSection(content, path)
       case 'SectionReference':
         return await this.mapSection(content, path)
       default:

@@ -1,3 +1,19 @@
+## [5.2.1](https://github.com/e-Spirit/fsxa-api/compare/v5.2.0...v5.2.1) (2021-06-11)
+
+
+### Bug Fixes
+
+* **express.ts:** fix the body request locale error message ([#26](https://github.com/e-Spirit/fsxa-api/issues/26)) ([7c53fb4](https://github.com/e-Spirit/fsxa-api/commit/7c53fb4ab4545b664fa2f02a6c2e65e86d4d024a))
+* **express.ts:** fix the deprecated method ([#28](https://github.com/e-Spirit/fsxa-api/issues/28)) ([c237cd4](https://github.com/e-Spirit/fsxa-api/commit/c237cd45ea3d5a5b6fb548a1a9278da6ec3742f0))
+
+# [5.2.0](https://github.com/e-Spirit/fsxa-api/compare/v5.1.1...v5.2.0) (2021-04-22)
+
+
+### Features
+
+* **custom mapper:** simplify custom mapper usage ([#20](https://github.com/e-Spirit/fsxa-api/issues/20)) ([9208eb5](https://github.com/e-Spirit/fsxa-api/commit/9208eb525e18f849ad2e78b0b939e5e5e02e8802))
+* **navigation / pass extra headers:** allow passing of extra headers to navigation service ([#22](https://github.com/e-Spirit/fsxa-api/issues/22)) ([62b749d](https://github.com/e-Spirit/fsxa-api/commit/62b749d1670eeab15fbe0aaed25e4074b6d4ed16))
+
 ## [5.1.1](https://github.com/e-Spirit/fsxa-api/compare/v5.1.0...v5.1.1) (2021-03-22)
 
 

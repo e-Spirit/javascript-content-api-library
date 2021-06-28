@@ -49,29 +49,8 @@ app.listen(3001, async () => {
     3
   )
   try {
-    const [respFetchByFilter, respFetchElement] = await Promise.all([
-      proxyApi.fetchByFilter(
-        [
-          {
-            field: 'identifier',
-            operator: ComparisonQueryOperatorEnum.EQUALS,
-            value: 'xxxxxxxxxxxxxxxxxxx'
-          }
-        ],
-        'en_EN'
-      ),
-      proxyApi.fetchElement('xxxxxxxxxxxxxxxxxxx', 'en_EN')
-    ])
-    createFile({
-      dirName: './dev/dist',
-      fileName: 'fetchByFilter.json',
-      content: respFetchByFilter
-    })
-    createFile({
-      dirName: './dev/dist',
-      fileName: 'fetchElement.json',
-      content: respFetchElement
-    })
+    const response = await proxyApi.fetchProjectProperties('de_DE')
+    console.log(inspect(response, false, null, true))
   } catch (err) {
     console.log('ERROR', err)
   }

@@ -16,12 +16,12 @@ export interface GetExpressRouterContext {
   api: FSXAApi
 }
 export enum ExpressRouterIntegrationErrors {
-  MISSING_LOCALE = 'Please specify a locale through ?locale.',
+  MISSING_LOCALE = 'Please specify a locale in the body through: e.g. "locale": "de_DE" ',
   UNKNOWN_ROUTE = 'Could not map given route and method.'
 }
 function getExpressRouter({ api }: GetExpressRouterContext) {
   const router = express.Router()
-  router.use(bodyParser.json())
+  router.use(express.json())
   router.post(
     FETCH_ELEMENT_ROUTE,
     async (req: express.Request<FetchElementRouteParams, any, FetchElementRouteBody>, res) => {
