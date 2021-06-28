@@ -89,9 +89,10 @@ export class CaaSMapper {
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find(
-      key => this.api.config?.remotes![key] === remoteProjectId
-    )
+    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find(key => {
+      return this.api.config?.remotes![key].id === remoteProjectId
+    })
+
     if (remoteProjectId && !remoteProjectKey) {
       this.logger.warn(
         `Item with identifier '${identifier}' was tried to register from remoteProject '${remoteProjectId}' but no remote key was found in the config.`
@@ -482,6 +483,15 @@ export class CaaSMapper {
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
+
+    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find(key => {
+      return key === remoteProjectId
+    })
+    const locale =
+      remoteProjectKey && this.api.config?.remotes
+        ? this.api.config?.remotes[remoteProjectKey].locale
+        : this.locale
+
     const ids = Object.keys(referencedItems)
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
     if (ids.length > 0) {
@@ -495,7 +505,7 @@ export class CaaSMapper {
                 field: 'identifier'
               }
             ],
-            this.locale,
+            locale,
             1,
             REFERENCED_ITEMS_CHUNK_SIZE,
             undefined,

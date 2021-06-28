@@ -30,7 +30,7 @@ const remoteApi = new FSXAApi(
       caas: API_CAAS!,
       projectId: API_PROJECT_ID!,
       tenantId: API_TENANT_ID!,
-      remotes: API_REMOTES ? (JSON.parse(API_REMOTES) as Record<string, string>) : {}
+      remotes: API_REMOTES ? JSON.parse(API_REMOTES) : {}
     }
   },
   3

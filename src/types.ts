@@ -534,7 +534,7 @@ export interface FSXAConfiguration {
   projectId: string
   tenantId: string
   customMapper?: CustomMapper
-  remotes?: Record<string, string>
+  remotes?: Record<string, { id: string; locale: string }>
 }
 
 export interface ObjectMap<ValueType = any> {

@@ -9,7 +9,7 @@ const configuration: FSXAConfiguration = {
   projectId: 'projectId',
   tenantId: 'tenantId',
   remotes: {
-    media: 'mediaProjectId'
+    media: { id: 'mediaProjectId', locale: 'locale' }
   }
 }
 
@@ -137,7 +137,7 @@ describe('FSXAApi', () => {
           config: configuration
         }).buildCaaSUrl('media')
       ).toEqual(
-        `${configuration.caas}/tenantId/${configuration.remotes?.media}.${FSXAContentMode.PREVIEW}.content`
+        `${configuration.caas}/tenantId/${configuration.remotes?.media.id}.${FSXAContentMode.PREVIEW}.content`
       )
     })
   })

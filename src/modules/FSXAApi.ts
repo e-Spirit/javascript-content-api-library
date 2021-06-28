@@ -84,7 +84,9 @@ export class FSXAApi {
     if (this.params.mode === 'proxy') {
       return ''
     }
-    const projectId = this.params.config.remotes ? this.params.config.remotes[remoteProject] : null
+    const projectId = this.params.config.remotes
+      ? this.params.config.remotes[remoteProject].id
+      : null
     if (!projectId) {
       throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
     }
@@ -170,6 +172,9 @@ export class FSXAApi {
       },
       this.logger
     )
+    locale =
+      remoteProject && this.config?.remotes ? this.config?.remotes[remoteProject].locale : locale
+
     const url = `${this.buildCaaSUrl(remoteProject)}/${id}.${locale}?${
       additionalParams
         ? stringify(this.buildRestheartParams(additionalParams), { indices: false })

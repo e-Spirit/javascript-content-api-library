@@ -79,7 +79,10 @@ If you want to use the `remote` mode, you have to specify all authorization keys
 
 You can also include remote projects if you want to use remote media.
 
-For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and the corresponding project id as value. For example:
+> **_Attention_**<br>
+> Currently the FSXA-API can only work with the master language of the remote media project.
+
+For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
 
 ```typescript
 {
@@ -90,7 +93,7 @@ For this you can add another parameter called `remotes` to the config. This para
             caas: "https://your.caas.url",
             projectId: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
             tenantId: "your-tenant-id",
-            remote: {"media":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"}
+            remotes: { "media": {"id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "locale": "en_GB"} }
     }
 }
 ```
