@@ -1,7 +1,7 @@
 import {inspect} from "util";
 import dotenv from "dotenv"
 import express from "express";
-import {ComparisonQueryOperatorEnum, FSXAApi, FSXAContentMode} from "../src"
+import { FSXAApi, FSXAContentMode} from "../src"
 import {default as expressIntegration} from "../src/integrations/express"
 require('cross-fetch/polyfill')
 
@@ -38,8 +38,7 @@ app.listen(3001, async () => {
     3
   )
   try {
-   const response = await proxyApi.fetchProjectProperties("de_DE")
-   
+    const response = await proxyApi.fetchProjectProperties("de_DE")
     console.log(inspect(response, false, null, true))
   } catch (err) {
     console.log('ERROR', err)

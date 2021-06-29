@@ -571,7 +571,7 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.NOT_AN_ARRAY)
       })
 
-      it('should return an query which includes an empty array', () => {
+      it('should return a query which includes an empty array', () => {
         expect(
           builder.build({
             operator: ComparisonQueryOperatorEnum.IN,
