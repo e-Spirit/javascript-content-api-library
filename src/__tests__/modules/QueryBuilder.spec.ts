@@ -577,7 +577,7 @@ describe('QueryBuilder', () => {
             value: [],
             field: 'foobar'
           })
-        ).toEqual(null)
+        ).toEqual({ foobar: { $in: [] } })
       })
 
       it('should return the correct markup', () => {
@@ -634,7 +634,7 @@ describe('QueryBuilder', () => {
             value: [],
             field: 'foobar'
           })
-        ).toEqual(null)
+        ).toEqual({ foobar: { $nin: [] } })
       })
 
       it('should return the correct markup', () => {
@@ -691,7 +691,7 @@ describe('QueryBuilder', () => {
             value: [],
             field: 'foobar'
           })
-        ).toEqual(null)
+        ).toEqual({ foobar: { $all: [] } })
       })
 
       it('should return the correct markup', () => {
@@ -720,7 +720,7 @@ describe('QueryBuilder', () => {
             field: 'foobar'
           }
         ])
-      ).toEqual([])
+      ).toEqual([{ foobar: { $in: [] } }])
     })
   })
 })

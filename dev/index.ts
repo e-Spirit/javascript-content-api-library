@@ -1,7 +1,7 @@
 import {inspect} from "util";
 import dotenv from "dotenv"
 import express from "express";
-import {FSXAApi, FSXAContentMode} from "../src"
+import {ComparisonQueryOperatorEnum, FSXAApi, FSXAContentMode} from "../src"
 import {default as expressIntegration} from "../src/integrations/express"
 require('cross-fetch/polyfill')
 
@@ -38,7 +38,21 @@ app.listen(3001, async () => {
     3
   )
   try {
-    const response = await proxyApi.fetchProjectProperties("de_DE")
+   //const response = await proxyApi.fetchProjectProperties("de_DE")
+   const response = await proxyApi.fetchByFilter(
+    [
+      {
+        field: 'identifier',
+        operator: ComparisonQueryOperatorEnum.NOT_IN,
+        value: []
+      }
+    ],
+    "de_DE",
+    1,
+    100,
+    {
+      keys: { 'formData.tt_fontAwesomeCode.value': true, identifier: true }
+    })
     console.log(inspect(response, false, null, true))
   } catch (err) {
     console.log('ERROR', err)

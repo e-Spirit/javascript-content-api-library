@@ -107,7 +107,6 @@ export class QueryBuilder {
         if (!filter.value) throw new Error(QueryBuilderErrors.MISSING_VALUE)
         if (!Array.isArray(filter.value)) throw new Error(QueryBuilderErrors.NOT_AN_ARRAY)
         // if array is empty we will invalidate this query
-        if (filter.value.length === 0) return null
         return {
           [filter.field]: {
             [filter.operator]: filter.value
