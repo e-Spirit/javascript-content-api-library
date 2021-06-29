@@ -2,26 +2,26 @@
 
 The FSXA-API is an interface handling data coming from the FirstSpirit
 [CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
-Navigation Service. The data is processed and transformed to suit the needs of
-the [FSXA-Pattern-Library](https://github.com/e-Spirit/fsxa-pattern-library).
+Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
 
-- [1. About the FSXA](#about-the-fsxa)
-- [2. Legal Notices](#legal-notices)
-- [3. Methods](#methods)
-  - [Constructor](#constructor)
-  - [setConfiguration](#setconfiguration)
-  - [config](#config)
-  - [buildAuthorizationHeaders](#buildauthorizationheaders)
-  - [buildCaaSURL](#buildcaasurl)
-  - [buildNavigationServiceUrl](#buildnavigationserviceurl)
-  - [fetchElement](#fetchelement)
-  - [fetchByFilter](#fetchbyfilter)
-  - [fetchProjectProperties](#fetchprojectproperties)
-- [4. Filter](#filter)
-  - [LogicalFilter](#logical-query-operators)
-  - [ComparisonFilter](#comparison-query-operators)
-  - [ArrayFilter](#array-query-operators)
-- [5. Disclaimer](#disclaimer)
+- [FSXA-API](#fsxa-api)
+  - [About the FSXA](#about-the-fsxa)
+  - [Legal Notices](#legal-notices)
+  - [Methods](#methods)
+    - [Constructor](#constructor)
+    - [setConfiguration](#setconfiguration)
+    - [config](#config)
+    - [buildAuthorizationHeaders](#buildauthorizationheaders)
+    - [buildCaaSURL](#buildcaasurl)
+    - [buildNavigationServiceUrl](#buildnavigationserviceurl)
+    - [fetchElement](#fetchelement)
+    - [fetchByFilter](#fetchbyfilter)
+    - [fetchProjectProperties](#fetchprojectproperties)
+  - [Filter](#filter)
+    - [Logical Query Operators](#logical-query-operators)
+    - [Comparison Query Operators](#comparison-query-operators)
+    - [Array Query Operators](#array-query-operators)
+  - [Disclaimer](#disclaimer)
 
 ## About the FSXA
 
@@ -64,7 +64,7 @@ The configuration depends on which in which mode you want to run the FSXA-API.
 
 If you want to use the `remote` mode, you have to specify all authorization keys:
 
-````typescript
+```typescript
 {
     mode: "remote",
     config: {
@@ -75,7 +75,28 @@ If you want to use the `remote` mode, you have to specify all authorization keys
             tenantId: "your-tenant-id"
     }
 }
-````
+```
+
+You can also include remote projects if you want to use remote media.
+
+> **_Attention_**<br>
+> Currently the FSXA-API can only work with the master language of the remote media project.
+
+For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
+
+```typescript
+{
+    mode: "remote",
+    config: {
+            apiKey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            navigationService: "https://your.navigation-service.url/navigation",
+            caas: "https://your.caas.url",
+            projectId: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            tenantId: "your-tenant-id",
+            remotes: { "media": {"id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "locale": "en_GB"} }
+    }
+}
+```
 
 If you want to use the `proxy` mode, you have to specify the baseURL:
 
@@ -99,31 +120,31 @@ Here is an example of how the FSXA-API could be used with an [Express.js](https:
 Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
 
 ```typescript
-require("cross-fetch/polyfill")
+require('cross-fetch/polyfill')
 const express = require('express')
-const {FSXAApi, FSXAContentMode, } = require("fsxa-api");
-const expressIntegration = require("fsxa-api/dist/lib/integrations/express").default
-const cors = require("cors")
+const { FSXAApi, FSXAContentMode } = require('fsxa-api')
+const expressIntegration = require('fsxa-api/dist/lib/integrations/express').default
+const cors = require('cors')
 
 const app = express()
 
 const remoteApi = new FSXAApi(
-    FSXAContentMode.PREVIEW,
-    {
-        mode: "remote",
-        config: {
-            apiKey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            navigationService: "https://your.navigation-service.url/navigation",
-            caas: "https://your.caas.url",
-            projectId: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            tenantId: "your-tenant-id"
-        }
-    },
-    3
+  FSXAContentMode.PREVIEW,
+  {
+    mode: 'remote',
+    config: {
+      apiKey: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+      navigationService: 'https://your.navigation-service.url/navigation',
+      caas: 'https://your.caas.url',
+      projectId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+      tenantId: 'your-tenant-id'
+    }
+  },
+  3
 )
 
 app.use(cors())
-app.use("/api", expressIntegration({ api: remoteApi }))
+app.use('/api', expressIntegration({ api: remoteApi }))
 
 app.listen(3001, () => {
   console.log('Listening at http://localhost:3001')
@@ -134,12 +155,12 @@ Here is an example of the corresponding usage in a frontend application:
 
 ```typescript
 const fsxaApi = new FSXAApi(
-    FSXAContentMode.PREVIEW,
-    {
-        mode: 'proxy',
-        baseUrl: 'http://localhost:3001/api'
-    },
-    1
+  FSXAContentMode.PREVIEW,
+  {
+    mode: 'proxy',
+    baseUrl: 'http://localhost:3001/api'
+  },
+  1
 )
 ```
 
@@ -159,7 +180,7 @@ The config data depends on which in which mode you want to run the FSXA-API.
 
 If you want to use the `remote` mode, you have to specify all authorization keys:
 
-````typescript
+```typescript
 {
     mode: "remote",
     config: {
@@ -170,7 +191,7 @@ If you want to use the `remote` mode, you have to specify all authorization keys
             tenantId: "your-tenant-id"
     }
 }
-````
+```
 
 If you want to use the `proxy` mode, you have to specify the baseURL:
 
@@ -218,7 +239,9 @@ fsxaApi.config()
 Returns the build authorization header in the following format when mode is set to `remote`:
 
 ```typescript
-{ authorization: 'apikey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"' }
+{
+  authorization: 'apikey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"'
+}
 ```
 
 Returns an empty object when mode is set to `proxy`.
@@ -230,6 +253,8 @@ fsxaApi.buildAuthorizationHeaders()
 ```
 
 ### buildCaaSURL
+
+Expects an optional parameter `remoteProjectId`. If passed, the CaaS Url will be built with it instead of the default project id.
 
 Returns the build CaaS url when mode is set to `remote`:
 
@@ -259,16 +284,16 @@ Returns the corresponding CaaS data entry.
 
 Expects as input parameter an id, which is described in CaaS as 'identifier' and a language abbreviation.
 <br />
-Optionally additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys-parameter. For more information please refer to the [restheart documentation](https://restheart.org/docs/read-docs/#projection).
+Optionally, additional parameters can be passed that will be appended to the CaaS-Url. Be aware that the response is not mapped if you pass the keys. For more information please refer to the [restheart documentation](https://restheart.org/docs/read-docs/#projection).
+<br />
+Optionally, a remoteProject can be passed. If one is passed, the element will be fetched from this project instead of the default one.
 
 In this example the additional parameters ensure that only the fields `identifier` and `displayName` are in the result set:
 
 ```typescript
-fsxaApi.fetchElement(
-    "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    "en-EN",
-    {"keys": [{'identifier': 1}, {'displayName': 1}]}
-)
+fsxaApi.fetchElement('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'en-EN', {
+  keys: [{ identifier: 1 }, { displayName: 1 }]
+})
 ```
 
 ### fetchByFilter
@@ -277,6 +302,8 @@ Returns the matching CaaS data entries.
 
 Expects as input parameter an array of filters and a language abbreviation.
 Optionally a page number, page size and additional parameters can be passed.
+<br />
+Optionally, a remoteProject can be passed. If one is passed, the element will be fetched from this project instead of the default one.
 
 Several filter objects can be specified in the filter array, the results will then correspond to all specified filters.
 
@@ -294,17 +321,17 @@ In this example we search for all elements with the `fsType` equals `Example`. W
 
 ```typescript
 fsxaApi.fetchByFilter(
-    [
-      {
-        field: "fsType",
-        operator: ComparisonQueryOperatorEnum.EQUALS,
-        value: "Example"
-      }
-    ],
-    "en",
-    2,
-    50,
-    {"keys": {"identifier": 0}}
+  [
+    {
+      field: 'fsType',
+      operator: ComparisonQueryOperatorEnum.EQUALS,
+      value: 'Example'
+    }
+  ],
+  'en',
+  2,
+  50,
+  { keys: { identifier: 0 } }
 )
 ```
 
@@ -319,7 +346,7 @@ ATTENTION: Works only with CaaSConnect module version 3 onwards.
 Example:
 
 ```typescript
-fsxaApi.fetchProjectProperties("en_EN")
+fsxaApi.fetchProjectProperties('en_EN')
 ```
 
 ## Filter
@@ -330,35 +357,35 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
 
-| Enum | Operation |
-| --- | --- |
-|LogicalQueryOperatorEnum.AND | $and |
-|LogicalQueryOperatorEnum.NOT | $not |
-|LogicalQueryOperatorEnum.NOR | $nor |
-|LogicalQueryOperatorEnum.OR | $or |
+| Enum                         | Operation |
+| ---------------------------- | --------- |
+| LogicalQueryOperatorEnum.AND | \$and     |
+| LogicalQueryOperatorEnum.NOT | \$not     |
+| LogicalQueryOperatorEnum.NOR | \$nor     |
+| LogicalQueryOperatorEnum.OR  | \$or      |
 
 ### Comparison Query Operators
 
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
-| Enum | Operation |
-| --- | --- |
-|LogicalQueryOperatorEnum.GREATER_THAN_EQUALS | $gte |
-|LogicalQueryOperatorEnum.GREATER_THAN | $gt |
-|LogicalQueryOperatorEnum.EQUALS | $eq |
-|LogicalQueryOperatorEnum.IN | $in |
-|LogicalQueryOperatorEnum.LESS_THAN | $lt |
-|LogicalQueryOperatorEnum.LESS_THAN_EQUALS | $lte |
-|LogicalQueryOperatorEnum.NOT_EQUALS | $ne |
-|LogicalQueryOperatorEnum.NOT_IN | $nin |
+| Enum                                         | Operation |
+| -------------------------------------------- | --------- |
+| LogicalQueryOperatorEnum.GREATER_THAN_EQUALS | \$gte     |
+| LogicalQueryOperatorEnum.GREATER_THAN        | \$gt      |
+| LogicalQueryOperatorEnum.EQUALS              | \$eq      |
+| LogicalQueryOperatorEnum.IN                  | \$in      |
+| LogicalQueryOperatorEnum.LESS_THAN           | \$lt      |
+| LogicalQueryOperatorEnum.LESS_THAN_EQUALS    | \$lte     |
+| LogicalQueryOperatorEnum.NOT_EQUALS          | \$ne      |
+| LogicalQueryOperatorEnum.NOT_IN              | \$nin     |
 
 ### Array Query Operators
 
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
 
-| Enum | Operation |
-| --- | --- |
-|ArrayQueryOperatorEnum.ALL | $all |
+| Enum                       | Operation |
+| -------------------------- | --------- |
+| ArrayQueryOperatorEnum.ALL | \$all     |
 
 ## Disclaimer
 

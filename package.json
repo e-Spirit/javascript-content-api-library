@@ -7,6 +7,9 @@
   "module": "dist/fsxa-api.es5.js",
   "types": "dist/types",
   "author": "Tobias Golbs <golbs@e-spirit.com>",
+  "contributors": [
+    "Dominik Barczewski <barczewski@e-spirit.com>"
+  ],
   "files": [
     "dist",
     "package.json"
@@ -37,7 +40,7 @@
     "prepush": "npm run build",
     "commitmsg": "commitlint -E HUSKY_GIT_PARAMS",
     "dts": "./node_modules/.bin/npm-dts generate -e ./src/FSXAApi.ts",
-    "dev": "npx nodemon dev/index.ts"
+    "dev": "npx nodemon dev/index.ts --ignore ./**/dist"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [

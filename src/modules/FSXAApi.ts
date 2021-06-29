@@ -12,6 +12,7 @@ import {
   QueryBuilderQuery
 } from '../types'
 import { stringify } from 'qs'
+import { clean } from '../utils'
 
 export enum FSXAContentMode {
   PREVIEW = 'preview',
@@ -22,6 +23,7 @@ export enum FSXAApiErrors {
   UNKNOWN_CONTENT_MODE = 'The content mode must be preview or release.',
   UNKNOWN_API_MODE = 'The api mode must be remote or proxy.',
   UNKNOWN_ERROR = 'An unknown error occured. Please check the logs for more information',
+  UNKNOWN_REMOTE = 'The specified remote project was not found in the configuration. [remotes]',
   MISSING_BASE_URL = 'You do need to specify a baseUrl in proxy mode.',
   MISSING_API_KEY = 'No CaaS-ApiKey was passed via the configuration. [apiKey]',
   MISSING_CAAS_URL = 'No CaaS-URL was passed via the configuration. [caas]',
@@ -78,10 +80,27 @@ export class FSXAApi {
     }
   }
 
-  buildCaaSUrl(): string {
-    return this.params.mode === 'proxy'
-      ? ''
-      : `${this.params.config.caas}/${this.params.config.tenantId}/${this.params.config.projectId}.${this.mode}.content`
+  private getRemoteProjectId(remoteProject: string) {
+    if (this.params.mode === 'proxy') {
+      return ''
+    }
+    const projectId = this.params.config.remotes
+      ? this.params.config.remotes[remoteProject].id
+      : null
+    if (!projectId) {
+      throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
+    }
+    return projectId
+  }
+
+  buildCaaSUrl(remoteProject?: string): string {
+    if (this.params.mode === 'proxy') {
+      return ''
+    }
+    const projectId = remoteProject
+      ? this.getRemoteProjectId(remoteProject)
+      : this.params.config.projectId
+    return `${this.params.config.caas}/${this.params.config.tenantId}/${projectId}.${this.mode}.content`
   }
 
   buildNavigationServiceUrl(): string {
@@ -93,7 +112,8 @@ export class FSXAApi {
   async fetchElement(
     id: string,
     locale: string,
-    additionalParams: Record<'keys' | string, any> = {}
+    additionalParams: Record<'keys' | string, any> = {},
+    remoteProject?: string
   ): Promise<Page | GCAPage | Dataset | Image | any | null> {
     /**
      * If we are in proxy mode (client-side), we only want to pipe the input through to the "local" api (server-side) that is able to
@@ -101,11 +121,17 @@ export class FSXAApi {
      */
     if (this.params.mode === 'proxy') {
       const url = `${this.params.baseUrl}${getFetchElementRoute(id)}`
-      this.logger.info('[Proxy][fetchElement] Requesting:', url, {
-        id,
-        locale,
-        additionalParams
-      })
+      this.logger.info(
+        '[Proxy][fetchElement] Requesting:',
+        url,
+        clean({
+          id,
+          locale,
+          additionalParams,
+          remoteProject
+        })
+      )
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -113,9 +139,11 @@ export class FSXAApi {
         },
         body: JSON.stringify({
           locale,
-          additionalParams
+          additionalParams,
+          remote: remoteProject
         })
       })
+
       if (!response.ok) {
         if (response.status === 404) {
           this.logger.error(`[Proxy][fetchElement] Error: ${FSXAApiErrors.NOT_FOUND}`)
@@ -144,7 +172,10 @@ export class FSXAApi {
       },
       this.logger
     )
-    const url = `${this.buildCaaSUrl()}/${id}.${locale}?${
+    locale =
+      remoteProject && this.config?.remotes ? this.config?.remotes[remoteProject].locale : locale
+
+    const url = `${this.buildCaaSUrl(remoteProject)}/${id}.${locale}?${
       additionalParams
         ? stringify(this.buildRestheartParams(additionalParams), { indices: false })
         : ''
@@ -187,6 +218,7 @@ export class FSXAApi {
    * @param page page that should be fetched
    * @param pagesize the number of elements that should be fetched
    * @param additionalParams You can specify additional params that will be appended to the CaaS-Url. Be aware that the response is not mapped, if you pass the keys-parameter
+   * @param remoteProject id of the remote media project, where the data should be fetched of
    */
   async fetchByFilter(
     filters: QueryBuilderQuery[],
@@ -195,19 +227,25 @@ export class FSXAApi {
     pagesize = 100,
     // you can pass in all available restheart-parameters that are not available through our api
     // Using the keys parameter will remove the default mapping mechanism
-    additionalParams: Record<'keys' | string, any> = {}
+    additionalParams: Record<'keys' | string, any> = {},
+    remoteProject?: string
   ): Promise<(Page | GCAPage | Image | Dataset)[]> {
     if (pagesize < 1 || pagesize > 1000) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_SIZE)
     if (page < 1) throw new Error(FSXAApiErrors.ILLEGAL_PAGE_NUMBER)
     if (this.params.mode === 'proxy') {
       const url = `${this.params.baseUrl}${FETCH_BY_FILTER_ROUTE}`
-      this.logger.info('[Proxy][fetchByFilter] Requesting:', url, {
-        filters,
-        locale,
-        page,
-        pagesize,
-        additionalParams
-      })
+      this.logger.info(
+        '[Proxy][fetchByFilter] Requesting:',
+        url,
+        clean({
+          filters,
+          locale,
+          page,
+          pagesize,
+          additionalParams,
+          remote: remoteProject
+        })
+      )
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -218,7 +256,8 @@ export class FSXAApi {
           locale,
           page,
           pagesize,
-          additionalParams
+          additionalParams,
+          remote: remoteProject
         })
       })
       if (!response.ok) {
@@ -256,7 +295,7 @@ export class FSXAApi {
     ]
     const buildAdditionalParams: Record<string, any> = this.buildRestheartParams(additionalParams)
     // we need to encode array
-    const url = `${this.buildCaaSUrl()}?${stringify(
+    const url = `${this.buildCaaSUrl(remoteProject)}?${stringify(
       {
         filter: buildFilters,
         page,

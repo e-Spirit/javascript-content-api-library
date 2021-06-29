@@ -34,16 +34,20 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         const response = await api.fetchElement(
           req.params.id,
           req.body.locale,
-          req.body?.additionalParams
+          req.body?.additionalParams,
+          req.body?.remote
         )
         return res.json(response)
       } catch (err) {
-        if (err.message === FSXAApiErrors.NOT_FOUND) {
-          return res.status(404).send()
-        } else if (err.message === FSXAApiErrors.NOT_AUTHORIZED) {
-          return res.status(401).send()
+        if (
+          err.message === FSXAApiErrors.NOT_FOUND ||
+          err.message === FSXAApiErrors.UNKNOWN_REMOTE
+        ) {
+          return res.status(404).send({ message: err.message })
+        } else if (FSXAApiErrors.NOT_AUTHORIZED === err.message) {
+          return res.status(401).send({ message: err.message })
         } else {
-          return res.status(500).send()
+          return res.status(500).send({ message: err.message })
         }
       }
     }
@@ -60,7 +64,10 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         const response = await api.fetchNavigation(req.body.initialPath || null, req.body.locale)
         return res.json(response)
       } catch (err) {
-        if (err.message === FSXAApiErrors.NOT_FOUND) {
+        if (
+          err.message === FSXAApiErrors.NOT_FOUND ||
+          err.message === FSXAApiErrors.UNKNOWN_REMOTE
+        ) {
           return res.status(404).send()
         } else {
           return res.status(500).send()
@@ -82,7 +89,8 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           req.body.locale,
           req.body.page ? req.body.page : undefined,
           req.body.pagesize ? req.body.pagesize : undefined,
-          req.body.additionalParams || {}
+          req.body.additionalParams || {},
+          req.body.remote ? req.body.remote : undefined
         )
         return res.json(response)
       } catch (err) {

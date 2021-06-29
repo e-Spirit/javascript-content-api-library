@@ -1,25 +1,36 @@
-import {inspect} from "util";
-import dotenv from "dotenv"
-import express from "express";
-import {FSXAApi, FSXAContentMode} from "../src"
-import {default as expressIntegration} from "../src/integrations/express"
+import { createFile } from './utils'
+import { inspect } from 'util'
+import { ComparisonQueryOperatorEnum } from './../src/modules/QueryBuilder'
+import dotenv from 'dotenv'
+import express from 'express'
+import { FSXAApi, FSXAContentMode } from '../src'
+import { default as expressIntegration } from '../src/integrations/express'
+import { dirname } from 'path'
 require('cross-fetch/polyfill')
 
-dotenv.config({path: './dev/.env'})
+dotenv.config({ path: './dev/.env' })
 const app = express()
 
-const {API_API_KEY, API_NAVIGATION_SERVICE, API_CAAS, API_PROJECT_ID, API_TENANT_ID} = process.env
+const {
+  API_API_KEY,
+  API_NAVIGATION_SERVICE,
+  API_CAAS,
+  API_PROJECT_ID,
+  API_TENANT_ID,
+  API_REMOTES
+} = process.env
 
 const remoteApi = new FSXAApi(
   FSXAContentMode.PREVIEW,
   {
-    mode: "remote", // we want to test against the 'remote' mode to ensure that it works with both modes.
+    mode: 'remote', // we want to test against the 'remote' mode to ensure that it works with both modes.
     config: {
       apiKey: API_API_KEY!,
       navigationService: API_NAVIGATION_SERVICE!,
       caas: API_CAAS!,
       projectId: API_PROJECT_ID!,
-      tenantId: API_TENANT_ID!
+      tenantId: API_TENANT_ID!,
+      remotes: API_REMOTES ? JSON.parse(API_REMOTES) : {}
     }
   },
   3
@@ -38,7 +49,7 @@ app.listen(3001, async () => {
     3
   )
   try {
-    const response = await proxyApi.fetchProjectProperties("de_DE")
+    const response = await proxyApi.fetchProjectProperties('de_DE')
     console.log(inspect(response, false, null, true))
   } catch (err) {
     console.log('ERROR', err)
