@@ -1,3 +1,15 @@
+# [5.3.0](https://github.com/e-Spirit/fsxa-api/compare/v5.2.1...v5.3.0) (2021-06-29)
+
+
+### Bug Fixes
+
+* **querybuilder:** fix ComparisonQueryOperatorEnum.IN request with empty array ([a60925c](https://github.com/e-Spirit/fsxa-api/commit/a60925cce4fb19377956b2e423d987c1911f5b9d))
+
+
+### Features
+
+* enabled usage of remote media ([#30](https://github.com/e-Spirit/fsxa-api/issues/30)) ([85b2806](https://github.com/e-Spirit/fsxa-api/commit/85b2806e85511ec2347e2a1610f633b8dc3e92d5))
+
 ## [5.2.1](https://github.com/e-Spirit/fsxa-api/compare/v5.2.0...v5.2.1) (2021-06-11)
 
 
