@@ -570,7 +570,7 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.NOT_AN_ARRAY)
       })
 
-      it('should return null if an empty array is passed', () => {
+      it('should return an empty array if an empty array is passed', () => {
         expect(
           builder.build({
             operator: ComparisonQueryOperatorEnum.IN,
@@ -627,7 +627,7 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.NOT_AN_ARRAY)
       })
 
-      it('should return null if an empty array is passed', () => {
+      it('should return an empty array if an empty array is passed', () => {
         expect(
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_IN,
@@ -684,7 +684,7 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.NOT_AN_ARRAY)
       })
 
-      it('should return null if an empty array is passed', () => {
+      it('should return an empty array if an empty array is passed', () => {
         expect(
           builder.build({
             operator: ArrayQueryOperatorEnum.ALL,
@@ -711,7 +711,7 @@ describe('QueryBuilder', () => {
   })
 
   describe('buildAll', () => {
-    it('should remove invalidated (null) queries', () => {
+    it('should not remove empty queries', () => {
       expect(
         builder.buildAll([
           {
