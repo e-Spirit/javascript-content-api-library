@@ -1,7 +1,7 @@
 import {inspect} from "util";
 import dotenv from "dotenv"
 import express from "express";
-import { FSXAApi, FSXAContentMode} from "../src"
+import {FSXAApi, FSXAContentMode} from "../src"
 import {default as expressIntegration} from "../src/integrations/express"
 require('cross-fetch/polyfill')
 
