@@ -38,21 +38,8 @@ app.listen(3001, async () => {
     3
   )
   try {
-   //const response = await proxyApi.fetchProjectProperties("de_DE")
-   const response = await proxyApi.fetchByFilter(
-    [
-      {
-        field: 'identifier',
-        operator: ComparisonQueryOperatorEnum.NOT_IN,
-        value: []
-      }
-    ],
-    "de_DE",
-    1,
-    100,
-    {
-      keys: { 'formData.tt_fontAwesomeCode.value': true, identifier: true }
-    })
+   const response = await proxyApi.fetchProjectProperties("de_DE")
+   
     console.log(inspect(response, false, null, true))
   } catch (err) {
     console.log('ERROR', err)
