@@ -1,4 +1,4 @@
-import { Logger } from '../../modules'
+/*import { Logger } from '../../modules'
 import XMLParser from '../../modules/XMLParser'
 
 var logger: Logger
@@ -13,3 +13,4 @@ describe('XMLParser', () => {
     ).toEqual('')
   })
 })
+*/
