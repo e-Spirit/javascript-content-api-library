@@ -1,7 +1,7 @@
 import { Logger } from './Logger'
 import * as saxes from 'saxes'
 import { RichTextElement } from '../types'
-import get from 'lodash.get'
+import { get } from 'lodash'
 
 class XMLParser {
   logger: Logger
