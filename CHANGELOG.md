@@ -1,3 +1,10 @@
+## [5.3.1](https://github.com/e-Spirit/fsxa-api/compare/v5.3.0...v5.3.1) (2021-08-16)
+
+
+### Bug Fixes
+
+* update dependencies  ([#36](https://github.com/e-Spirit/fsxa-api/issues/36)) ([223a00d](https://github.com/e-Spirit/fsxa-api/commit/223a00d9c5aad11f5f82f51fbf9c3461bf8cce80))
+
 # [5.3.0](https://github.com/e-Spirit/fsxa-api/compare/v5.2.1...v5.3.0) (2021-06-29)
 
 
