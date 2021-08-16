@@ -182,19 +182,19 @@ describe('FSXAApi', () => {
     })
   })
 
-  describe('fetchPage', async () => {
+  describe('fetchPage', () => {
     it('should call local url in proxy-mode', async () => {
       await testForLocalUrl(api => api.fetchElement('foobar', 'de_DE'))
     })
   })
 
-  describe('fetchNavigation', async () => {
+  describe('fetchNavigation', () => {
     it('should call local url in proxy-mode', async () => {
       await testForLocalUrl(api => api.fetchNavigation(null, 'de_DE'))
     })
 
-    it('should pass extraHeaders', async () => {
-      await testForLocalUrl(
+    it('should pass extraHeaders', () => {
+      testForLocalUrl(
         api => api.fetchNavigation(null, 'de_DE', { 'x-test': 'foobar' }),
         fetch => {
           const request = fetch.mock.calls[0][1]

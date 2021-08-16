@@ -115,7 +115,7 @@ describe('Express-Integration', () => {
     })
   })
 
-  describe(FETCH_BY_FILTER_ROUTE, async () => {
+  describe(FETCH_BY_FILTER_ROUTE, () => {
     it('should correctly map function params', async () => {
       await proxyApi.fetchByFilter([], 'de_DE')
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(1)
