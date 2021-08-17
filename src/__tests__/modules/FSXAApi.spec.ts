@@ -9,8 +9,8 @@ const configuration: FSXAConfiguration = {
   projectId: 'projectId',
   tenantId: 'tenantId',
   remotes: {
-    media: { id: 'mediaProjectId', locale: 'locale' }
-  }
+    media: { id: 'mediaProjectId', locale: 'locale' },
+  },
 }
 
 describe('Configuration', () => {
@@ -20,7 +20,7 @@ describe('Configuration', () => {
         // @ts-ignore
         new FSXAApi('foobar', {
           config: configuration,
-          mode: 'remote'
+          mode: 'remote',
         })
     ).toThrowError(FSXAApiErrors.UNKNOWN_CONTENT_MODE)
   })
@@ -30,7 +30,7 @@ describe('Configuration', () => {
       () =>
         new FSXAApi(FSXAContentMode.PREVIEW, {
           // @ts-ignore
-          mode: 'foobar'
+          mode: 'foobar',
         })
     ).toThrowError(FSXAApiErrors.UNKNOWN_API_MODE)
   })
@@ -40,7 +40,7 @@ describe('Configuration', () => {
       () =>
         // @ts-ignore
         new FSXAApi(FSXAContentMode.PREVIEW, {
-          mode: 'proxy'
+          mode: 'proxy',
         })
     ).toThrowError(FSXAApiErrors.MISSING_BASE_URL)
   })
@@ -52,8 +52,8 @@ describe('Configuration', () => {
           mode: 'remote',
           config: {
             ...configuration,
-            apiKey: ''
-          }
+            apiKey: '',
+          },
         })
     ).toThrowError(FSXAApiErrors.MISSING_API_KEY)
   })
@@ -65,8 +65,8 @@ describe('Configuration', () => {
           mode: 'remote',
           config: {
             ...configuration,
-            caas: ''
-          }
+            caas: '',
+          },
         })
     ).toThrowError(FSXAApiErrors.MISSING_CAAS_URL)
   })
@@ -78,8 +78,8 @@ describe('Configuration', () => {
           mode: 'remote',
           config: {
             ...configuration,
-            navigationService: ''
-          }
+            navigationService: '',
+          },
         })
     ).toThrowError(FSXAApiErrors.MISSING_NAVIGATION_SERVICE_URL)
   })
@@ -91,8 +91,8 @@ describe('Configuration', () => {
           mode: 'remote',
           config: {
             ...configuration,
-            projectId: ''
-          }
+            projectId: '',
+          },
         })
     ).toThrowError(FSXAApiErrors.MISSING_PROJECT_ID)
   })
@@ -104,8 +104,8 @@ describe('Configuration', () => {
           mode: 'remote',
           config: {
             ...configuration,
-            tenantId: ''
-          }
+            tenantId: '',
+          },
         })
     ).toThrowError(FSXAApiErrors.MISSING_TENANT_ID)
   })
@@ -123,7 +123,7 @@ describe('FSXAApi', () => {
       expect(
         new FSXAApi(FSXAContentMode.PREVIEW, {
           mode: 'remote',
-          config: configuration
+          config: configuration,
         }).buildCaaSUrl()
       ).toEqual(
         `${configuration.caas}/tenantId/${configuration.projectId}.${FSXAContentMode.PREVIEW}.content`
@@ -134,7 +134,7 @@ describe('FSXAApi', () => {
       expect(
         new FSXAApi(FSXAContentMode.PREVIEW, {
           mode: 'remote',
-          config: configuration
+          config: configuration,
         }).buildCaaSUrl('media')
       ).toEqual(
         `${configuration.caas}/tenantId/${configuration.remotes?.media.id}.${FSXAContentMode.PREVIEW}.content`
@@ -147,7 +147,7 @@ describe('FSXAApi', () => {
       expect(
         new FSXAApi(FSXAContentMode.PREVIEW, {
           mode: 'proxy',
-          baseUrl: 'localhost'
+          baseUrl: 'localhost',
         }).buildNavigationServiceUrl()
       ).toEqual('')
     })
@@ -156,18 +156,22 @@ describe('FSXAApi', () => {
       expect(
         new FSXAApi(FSXAContentMode.PREVIEW, {
           mode: 'remote',
-          config: configuration
+          config: configuration,
         }).buildNavigationServiceUrl()
       ).toEqual(`${configuration.navigationService}/preview.${configuration.projectId}`)
     })
   })
 
   describe('buildAuthorizationHeaders', () => {
+    it('This test have to fail', () => {
+      expect(true).toBe(false)
+    })
+
     it('should return an empty object if proxy mode is set', () => {
       expect(
         new FSXAApi(FSXAContentMode.PREVIEW, {
           mode: 'proxy',
-          baseUrl: 'localhost'
+          baseUrl: 'localhost',
         }).buildAuthorizationHeaders()
       ).toEqual({})
     })
@@ -176,7 +180,7 @@ describe('FSXAApi', () => {
       expect(
         new FSXAApi(FSXAContentMode.PREVIEW, {
           mode: 'remote',
-          config: configuration
+          config: configuration,
         }).buildAuthorizationHeaders()
       ).toEqual({ authorization: `apikey="${configuration.apiKey}"` })
     })
@@ -184,19 +188,19 @@ describe('FSXAApi', () => {
 
   describe('fetchPage', () => {
     it('should call local url in proxy-mode', async () => {
-      await testForLocalUrl(api => api.fetchElement('foobar', 'de_DE'))
+      await testForLocalUrl((api) => api.fetchElement('foobar', 'de_DE'))
     })
   })
 
   describe('fetchNavigation', () => {
     it('should call local url in proxy-mode', async () => {
-      await testForLocalUrl(api => api.fetchNavigation(null, 'de_DE'))
+      await testForLocalUrl((api) => api.fetchNavigation(null, 'de_DE'))
     })
 
     it('should pass extraHeaders', () => {
       testForLocalUrl(
-        api => api.fetchNavigation(null, 'de_DE', { 'x-test': 'foobar' }),
-        fetch => {
+        (api) => api.fetchNavigation(null, 'de_DE', { 'x-test': 'foobar' }),
+        (fetch) => {
           const request = fetch.mock.calls[0][1]
           const headers = request && request['headers']
           expect(headers && 'x-test' in headers && headers['x-test']).toBe('foobar')
@@ -213,7 +217,7 @@ const testForLocalUrl = async (
   fetchMock.enableMocks()
   const api = new FSXAApi(FSXAContentMode.PREVIEW, {
     mode: 'proxy',
-    baseUrl: 'http://localhost:3000'
+    baseUrl: 'http://localhost:3000',
   })
   const mockedFetch = fetch as FetchMock
   mockedFetch.mockReset()
