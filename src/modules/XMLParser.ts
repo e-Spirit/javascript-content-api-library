@@ -33,7 +33,7 @@ class XMLParser {
     }
   }
 
-  parse(xml: string, identifier: string): Promise<RichTextElement[]> {
+  parse(xml: string): Promise<RichTextElement[]> {
     const sanitizedXml = this.sanitizeXml(xml)
     return new Promise(resolve => {
       // this will be the result, wrapped with a "root" node
@@ -138,6 +138,7 @@ class XMLParser {
         }
       case 'link':
         const data = tag.attributes
+        console.log(tag)
         if (data.data) {
           try {
             data.data = JSON.parse(data.data as string)
