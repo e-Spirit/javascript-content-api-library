@@ -16,6 +16,14 @@ jobs:
         with:
           node-version: 14.x
 
+      - name: use cache if package-lock has not changed
+        uses: actions/cache@v2
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install dependencies
         run: npm install
 
