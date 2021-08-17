@@ -17,21 +17,21 @@ const {
   API_CAAS,
   API_PROJECT_ID,
   API_TENANT_ID,
-  API_REMOTES
+  API_REMOTES,
 } = process.env
 
 const remoteApi = new FSXAApi(
   FSXAContentMode.PREVIEW,
   {
-    mode: 'remote', // we want to test against the 'remote' mode to ensure that it works with both modes.
+    mode: 'remote',
     config: {
       apiKey: API_API_KEY!,
       navigationService: API_NAVIGATION_SERVICE!,
       caas: API_CAAS!,
       projectId: API_PROJECT_ID!,
       tenantId: API_TENANT_ID!,
-      remotes: API_REMOTES ? JSON.parse(API_REMOTES) : {}
-    }
+      remotes: API_REMOTES ? JSON.parse(API_REMOTES) : {},
+    },
   },
   3
 )
@@ -44,7 +44,7 @@ app.listen(3001, async () => {
     FSXAContentMode.PREVIEW,
     {
       mode: 'proxy',
-      baseUrl: 'http://localhost:3001/api'
+      baseUrl: 'http://localhost:3001/api',
     },
     3
   )
