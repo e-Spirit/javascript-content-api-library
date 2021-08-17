@@ -163,10 +163,6 @@ describe('FSXAApi', () => {
   })
 
   describe('buildAuthorizationHeaders', () => {
-    it('This test have to fail', () => {
-      expect(true).toBe(false)
-    })
-
     it('should return an empty object if proxy mode is set', () => {
       expect(
         new FSXAApi(FSXAContentMode.PREVIEW, {
