@@ -54,7 +54,7 @@ describe('XMLParser', () => {
       ['<default></default>', undefined, 'default']
     ]
 
-    it.each(cases)('should be parsed correct', async (xml, format, type) => {
+    it.each(cases)('should be parsed correct', async (xml: string, format, type) => {
       const expectedValue = [{ content: [], data: { format }, type }]
       const result = await xmlParser.parse(xml)
 
