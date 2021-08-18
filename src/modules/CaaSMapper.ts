@@ -129,7 +129,7 @@ export class CaaSMapper {
         return entry.value ? { key: entry.value.identifier, value: entry.value.label } : null
       case 'CMS_INPUT_DOM':
       case 'CMS_INPUT_DOMTABLE':
-        return entry.value ? await this.xmlParser.parse(entry.value, path.join('-')) : []
+        return entry.value ? await this.xmlParser.parse(entry.value) : []
       case 'CMS_INPUT_NUMBER':
       case 'CMS_INPUT_TEXT':
       case 'CMS_INPUT_TEXTAREA':
