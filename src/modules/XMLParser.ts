@@ -138,7 +138,6 @@ class XMLParser {
         }
       case 'link':
         const data = tag.attributes
-        console.log(tag)
         if (data.data) {
           try {
             data.data = JSON.parse(data.data as string)
