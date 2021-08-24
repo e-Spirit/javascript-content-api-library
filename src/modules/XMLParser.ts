@@ -16,7 +16,6 @@ class XMLParser {
         xml
           // we will replace all non closing br tags, with self-closing once
           .replace(/<br>/gm, '<br />')
-          .replace(/&/g, '&amp;')
           .replace(/'(?=[^>]*<)/g, '&apos;')
           // we need to restructure the link structure into one single link element
           .replace(
@@ -34,7 +33,7 @@ class XMLParser {
     }
   }
 
-  parse(xml: string, identifier: string): Promise<RichTextElement[]> {
+  parse(xml: string): Promise<RichTextElement[]> {
     const sanitizedXml = this.sanitizeXml(xml)
     return new Promise(resolve => {
       // this will be the result, wrapped with a "root" node
