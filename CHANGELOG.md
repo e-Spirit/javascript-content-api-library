@@ -1,3 +1,10 @@
+## [5.3.2](https://github.com/e-Spirit/fsxa-api/compare/v5.3.1...v5.3.2) (2021-08-24)
+
+
+### Bug Fixes
+
+* remove &nbps regex and add tests to the XMLParser ([#39](https://github.com/e-Spirit/fsxa-api/issues/39)) ([5b98087](https://github.com/e-Spirit/fsxa-api/commit/5b980870ec10f7333665f73b5f0dce8eb7b22c1c))
+
 ## [5.3.1](https://github.com/e-Spirit/fsxa-api/compare/v5.3.0...v5.3.1) (2021-08-16)
 
 
