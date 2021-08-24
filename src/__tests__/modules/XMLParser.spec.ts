@@ -44,17 +44,25 @@ describe('XMLParser', () => {
 
   describe('Richtext ELements', () => {
     const cases = [
-      ['<div></div>', undefined, 'block'],
-      ['<br>', undefined, 'linebreak'],
-      ['<b></b>', 'bold', 'text'],
-      ['<i></i>', 'italic', 'text'],
-      ['<ul></ul>', undefined, 'list'],
-      ['<li></li>', undefined, 'listitem'],
-      ['<p></p>', undefined, 'paragraph'],
-      ['<default></default>', undefined, 'default']
+      ['<div></div>','block' ],
+      ['<br>','linebreak'],
+      ['<ul></ul>','list'],
+      ['<li></li>','listitem'],
+      ['<p></p>','paragraph'],
+      ['<default></default>','default',]
+    ]
+    const formatcases=[
+      ['<b></b>','text', 'bold'],
+      ['<i></i>','text', 'italic'],
     ]
 
-    it.each(cases)('should be parsed correct', async (xml, format, type) => {
+    it.each(cases)(`%p should be parsed as %p`, async ( xml, type) => {
+      const expectedValue = [{ content: [], data: { }, type }]
+      const result = await xmlParser.parse(xml as string)
+
+      expect(result).toEqual(expectedValue)
+    })
+    it.each(formatcases)(`%p should be parsed as %p with format: %p"`, async ( xml, type, format) => {
       const expectedValue = [{ content: [], data: { format }, type }]
       const result = await xmlParser.parse(xml as string)
 
@@ -100,7 +108,7 @@ describe('XMLParser', () => {
       expect(result).toEqual(expectedValue)
     })
 
-    it('should throw error in link element with incorrect data', async () => {
+    it('should log an error in link element with incorrect data', async () => {
       const destructedJson = '{'
       const xml = `<div data-fs-type=\"link.${link}\"><script type=\"application/json\">${destructedJson}</script><a>Smart</a></div>`
       const expectedValue = [
