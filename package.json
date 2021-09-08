@@ -26,6 +26,7 @@
     "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
     "prebuild": "rimraf dist",
     "build": "jest && tsc --module commonjs && rollup -c rollup.config.ts",
+    "build:local": "rimraf fsxa-api-*.tgz && npm version prerelease --no-git-tag-version --preid alpha && npm run build && npm pack",
     "start": "rollup -c rollup.config.ts -w",
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
