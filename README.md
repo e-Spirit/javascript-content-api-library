@@ -137,8 +137,8 @@ const remoteApi = new FSXAApi(
       navigationService: 'https://your.navigation-service.url/navigation',
       caas: 'https://your.caas.url',
       projectId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-      tenantId: 'your-tenant-id'
-    }
+      tenantId: 'your-tenant-id',
+    },
   },
   3
 )
@@ -158,7 +158,7 @@ const fsxaApi = new FSXAApi(
   FSXAContentMode.PREVIEW,
   {
     mode: 'proxy',
-    baseUrl: 'http://localhost:3001/api'
+    baseUrl: 'http://localhost:3001/api',
   },
   1
 )
@@ -292,7 +292,7 @@ In this example the additional parameters ensure that only the fields `identifie
 
 ```typescript
 fsxaApi.fetchElement('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'en-EN', {
-  keys: [{ identifier: 1 }, { displayName: 1 }]
+  keys: [{ identifier: 1 }, { displayName: 1 }],
 })
 ```
 
@@ -325,8 +325,8 @@ fsxaApi.fetchByFilter(
     {
       field: 'fsType',
       operator: ComparisonQueryOperatorEnum.EQUALS,
-      value: 'Example'
-    }
+      value: 'Example',
+    },
   ],
   'en',
   2,

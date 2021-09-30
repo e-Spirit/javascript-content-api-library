@@ -1,4 +1,4 @@
-import { FSXAApi, ComparisonQueryOperatorEnum } from './'
+import { ComparisonQueryOperatorEnum } from './'
 import {
   CaaSApi_Body,
   CaaSApi_Content2Section,
@@ -26,16 +26,17 @@ import {
   PageBody,
   PageBodyContent,
   ProjectProperties,
-  Section
+  Section,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { set, chunk } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
+import { FSXARemoteApi } from './FSXARemoteApi'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
-  UNKNOWN_FSTYPE = 'Unknown fsType could not be mapped'
+  UNKNOWN_FSTYPE = 'Unknown fsType could not be mapped',
 }
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
@@ -46,13 +47,13 @@ interface ReferencedItemsInfo {
 
 export class CaaSMapper {
   public logger: Logger
-  api: FSXAApi
+  api: FSXARemoteApi
   locale: string
   xmlParser: XMLParser
   customMapper?: CustomMapper
 
   constructor(
-    api: FSXAApi,
+    api: FSXARemoteApi,
     locale: string,
     utils: {
       customMapper?: CustomMapper
@@ -63,9 +64,9 @@ export class CaaSMapper {
     this.locale = locale
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
-    Object.keys(this.api.config?.remotes || {}).forEach((item: string) => {
-      this._remoteReferences[item] = ([] as unknown) as ReferencedItemsInfo
-    })
+    Object.keys(this.api.remotes || {}).forEach(
+      (item: string) => (this._remoteReferences[item] = [] as unknown as ReferencedItemsInfo)
+    )
     this.logger = logger
   }
 
@@ -88,8 +89,8 @@ export class CaaSMapper {
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find(key => {
-      return this.api.config?.remotes![key].id === remoteProjectId
+    const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
+      return this.api.remotes[key].id === remoteProjectId
     })
 
     if (remoteProjectId && !remoteProjectKey) {
@@ -100,7 +101,7 @@ export class CaaSMapper {
     if (remoteProjectKey) {
       this._remoteReferences[remoteProjectKey][identifier] = [
         ...(this._remoteReferences[remoteProjectKey][identifier] || []),
-        path
+        path,
       ]
       return `[REFERENCED-REMOTE-ITEM-${identifier}]`
     }
@@ -116,11 +117,11 @@ export class CaaSMapper {
   async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
     if (this.customMapper) {
       const result = await this.customMapper(entry, path, {
-        api: this.api,
+        api: this.api as any,
         xmlParser: this.xmlParser,
         registerReferencedItem: this.registerReferencedItem.bind(this),
         buildPreviewId: this.buildPreviewId.bind(this),
-        mapDataEntries: this.mapDataEntries.bind(this)
+        mapDataEntries: this.mapDataEntries.bind(this),
       })
       if (typeof result !== 'undefined') return result
     }
@@ -143,7 +144,7 @@ export class CaaSMapper {
           ? {
               template: entry.value.template.uid,
               data: await this.mapDataEntries(entry.value.formData, [...path, 'data']),
-              meta: await this.mapDataEntries(entry.value.metaFormData, [...path, 'meta'])
+              meta: await this.mapDataEntries(entry.value.metaFormData, [...path, 'meta']),
             }
           : null
       case 'CMS_INPUT_LIST':
@@ -179,7 +180,7 @@ export class CaaSMapper {
                     ...card,
                     fsType: 'Section',
                     name: card.template.name,
-                    displayName: card.template.displayName
+                    displayName: card.template.displayName,
                   },
                   [...path, index]
                 )
@@ -188,7 +189,7 @@ export class CaaSMapper {
                   id: card.identifier,
                   previewId: this.buildPreviewId(card.identifier),
                   template: card.template.uid,
-                  data: await this.mapDataEntries(card.formData, [...path, index, 'data'])
+                  data: await this.mapDataEntries(card.formData, [...path, index, 'data']),
                 }
               default:
                 return card
@@ -206,7 +207,7 @@ export class CaaSMapper {
         } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
           return {
             referenceId: entry.value.identifier,
-            referenceType: entry.value.fsType
+            referenceType: entry.value.fsType,
           }
         }
         return entry
@@ -220,14 +221,9 @@ export class CaaSMapper {
       case 'Option':
         return {
           key: entry.identifier,
-          value: entry.label
+          value: entry.label,
         }
       default:
-        this.api.logger.log(
-          `[mapDataEntry]: Unknown Type ${entry.fsType}. Returning raw value:`,
-          entry.fsType,
-          entry
-        )
         return entry
     }
   }
@@ -235,12 +231,12 @@ export class CaaSMapper {
   async mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): Promise<DataEntries> {
     const keys = Object.keys(entries || {})
     const mappedEntries: any[] = await Promise.all(
-      Object.keys(entries || {}).map(key => this.mapDataEntry(entries[key], [...path, key]))
+      Object.keys(entries || {}).map((key) => this.mapDataEntry(entries[key], [...path, key]))
     )
     return keys.reduce(
       (result, key, index) => ({
         ...result,
-        [key]: mappedEntries[index]
+        [key]: mappedEntries[index],
       }),
       {}
     )
@@ -256,7 +252,7 @@ export class CaaSMapper {
       sectionType: section.template.uid,
       previewId: this.buildPreviewId(section.identifier),
       data: await this.mapDataEntries(section.formData, [...path, 'data']),
-      children: []
+      children: [],
     }
   }
 
@@ -272,10 +268,10 @@ export class CaaSMapper {
         ordering: content2Section.ordering,
         query: content2Section.query,
         recordCountPerPage: content2Section.recordCountPerPage,
-        schema: content2Section.schema
+        schema: content2Section.schema,
       },
       sectionType: content2Section.template.uid,
-      children: []
+      children: [],
     }
   }
 
@@ -285,10 +281,10 @@ export class CaaSMapper {
   ): Promise<PageBodyContent> {
     switch (content.fsType) {
       case 'Content2Section':
-        return await this.mapContent2Section(content)
+        return this.mapContent2Section(content)
       case 'Section':
       case 'SectionReference':
-        return await this.mapSection(content, path)
+        return this.mapSection(content, path)
       default:
         throw new Error(CaaSMapperErrors.UNKNOWN_BODY_CONTENT)
     }
@@ -302,7 +298,7 @@ export class CaaSMapper {
         body.children.map((child, index) =>
           this.mapBodyContent(child, [...path, 'children', index])
         )
-      )
+      ),
     }
   }
 
@@ -319,7 +315,7 @@ export class CaaSMapper {
         )
       ),
       data: await this.mapDataEntries(pageRef.page.formData, [...path, 'data']),
-      meta: await this.mapDataEntries(pageRef.page.metaFormData, [...path, 'meta'])
+      meta: await this.mapDataEntries(pageRef.page.metaFormData, [...path, 'meta']),
     }
   }
 
@@ -333,7 +329,7 @@ export class CaaSMapper {
       meta: await this.mapDataEntries(properties.metaFormData, [...path, 'meta']),
       name: properties.name,
       previewId: this.buildPreviewId(properties.identifier),
-      id: properties.identifier
+      id: properties.identifier,
     }
   }
 
@@ -344,7 +340,7 @@ export class CaaSMapper {
       name: gcaPage.name,
       layout: gcaPage.template.uid,
       data: await this.mapDataEntries(gcaPage.formData, [...path, 'data']),
-      meta: await this.mapDataEntries(gcaPage.metaFormData, [...path, 'meta'])
+      meta: await this.mapDataEntries(gcaPage.metaFormData, [...path, 'meta']),
     }
   }
 
@@ -358,7 +354,7 @@ export class CaaSMapper {
       data: await this.mapDataEntries(dataset.formData, [...path, 'data']),
       route: dataset.route,
       template: dataset.template?.uid,
-      children: []
+      children: [],
     }
   }
 
@@ -368,7 +364,7 @@ export class CaaSMapper {
       previewId: this.buildPreviewId(item.identifier),
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
       description: item.description,
-      resolutions: item.resolutionsMetaData
+      resolutions: item.resolutionsMetaData,
     }
   }
 
@@ -379,7 +375,7 @@ export class CaaSMapper {
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
       fileName: item.fileName,
       fileMetaData: item.fileMetaData,
-      url: item.url
+      url: item.url,
     }
   }
 
@@ -447,7 +443,8 @@ export class CaaSMapper {
             case 'ProjectProperties':
               return this.mapProjectProperties(item, [index])
             default:
-              throw new Error(CaaSMapperErrors.UNKNOWN_FSTYPE)
+              // TODO LOG WARN
+              return item
           }
         })
       )
@@ -466,9 +463,8 @@ export class CaaSMapper {
 
     await Promise.all([
       this.resolveReferencesPerProject(data),
-      ...remoteIds.map(remoteId => this.resolveReferencesPerProject(data, remoteId))
+      ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(data, remoteId)),
     ])
-
     return data
   }
 
@@ -485,39 +481,34 @@ export class CaaSMapper {
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
 
-    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find(key => {
+    const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
       return key === remoteProjectId
     })
     const locale =
-      remoteProjectKey && this.api.config?.remotes
-        ? this.api.config?.remotes[remoteProjectKey].locale
-        : this.locale
+      remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
 
     const ids = Object.keys(referencedItems)
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
-    if (ids.length > 0) {
+    if (ids?.length > 0) {
       const response = await Promise.all(
-        idChunks.map(ids =>
-          this.api.fetchByFilter(
-            [
+        idChunks.map((ids) =>
+          this.api.fetchByFilter({
+            filters: [
               {
                 operator: ComparisonQueryOperatorEnum.IN,
                 value: ids,
-                field: 'identifier'
-              }
+                field: 'identifier',
+              },
             ],
             locale,
-            1,
-            REFERENCED_ITEMS_CHUNK_SIZE,
-            undefined,
-            remoteProjectId
-          )
+          })
         )
       )
-      const fetchedItems = response.reduce((result, entries) => [...result, ...entries], [])
-      ids.forEach(id =>
-        referencedItems[id].forEach(path =>
-          set(data, path, fetchedItems.find(data => data.id === id) || null)
+      const fetchedItems = response.flat()
+      // const fetchedItems = response.reduce((result, entries) => [...result, ...entries], [])
+      ids.forEach((id) =>
+        referencedItems[id].forEach((path) =>
+          set(data, path, fetchedItems.find((data) => data.id === id) || null)
         )
       )
       return data

@@ -5,11 +5,11 @@ import {
   LogicalQueryOperatorEnum,
   QueryBuilderErrors,
   Logger,
-  LogLevel
-} from '../../modules'
-import { MappedFilter } from '../../types'
+  LogLevel,
+} from '.'
+import { MappedFilter } from '../types'
 
-const builder = new QueryBuilder(new Logger(LogLevel.NONE))
+const builder = new QueryBuilder(new Logger(LogLevel.NONE, 'Querybuilder'))
 const foobar = 'foobar'
 
 describe('QueryBuilder', () => {
@@ -19,7 +19,7 @@ describe('QueryBuilder', () => {
         builder.build({
           field: 'foo.bar',
           // @ts-ignore
-          value: 'foobar'
+          value: 'foobar',
         })
       ).toThrow(QueryBuilderErrors.MISSING_OPERATOR)
     })
@@ -29,7 +29,7 @@ describe('QueryBuilder', () => {
         builder.build({
           field: 'foo.bar',
           // @ts-ignore
-          operator: 'foobar'
+          operator: 'foobar',
         })
       ).toThrow(QueryBuilderErrors.UNKNOWN_OPERATOR)
     })
@@ -39,7 +39,7 @@ describe('QueryBuilder', () => {
         expect(
           builder.build({
             operator: LogicalQueryOperatorEnum.AND,
-            filters: []
+            filters: [],
           })
         ).toEqual(null)
       })
@@ -52,9 +52,9 @@ describe('QueryBuilder', () => {
               {
                 operator: ComparisonQueryOperatorEnum.EQUALS,
                 field: 'foo.bar',
-                value: 'foobar'
-              }
-            ]
+                value: 'foobar',
+              },
+            ],
           })
         ).toEqual({ 'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' } })
       })
@@ -66,14 +66,14 @@ describe('QueryBuilder', () => {
             {
               operator: ComparisonQueryOperatorEnum.EQUALS,
               field: 'foo.bar',
-              value: 'foobar'
+              value: 'foobar',
             },
             {
               operator: ComparisonQueryOperatorEnum.EQUALS,
               field: 'foo.bar',
-              value: 'foobar'
-            }
-          ]
+              value: 'foobar',
+            },
+          ],
         })
         expect(filter).toBeTruthy()
         expect(Array.isArray(filter![LogicalQueryOperatorEnum.AND])).toBe(true)
@@ -83,7 +83,7 @@ describe('QueryBuilder', () => {
         expect(() =>
           // @ts-ignore
           builder.build({
-            operator: LogicalQueryOperatorEnum.AND
+            operator: LogicalQueryOperatorEnum.AND,
           })
         ).toThrow(QueryBuilderErrors.MISSING_FILTERS)
       })
@@ -94,7 +94,7 @@ describe('QueryBuilder', () => {
         expect(
           builder.build({
             operator: LogicalQueryOperatorEnum.NOR,
-            filters: []
+            filters: [],
           })
         ).toEqual(null)
       })
@@ -107,9 +107,9 @@ describe('QueryBuilder', () => {
               {
                 operator: ComparisonQueryOperatorEnum.EQUALS,
                 field: 'foo.bar',
-                value: 'foobar'
-              }
-            ]
+                value: 'foobar',
+              },
+            ],
           })
         ).toEqual({ 'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' } })
       })
@@ -121,14 +121,14 @@ describe('QueryBuilder', () => {
             {
               operator: ComparisonQueryOperatorEnum.EQUALS,
               field: 'foo.bar',
-              value: 'foobar'
+              value: 'foobar',
             },
             {
               operator: ComparisonQueryOperatorEnum.EQUALS,
               field: 'foo.bar',
-              value: 'foobar'
-            }
-          ]
+              value: 'foobar',
+            },
+          ],
         })
         expect(filter).toBeTruthy()
         expect(Array.isArray(filter![LogicalQueryOperatorEnum.NOR])).toBe(true)
@@ -138,7 +138,7 @@ describe('QueryBuilder', () => {
         expect(() =>
           // @ts-ignore
           builder.build({
-            operator: LogicalQueryOperatorEnum.NOR
+            operator: LogicalQueryOperatorEnum.NOR,
           })
         ).toThrow(QueryBuilderErrors.MISSING_FILTERS)
       })
@@ -149,7 +149,7 @@ describe('QueryBuilder', () => {
         expect(
           builder.build({
             operator: LogicalQueryOperatorEnum.OR,
-            filters: []
+            filters: [],
           })
         ).toEqual(null)
       })
@@ -162,9 +162,9 @@ describe('QueryBuilder', () => {
               {
                 operator: ComparisonQueryOperatorEnum.EQUALS,
                 field: 'foo.bar',
-                value: 'foobar'
-              }
-            ]
+                value: 'foobar',
+              },
+            ],
           })
         ).toEqual({ 'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' } })
       })
@@ -176,14 +176,14 @@ describe('QueryBuilder', () => {
             {
               operator: ComparisonQueryOperatorEnum.EQUALS,
               field: 'foo.bar',
-              value: 'foobar'
+              value: 'foobar',
             },
             {
               operator: ComparisonQueryOperatorEnum.EQUALS,
               field: 'foo.bar',
-              value: 'foobar'
-            }
-          ]
+              value: 'foobar',
+            },
+          ],
         })
         expect(filter).toBeTruthy()
         expect(Array.isArray(filter![LogicalQueryOperatorEnum.OR])).toBe(true)
@@ -193,7 +193,7 @@ describe('QueryBuilder', () => {
         expect(() =>
           // @ts-ignore
           builder.build({
-            operator: LogicalQueryOperatorEnum.OR
+            operator: LogicalQueryOperatorEnum.OR,
           })
         ).toThrow(QueryBuilderErrors.MISSING_FILTERS)
       })
@@ -205,7 +205,7 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: LogicalQueryOperatorEnum.NOT,
             // @ts-ignore
-            filter: {}
+            filter: {},
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -217,8 +217,8 @@ describe('QueryBuilder', () => {
             field: 'foo.bar',
             filter: {
               operator: ComparisonQueryOperatorEnum.EQUALS,
-              value: []
-            }
+              value: [],
+            },
           })
         ).toBe(null)
       })
@@ -230,15 +230,15 @@ describe('QueryBuilder', () => {
             field: 'foo.bar',
             filter: {
               operator: ComparisonQueryOperatorEnum.EQUALS,
-              value: 'foobar'
-            }
+              value: 'foobar',
+            },
           })
         ).toEqual({
           [LogicalQueryOperatorEnum.NOT]: {
             'foo.bar': {
-              [ComparisonQueryOperatorEnum.EQUALS]: 'foobar'
-            }
-          }
+              [ComparisonQueryOperatorEnum.EQUALS]: 'foobar',
+            },
+          },
         })
       })
     })
@@ -249,7 +249,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.EQUALS,
-            value: 'foobar'
+            value: 'foobar',
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -259,7 +259,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.EQUALS,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -269,7 +269,7 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ComparisonQueryOperatorEnum.EQUALS,
             value: [],
-            field: foobar
+            field: foobar,
           })
         ).toBe(null)
       })
@@ -278,7 +278,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: 'foo',
-          field: foobar
+          field: foobar,
         })
         expect(filter).toBeTruthy()
         expect(
@@ -290,7 +290,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: ['foo', 'bar'],
-          field: foobar
+          field: foobar,
         })
         expect(filter).toBeTruthy()
         expect(
@@ -307,7 +307,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_EQUALS,
-            value: 'foobar'
+            value: 'foobar',
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -317,7 +317,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_EQUALS,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -327,7 +327,7 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_EQUALS,
             value: [],
-            field: foobar
+            field: foobar,
           })
         ).toBe(null)
       })
@@ -336,7 +336,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.NOT_EQUALS,
           value: 'foo',
-          field: foobar
+          field: foobar,
         })
         expect(filter).toBeTruthy()
         expect(
@@ -348,7 +348,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.NOT_EQUALS,
           value: ['foo', 'bar'],
-          field: foobar
+          field: foobar,
         })
         expect(filter).toBeTruthy()
         expect(
@@ -365,7 +365,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.GREATER_THAN,
-            value: 2
+            value: 2,
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -375,7 +375,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.GREATER_THAN,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -386,7 +386,7 @@ describe('QueryBuilder', () => {
             operator: ComparisonQueryOperatorEnum.GREATER_THAN,
             // @ts-ignore
             value: 'foobar',
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
       })
@@ -395,7 +395,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN,
           field: foobar,
-          value: 2
+          value: 2,
         })
         expect(filter).toBeTruthy()
         expect(
@@ -410,7 +410,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
-            value: 2
+            value: 2,
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -420,7 +420,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -431,7 +431,7 @@ describe('QueryBuilder', () => {
             operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
             // @ts-ignore
             value: 'foobar',
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
       })
@@ -440,7 +440,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
           field: foobar,
-          value: 2
+          value: 2,
         })
         expect(filter).toBeTruthy()
         expect(
@@ -455,7 +455,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.LESS_THAN,
-            value: 2
+            value: 2,
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -465,7 +465,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.LESS_THAN,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -476,7 +476,7 @@ describe('QueryBuilder', () => {
             operator: ComparisonQueryOperatorEnum.LESS_THAN,
             // @ts-ignore
             value: 'foobar',
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
       })
@@ -485,7 +485,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN,
           field: foobar,
-          value: 2
+          value: 2,
         })
         expect(filter).toBeTruthy()
         expect((filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.LESS_THAN]).toEqual(
@@ -500,7 +500,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
-            value: 2
+            value: 2,
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -510,7 +510,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -521,7 +521,7 @@ describe('QueryBuilder', () => {
             operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
             // @ts-ignore
             value: 'foobar',
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
       })
@@ -530,7 +530,7 @@ describe('QueryBuilder', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
           field: foobar,
-          value: 2
+          value: 2,
         })
         expect(filter).toBeTruthy()
         expect(
@@ -545,7 +545,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.IN,
-            value: []
+            value: [],
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -555,7 +555,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.IN,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -566,7 +566,7 @@ describe('QueryBuilder', () => {
             operator: ComparisonQueryOperatorEnum.IN,
             // @ts-ignore
             value: 'foobar',
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.NOT_AN_ARRAY)
       })
@@ -576,7 +576,7 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ComparisonQueryOperatorEnum.IN,
             value: [],
-            field: foobar
+            field: foobar,
           })
         ).toEqual({ foobar: { $in: [] } })
       })
@@ -586,12 +586,12 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ComparisonQueryOperatorEnum.IN,
             value: ['foo', 'bar'],
-            field: foobar
+            field: foobar,
           })
         ).toEqual({
           foobar: {
-            [ComparisonQueryOperatorEnum.IN]: ['foo', 'bar']
-          }
+            [ComparisonQueryOperatorEnum.IN]: ['foo', 'bar'],
+          },
         })
       })
     })
@@ -602,7 +602,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_IN,
-            value: []
+            value: [],
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -612,7 +612,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_IN,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -623,7 +623,7 @@ describe('QueryBuilder', () => {
             operator: ComparisonQueryOperatorEnum.NOT_IN,
             // @ts-ignore
             value: 'foobar',
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.NOT_AN_ARRAY)
       })
@@ -633,7 +633,7 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_IN,
             value: [],
-            field: foobar
+            field: foobar,
           })
         ).toEqual({ foobar: { $nin: [] } })
       })
@@ -643,12 +643,12 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ComparisonQueryOperatorEnum.NOT_IN,
             value: ['foo', 'bar'],
-            field: foobar
+            field: foobar,
           })
         ).toEqual({
           foobar: {
-            [ComparisonQueryOperatorEnum.NOT_IN]: ['foo', 'bar']
-          }
+            [ComparisonQueryOperatorEnum.NOT_IN]: ['foo', 'bar'],
+          },
         })
       })
     })
@@ -659,7 +659,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ArrayQueryOperatorEnum.ALL,
-            value: []
+            value: [],
           })
         ).toThrow(QueryBuilderErrors.MISSING_FIELD)
       })
@@ -669,7 +669,7 @@ describe('QueryBuilder', () => {
           // @ts-ignore
           builder.build({
             operator: ArrayQueryOperatorEnum.ALL,
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
@@ -680,7 +680,7 @@ describe('QueryBuilder', () => {
             operator: ArrayQueryOperatorEnum.ALL,
             // @ts-ignore
             value: 'foobar',
-            field: foobar
+            field: foobar,
           })
         ).toThrow(QueryBuilderErrors.NOT_AN_ARRAY)
       })
@@ -690,7 +690,7 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ArrayQueryOperatorEnum.ALL,
             value: [],
-            field: foobar
+            field: foobar,
           })
         ).toEqual({ foobar: { $all: [] } })
       })
@@ -700,12 +700,12 @@ describe('QueryBuilder', () => {
           builder.build({
             operator: ArrayQueryOperatorEnum.ALL,
             value: ['foo', 'bar'],
-            field: foobar
+            field: foobar,
           })
         ).toEqual({
           foobar: {
-            [ArrayQueryOperatorEnum.ALL]: ['foo', 'bar']
-          }
+            [ArrayQueryOperatorEnum.ALL]: ['foo', 'bar'],
+          },
         })
       })
     })

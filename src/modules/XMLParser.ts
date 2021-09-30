@@ -35,19 +35,19 @@ class XMLParser {
 
   parse(xml: string): Promise<RichTextElement[]> {
     const sanitizedXml = this.sanitizeXml(xml)
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       // this will be the result, wrapped with a "root" node
       const result: RichTextElement = {
         data: {},
         type: 'root',
-        content: []
+        content: [],
       }
 
       // we will track the current nested node through the path property
       let path: string[] = []
 
       const parser = new saxes.SaxesParser(false as any)
-      parser.on('error', err => {
+      parser.on('error', (err) => {
         this.logger.error('[XMLParser]: Error parsing XML', err, xml)
       })
 
@@ -55,24 +55,24 @@ class XMLParser {
         resolve((result.content as RichTextElement[])[0].content as RichTextElement[])
       })
 
-      parser.on('text', text => {
+      parser.on('text', (text) => {
         const parent = this.getCurrentElement(result, path)
         if (!parent || !Array.isArray(parent.content)) return
         parent.content.push({
           type: 'text',
           content: text,
-          data: {}
+          data: {},
         })
       })
 
-      parser.on('opentag', tag => {
+      parser.on('opentag', (tag) => {
         const parent = this.getCurrentElement(result, path)
         if (!parent || !Array.isArray(parent.content)) return
         const elementIndex = parent.content.push(this.createRichTextElement(tag))
         path = [...path, 'content', elementIndex - 1 + '']
       })
 
-      parser.on('closetag', tag => {
+      parser.on('closetag', (tag) => {
         path.splice(-2, 2)
       })
 
@@ -92,49 +92,49 @@ class XMLParser {
         return {
           data: {
             format: 'bold',
-            ...tag.attributes
+            ...tag.attributes,
           },
           content: [],
-          type: 'text'
+          type: 'text',
         }
       case 'i':
         return {
           data: {
             format: 'italic',
-            ...tag.attributes
+            ...tag.attributes,
           },
           content: [],
-          type: 'text'
+          type: 'text',
         }
       case 'ul':
         return {
           data: tag.attributes,
           content: [],
-          type: 'list'
+          type: 'list',
         }
       case 'li':
         return {
           data: tag.attributes,
           content: [],
-          type: 'listitem'
+          type: 'listitem',
         }
       case 'br':
         return {
           data: tag.attributes,
           content: [],
-          type: 'linebreak'
+          type: 'linebreak',
         }
       case 'p':
         return {
           data: tag.attributes,
           content: [],
-          type: 'paragraph'
+          type: 'paragraph',
         }
       case 'div':
         return {
           data: tag.attributes,
           content: [],
-          type: 'block'
+          type: 'block',
         }
       case 'link':
         const data = tag.attributes
@@ -151,13 +151,13 @@ class XMLParser {
         return {
           data,
           content: [],
-          type: 'link'
+          type: 'link',
         }
       default:
         return {
           data: tag.attributes,
           content: [],
-          type: tag.name
+          type: tag.name,
         }
     }
   }
