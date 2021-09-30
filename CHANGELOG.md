@@ -7,29 +7,25 @@
 
 ## [5.4.1](https://github.com/e-Spirit/fsxa-api/compare/v5.4.0...v5.4.1) (2021-11-18)
 
-
 ### Bug Fixes
 
-* **release management:** deprecate an old release ([8709044](https://github.com/e-Spirit/fsxa-api/commit/8709044235fce838a93f044602de1fee499b73fe))
-
+- **release management:** deprecate an old release ([8709044](https://github.com/e-Spirit/fsxa-api/commit/8709044235fce838a93f044602de1fee499b73fe))
 
 ### Reverts
 
-* "feat(caasmapper): added type names to interfaces used by mapper" ([#53](https://github.com/e-Spirit/fsxa-api/issues/53)) ([0dd34f2](https://github.com/e-Spirit/fsxa-api/commit/0dd34f214b6ec613ea716e40ef8801af556b976b))
+- "feat(caasmapper): added type names to interfaces used by mapper" ([#53](https://github.com/e-Spirit/fsxa-api/issues/53)) ([0dd34f2](https://github.com/e-Spirit/fsxa-api/commit/0dd34f214b6ec613ea716e40ef8801af556b976b))
 
 # [5.4.0](https://github.com/e-Spirit/fsxa-api/compare/v5.3.3...v5.4.0) (2021-11-18)
 
-
 ### Features
 
-* **caasmapper:** added type names to interfaces used by mapper ([8a7bca0](https://github.com/e-Spirit/fsxa-api/commit/8a7bca0827e427d465de0bb994ff753d5b11b940))
+- **caasmapper:** added type names to interfaces used by mapper ([8a7bca0](https://github.com/e-Spirit/fsxa-api/commit/8a7bca0827e427d465de0bb994ff753d5b11b940))
 
 ## [5.3.3](https://github.com/e-Spirit/fsxa-api/compare/v5.3.2...v5.3.3) (2021-10-13)
 
-
 ### Bug Fixes
 
-* fix nullable record entries bug for FS_INDEX ([#45](https://github.com/e-Spirit/fsxa-api/issues/45)) ([4722f68](https://github.com/e-Spirit/fsxa-api/commit/4722f68ec888a9073176d9f5bb1fa9c3bd72a033))
+- fix nullable record entries bug for FS_INDEX ([#45](https://github.com/e-Spirit/fsxa-api/issues/45)) ([4722f68](https://github.com/e-Spirit/fsxa-api/commit/4722f68ec888a9073176d9f5bb1fa9c3bd72a033))
 
 ## [5.3.2](https://github.com/e-Spirit/fsxa-api/compare/v5.3.1...v5.3.2) (2021-08-24)
 
