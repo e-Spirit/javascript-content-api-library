@@ -9,18 +9,18 @@ export enum ComparisonQueryOperatorEnum {
   LESS_THAN = '$lt',
   LESS_THAN_EQUALS = '$lte',
   NOT_EQUALS = '$ne',
-  NOT_IN = '$nin'
+  NOT_IN = '$nin',
 }
 
 export enum LogicalQueryOperatorEnum {
   AND = '$and',
   NOT = '$not',
   NOR = '$nor',
-  OR = '$or'
+  OR = '$or',
 }
 
 export enum ArrayQueryOperatorEnum {
-  ALL = '$all'
+  ALL = '$all',
 }
 
 export enum QueryBuilderErrors {
@@ -30,7 +30,7 @@ export enum QueryBuilderErrors {
   MISSING_VALUE = 'The filter query requires a value',
   MISSING_FILTERS = 'No filters property was specified',
   NOT_A_NUMBER = 'This filter requires a number as value',
-  NOT_AN_ARRAY = 'This filter requires an array as value'
+  NOT_AN_ARRAY = 'This filter requires an array as value',
 }
 
 export class QueryBuilder {
@@ -56,24 +56,24 @@ export class QueryBuilder {
         // throw an error if no filters are specified
         if (filter.filters == null) throw new Error(QueryBuilderErrors.MISSING_FILTERS)
         const childFilters = filter.filters
-          .map(child => this.build(child))
+          .map((child) => this.build(child))
           .filter(Boolean) as MappedFilter[]
         // we do not want to add a logical filter with no children
         if (childFilters.length === 0) return null
         // we do not need a logical query for only one child --> return the child-query instead
         if (childFilters.length === 1) return childFilters[0]
         return {
-          [filter.operator]: childFilters
+          [filter.operator]: childFilters,
         }
       case LogicalQueryOperatorEnum.NOT:
         if (!filter.field) throw new Error(QueryBuilderErrors.MISSING_FIELD)
         const mappedFilter = this.build({
           ...filter.filter,
-          field: filter.field
+          field: filter.field,
         })
         return mappedFilter
           ? {
-              [LogicalQueryOperatorEnum.NOT]: mappedFilter
+              [LogicalQueryOperatorEnum.NOT]: mappedFilter,
             }
           : null
       case ComparisonQueryOperatorEnum.EQUALS:
@@ -84,8 +84,8 @@ export class QueryBuilder {
         if (Array.isArray(filter.value) && filter.value.length === 0) return null
         return {
           [filter.field]: {
-            [filter.operator]: filter.value
-          }
+            [filter.operator]: filter.value,
+          },
         }
       case ComparisonQueryOperatorEnum.GREATER_THAN:
       case ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS:
@@ -97,8 +97,8 @@ export class QueryBuilder {
         if (isNaN(filter.value)) throw new Error(QueryBuilderErrors.NOT_A_NUMBER)
         return {
           [filter.field]: {
-            [filter.operator]: filter.value
-          }
+            [filter.operator]: filter.value,
+          },
         }
       case ComparisonQueryOperatorEnum.IN:
       case ComparisonQueryOperatorEnum.NOT_IN:
@@ -108,8 +108,8 @@ export class QueryBuilder {
         if (!Array.isArray(filter.value)) throw new Error(QueryBuilderErrors.NOT_AN_ARRAY)
         return {
           [filter.field]: {
-            [filter.operator]: filter.value
-          }
+            [filter.operator]: filter.value,
+          },
         }
     }
     throw new Error(QueryBuilderErrors.UNKNOWN_OPERATOR)
