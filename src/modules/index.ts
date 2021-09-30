@@ -6,4 +6,5 @@
 export * from './CaaSMapper'
 export * from './QueryBuilder'
 export * from './Logger'
-export * from './FSXAApi'
+export * from './FSXAProxyApi'
+export * from './FSXARemoteApi'

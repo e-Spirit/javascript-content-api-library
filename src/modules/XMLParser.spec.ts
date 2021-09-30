@@ -1,8 +1,8 @@
-import { Logger, LogLevel } from '../../modules'
-import XMLParser from '../../modules/XMLParser'
+import { Logger, LogLevel } from './'
+import XMLParser from './XMLParser'
 
 describe('XMLParser', () => {
-  const logger = new Logger(LogLevel.ERROR)
+  const logger = new Logger(LogLevel.ERROR, 'XMLParserTest')
   const xmlParser = new XMLParser(logger)
 
   it('should log an error on incorrect XML', async () => {
@@ -22,7 +22,7 @@ describe('XMLParser', () => {
   it('should parse &apos correct', async () => {
     const xml = "<div>'</div>"
     const expectedValue = [
-      { content: [{ content: "'", data: {}, type: 'text' }], data: {}, type: 'block' }
+      { content: [{ content: "'", data: {}, type: 'text' }], data: {}, type: 'block' },
     ]
     const result = await xmlParser.parse(xml)
 
@@ -44,30 +44,33 @@ describe('XMLParser', () => {
 
   describe('Richtext ELements', () => {
     const cases = [
-      ['<div></div>','block' ],
-      ['<br>','linebreak'],
-      ['<ul></ul>','list'],
-      ['<li></li>','listitem'],
-      ['<p></p>','paragraph'],
-      ['<default></default>','default',]
+      ['<div></div>', 'block'],
+      ['<br>', 'linebreak'],
+      ['<ul></ul>', 'list'],
+      ['<li></li>', 'listitem'],
+      ['<p></p>', 'paragraph'],
+      ['<default></default>', 'default'],
     ]
-    const formatcases=[
-      ['<b></b>','text', 'bold'],
-      ['<i></i>','text', 'italic'],
+    const formatcases = [
+      ['<b></b>', 'text', 'bold'],
+      ['<i></i>', 'text', 'italic'],
     ]
 
-    it.each(cases)(`%p should be parsed as %p`, async ( xml, type) => {
-      const expectedValue = [{ content: [], data: { }, type }]
+    it.each(cases)(`%p should be parsed as %p`, async (xml, type) => {
+      const expectedValue = [{ content: [], data: {}, type }]
       const result = await xmlParser.parse(xml as string)
 
       expect(result).toEqual(expectedValue)
     })
-    it.each(formatcases)(`%p should be parsed as %p with format: %p"`, async ( xml, type, format) => {
-      const expectedValue = [{ content: [], data: { format }, type }]
-      const result = await xmlParser.parse(xml as string)
+    it.each(formatcases)(
+      `%p should be parsed as %p with format: %p"`,
+      async (xml, type, format) => {
+        const expectedValue = [{ content: [], data: { format }, type }]
+        const result = await xmlParser.parse(xml as string)
 
-      expect(result).toEqual(expectedValue)
-    })
+        expect(result).toEqual(expectedValue)
+      }
+    )
   })
 
   describe('Link Element', () => {
@@ -100,8 +103,8 @@ describe('XMLParser', () => {
         {
           content: [{ content: 'Smart', data: {}, type: 'text' }],
           data: { data: json, type: link },
-          type: 'link'
-        }
+          type: 'link',
+        },
       ]
       const result = await xmlParser.parse(xml)
 
@@ -115,8 +118,8 @@ describe('XMLParser', () => {
         {
           content: [{ content: 'Smart', data: {}, type: 'text' }],
           data: { data: destructedJson, type: link },
-          type: 'link'
-        }
+          type: 'link',
+        },
       ]
       const logTest = jest.spyOn(logger, 'error').mockImplementation(() => {})
       const result = await xmlParser.parse(xml)
