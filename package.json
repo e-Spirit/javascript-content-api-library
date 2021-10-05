@@ -29,6 +29,7 @@
     "build:local": "rimraf fsxa-api-*.tgz && npm version prerelease --no-git-tag-version --preid alpha && npm run build && npm pack",
     "start": "rollup -c rollup.config.ts -w",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "test:watch": "jest --coverage --watch",
     "test:prod": "npm run lint && npm run test -- --no-cache",
     "deploy-docs": "ts-node tools/gh-pages-publish",
@@ -70,15 +71,10 @@
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/test/",
-      "/types/",
-      "/src/FSXAApi",
-      "/src/Logger",
-      "/src/CaaSMapper",
-      "/src/utils",
-      "/src/routes",
-      "/src/index",
-      "/src/internal"
+      "/src/enums.ts",
+      "/src/index.ts",
+      "/src/routes.ts",
+      "/src/modules/Logger.ts"
     ],
     "collectCoverageFrom": [
       "src/**/*.{js,ts}"
