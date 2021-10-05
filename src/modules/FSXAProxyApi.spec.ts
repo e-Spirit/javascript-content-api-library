@@ -217,7 +217,8 @@ describe('FSXAProxyAPI', () => {
     })
     it('should trigger the fetch method with the correct params', () => {
       fetchMock.mockResponseOnce('{}')
-      proxyApi.fetchNavigation({ initialPath, locale })
+      const authData = Faker.datatype.json()
+      proxyApi.fetchNavigation({ initialPath, locale, authData })
       const actualBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
       const actualURL = fetchMock.mock.calls[0][0]
       const expectedURL = `${baseURL}${FSXAProxyRoutes.FETCH_NAVIGATION_ROUTE}`
@@ -225,6 +226,7 @@ describe('FSXAProxyAPI', () => {
       expect(expectedURL).toEqual(actualURL)
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.initialPath).toEqual(initialPath)
+      expect(actualBody.authData).toEqual(authData)
     })
     it('should throw an not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })

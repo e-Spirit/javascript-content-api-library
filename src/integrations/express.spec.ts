@@ -11,6 +11,7 @@ import { FETCH_BY_FILTER_ROUTE, FETCH_NAVIGATION_ROUTE, FETCH_ELEMENT_ROUTE } fr
 import 'cross-fetch/polyfill'
 import { Page, QueryBuilderQuery, NavigationData } from '../types'
 import { FSXAContentMode } from '../enums'
+import Faker from 'faker'
 
 const PORT = 3125
 
@@ -135,6 +136,14 @@ describe('Express-Integration', () => {
       expect(fetchNavigationSpy).toHaveBeenCalledWith({
         authData: undefined,
         initialPath: '/foobar',
+        locale: 'de_DE',
+      })
+      const json = Faker.datatype.json()
+      await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE', authData: json })
+      expect(fetchNavigationSpy).toHaveBeenCalledTimes(4)
+      expect(fetchNavigationSpy).toHaveBeenCalledWith({
+        authData: json,
+        initialPath: '/',
         locale: 'de_DE',
       })
     })
