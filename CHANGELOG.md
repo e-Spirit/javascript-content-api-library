@@ -1,3 +1,10 @@
+## [5.3.3](https://github.com/e-Spirit/fsxa-api/compare/v5.3.2...v5.3.3) (2021-10-13)
+
+
+### Bug Fixes
+
+* fix nullable record entries bug for FS_INDEX ([#45](https://github.com/e-Spirit/fsxa-api/issues/45)) ([4722f68](https://github.com/e-Spirit/fsxa-api/commit/4722f68ec888a9073176d9f5bb1fa9c3bd72a033))
+
 ## [5.3.2](https://github.com/e-Spirit/fsxa-api/compare/v5.3.1...v5.3.2) (2021-08-24)
 
 
