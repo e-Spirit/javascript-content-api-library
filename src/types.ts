@@ -2,7 +2,7 @@ import { FSXAApi } from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
-  LogicalQueryOperatorEnum
+  LogicalQueryOperatorEnum,
 } from './modules/QueryBuilder'
 import XMLParser from './modules/XMLParser'
 
@@ -161,7 +161,7 @@ export interface CaaSApi_MediaRef {
 export interface CaaSApi_Record {
   fsType: 'Record'
   identifier: string
-  value: any
+  value: Record<string, any> | null
 }
 
 export interface CaaSApi_FSIndex {
