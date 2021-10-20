@@ -274,7 +274,8 @@ export class CaaSMapper {
         )
       ),
       data: await this.mapDataEntries(pageRef.page.formData, [...path, 'data']),
-      meta: await this.mapDataEntries(pageRef.page.metaFormData, [...path, 'meta'])
+      meta: await this.mapDataEntries(pageRef.page.metaFormData, [...path, 'meta']),
+      metaPageRef: await this.mapDataEntries(pageRef.metaFormData, [...path, 'metaPageRef'])
     }
   }
 
