@@ -330,6 +330,7 @@ export interface CaaSApi_Media_Base {
 
 export interface CaaSApi_Media_File extends CaaSApi_Media_Base {
   mediaType: 'FILE'
+  changeInfo?: { revision: number }
   url: string
   fileMetaData: {
     fileSize: number
@@ -341,6 +342,7 @@ export interface CaaSApi_Media_File extends CaaSApi_Media_Base {
 
 export interface CaaSApi_Media_Picture extends CaaSApi_Media_Base {
   mediaType: 'PICTURE'
+  changeInfo?: { revision: number }
   resolutionsMetaData: {
     [resolution: string]: {
       fileSize: number
@@ -518,6 +520,7 @@ export type CustomMapper = (
     xmlParser: XMLParser
     registerReferencedItem: (identifier: string, path: NestedPath) => string
     buildPreviewId: (identifier: string) => string
+    buildMediaUrl: (url: string, rev?: number) => string
     mapDataEntries: (entries: CaaSApi_DataEntries, path: NestedPath) => Promise<DataEntries>
   }
 ) => Promise<any>

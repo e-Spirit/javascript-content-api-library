@@ -1,4 +1,4 @@
-import { FSXAApi, ComparisonQueryOperatorEnum } from './'
+import { FSXAApi, FSXAContentMode, ComparisonQueryOperatorEnum } from './'
 import {
   CaaSApi_Body,
   CaaSApi_Content2Section,
@@ -113,6 +113,13 @@ export class CaaSMapper {
     return [identifier, this.locale].join('.')
   }
 
+  buildMediaUrl(url: string, rev?: number) {
+    if (rev && this.api.mode === FSXAContentMode.PREVIEW) {
+      url += `${url.includes('?') ? '&' : '?'}rev=${rev}`
+    }
+    return url
+  }
+
   async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
     if (this.customMapper) {
       const result = await this.customMapper(entry, path, {
@@ -120,6 +127,7 @@ export class CaaSMapper {
         xmlParser: this.xmlParser,
         registerReferencedItem: this.registerReferencedItem.bind(this),
         buildPreviewId: this.buildPreviewId.bind(this),
+        buildMediaUrl: this.buildMediaUrl.bind(this),
         mapDataEntries: this.mapDataEntries.bind(this),
       })
       if (typeof result !== 'undefined') return result
@@ -372,7 +380,20 @@ export class CaaSMapper {
       previewId: this.buildPreviewId(item.identifier),
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
       description: item.description,
-      resolutions: item.resolutionsMetaData,
+      resolutions: Object.entries(item.resolutionsMetaData)
+        .map(([resolution, resolutionMetaData]) => {
+          return {
+            resolution,
+            resolutionMetaData: Object.assign(resolutionMetaData, {
+              url: this.buildMediaUrl(resolutionMetaData.url, item.changeInfo?.revision),
+            }),
+          }
+        })
+        .reduce(
+          (resolutions, { resolution, resolutionMetaData }) =>
+            Object.assign(resolutions, { [resolution]: resolutionMetaData }),
+          {}
+        ),
     }
   }
 
@@ -383,7 +404,7 @@ export class CaaSMapper {
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
       fileName: item.fileName,
       fileMetaData: item.fileMetaData,
-      url: item.url,
+      url: this.buildMediaUrl(item.url, item.changeInfo?.revision),
     }
   }
 
