@@ -205,10 +205,13 @@ export class CaaSMapper {
             entry.value.remoteProject
           )
         } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
-          return {
+          const fsReferenceData = {
             referenceId: entry.value.identifier,
             referenceType: entry.value.fsType,
           }
+          Object.keys(entry.value).includes('section') &&
+            Object.assign(fsReferenceData, { section: entry.value.section })
+          return fsReferenceData
         }
         return entry
       case 'FS_INDEX':
