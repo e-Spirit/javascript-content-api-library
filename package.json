@@ -1,8 +1,8 @@
 {
   "name": "fsxa-api",
-  "version": "5.4.0",
+  "version": "5.4.1",
   "description": "",
-  "keywords": [], 
+  "keywords": [],
   "main": "dist/fsxa-api.cjs.js",
   "module": "dist/fsxa-api.es5.js",
   "types": "dist/types",
