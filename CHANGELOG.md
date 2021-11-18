@@ -1,3 +1,10 @@
+# [5.4.0](https://github.com/e-Spirit/fsxa-api/compare/v5.3.3...v5.4.0) (2021-11-18)
+
+
+### Features
+
+* **caasmapper:** added type names to interfaces used by mapper ([8a7bca0](https://github.com/e-Spirit/fsxa-api/commit/8a7bca0827e427d465de0bb994ff753d5b11b940))
+
 ## [5.3.3](https://github.com/e-Spirit/fsxa-api/compare/v5.3.2...v5.3.3) (2021-10-13)
 
 
