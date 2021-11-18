@@ -27,9 +27,6 @@ import {
   PageBodyContent,
   ProjectProperties,
   Section,
-  Link,
-  Option,
-  CaaSApi_FSIndex
 } from '../types'
 import { parseISO } from 'date-fns'
 import { set, chunk } from 'lodash'
@@ -129,9 +126,7 @@ export class CaaSMapper {
     }
     switch (entry.fsType) {
       case 'CMS_INPUT_COMBOBOX':
-        return entry.value
-          ? ({ type: 'Option', key: entry.value.identifier, value: entry.value.label } as Option)
-          : null
+        return entry.value ? { key: entry.value.identifier, value: entry.value.label } : null
       case 'CMS_INPUT_DOM':
       case 'CMS_INPUT_DOMTABLE':
         return entry.value ? await this.xmlParser.parse(entry.value) : []
@@ -145,12 +140,11 @@ export class CaaSMapper {
         return entry.value ? parseISO(entry.value) : null
       case 'CMS_INPUT_LINK':
         return entry.value
-          ? ({
-              type: 'Link',
+          ? {
               template: entry.value.template.uid,
               data: await this.mapDataEntries(entry.value.formData, [...path, 'data']),
-              meta: await this.mapDataEntries(entry.value.metaFormData, [...path, 'meta'])
-            } as Link)
+              meta: await this.mapDataEntries(entry.value.metaFormData, [...path, 'meta']),
+            }
           : null
       case 'CMS_INPUT_LIST':
         if (!entry.value) return []
@@ -226,13 +220,12 @@ export class CaaSMapper {
             })
             .filter(Boolean)
         }
-        return entry as CaaSApi_FSIndex
+        return entry
       case 'Option':
         return {
-          type: 'Option',
           key: entry.identifier,
-          value: entry.label
-        } as Option
+          value: entry.label,
+        }
       default:
         this.api.logger.log(
           `[mapDataEntry]: Unknown Type ${entry.fsType}. Returning raw value:`,
@@ -319,7 +312,6 @@ export class CaaSMapper {
 
   async mapPageRef(pageRef: CaaSApi_PageRef, path: NestedPath = []): Promise<Page> {
     return {
-      type: 'Page',
       id: pageRef.page.identifier,
       refId: pageRef.identifier,
       previewId: this.buildPreviewId(pageRef.identifier),
@@ -340,7 +332,6 @@ export class CaaSMapper {
     path: NestedPath = []
   ): Promise<ProjectProperties> {
     return {
-      type: 'ProjectProperties',
       data: await this.mapDataEntries(properties.formData, [...path, 'data']),
       layout: properties.template.uid,
       meta: await this.mapDataEntries(properties.metaFormData, [...path, 'meta']),
@@ -352,7 +343,6 @@ export class CaaSMapper {
 
   async mapGCAPage(gcaPage: CaaSApi_GCAPage, path: NestedPath = []): Promise<GCAPage> {
     return {
-      type: 'GCAPage',
       id: gcaPage.identifier,
       previewId: this.buildPreviewId(gcaPage.identifier),
       name: gcaPage.name,
@@ -378,7 +368,6 @@ export class CaaSMapper {
 
   async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath): Promise<Image> {
     return {
-      type: 'Image',
       id: item.identifier,
       previewId: this.buildPreviewId(item.identifier),
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
@@ -389,7 +378,6 @@ export class CaaSMapper {
 
   async mapMediaFile(item: CaaSApi_Media_File, path: NestedPath): Promise<File> {
     return {
-      type: 'File',
       id: item.identifier,
       previewId: this.buildPreviewId(item.identifier),
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
