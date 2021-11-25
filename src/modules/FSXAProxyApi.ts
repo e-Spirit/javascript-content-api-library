@@ -9,6 +9,7 @@ import {
   FetchNavigationParams,
   FetchProjectPropertiesParams,
   FetchElementParams,
+  FSXAApi,
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
@@ -23,8 +24,8 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
  * By using this class, no secrets are provided to the client.
  * @see FSXARemoteApi
  */
-export class FSXAProxyApi {
-  public mode = 'proxy'
+export class FSXAProxyApi implements FSXAApi {
+  public mode: 'proxy' = 'proxy'
   private _baseUrl: string = this.baseUrl
   private _method = 'POST'
   private _headers = {
