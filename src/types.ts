@@ -326,11 +326,11 @@ export interface CaaSApi_Media_Base {
   languageDependent: boolean
   description: string | null
   metaFormData: CaaSApi_DataEntries
+  changeInfo?: { revision: number }
 }
 
 export interface CaaSApi_Media_File extends CaaSApi_Media_Base {
   mediaType: 'FILE'
-  changeInfo?: { revision: number }
   url: string
   fileMetaData: {
     fileSize: number
@@ -340,19 +340,22 @@ export interface CaaSApi_Media_File extends CaaSApi_Media_Base {
   }
 }
 
+export type CaaSApi_Media_Picture_Resolution_MetaData = {
+  fileSize: number
+  extension: string
+  mimeType: string
+  width: number
+  height: number
+  url: string
+}
+
+export interface CaaSApi_Media_Picture_Resolutions {
+  [resolution: string]: CaaSApi_Media_Picture_Resolution_MetaData
+}
+
 export interface CaaSApi_Media_Picture extends CaaSApi_Media_Base {
   mediaType: 'PICTURE'
-  changeInfo?: { revision: number }
-  resolutionsMetaData: {
-    [resolution: string]: {
-      fileSize: number
-      extension: string
-      mimeType: string
-      width: number
-      height: number
-      url: string
-    }
-  }
+  resolutionsMetaData: CaaSApi_Media_Picture_Resolutions
 }
 
 export type CaaSApi_Media = CaaSApi_Media_File | CaaSApi_Media_Picture

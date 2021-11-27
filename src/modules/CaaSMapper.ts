@@ -8,6 +8,7 @@ import {
   CaaSApi_GCAPage,
   CaaSApi_Media,
   CaaSApi_Media_Picture,
+  CaaSApi_Media_Picture_Resolutions,
   CaaSApi_Media_File,
   CaaSApi_PageRef,
   CaaSApi_ProjectProperties,
@@ -20,7 +21,6 @@ import {
   GCAPage,
   Image,
   File,
-  Media,
   NestedPath,
   Page,
   PageBody,
@@ -380,21 +380,21 @@ export class CaaSMapper {
       previewId: this.buildPreviewId(item.identifier),
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
       description: item.description,
-      resolutions: Object.entries(item.resolutionsMetaData)
-        .map(([resolution, resolutionMetaData]) => {
-          return {
-            resolution,
-            resolutionMetaData: Object.assign(resolutionMetaData, {
-              url: this.buildMediaUrl(resolutionMetaData.url, item.changeInfo?.revision),
-            }),
-          }
-        })
-        .reduce(
-          (resolutions, { resolution, resolutionMetaData }) =>
-            Object.assign(resolutions, { [resolution]: resolutionMetaData }),
-          {}
-        ),
+      resolutions: this.mapMediaPictureResolutionUrls(
+        item.resolutionsMetaData,
+        item.changeInfo?.revision
+      ),
     }
+  }
+
+  mapMediaPictureResolutionUrls(
+    resolutions: CaaSApi_Media_Picture_Resolutions,
+    rev?: number
+  ): CaaSApi_Media_Picture_Resolutions {
+    for (let resolution in Object.keys(resolutions)) {
+      resolutions[resolution].url = this.buildMediaUrl(resolutions[resolution].url, rev)
+    }
+    return resolutions
   }
 
   async mapMediaFile(item: CaaSApi_Media_File, path: NestedPath): Promise<File> {
