@@ -1,9 +1,102 @@
-## [5.4.2](https://github.com/e-Spirit/fsxa-api/compare/v5.4.1...v5.4.2) (2021-12-06)
+### Migration Guide
 
+Since the FSXAApi class has been seperated into two different API classes,
+the usage of the component needs to be adjusted.
 
-### Bug Fixes
+#### API Calls
 
-* **RichTextParser:** handling of rich-text with special characters ([#59](https://github.com/e-Spirit/fsxa-api/issues/59)) ([c321a15](https://github.com/e-Spirit/fsxa-api/commit/c321a15c67ef39f495c9534cfc0a30cebd6c79b5))
+API calls like `fetchElement()`, `fetchByFilter()`, `fetchNavigation()` and `fetchProjectProperties()` now have a different method signatures.
+The parameters are now typed objects and some entries can even be omitted, due to the new default values.
+To be compliant to the new signature, you can wrap the parameters of your method calls inside objects and add the corresponding key to your them.
+
+_Example_:
+
+```typescript
+api.fetchElement(req.body.id, req.body.locale, req.body?.additionalParams, req.body?.remote);
+```
+
+_does not compile_
+
+```typescript
+api.fetchElement({
+  id: req.body.id,
+  locale: req.body.locale,
+  additionalParams: req.body?.additionalParams,
+  remoteProject: req.body?.remote,
+});
+```
+
+_new compliant solution_
+
+#### Usages of FSXAApi with mode = proxy
+
+FSXAApi has been removed.
+If you were using the FSXAApi in with `mode: 'proxy'` you should switch to the new FSXAProxyApi.
+The FSXAContentMode can be omitted.
+_Example_:
+
+```typescript
+new FSXAApi(
+  FSXAContentMode.PREVIEW,
+  {
+    mode: "proxy",
+    baseUrl: BASE_URL,
+  },
+  3
+);
+```
+
+_does not compile_
+
+```typescript
+new FSXAProxyApi(BASE_URL, LogLevel.INFO);
+```
+
+_new compliant solution_
+
+#### Usages of FSXAApi with mode = remote
+
+FSXAApi has been removed.
+If you were using the FSXAApi in with `mode: 'remote'` you should switch to the new FSXARemoteApi.
+
+_Example_:
+
+```typescript
+new FSXAApi(FSXAContentMode.PREVIEW, {
+  mode: "remote",
+  config: {
+    apiKey: API_KEY,
+    caas: CAAS_URL,
+    navigationService: NAVIGATION_SERVICE_URL,
+    tenantId: TENANT_ID,
+    projectId: PROJECT_ID,
+    remotes: REMOTES,
+  },
+});
+```
+
+_does not compile_
+
+```typescript
+new FSXARemoteApi({
+  apikey: API_KEY,
+  caasURL: CAAS_URL,
+  navigationServiceURL: NAVIGATION_SERVICE_URL,
+  tenantID: TENANT_ID,
+  projectID: PROJECT_ID,
+  remotes: REMOTES,
+  contentMode: CONTENT_MODE,
+});
+```
+
+_new compliant solution_
+
+#### Updated Endpoints
+
+The endpoint of `/elements/:id` has changed.
+The `:id` will no longer be parsed.
+_Instead:_
+Provide the _id_ in the POST request's body.
 
 ## [5.4.1](https://github.com/e-Spirit/fsxa-api/compare/v5.4.0...v5.4.1) (2021-11-18)
 

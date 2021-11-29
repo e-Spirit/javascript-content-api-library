@@ -9,7 +9,6 @@
     "declaration": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
-    "allowJs": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "outDir": "dist/lib",

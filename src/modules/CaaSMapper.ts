@@ -447,7 +447,7 @@ export class CaaSMapper {
             case 'ProjectProperties':
               return this.mapProjectProperties(item, [index])
             default:
-              // TODO LOG WARN
+              this.logger.warn(`Item at index'${index}' could not be mapped!`)
               return item
           }
         })
@@ -509,7 +509,6 @@ export class CaaSMapper {
         )
       )
       const fetchedItems = response.flat()
-      // const fetchedItems = response.reduce((result, entries) => [...result, ...entries], [])
       ids.forEach((id) =>
         referencedItems[id].forEach((path) =>
           set(data, path, fetchedItems.find((data) => data.id === id) || null)
