@@ -3,7 +3,6 @@ import {
   GCAPage,
   Dataset,
   Image,
-  QueryBuilderQuery,
   NavigationData,
   FetchByFilterParams,
   FetchNavigationParams,
@@ -33,10 +32,17 @@ export class FSXAProxyApi implements FSXAApi {
   }
   private _logger: Logger
 
+  /**
+   * This method requests the current state of baseUrl
+   * @param baseUrl specifies the base Url for the FSXA-Proxy-Api
+   */
   get baseUrl() {
     return this._baseUrl
   }
-
+  /**
+   * This method sets a new state of baseUrl
+   * @param baseUrl specifies the base Url for the FSXA-Proxy-Api
+   */
   set baseUrl(value: string) {
     value = value.trim()
     if (value === '') {
@@ -48,6 +54,7 @@ export class FSXAProxyApi implements FSXAApi {
   /**
    * Creates a new instance with the connection to the FSXARemoteAPI
    * @param baseURL specifies the URL to communicate with
+   * @param logLevel specifies the restrictions of logs which will be displayed
    */
   constructor(baseURL: string, logLevel = LogLevel.ERROR) {
     this.baseUrl = baseURL
@@ -55,13 +62,13 @@ export class FSXAProxyApi implements FSXAApi {
   }
 
   /**
-   *
-   * @param id
-   * @param locale
-   * @param additionalParams
-   * @param remoteProject
-   * @param fetchOptions
-   * @returns
+   * This methods fetches a specific element by its Id and its fetch options
+   * @param id specifies the element that needs to be fetched
+   * @param locale specifies the language e.g. de_DE
+   * @param additionalParams sets parameters for the fetching process
+   * @param remoteProject specifies the remote Project
+   * @param fetchOptions specifies the options for the fetching process
+   * @returns a JSON from the fetched element
    */
   async fetchElement<T = Page | GCAPage | Dataset | Image | any | null>({
     id,
@@ -71,7 +78,7 @@ export class FSXAProxyApi implements FSXAApi {
     fetchOptions,
   }: FetchElementParams): Promise<T> {
     const body = { id, locale, additionalParams, remote: remoteProject }
-
+    this._logger.info('fetchElement', 'trying to fetch body', body)
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_ELEMENT_ROUTE,
       options: {
@@ -97,15 +104,15 @@ export class FSXAProxyApi implements FSXAApi {
   }
 
   /**
-   *
-   * @param filters
-   * @param locale
-   * @param page
-   * @param pagesize
-   * @param additionalParams
-   * @param remoteProject
-   * @param fetchOptions
-   * @returns
+   * This method fetches elements found by a specified Filter
+   * @param filters specifies the filter that needs to be fetched
+   * @param locale specifies the language
+   * @param page specifies the page
+   * @param pagesize specifies the number of pages
+   * @param additionalParams specifies additional parameters for the fetching process
+   * @param remoteProject specifies the remote project for the fetching process
+   * @param fetchOptions specifies options in the fetching process
+   * @returns a JSON from the fetched elements
    *
    * @example
    * ```
@@ -122,17 +129,26 @@ export class FSXAProxyApi implements FSXAApi {
     fetchOptions,
   }: FetchByFilterParams) {
     if (pagesize < 1) {
-      // TODO: LOGGER WARN
+      this._logger.warn(
+        'fetchByFilter',
+        `Given pagesize: ${pagesize} was smaller than 1, pagesize will be set to 1`
+      )
       pagesize = 1
     }
 
     if (page < 1) {
-      // TODO: LOGGER WARN
+      this._logger.warn(
+        'fetchByFilter',
+        `Given page: ${page} was smaller than 1, page will be set to 1`
+      )
       page = 1
     }
 
     if (page > 100) {
-      // TODO: LOGGER WARN
+      this._logger.warn(
+        'fetchByFilter',
+        `Given page: ${page} was greater than 100, page will be set to 100`
+      )
       page = 100
     }
 
@@ -144,7 +160,7 @@ export class FSXAProxyApi implements FSXAApi {
       additionalParams,
       remote: remoteProject,
     }
-
+    this._logger.info('fetchByFilter', 'trying to fetch with body', body)
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_BY_FILTER_ROUTE,
       options: {
@@ -153,6 +169,10 @@ export class FSXAProxyApi implements FSXAApi {
         body,
         ...fetchOptions,
       },
+    })
+    this._logger.info('fetchByFilter', 'response', {
+      url: response.url,
+      status: response.status,
     })
 
     if (!response.ok) {
@@ -168,11 +188,11 @@ export class FSXAProxyApi implements FSXAApi {
   }
 
   /**
-   *
-   * @param initialPath
-   * @param locale
-   * @param fetchOptions
-   * @returns
+   * This method fetches the Navigation
+   * @param initialPath to identify the Navigation
+   * @param locale specifies the Language
+   * @param fetchOptions specifies options in the fetching Process
+   * @returns a JSON from the fetching process
    */
   async fetchNavigation({
     initialPath,
@@ -215,11 +235,11 @@ export class FSXAProxyApi implements FSXAApi {
   }
 
   /**
-   *
-   * @param locale
+   * This method fetches Project Properties
+   * @param locale specifies the language
    * @param resolver
-   * @param fetchOptions
-   * @returns
+   * @param fetchOptions specifies options in the fetching process
+   * @returns a JSON from the fetching results
    */
   async fetchProjectProperties({
     locale,
@@ -231,6 +251,7 @@ export class FSXAProxyApi implements FSXAApi {
       locale,
       resolver,
     }
+    this._logger.info('fetchProjectProperties', 'trying to fetch body', body)
 
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
@@ -240,6 +261,10 @@ export class FSXAProxyApi implements FSXAApi {
         body,
         ...fetchOptions,
       },
+    })
+    this._logger.info('fetchNavigation', 'response', {
+      url: response.url,
+      status: response.status,
     })
 
     if (!response.ok) {
@@ -254,12 +279,6 @@ export class FSXAProxyApi implements FSXAApi {
     return response.json()
   }
 
-  /**
-   *
-   * @param url
-   * @param options
-   * @returns
-   */
   private fetch({ url, options }: { url: string; options: RequestOptions }) {
     if (options?.body && typeof options.body === 'object') {
       options.body = JSON.stringify(options.body)

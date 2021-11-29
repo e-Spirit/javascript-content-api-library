@@ -2,8 +2,8 @@ import chalk from 'chalk'
 import { inspect } from 'util'
 
 export enum LogLevel {
-  INFO = 0,
-  LOG = 1,
+  DEBUG = 0,
+  INFO = 1,
   WARNING = 2,
   ERROR = 3,
   NONE = 4,
@@ -31,18 +31,22 @@ export class Logger {
     this._name = name
   }
 
-  info(...args: any[]) {
-    if (this._logLevel <= LogLevel.INFO) {
-      console.info(
-        chalk.gray(`${chalk.bgWhite.black(' INFO ')} ${this._name} | ${formatOutput(...args)}`)
+  debug(...args: any[]) {
+    if (this._logLevel <= LogLevel.DEBUG) {
+      console.debug(
+        chalk.gray(`${chalk.bgWhite.black(' DEBUG ')} ${this._name} | ${formatOutput(...args)}`)
       )
     }
   }
 
   log(...args: any[]) {
-    if (this._logLevel <= LogLevel.LOG) {
-      console.log(
-        chalk.blue(`${chalk.bgBlue.white(' LOG ')} ${this._name} | ${formatOutput(...args)}`)
+    this.info(args)
+  }
+
+  info(...args: any[]) {
+    if (this._logLevel <= LogLevel.INFO) {
+      console.info(
+        chalk.blue(`${chalk.bgBlue.white(' INFO ')} ${this._name} | ${formatOutput(...args)}`)
       )
     }
   }
