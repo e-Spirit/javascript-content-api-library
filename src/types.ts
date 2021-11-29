@@ -695,3 +695,15 @@ export type FSXARemoteApiConfig = {
   navigationFilter?: NavigationFilter
   preFilterFetch?: PreFilterFetch
 }
+
+export interface FSXAApi {
+  mode: 'proxy' | 'remote'
+  fetchElement: <T = Page | GCAPage | Dataset | Image | any | null>(
+    params: FetchElementParams
+  ) => Promise<T>
+  fetchByFilter: (params: FetchByFilterParams) => Promise<any>
+  fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
+  fetchProjectProperties: (
+    params: FetchProjectPropertiesParams
+  ) => Promise<Record<string, any> | null>
+}

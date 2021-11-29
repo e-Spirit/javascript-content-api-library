@@ -14,6 +14,7 @@ import {
   PreFilterFetch,
   RemoteProjectConfiguration,
   FSXARemoteApiConfig,
+  FSXAApi,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors, FSXAContentMode } from './../enums'
@@ -23,6 +24,7 @@ import { ComparisonQueryOperatorEnum, QueryBuilder } from './QueryBuilder'
 type buildNavigationServiceURLParams = {
   locale?: string
   initialPath?: string
+  all?: boolean
 }
 
 type buildCaaSUrlParams = {
@@ -38,8 +40,8 @@ type buildCaaSUrlParams = {
 /**
  * This class represents the `remote` variant of the FSXA API.
  */
-export class FSXARemoteApi {
-  public mode = 'remote'
+export class FSXARemoteApi implements FSXAApi {
+  public mode: 'remote' = 'remote'
   private _apikey: string = this.apikey
   private _caasURL: string = this.caasURL
   private _navigationServiceURL: string = this.navigationServiceURL
@@ -204,7 +206,7 @@ export class FSXARemoteApi {
    * @param initialPath can be provided when you want to access a subtree of the navigation
    * @returns {string} the Navigation Service url for either a subtree of or a complete navigation
    */
-  buildNavigationServiceUrl({ locale, initialPath }: buildNavigationServiceURLParams = {}) {
+  buildNavigationServiceUrl({ locale, initialPath, all }: buildNavigationServiceURLParams = {}) {
     this._logger.debug('[buildNavigationServiceUrl]', { locale, initialPath })
     if (locale && initialPath) {
       this._logger.warn('Parameters "locale" and "initialPath" have been given.')
@@ -213,7 +215,8 @@ export class FSXARemoteApi {
     const baseNavigationServiceUrl = `${this.navigationServiceURL}/${this.contentMode}.${this.projectID}`
 
     if (initialPath && initialPath !== '/') {
-      return `${baseNavigationServiceUrl}/by-seo-route/${initialPath}?depth=99&format=caas`
+      const queryParams = ['depth=99', '&format=caas', `${all ? '&all' : ''}`].join('')
+      return `${baseNavigationServiceUrl}/by-seo-route/${initialPath}?${queryParams}`
     }
 
     if (locale) {
@@ -248,7 +251,11 @@ export class FSXARemoteApi {
     if (initialPath) {
       encodedInitialPath = encodeURI(initialPath)
     }
-    const url = this.buildNavigationServiceUrl({ initialPath: encodedInitialPath, locale })
+    const url = this.buildNavigationServiceUrl({
+      initialPath: encodedInitialPath,
+      locale,
+      all: true,
+    })
     const headers = {
       'Accept-Language': '*',
     }
