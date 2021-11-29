@@ -1,3 +1,10 @@
+# [6.0.0-alpha.2](https://github.com/e-Spirit/fsxa-api/compare/v6.0.0-alpha.1...v6.0.0-alpha.2) (2021-11-29)
+
+
+### Features
+
+* **TypeDoc & FSXARemoteApi:** Add 'all' param for buildNavigationServiceUrl & TypeDoc  ([#57](https://github.com/e-Spirit/fsxa-api/issues/57)) ([1020287](https://github.com/e-Spirit/fsxa-api/commit/102028773d4fc889777ab3d4260ed374b960ebad)), closes [#47](https://github.com/e-Spirit/fsxa-api/issues/47) [#49](https://github.com/e-Spirit/fsxa-api/issues/49) [#55](https://github.com/e-Spirit/fsxa-api/issues/55)
+
 # [6.0.0-alpha.1](https://github.com/e-Spirit/fsxa-api/compare/v5.3.2...v6.0.0-alpha.1) (2021-09-30)
 
 ### Features
