@@ -419,7 +419,7 @@ describe('FSXARemoteAPI', () => {
 
       const actualURL = fetchMock.mock.calls[0][0]
 
-      const expectedURL = `${config.navigationServiceURL}/${config.contentMode}.${config.projectID}/by-seo-route/${initialPath}?depth=99&format=caas`
+      const expectedURL = `${config.navigationServiceURL}/${config.contentMode}.${config.projectID}/by-seo-route/${initialPath}?depth=99&format=caas&all`
       expect(expectedURL).toBe(actualURL)
     })
     it('should throw an not found error when the response is 404', () => {

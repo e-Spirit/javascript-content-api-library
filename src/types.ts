@@ -672,13 +672,15 @@ export type FetchProjectPropertiesParams = {
   fetchOptions?: RequestInit
 }
 
-export type navigationFilter = <A = unknown, P = unknown>(
+export type NavigationFilter = <A = unknown, P = unknown>(
   route: NavigationItem,
   authData: A,
   preFilterFetchData: P
 ) => boolean
 
-export type preFilterFetch = <T = unknown>(authData?: string) => Promise<T>
+export type PreFilterFetch = <T = unknown>(authData?: unknown) => Promise<T>
+
+export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
 
 export type FSXARemoteApiConfig = {
   apikey: string
@@ -687,9 +689,21 @@ export type FSXARemoteApiConfig = {
   tenantID: string
   projectID: string
   contentMode: FSXAContentMode
-  remotes?: Record<string, { id: string; locale: string }>
+  remotes?: RemoteProjectConfiguration
   logLevel?: LogLevel
   customMapper?: CustomMapper
-  navigationFilter?: navigationFilter
-  preFilterFetch?: preFilterFetch
+  navigationFilter?: NavigationFilter
+  preFilterFetch?: PreFilterFetch
+}
+
+export interface FSXAApi {
+  mode: 'proxy' | 'remote'
+  fetchElement: <T = Page | GCAPage | Dataset | Image | any | null>(
+    params: FetchElementParams
+  ) => Promise<T>
+  fetchByFilter: (params: FetchByFilterParams) => Promise<any>
+  fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
+  fetchProjectProperties: (
+    params: FetchProjectPropertiesParams
+  ) => Promise<Record<string, any> | null>
 }

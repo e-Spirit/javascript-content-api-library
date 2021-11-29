@@ -5,6 +5,7 @@ import {
   FSXAProxyApi,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
+  LogLevel,
 } from '../modules'
 import getExpressRouter, { ExpressRouterIntegrationErrors, getMappedFilters } from './express'
 import { FETCH_BY_FILTER_ROUTE, FETCH_NAVIGATION_ROUTE, FETCH_ELEMENT_ROUTE } from '../routes'
@@ -24,6 +25,7 @@ describe('Express-Integration', () => {
     projectID: 'projectId',
     tenantID: 'tenantId',
     contentMode: FSXAContentMode.PREVIEW,
+    logLevel: LogLevel.NONE,
   })
   let fetchElementSpy: jest.SpyInstance,
     fetchNavigationSpy: jest.SpyInstance,
