@@ -160,7 +160,7 @@ export class FSXAProxyApi implements FSXAApi {
       additionalParams,
       remote: remoteProject,
     }
-    this._logger.info('fetchByFilter', 'trying to fetch with body', body)
+    this._logger.debug('fetchByFilter', 'trying to fetch with body', body)
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_BY_FILTER_ROUTE,
       options: {
@@ -188,8 +188,8 @@ export class FSXAProxyApi implements FSXAApi {
   }
 
   /**
-   * This method fetches the Navigation
-   * @param initialPath to identify the Navigation
+   * This method fetches the navigation
+   * @param initialPath to identify the navigation
    * @param locale specifies the Language
    * @param fetchOptions specifies options in the fetching Process
    * @returns a JSON from the fetching process

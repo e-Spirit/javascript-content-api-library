@@ -35,11 +35,10 @@ app.use('/api', expressIntegration({ api: remoteApi }))
 app.listen(3002, async () => {
   console.log('Listening at http://localhost:3002')
   try {
-    const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', 0)
-    const response = await proxyAPI.fetchByFilter({
+    const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
+    const response = await proxyAPI.fetchNavigation({
       locale: 'de_DE',
-      filters: [],
-      page: -25,
+      initialPath: '/',
     })
 
     createFile({

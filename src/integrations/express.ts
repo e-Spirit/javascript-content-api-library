@@ -41,7 +41,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           additionalParams: req.body?.additionalParams,
           remoteProject: req.body?.remote,
         })
-        logger.info('response: ', response)
+        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
         logger.error('could not fetch element: ', err.message)
@@ -61,7 +61,6 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   router.post(
     [FETCH_NAVIGATION_ROUTE, FSXAProxyRoutes.FETCH_NAVIGATION_ROUTE],
     async (req: express.Request<any, any, FetchNavigationRouteBody>, res) => {
-      logger.info('fetchNavigation', 'start1111')
       logger.info('fetchNavigation', 'req', { body: req.body })
 
       if (req.body.locale == null) {
@@ -77,7 +76,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           locale: req.body.locale,
           authData: req.body.authData,
         })
-        logger.info('response: ', response)
+        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch Navigation: ', err.message)
@@ -113,7 +112,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           additionalParams: req.body.additionalParams || {},
           remoteProject: req.body.remote ? req.body.remote : undefined,
         })
-        logger.info('response: ', response)
+        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch by filter: ', err.message)
@@ -143,7 +142,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         const response = await api.fetchProjectProperties({
           locale: req.body.locale,
         })
-        logger.info('response: ', response)
+        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch project properties', err.message)
@@ -163,7 +162,6 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE,
     })
   })
-  logger.info('router: ', router)
   return router
 }
 export default getExpressRouter

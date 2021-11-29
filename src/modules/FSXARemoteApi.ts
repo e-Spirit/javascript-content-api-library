@@ -12,12 +12,11 @@ import {
   FetchByFilterParams,
   NavigationFilter,
   PreFilterFetch,
-  RemoteProjectConfiguration,
   FSXARemoteApiConfig,
   FSXAApi,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
-import { FSXAApiErrors, FSXAContentMode } from './../enums'
+import { FSXAApiErrors } from './../enums'
 import { LogLevel } from './Logger'
 import { ComparisonQueryOperatorEnum, QueryBuilder } from './QueryBuilder'
 
@@ -391,9 +390,9 @@ export class FSXARemoteApi implements FSXAApi {
   }: FetchByFilterParams) {
     if (pagesize < 1 || pagesize > 1000) {
       this._logger.warn(
-        `[fetchByFilter] pagesize may not be below zero or above 1000 ! Using fallback of pagesize = 1`
+        `[fetchByFilter] pagesize may not be below zero or above 1000 ! Using fallback of pagesize = 30`
       )
-      pagesize = 1
+      pagesize = 30
     }
 
     if (page < 1) {
