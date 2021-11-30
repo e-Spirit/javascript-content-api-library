@@ -2,7 +2,7 @@ import { Logger, LogLevel } from '../../modules'
 import XMLParser from '../../modules/XMLParser'
 
 describe('XMLParser', () => {
-  const logger = new Logger(LogLevel.ERROR)
+  const logger = new Logger(LogLevel.INFO)
   const xmlParser = new XMLParser(logger)
 
   it('should log an error on incorrect XML', async () => {
@@ -92,13 +92,13 @@ describe('XMLParser', () => {
     })
 
     it('should parse link elements with complex correct data', async () => {
-      const json = { object: { 'test-id': 'test' } }
+      const json = { object: { 'test-id': 'test "&<>\'' } }
       const xml = `<div data-fs-type=\"link.${link}\"><script type=\"application/json\">${JSON.stringify(
         json
-      )}</script><a>Smart</a></div>`
+      )}</script><a>Smart &amp; Clever</a></div>`
       const expectedValue = [
         {
-          content: [{ content: 'Smart', data: {}, type: 'text' }],
+          content: [{ content: 'Smart & Clever', data: {}, type: 'text' }],
           data: { data: json, type: link },
           type: 'link'
         }
