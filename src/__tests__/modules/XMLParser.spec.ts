@@ -2,7 +2,7 @@ import { Logger, LogLevel } from '../../modules'
 import XMLParser from '../../modules/XMLParser'
 
 describe('XMLParser', () => {
-  const logger = new Logger(LogLevel.INFO)
+  const logger = new Logger(LogLevel.ERROR)
   const xmlParser = new XMLParser(logger)
 
   it('should log an error on incorrect XML', async () => {
@@ -44,30 +44,33 @@ describe('XMLParser', () => {
 
   describe('Richtext ELements', () => {
     const cases = [
-      ['<div></div>','block' ],
-      ['<br>','linebreak'],
-      ['<ul></ul>','list'],
-      ['<li></li>','listitem'],
-      ['<p></p>','paragraph'],
-      ['<default></default>','default',]
+      ['<div></div>', 'block'],
+      ['<br>', 'linebreak'],
+      ['<ul></ul>', 'list'],
+      ['<li></li>', 'listitem'],
+      ['<p></p>', 'paragraph'],
+      ['<default></default>', 'default']
     ]
-    const formatcases=[
-      ['<b></b>','text', 'bold'],
-      ['<i></i>','text', 'italic'],
+    const formatcases = [
+      ['<b></b>', 'text', 'bold'],
+      ['<i></i>', 'text', 'italic']
     ]
 
-    it.each(cases)(`%p should be parsed as %p`, async ( xml, type) => {
-      const expectedValue = [{ content: [], data: { }, type }]
+    it.each(cases)(`%p should be parsed as %p`, async (xml, type) => {
+      const expectedValue = [{ content: [], data: {}, type }]
       const result = await xmlParser.parse(xml as string)
 
       expect(result).toEqual(expectedValue)
     })
-    it.each(formatcases)(`%p should be parsed as %p with format: %p"`, async ( xml, type, format) => {
-      const expectedValue = [{ content: [], data: { format }, type }]
-      const result = await xmlParser.parse(xml as string)
+    it.each(formatcases)(
+      `%p should be parsed as %p with format: %p"`,
+      async (xml, type, format) => {
+        const expectedValue = [{ content: [], data: { format }, type }]
+        const result = await xmlParser.parse(xml as string)
 
-      expect(result).toEqual(expectedValue)
-    })
+        expect(result).toEqual(expectedValue)
+      }
+    )
   })
 
   describe('Link Element', () => {
