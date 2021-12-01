@@ -49,11 +49,11 @@ describe('XMLParser', () => {
       ['<ul></ul>', 'list'],
       ['<li></li>', 'listitem'],
       ['<p></p>', 'paragraph'],
-      ['<default></default>', 'default']
+      ['<default></default>', 'default'],
     ]
     const formatcases = [
       ['<b></b>', 'text', 'bold'],
-      ['<i></i>', 'text', 'italic']
+      ['<i></i>','text', 'italic'],
     ]
 
     it.each(cases)(`%p should be parsed as %p`, async (xml, type) => {
