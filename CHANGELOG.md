@@ -1,3 +1,10 @@
+## [5.4.2](https://github.com/e-Spirit/fsxa-api/compare/v5.4.1...v5.4.2) (2021-12-06)
+
+
+### Bug Fixes
+
+* **RichTextParser:** handling of rich-text with special characters ([#59](https://github.com/e-Spirit/fsxa-api/issues/59)) ([c321a15](https://github.com/e-Spirit/fsxa-api/commit/c321a15c67ef39f495c9534cfc0a30cebd6c79b5))
+
 ## [5.4.1](https://github.com/e-Spirit/fsxa-api/compare/v5.4.0...v5.4.1) (2021-11-18)
 
 
