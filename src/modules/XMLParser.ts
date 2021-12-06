@@ -3,6 +3,14 @@ import * as saxes from 'saxes'
 import { RichTextElement } from '../types'
 import { get } from 'lodash'
 
+// map characters which are not valid inside XML attributes enclosed in double quotes to their
+// entity representation
+const ENTITIES = new Map([
+  ['"', '&quot;'],
+  ['&', '&amp;'],
+  ['<', '&lt;']
+])
+
 class XMLParser {
   logger: Logger
 
@@ -14,16 +22,17 @@ class XMLParser {
     try {
       return (
         xml
-          // we will replace all non closing br tags, with self-closing once
-          .replace(/<br>/gm, '<br />')
-          .replace(/'(?=[^>]*<)/g, '&apos;')
-          // we need to restructure the link structure into one single link element
+          // replace all non closing br tags with self-closing once (legacy, fixed with CORE-13424)
+          .replace(/<br>/g, '<br />')
+          // restructure the link structure into one single link element  (hint: *? matches non-eager)
           .replace(
+            // capturing groups:      _____1 type                                _____2 data          _____ 3 text
             /<div data-fs-type="link\.(.*?)">\s*<script type="application\/json">(.*?)<\/script>\s*<a>(.*?)<\/a>\s*<\/div>/g,
             (...args: any[]) => {
-              return `<link type="${args[1]}" data="${args[2].replace(/"/g, '&quot;')}">${
-                args[3]
-              }</link>`
+              // replace characters not valid for xml attributes
+              const data = args[2].replace(/(["&<])/g, (...args: any[]) => ENTITIES.get(args[1]))
+              // construct new node
+              return `<link type="${args[1]}" data="${data}">${args[3]}</link>`
             }
           )
       )
