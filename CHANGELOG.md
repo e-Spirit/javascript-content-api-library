@@ -1,3 +1,21 @@
+# [6.0.0](https://github.com/e-Spirit/fsxa-api/compare/v5.4.2...v6.0.0) (2021-12-07)
+
+
+### Bug Fixes
+
+* fix version number ([#60](https://github.com/e-Spirit/fsxa-api/issues/60)) ([5e8b3d0](https://github.com/e-Spirit/fsxa-api/commit/5e8b3d0d0212a43e204ca1dd81778aeb185f7c3c))
+
+
+### Features
+
+* add FSXAProxy, FSXARemoteApi and navigationFilter utilities ([#58](https://github.com/e-Spirit/fsxa-api/issues/58)) ([e909dc0](https://github.com/e-Spirit/fsxa-api/commit/e909dc0e9e49a45ec5da966fabf460fa0a3d9fb2)), closes [#44](https://github.com/e-Spirit/fsxa-api/issues/44) [#55](https://github.com/e-Spirit/fsxa-api/issues/55) [#57](https://github.com/e-Spirit/fsxa-api/issues/57) [#47](https://github.com/e-Spirit/fsxa-api/issues/47) [#49](https://github.com/e-Spirit/fsxa-api/issues/49)
+
+
+### BREAKING CHANGES
+
+* The FSXAApi class was removed and new classes FSXAProxyApi and FSXARemoteApi was
+added. Please read the [migration guide in the CHANGELOG](https://github.com/e-Spirit/fsxa-api/blob/alpha/CHANGELOG.md#migration-guide) for more details.
+
 ### Migration Guide
 
 Since the FSXAApi class has been seperated into two different API classes,
