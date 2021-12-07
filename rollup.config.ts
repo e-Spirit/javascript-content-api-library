@@ -5,6 +5,7 @@ import babel from '@rollup/plugin-babel'
 import { terser } from 'rollup-plugin-terser'
 import ts from 'rollup-plugin-ts'
 import pkg from './package.json'
+import nodePolyfills from 'rollup-plugin-node-polyfills'
 
 const extensions = ['.js', '.ts']
 
@@ -33,6 +34,7 @@ export default [
         babelHelpers: 'bundled',
       }),
       terser(),
+      nodePolyfills(),
     ],
   },
 ]

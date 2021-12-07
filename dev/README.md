@@ -6,8 +6,7 @@ The `index.ts` file imports the FSXA-API from the `src` folder and makes all fun
 
 There you can these functions and see if the FSXA-API behaves as desired during development.
 
-
-## Getting Started 
+## Getting Started
 
 Copy the `.env.template` file, rename it to `.env` and write there all needed variables.
 Make sure that the `.env` file is located in the `dev` folder.

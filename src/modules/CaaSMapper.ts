@@ -1,4 +1,4 @@
-import { FSXAApi, ComparisonQueryOperatorEnum } from './'
+import { ComparisonQueryOperatorEnum } from './'
 import {
   CaaSApi_Body,
   CaaSApi_Content2Section,
@@ -32,6 +32,7 @@ import { parseISO } from 'date-fns'
 import { set, chunk } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
+import { FSXARemoteApi } from './FSXARemoteApi'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -46,13 +47,13 @@ interface ReferencedItemsInfo {
 
 export class CaaSMapper {
   public logger: Logger
-  api: FSXAApi
+  api: FSXARemoteApi
   locale: string
   xmlParser: XMLParser
   customMapper?: CustomMapper
 
   constructor(
-    api: FSXAApi,
+    api: FSXARemoteApi,
     locale: string,
     utils: {
       customMapper?: CustomMapper
@@ -63,9 +64,9 @@ export class CaaSMapper {
     this.locale = locale
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
-    Object.keys(this.api.config?.remotes || {}).forEach((item: string) => {
-      this._remoteReferences[item] = [] as unknown as ReferencedItemsInfo
-    })
+    Object.keys(this.api.remotes || {}).forEach(
+      (item: string) => (this._remoteReferences[item] = [] as unknown as ReferencedItemsInfo)
+    )
     this.logger = logger
   }
 
@@ -88,8 +89,8 @@ export class CaaSMapper {
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find((key) => {
-      return this.api.config?.remotes![key].id === remoteProjectId
+    const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
+      return this.api.remotes[key].id === remoteProjectId
     })
 
     if (remoteProjectId && !remoteProjectKey) {
@@ -116,7 +117,7 @@ export class CaaSMapper {
   async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
     if (this.customMapper) {
       const result = await this.customMapper(entry, path, {
-        api: this.api,
+        api: this.api as any,
         xmlParser: this.xmlParser,
         registerReferencedItem: this.registerReferencedItem.bind(this),
         buildPreviewId: this.buildPreviewId.bind(this),
@@ -227,11 +228,6 @@ export class CaaSMapper {
           value: entry.label,
         }
       default:
-        this.api.logger.log(
-          `[mapDataEntry]: Unknown Type ${entry.fsType}. Returning raw value:`,
-          entry.fsType,
-          entry
-        )
         return entry
     }
   }
@@ -289,10 +285,10 @@ export class CaaSMapper {
   ): Promise<PageBodyContent> {
     switch (content.fsType) {
       case 'Content2Section':
-        return await this.mapContent2Section(content)
+        return this.mapContent2Section(content)
       case 'Section':
       case 'SectionReference':
-        return await this.mapSection(content, path)
+        return this.mapSection(content, path)
       default:
         throw new Error(CaaSMapperErrors.UNKNOWN_BODY_CONTENT)
     }
@@ -451,7 +447,8 @@ export class CaaSMapper {
             case 'ProjectProperties':
               return this.mapProjectProperties(item, [index])
             default:
-              throw new Error(CaaSMapperErrors.UNKNOWN_FSTYPE)
+              this.logger.warn(`Item at index'${index}' could not be mapped!`)
+              return item
           }
         })
       )
@@ -472,7 +469,6 @@ export class CaaSMapper {
       this.resolveReferencesPerProject(data),
       ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(data, remoteId)),
     ])
-
     return data
   }
 
@@ -489,21 +485,19 @@ export class CaaSMapper {
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
 
-    const remoteProjectKey = Object.keys(this.api.config?.remotes || {}).find((key) => {
+    const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
       return key === remoteProjectId
     })
     const locale =
-      remoteProjectKey && this.api.config?.remotes
-        ? this.api.config?.remotes[remoteProjectKey].locale
-        : this.locale
+      remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
 
     const ids = Object.keys(referencedItems)
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
-    if (ids.length > 0) {
+    if (ids?.length > 0) {
       const response = await Promise.all(
         idChunks.map((ids) =>
-          this.api.fetchByFilter(
-            [
+          this.api.fetchByFilter({
+            filters: [
               {
                 operator: ComparisonQueryOperatorEnum.IN,
                 value: ids,
@@ -511,14 +505,10 @@ export class CaaSMapper {
               },
             ],
             locale,
-            1,
-            REFERENCED_ITEMS_CHUNK_SIZE,
-            undefined,
-            remoteProjectId
-          )
+          })
         )
       )
-      const fetchedItems = response.reduce((result, entries) => [...result, ...entries], [])
+      const fetchedItems = response.flat()
       ids.forEach((id) =>
         referencedItems[id].forEach((path) =>
           set(data, path, fetchedItems.find((data) => data.id === id) || null)

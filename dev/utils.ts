@@ -11,11 +11,11 @@ export const createFolder = (dirName: string) => {
 export const createFile = ({
   dirName,
   fileName,
-  content
+  content,
 }: {
   dirName: string
   fileName: string
-  content: any
+  content: unknown
 }) => {
   createFolder(dirName)
   fs.writeFileSync(dirName + '/' + fileName, `{"result": ${JSON.stringify(content, null, 2)}}`)
