@@ -9,14 +9,14 @@ import {
   Image,
   NavigationData,
   Page,
-  QueryBuilderQuery
+  QueryBuilderQuery,
 } from '../types'
 import { stringify } from 'qs'
 import { clean } from '../utils'
 
 export enum FSXAContentMode {
   PREVIEW = 'preview',
-  RELEASE = 'release'
+  RELEASE = 'release',
 }
 
 export enum FSXAApiErrors {
@@ -33,7 +33,7 @@ export enum FSXAApiErrors {
   ILLEGAL_PAGE_SIZE = 'The pagesize parameter must be between 1 and 1000.',
   ILLEGAL_PAGE_NUMBER = 'Given page number must be larger than 0',
   NOT_AUTHORIZED = 'Your passed ApiKey has no access to the requested resource',
-  NOT_FOUND = 'Resource could not be found'
+  NOT_FOUND = 'Resource could not be found',
 }
 
 export class FSXAApi {
@@ -76,7 +76,7 @@ export class FSXAApi {
   buildAuthorizationHeaders(): {} {
     if (this.params.mode === 'proxy') return {}
     return {
-      authorization: `apikey="${this.params.config.apiKey}"`
+      authorization: `apikey="${this.params.config.apiKey}"`,
     }
   }
 
@@ -128,20 +128,20 @@ export class FSXAApi {
           id,
           locale,
           additionalParams,
-          remoteProject
+          remoteProject,
         })
       )
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           locale,
           additionalParams,
-          remote: remoteProject
-        })
+          remote: remoteProject,
+        }),
       })
 
       if (!response.ok) {
@@ -168,7 +168,7 @@ export class FSXAApi {
       this,
       locale,
       {
-        customMapper: this.params.config.customMapper
+        customMapper: this.params.config.customMapper,
       },
       this.logger
     )
@@ -183,10 +183,10 @@ export class FSXAApi {
     this.logger.info('[Remote][fetchElement] Requesting: ', url, {
       id,
       locale,
-      additionalParams
+      additionalParams,
     })
     const response = await fetch(url, {
-      headers: this.buildAuthorizationHeaders()
+      headers: this.buildAuthorizationHeaders(),
     })
     if (!response.ok) {
       if (response.status === 404) {
@@ -243,13 +243,13 @@ export class FSXAApi {
           page,
           pagesize,
           additionalParams,
-          remote: remoteProject
+          remote: remoteProject,
         })
       )
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           filter: filters,
@@ -257,8 +257,8 @@ export class FSXAApi {
           page,
           pagesize,
           additionalParams,
-          remote: remoteProject
-        })
+          remote: remoteProject,
+        }),
       })
       if (!response.ok) {
         if (response.status === 401) {
@@ -277,21 +277,21 @@ export class FSXAApi {
       return response.json()
     }
     const buildFilters = [
-      ...filters.map(filter => JSON.stringify(this.queryBuilder.build(filter))),
+      ...filters.map((filter) => JSON.stringify(this.queryBuilder.build(filter))),
       JSON.stringify(
         this.queryBuilder.build({
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: locale.split('_')[0],
-          field: 'locale.language'
+          field: 'locale.language',
         })
       ),
       JSON.stringify(
         this.queryBuilder.build({
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: locale.split('_')[1],
-          field: 'locale.country'
+          field: 'locale.country',
         })
-      )
+      ),
     ]
     const buildAdditionalParams: Record<string, any> = this.buildRestheartParams(additionalParams)
     // we need to encode array
@@ -300,10 +300,10 @@ export class FSXAApi {
         filter: buildFilters,
         page,
         pagesize,
-        ...buildAdditionalParams
+        ...buildAdditionalParams,
       },
       {
-        arrayFormat: 'repeat'
+        arrayFormat: 'repeat',
       }
     )}`
     this.logger.info('[Remote][fetchByFilter] Constructed Filters:', buildFilters)
@@ -312,10 +312,10 @@ export class FSXAApi {
       locale,
       page,
       pagesize,
-      additionalParams
+      additionalParams,
     })
     const response = await fetch(url, {
-      headers: this.buildAuthorizationHeaders()
+      headers: this.buildAuthorizationHeaders(),
     })
     if (!response.ok) {
       if (response.status === 401) {
@@ -335,7 +335,7 @@ export class FSXAApi {
       this,
       locale,
       {
-        customMapper: this.params.config.customMapper
+        customMapper: this.params.config.customMapper,
       },
       this.logger
     )
@@ -362,18 +362,18 @@ export class FSXAApi {
       const url = `${this.params.baseUrl}/navigation`
       this.logger.info('[Proxy][fetchNavigation] Requesting:', url, {
         encodedInitialPath,
-        defaultLocale
+        defaultLocale,
       })
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...extraHeaders
+          ...extraHeaders,
         },
         body: JSON.stringify({
           initialPath,
-          locale: defaultLocale
-        })
+          locale: defaultLocale,
+        }),
       })
       if (!response.ok) {
         if (response.status === 404) {
@@ -397,13 +397,13 @@ export class FSXAApi {
         : `${this.buildNavigationServiceUrl()}/by-seo-route/${encodedInitialPath}?depth=99&format=caas&all`
     this.logger.info('[Remote][fetchNavigation] Requesting:', url, {
       encodedInitialPath,
-      defaultLocale
+      defaultLocale,
     })
     const response = await fetch(url, {
       headers: {
         'Accept-Language': '*',
-        ...extraHeaders
-      }
+        ...extraHeaders,
+      },
     })
 
     if (!response.ok) {
@@ -434,8 +434,8 @@ export class FSXAApi {
         {
           field: 'fsType',
           value: 'ProjectProperties',
-          operator: ComparisonQueryOperatorEnum.EQUALS
-        }
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+        },
       ],
       locale
     )
@@ -451,8 +451,8 @@ export class FSXAApi {
             {
               field: 'identifier',
               value: page[key].referenceId,
-              operator: ComparisonQueryOperatorEnum.EQUALS
-            }
+              operator: ComparisonQueryOperatorEnum.EQUALS,
+            },
           ],
           locale
         )
@@ -462,9 +462,39 @@ export class FSXAApi {
     return response
   }
 
+  async fetchSecureToken(): Promise<string | null> {
+    if (this.params.mode === 'proxy') return null
+    const url = `${this.params.config.caas}/_logic/securetoken?${stringify({
+      tenant: this.params.config.tenantId,
+    })}`
+    this.logger.info('[Remote][fetchSecureToken] Requesting: ', url)
+    const response = await fetch(url, {
+      headers: this.buildAuthorizationHeaders(),
+    })
+    if (!response.ok) {
+      if (response.status === 404) {
+        this.logger.error(`[Remote][fetchSecureToken] Error: ${FSXAApiErrors.NOT_FOUND}`)
+        throw new Error(FSXAApiErrors.NOT_FOUND)
+      } else if (response.status === 401) {
+        this.logger.error(`[Remote][fetchSecureToken] Error: ${FSXAApiErrors.NOT_AUTHORIZED}.`)
+        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+      } else {
+        this.logger.error(
+          `[Remote][fetchSecureToken] Error: ${FSXAApiErrors.UNKNOWN_ERROR}.`,
+          response.status,
+          response.statusText,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+      }
+    }
+    const { securetoken = null } = await response.json()
+    return securetoken
+  }
+
   private buildRestheartParams(params: Record<'keys' | string, any>) {
     const result: Record<string, any> = {}
-    Object.keys(params).forEach(key => {
+    Object.keys(params).forEach((key) => {
       if (Array.isArray(params[key])) {
         result[key] = params[key].map(JSON.stringify)
       } else if (typeof params[key] === 'object') {

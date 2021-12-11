@@ -5,11 +5,12 @@ import {
   FETCH_BY_FILTER_ROUTE,
   FETCH_NAVIGATION_ROUTE,
   FETCH_ELEMENT_ROUTE,
+  STREAM_CHANGE_EVENTS_ROUTE,
   FetchByFilterBody,
   FetchNavigationRouteBody,
-  FetchElementRouteBody
+  FetchElementRouteBody,
 } from '../routes'
-import { FSXAApi, FSXAApiErrors } from './../modules'
+import { FSXAApi, FSXAApiErrors, EventStream } from './../modules'
 import { QueryBuilderQuery } from '../types'
 
 export interface GetExpressRouterContext {
@@ -17,9 +18,10 @@ export interface GetExpressRouterContext {
 }
 export enum ExpressRouterIntegrationErrors {
   MISSING_LOCALE = 'Please specify a locale in the body through: e.g. "locale": "de_DE" ',
-  UNKNOWN_ROUTE = 'Could not map given route and method.'
+  UNKNOWN_ROUTE = 'Could not map given route and method.',
 }
 function getExpressRouter({ api }: GetExpressRouterContext) {
+  const eventStream = new EventStream(api)
   const router = express.Router()
   router.use(express.json())
   router.post(
@@ -27,7 +29,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     async (req: express.Request<FetchElementRouteParams, any, FetchElementRouteBody>, res) => {
       if (!req.body || req.body.locale == null) {
         return res.json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE
+          error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
       }
       try {
@@ -57,7 +59,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     async (req: express.Request<any, any, FetchNavigationRouteBody>, res) => {
       if (req.body.locale == null) {
         return res.json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE
+          error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
       }
       try {
@@ -80,7 +82,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     async (req: express.Request<any, any, FetchByFilterBody>, res) => {
       if (!req.body || req.body.locale == null) {
         return res.json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE
+          error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
       }
       try {
@@ -104,9 +106,10 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
     }
   )
+  router.get(STREAM_CHANGE_EVENTS_ROUTE, eventStream.middleware.bind(eventStream))
   router.all('*', (_, res) => {
     return res.json({
-      error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE
+      error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE,
     })
   })
   return router
@@ -114,9 +117,5 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 export default getExpressRouter
 
 export const getMappedFilters = (filters: any | any[]): QueryBuilderQuery[] => {
-  return ((Array.isArray(filters)
-    ? filters
-    : filters
-    ? [filters]
-    : []) as any) as QueryBuilderQuery[]
+  return (Array.isArray(filters) ? filters : filters ? [filters] : []) as any as QueryBuilderQuery[]
 }
