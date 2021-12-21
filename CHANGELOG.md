@@ -1,3 +1,10 @@
+## [6.0.1](https://github.com/e-Spirit/fsxa-api/compare/v6.0.0...v6.0.1) (2021-12-21)
+
+
+### Bug Fixes
+
+* **types:** add FSXAProxyApiConfig type for explicit definition of proxy api config ([#62](https://github.com/e-Spirit/fsxa-api/issues/62)) ([1d4144c](https://github.com/e-Spirit/fsxa-api/commit/1d4144c0ad744727e05616b5b7929ff25afa1253))
+
 # [6.0.0](https://github.com/e-Spirit/fsxa-api/compare/v5.4.2...v6.0.0) (2021-12-07)
 
 
