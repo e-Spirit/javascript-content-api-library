@@ -696,6 +696,12 @@ export type FSXARemoteApiConfig = {
   preFilterFetch?: PreFilterFetch
 }
 
+export interface FSXAProxyApiConfig {
+  url: string
+  logLevel: LogLevel
+  contentMode: FSXAContentMode
+}
+
 export interface FSXAApi {
   mode: 'proxy' | 'remote'
   fetchElement: <T = Page | GCAPage | Dataset | Image | any | null>(
