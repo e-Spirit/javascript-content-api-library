@@ -504,6 +504,33 @@ export class FSXARemoteApi implements FSXAApi {
     return response
   }
 
+  async fetchSecureToken(): Promise<string | null> {
+    const url = `${this.caasURL}/_logic/securetoken?tenant=${this.tenantID}`
+    this._logger.info('fetchSecureToken', url)
+    const response = await fetch(url, {
+      headers: this.authorizationHeader,
+    })
+    if (!response.ok) {
+      if (response.status === 404) {
+        this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_FOUND)
+        throw new Error(FSXAApiErrors.NOT_FOUND)
+      } else if (response.status === 401) {
+        this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_AUTHORIZED)
+        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+      } else {
+        this._logger.error(
+          'fetchSecureToken',
+          FSXAApiErrors.UNKNOWN_ERROR,
+          `${response.status} - ${response.statusText}`,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+      }
+    }
+    const { securetoken = null } = await response.json()
+    return securetoken
+  }
+
   private buildRestheartParams(params: Record<'keys' | string, Record<string, number>>) {
     let result: string[] = []
     Object.keys(params).forEach((key) => {

@@ -1,21 +1,20 @@
-import { FSXAApi, Logger } from './'
+import { FSXARemoteApi, Logger } from './'
 import { NextFunction, Response, Request } from 'express'
 import SSE from 'express-sse-ts'
 import WebSocket from 'ws'
+import { LogLevel } from '..'
 
 const DEFAULT_RECONNECTION_DELAY = 10
 const DEFAULT_MAX_RETRIES = 10
 
 export type EventStreamOptions = {
-  remoteProject?: string
-  logger?: Logger
+  logLevel?: LogLevel
   reconnectionDelay?: number
   maxRetries?: number
 }
 
 export class EventStream {
-  api: FSXAApi
-  remoteProject?: string
+  api: FSXARemoteApi
   logger: Logger
   reconnectionDelay: number
   maxRetries: number
@@ -24,10 +23,9 @@ export class EventStream {
   sse: SSE
   socket?: WebSocket
 
-  constructor(api: FSXAApi, options?: EventStreamOptions) {
+  constructor(api: FSXARemoteApi, options?: EventStreamOptions) {
     this.api = api
-    this.remoteProject = options && options.remoteProject
-    this.logger = (options && options.logger) || api.logger
+    this.logger = new Logger((options && options.logLevel) || api.logLevel, 'EventStream')
     this.reconnectionDelay = (options && options.reconnectionDelay) || DEFAULT_RECONNECTION_DELAY
     this.maxRetries = (options && options.maxRetries) || DEFAULT_MAX_RETRIES
 
@@ -39,7 +37,7 @@ export class EventStream {
     try {
       this.secureToken = await this.api.fetchSecureToken()
     } catch (err) {
-      this.logger.error(err.message)
+      this.logger.error(err)
     }
   }
 
@@ -53,10 +51,9 @@ export class EventStream {
         this.sse.send(JSON.stringify({ error: true }))
       } else {
         if (!this.secureToken) await this.refreshSecureToken()
-        const caasUrl = this.api.buildCaaSUrl(this.remoteProject)
-        const socketUrl = `${caasUrl.replace(/^http/, 'ws')}/_streams/crud?securetoken=${
-          this.secureToken
-        }`
+        const caasWsUrl = this.api.buildCaaSUrl().split('?')[0].replace(/^http/, 'ws')
+        const socketUrl = `${caasWsUrl}/_streams/crud?securetoken=${this.secureToken}`
+        this.logger.info('ensureConnection', 'socket-url', socketUrl)
         this.retryCount++
         this.socket = new WebSocket(socketUrl)
         this.socket.onopen = this.onSocketOpen.bind(this)
