@@ -7,17 +7,16 @@ export const STREAM_CHANGE_EVENTS_ROUTE = '/change-stream'
 
 export const getFetchElementRoute = (id: string) => `${FETCH_ELEMENT_ROUTE.replace(':id', id)}`
 
-export interface FetchElementRouteParams {
-  id: string
-}
 export interface FetchNavigationRouteBody {
   initialPath?: string
   locale?: string
+  authData?: unknown
 }
 
 export interface FetchElementRouteBody {
+  id: string
   locale: string
-  additionalParams?: Record<string, any>
+  additionalParams?: Record<string, unknown>
   remote?: string
 }
 
@@ -26,6 +25,6 @@ export interface FetchByFilterBody {
   filter: QueryBuilderQuery[]
   page?: number
   pagesize?: number
-  additionalParams: Record<string, any>
+  additionalParams: Record<string, unknown>
   remote: string
 }

@@ -1,11 +1,10 @@
 import { createFile } from './utils'
-import { inspect } from 'util'
-import { ComparisonQueryOperatorEnum } from './../src/modules/QueryBuilder'
 import dotenv from 'dotenv'
 import express from 'express'
-import { FSXAApi, FSXAContentMode } from '../src'
+import cors from 'cors'
+import { FSXAContentMode, FSXAProxyApi, LogLevel, NavigationItem } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
-import { dirname } from 'path'
+import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
 require('cross-fetch/polyfill')
 
 dotenv.config({ path: './dev/.env' })
@@ -17,41 +16,37 @@ const {
   API_CAAS,
   API_PROJECT_ID,
   API_TENANT_ID,
-  API_REMOTES
+  API_REMOTES,
 } = process.env
+const remoteApi = new FSXARemoteApi({
+  apikey: API_API_KEY!,
+  caasURL: API_CAAS!,
+  contentMode: FSXAContentMode.PREVIEW,
+  navigationServiceURL: API_NAVIGATION_SERVICE!,
+  projectID: API_PROJECT_ID!,
+  tenantID: API_TENANT_ID!,
+  remotes: JSON.parse(API_REMOTES || '{}'),
+  logLevel: LogLevel.INFO,
+})
 
-const remoteApi = new FSXAApi(
-  FSXAContentMode.PREVIEW,
-  {
-    mode: 'remote', // we want to test against the 'remote' mode to ensure that it works with both modes.
-    config: {
-      apiKey: API_API_KEY!,
-      navigationService: API_NAVIGATION_SERVICE!,
-      caas: API_CAAS!,
-      projectId: API_PROJECT_ID!,
-      tenantId: API_TENANT_ID!,
-      remotes: API_REMOTES ? JSON.parse(API_REMOTES) : {}
-    }
-  },
-  3
-)
+app.use(cors())
 app.use('/api', expressIntegration({ api: remoteApi }))
 
-app.listen(3001, async () => {
-  console.log('Listening at http://localhost:3001')
-
-  const proxyApi = new FSXAApi(
-    FSXAContentMode.PREVIEW,
-    {
-      mode: 'proxy',
-      baseUrl: 'http://localhost:3001/api'
-    },
-    3
-  )
+app.listen(3002, async () => {
+  console.log('Listening at http://localhost:3002')
   try {
-    const response = await proxyApi.fetchProjectProperties('de_DE')
-    console.log(inspect(response, false, null, true))
-  } catch (err) {
-    console.log('ERROR', err)
+    const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
+    const response = await proxyAPI.fetchNavigation({
+      locale: 'de_DE',
+      initialPath: '/',
+    })
+
+    createFile({
+      dirName: 'dev/dist/proxy',
+      fileName: 'navigation.json',
+      content: response,
+    })
+  } catch (e) {
+    console.log(e)
   }
 })

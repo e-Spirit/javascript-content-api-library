@@ -3,19 +3,19 @@
 ## Contributing
 
 When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change. 
+email, or any other method with the owners of this repository before making a change.
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
 ### Pull Request Process
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a 
+1. Ensure any install or build dependencies are removed before the end of the layer when doing a
    build.
-2. If needed, update the README.md with details of changes to the interface, this includes new environment 
+2. If needed, update the README.md with details of changes to the interface, this includes new environment
    variables, exposed ports or useful file locations.
 3. There is no need to increase the projects version numbers in any of the files. We will increase the version numbers
-   when your pull request gets merged into the master branch. 
-4. Pull Requests are always reviewed by e-Spirit developers and will also be merged by them. We may contact you during 
+   when your pull request gets merged into the master branch.
+4. Pull Requests are always reviewed by e-Spirit developers and will also be merged by them. We may contact you during
    the process to make some changes to your pull request before we merge it into the master branch of the project.
 
 ### Code of Conduct
@@ -34,21 +34,21 @@ orientation.
 Examples of behavior that contributes to creating a positive environment
 include:
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+- Showing empathy towards other community members
 
 Examples of unacceptable behavior by participants include:
 
-* The use of sexualized language or imagery and unwelcome sexual attention or
-advances
-* Trolling, insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
+- The use of sexualized language or imagery and unwelcome sexual attention or
+  advances
+- Trolling, insulting/derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or electronic
   address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
+- Other conduct which could reasonably be considered inappropriate in a
   professional setting
 
 #### Our Responsibilities
@@ -94,17 +94,19 @@ available at [http://contributor-covenant.org/version/1/4/][version-covenant].
 [version-covenant]: http://contributor-covenant.org/version/1/4/
 
 ## Legal Notices
+
 FSXA-API is a product of [e-Spirit AG](http://www.e-spirit.com), Dortmund, Germany.
 The FSXA-API is subject to the Apache-2.0 license.
 
 ## Disclaimer
+
 This document is provided for information purposes only.
-e-Spirit may change the contents hereof without notice. 
-This document is not warranted to be error-free, nor subject to any 
-other warranties or conditions, whether expressed orally or 
-implied in law, including implied warranties and conditions of 
-merchantability or fitness for a particular purpose. e-Spirit 
-specifically disclaims any liability with respect to this document 
-and no contractual obligations are formed either directly or 
-indirectly by this document. The technologies, functionality, services, 
+e-Spirit may change the contents hereof without notice.
+This document is not warranted to be error-free, nor subject to any
+other warranties or conditions, whether expressed orally or
+implied in law, including implied warranties and conditions of
+merchantability or fitness for a particular purpose. e-Spirit
+specifically disclaims any liability with respect to this document
+and no contractual obligations are formed either directly or
+indirectly by this document. The technologies, functionality, services,
 and processes described herein are subject to change without notice.

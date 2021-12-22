@@ -13,4 +13,4 @@ docs
 *.env
 validate.js
 examples/index.ts
-.tgz
+*.tgz

@@ -3,6 +3,14 @@ import * as saxes from 'saxes'
 import { RichTextElement } from '../types'
 import { get } from 'lodash'
 
+// map characters which are not valid inside XML attributes enclosed in double quotes to their
+// entity representation
+const ENTITIES = new Map([
+  ['"', '&quot;'],
+  ['&', '&amp;'],
+  ['<', '&lt;']
+])
+
 class XMLParser {
   logger: Logger
 
@@ -14,16 +22,17 @@ class XMLParser {
     try {
       return (
         xml
-          // we will replace all non closing br tags, with self-closing once
-          .replace(/<br>/gm, '<br />')
-          .replace(/'(?=[^>]*<)/g, '&apos;')
-          // we need to restructure the link structure into one single link element
+          // replace all non closing br tags with self-closing once (legacy, fixed with CORE-13424)
+          .replace(/<br>/g, '<br />')
+          // restructure the link structure into one single link element  (hint: *? matches non-eager)
           .replace(
+            // capturing groups:      _____1 type                                _____2 data          _____ 3 text
             /<div data-fs-type="link\.(.*?)">\s*<script type="application\/json">(.*?)<\/script>\s*<a>(.*?)<\/a>\s*<\/div>/g,
             (...args: any[]) => {
-              return `<link type="${args[1]}" data="${args[2].replace(/"/g, '&quot;')}">${
-                args[3]
-              }</link>`
+              // replace characters not valid for xml attributes
+              const data = args[2].replace(/(["&<])/g, (...args: any[]) => ENTITIES.get(args[1]))
+              // construct new node
+              return `<link type="${args[1]}" data="${data}">${args[3]}</link>`
             }
           )
       )
@@ -35,19 +44,19 @@ class XMLParser {
 
   parse(xml: string): Promise<RichTextElement[]> {
     const sanitizedXml = this.sanitizeXml(xml)
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       // this will be the result, wrapped with a "root" node
       const result: RichTextElement = {
         data: {},
         type: 'root',
-        content: []
+        content: [],
       }
 
       // we will track the current nested node through the path property
       let path: string[] = []
 
       const parser = new saxes.SaxesParser(false as any)
-      parser.on('error', err => {
+      parser.on('error', (err) => {
         this.logger.error('[XMLParser]: Error parsing XML', err, xml)
       })
 
@@ -55,24 +64,24 @@ class XMLParser {
         resolve((result.content as RichTextElement[])[0].content as RichTextElement[])
       })
 
-      parser.on('text', text => {
+      parser.on('text', (text) => {
         const parent = this.getCurrentElement(result, path)
         if (!parent || !Array.isArray(parent.content)) return
         parent.content.push({
           type: 'text',
           content: text,
-          data: {}
+          data: {},
         })
       })
 
-      parser.on('opentag', tag => {
+      parser.on('opentag', (tag) => {
         const parent = this.getCurrentElement(result, path)
         if (!parent || !Array.isArray(parent.content)) return
         const elementIndex = parent.content.push(this.createRichTextElement(tag))
         path = [...path, 'content', elementIndex - 1 + '']
       })
 
-      parser.on('closetag', tag => {
+      parser.on('closetag', (tag) => {
         path.splice(-2, 2)
       })
 
@@ -92,49 +101,49 @@ class XMLParser {
         return {
           data: {
             format: 'bold',
-            ...tag.attributes
+            ...tag.attributes,
           },
           content: [],
-          type: 'text'
+          type: 'text',
         }
       case 'i':
         return {
           data: {
             format: 'italic',
-            ...tag.attributes
+            ...tag.attributes,
           },
           content: [],
-          type: 'text'
+          type: 'text',
         }
       case 'ul':
         return {
           data: tag.attributes,
           content: [],
-          type: 'list'
+          type: 'list',
         }
       case 'li':
         return {
           data: tag.attributes,
           content: [],
-          type: 'listitem'
+          type: 'listitem',
         }
       case 'br':
         return {
           data: tag.attributes,
           content: [],
-          type: 'linebreak'
+          type: 'linebreak',
         }
       case 'p':
         return {
           data: tag.attributes,
           content: [],
-          type: 'paragraph'
+          type: 'paragraph',
         }
       case 'div':
         return {
           data: tag.attributes,
           content: [],
-          type: 'block'
+          type: 'block',
         }
       case 'link':
         const data = tag.attributes
@@ -151,13 +160,13 @@ class XMLParser {
         return {
           data,
           content: [],
-          type: 'link'
+          type: 'link',
         }
       default:
         return {
           data: tag.attributes,
           content: [],
-          type: tag.name
+          type: tag.name,
         }
     }
   }
