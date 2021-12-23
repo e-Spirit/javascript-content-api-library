@@ -1,3 +1,10 @@
+# [6.1.0](https://github.com/e-Spirit/fsxa-api/compare/v6.0.1...v6.1.0) (2021-12-23)
+
+
+### Features
+
+* **caasmapper:** add customizable media url builder, to add revision in preview mode ([#63](https://github.com/e-Spirit/fsxa-api/issues/63)) ([88e6c45](https://github.com/e-Spirit/fsxa-api/commit/88e6c45492a2e7e9774c19a72742e8a3bc48a806))
+
 ### UPDATE NOTICE
 
 If you are using a CustomMapper to handle CaaS requests, you need to implement following method signature in the mapper's utils object:
