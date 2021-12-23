@@ -8,7 +8,7 @@ import {
   CaaSApi_GCAPage,
   CaaSApi_Media,
   CaaSApi_Media_Picture,
-  CaaSApiMediaPictureResolutions as CaaSApiMediaPictureResolutions,
+  CaaSApiMediaPictureResolutions,
   CaaSApi_Media_File,
   CaaSApi_PageRef,
   CaaSApi_ProjectProperties,
