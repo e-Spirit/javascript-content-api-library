@@ -712,9 +712,17 @@ export interface FSXAApi {
   fetchElement: <T = Page | GCAPage | Dataset | Image | any | null>(
     params: FetchElementParams
   ) => Promise<T>
-  fetchByFilter: (params: FetchByFilterParams) => Promise<any>
+  fetchByFilter: (params: FetchByFilterParams) => Promise<FetchResponse>
   fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
   ) => Promise<Record<string, any> | null>
+}
+
+export interface FetchResponse {
+  page: number
+  pagesize: number
+  totalPages?: number
+  size?: number
+  items: unknown[]
 }

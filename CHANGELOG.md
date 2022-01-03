@@ -1,9 +1,21 @@
-# [6.1.0](https://github.com/e-Spirit/fsxa-api/compare/v6.0.1...v6.1.0) (2021-12-23)
+### BREAKING CHANGE
 
+Previously fetchByFilter directly returned an array of returned items. Now this
+data is wrapped in an "items" property.
+
+Example:
+```typescript
+const { items } = fetchByFilter({...}) as { items: any[] }
+```
+
+The returned object also includes pagination data ("page" and "pagesize") now.
+If you are using "additionalParams" you can extend the pagination data with "totalPages" and "size" by passing `count: true`. Using "count" has performance implication for it involves querying the collection twice: once for counting and once of actually retrieving the data;
+
+# [6.1.0](https://github.com/e-Spirit/fsxa-api/compare/v6.0.1...v6.1.0) (2021-12-23)
 
 ### Features
 
-* **caasmapper:** add customizable media url builder, to add revision in preview mode ([#63](https://github.com/e-Spirit/fsxa-api/issues/63)) ([88e6c45](https://github.com/e-Spirit/fsxa-api/commit/88e6c45492a2e7e9774c19a72742e8a3bc48a806))
+- **caasmapper:** add customizable media url builder, to add revision in preview mode ([#63](https://github.com/e-Spirit/fsxa-api/issues/63)) ([88e6c45](https://github.com/e-Spirit/fsxa-api/commit/88e6c45492a2e7e9774c19a72742e8a3bc48a806))
 
 ### UPDATE NOTICE
 

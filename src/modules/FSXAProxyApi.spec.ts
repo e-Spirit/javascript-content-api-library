@@ -140,7 +140,10 @@ describe('FSXAProxyAPI', () => {
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.page).toEqual(page)
       expect(actualBody.pagesize).toEqual(pagesize)
-      expect(actualBody.additionalParams).toStrictEqual(additionalParams)
+      expect(actualBody.additionalParams).toStrictEqual({
+        ...additionalParams,
+        rep: 'hal',
+      })
       expect(actualBody.remote).toEqual(remoteProject)
       expect(actualReferrer).toEqual('')
     })
@@ -198,14 +201,23 @@ describe('FSXAProxyAPI', () => {
     })
 
     it('should return the response', async () => {
-      const expectedResponse = Faker.datatype.array()
+      const items = Faker.datatype.array()
+
+      const expectedResponse = {
+        page: 1,
+        pagesize: 30,
+        pages: 0,
+        total: 0,
+        items,
+      }
+
       fetchMock.mockResponseOnce(JSON.stringify(expectedResponse))
 
       const actualResponse = await proxyApi.fetchByFilter({
         filters: defaultFilters,
         locale,
       })
-      expect(expectedResponse).toEqual(actualResponse)
+      expect(actualResponse).toEqual(expectedResponse)
     })
   })
   describe('fetchNavigation', () => {

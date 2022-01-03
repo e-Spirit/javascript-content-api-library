@@ -38,7 +38,13 @@ describe('Express-Integration', () => {
     fetchNavigationSpy = jest
       .spyOn(remoteApi, 'fetchNavigation')
       .mockImplementation(async () => ({ foo: 'bar' } as any as NavigationData))
-    fetchByFilterSpy = jest.spyOn(remoteApi, 'fetchByFilter').mockImplementation(async () => [])
+    fetchByFilterSpy = jest.spyOn(remoteApi, 'fetchByFilter').mockImplementation(async () => ({
+      page: 1,
+      pagesize: 30,
+      pages: 0,
+      total: 0,
+      items: [],
+    }))
   })
 
   afterEach(() => {
@@ -170,7 +176,9 @@ describe('Express-Integration', () => {
       await proxyApi.fetchByFilter({ filters: [], locale: 'de_DE' })
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(1)
       expect(fetchByFilterSpy).toHaveBeenCalledWith({
-        additionalParams: {},
+        additionalParams: {
+          rep: 'hal',
+        },
         filters: [],
         locale: 'de_DE',
         page: 1,
@@ -213,7 +221,7 @@ describe('Express-Integration', () => {
       expect(fetchByFilterSpy.mock.calls[3][0].page).toEqual(3)
       expect(fetchByFilterSpy.mock.calls[3][0].pagesize).toEqual(30)
 
-      const additionalParams = { keys: ['1', '2', '3'], sort: '-age' }
+      const additionalParams = { keys: ['1', '2', '3'], sort: '-age', rep: 'hal' }
       await proxyApi.fetchByFilter({
         filters: [],
         locale: 'de_DE',
