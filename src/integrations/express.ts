@@ -8,7 +8,7 @@ import {
   FetchNavigationRouteBody,
   FetchElementRouteBody,
 } from '../routes'
-import { FSXARemoteApi, Logger, EventStream } from './../modules'
+import { FSXARemoteApi, Logger, bindCaaSEventStream } from './../modules'
 import { QueryBuilderQuery } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 
@@ -21,7 +21,6 @@ export enum ExpressRouterIntegrationErrors {
 }
 
 function getExpressRouter({ api }: GetExpressRouterContext) {
-  const eventStream = new EventStream(api)
   const router = express.Router()
   const logger = new Logger(api.logLevel, 'Express-Server')
   router.use(express.json())
@@ -158,7 +157,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
     }
   )
-  router.get(STREAM_CHANGE_EVENTS_ROUTE, eventStream.middleware.bind(eventStream))
+  router.get(STREAM_CHANGE_EVENTS_ROUTE, (req, res) => {
+    bindCaaSEventStream(req, res, api)
+  })
   router.all('*', (_, res) => {
     logger.info('trying to resolve all routes')
     return res.json({
