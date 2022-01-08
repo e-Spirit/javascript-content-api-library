@@ -22,6 +22,7 @@ export enum FSXAProxyRoutes {
   FETCH_NAVIGATION_ROUTE = '/navigation',
   FETCH_BY_FILTER_ROUTE = '/filter',
   FETCH_PROPERTIES_ROUTE = '/properties',
+  STREAM_CHANGE_EVENTS_ROUTE = '/change-stream',
 }
 
 export enum FSXAContentMode {

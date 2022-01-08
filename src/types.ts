@@ -677,6 +677,11 @@ export type FetchProjectPropertiesParams = {
   fetchOptions?: RequestInit
 }
 
+export type ConnectEventStreamParams = {
+  additionalParams?: Record<'keys' | string, any>
+  remoteProject?: string
+}
+
 export type NavigationFilter = <A = unknown, P = unknown>(
   route: NavigationItem,
   authData: A,

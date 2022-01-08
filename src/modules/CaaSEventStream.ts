@@ -1,14 +1,9 @@
 import { Channel, createChannel, createSession } from 'better-sse'
 import { FSXARemoteApi, Logger } from './'
-import ReconnectingWebSocket, {
-  Options,
-  Event,
-  CloseEvent,
-  ErrorEvent,
-} from 'reconnecting-websocket'
+import ReconnectingWebSocket, { Options, ErrorEvent } from 'reconnecting-websocket'
 import WebSocket from 'ws'
-import { LogLevel } from '..'
-import { IncomingMessage, ServerResponse } from 'http'
+import { ConnectEventStreamParams, LogLevel } from '..'
+import { Request, Response } from 'express'
 
 type SocketUrl = () => Promise<string>
 
@@ -60,7 +55,7 @@ class CaaSEventStream {
     this.channel.broadcast(event.type, event.data.toString('utf-8'))
   }
 
-  addSession(req: IncomingMessage, res: ServerResponse) {
+  addSession(req: Request, res: Response) {
     const serializer = (data: any) => (typeof data === 'string' ? data : JSON.stringify(data))
     createSession(req, res, { serializer }).then((session) => this.channel.register(session))
   }
@@ -68,18 +63,20 @@ class CaaSEventStream {
 
 const streams: Record<string, CaaSEventStream> = {}
 
-export type CaaSEventStreamOptions = Options & {
-  logger?: Logger
-  logLevel?: LogLevel
-}
+export type CaaSEventStreamOptions = Options &
+  ConnectEventStreamParams & {
+    api: FSXARemoteApi
+    logger?: Logger
+    logLevel?: LogLevel
+  }
 
 export const bindCaaSEventStream = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  api: FSXARemoteApi,
-  options: CaaSEventStreamOptions = {}
+  req: Request,
+  res: Response,
+  options: CaaSEventStreamOptions
 ) => {
-  const caasUrl = api.buildCaaSUrl().split('?')[0]
+  const { api, remoteProject, additionalParams } = options
+  const caasUrl = api.buildCaaSUrl({ remoteProject, additionalParams }).split('?')[0]
 
   if (!(caasUrl in streams)) {
     const logger = options.logger || new Logger(options.logLevel || api.logLevel, 'CaaSEventStream')

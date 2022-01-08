@@ -9,7 +9,7 @@ import {
   FetchElementRouteBody,
 } from '../routes'
 import { FSXARemoteApi, Logger, bindCaaSEventStream } from './../modules'
-import { QueryBuilderQuery } from '../types'
+import { QueryBuilderQuery, ConnectEventStreamParams } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 
 export interface GetExpressRouterContext {
@@ -157,9 +157,33 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
     }
   )
-  router.get(STREAM_CHANGE_EVENTS_ROUTE, (req, res) => {
-    bindCaaSEventStream(req, res, api)
-  })
+
+  router.get(
+    [STREAM_CHANGE_EVENTS_ROUTE, FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE],
+    async (req, res) => {
+      logger.info('requesting route: ', STREAM_CHANGE_EVENTS_ROUTE, req.query)
+
+      const params: ConnectEventStreamParams = {}
+      if ('remoteProject' in req.query) {
+        params.remoteProject = `${req.query.remoteProject}`
+      }
+      if ('additionalParams' in req.query) {
+        try {
+          params.additionalParams = JSON.parse(`${req.query.additionalParams}`)
+        } catch (err) {
+          logger.warn(
+            STREAM_CHANGE_EVENTS_ROUTE,
+            `parsing error for additionalParams`,
+            req.query.additionalParams,
+            err
+          )
+        }
+      }
+
+      bindCaaSEventStream(req, res, { api, ...params })
+    }
+  )
+
   router.all('*', (_, res) => {
     logger.info('trying to resolve all routes')
     return res.json({

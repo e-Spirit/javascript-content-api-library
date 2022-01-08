@@ -9,6 +9,7 @@ import {
   FetchProjectPropertiesParams,
   FetchElementParams,
   FSXAApi,
+  ConnectEventStreamParams,
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
@@ -277,6 +278,27 @@ export class FSXAProxyApi implements FSXAApi {
     }
 
     return response.json()
+  }
+
+  /**
+   * This method initilises an `EventSoure` pointing to the CaaS change event stream.
+   * @param additionalParams sets parameters for the fetching process
+   * @param remoteProject specifies the remote Project
+   * @returns an EventSource
+   */
+  connectEventStream({
+    additionalParams,
+    remoteProject,
+  }: ConnectEventStreamParams = {}): EventSource {
+    const url = new URL(this.baseUrl + FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE)
+    if (additionalParams) {
+      url.searchParams.set('additionalParams', JSON.stringify(additionalParams))
+    }
+    if (remoteProject) {
+      url.searchParams.set('remoteProject', remoteProject)
+    }
+    this._logger.info('connectEventStream', 'start', `${url}`)
+    return new EventSource(url)
   }
 
   private fetch({ url, options }: { url: string; options: RequestOptions }) {
