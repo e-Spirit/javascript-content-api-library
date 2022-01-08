@@ -8,6 +8,7 @@ import {
   CaaSApi_GCAPage,
   CaaSApi_Media,
   CaaSApi_Media_Picture,
+  CaaSApiMediaPictureResolutions,
   CaaSApi_Media_File,
   CaaSApi_PageRef,
   CaaSApi_ProjectProperties,
@@ -33,6 +34,7 @@ import { set, chunk } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
+import { FSXAContentMode } from '..'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -114,6 +116,13 @@ export class CaaSMapper {
     return [identifier, this.locale].join('.')
   }
 
+  buildMediaUrl(url: string, rev?: number) {
+    if (rev && this.api.contentMode === FSXAContentMode.PREVIEW) {
+      url += `${url.includes('?') ? '&' : '?'}rev=${rev}`
+    }
+    return url
+  }
+
   async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
     if (this.customMapper) {
       const result = await this.customMapper(entry, path, {
@@ -121,6 +130,7 @@ export class CaaSMapper {
         xmlParser: this.xmlParser,
         registerReferencedItem: this.registerReferencedItem.bind(this),
         buildPreviewId: this.buildPreviewId.bind(this),
+        buildMediaUrl: this.buildMediaUrl.bind(this),
         mapDataEntries: this.mapDataEntries.bind(this),
       })
       if (typeof result !== 'undefined') return result
@@ -368,8 +378,21 @@ export class CaaSMapper {
       previewId: this.buildPreviewId(item.identifier),
       meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
       description: item.description,
-      resolutions: item.resolutionsMetaData,
+      resolutions: this.mapMediaPictureResolutionUrls(
+        item.resolutionsMetaData,
+        item.changeInfo?.revision
+      ),
     }
+  }
+
+  mapMediaPictureResolutionUrls(
+    resolutions: CaaSApiMediaPictureResolutions,
+    rev?: number
+  ): CaaSApiMediaPictureResolutions {
+    for (let resolution in resolutions) {
+      resolutions[resolution].url = this.buildMediaUrl(resolutions[resolution].url, rev)
+    }
+    return resolutions
   }
 
   async mapMediaFile(item: CaaSApi_Media_File, path: NestedPath): Promise<File> {

@@ -1,27 +1,40 @@
-## [6.0.1](https://github.com/e-Spirit/fsxa-api/compare/v6.0.0...v6.0.1) (2021-12-21)
-
-
-### Bug Fixes
-
-* **types:** add FSXAProxyApiConfig type for explicit definition of proxy api config ([#62](https://github.com/e-Spirit/fsxa-api/issues/62)) ([1d4144c](https://github.com/e-Spirit/fsxa-api/commit/1d4144c0ad744727e05616b5b7929ff25afa1253))
-
-# [6.0.0](https://github.com/e-Spirit/fsxa-api/compare/v5.4.2...v6.0.0) (2021-12-07)
-
-
-### Bug Fixes
-
-* fix version number ([#60](https://github.com/e-Spirit/fsxa-api/issues/60)) ([5e8b3d0](https://github.com/e-Spirit/fsxa-api/commit/5e8b3d0d0212a43e204ca1dd81778aeb185f7c3c))
+# [6.1.0](https://github.com/e-Spirit/fsxa-api/compare/v6.0.1...v6.1.0) (2021-12-23)
 
 
 ### Features
 
-* add FSXAProxy, FSXARemoteApi and navigationFilter utilities ([#58](https://github.com/e-Spirit/fsxa-api/issues/58)) ([e909dc0](https://github.com/e-Spirit/fsxa-api/commit/e909dc0e9e49a45ec5da966fabf460fa0a3d9fb2)), closes [#44](https://github.com/e-Spirit/fsxa-api/issues/44) [#55](https://github.com/e-Spirit/fsxa-api/issues/55) [#57](https://github.com/e-Spirit/fsxa-api/issues/57) [#47](https://github.com/e-Spirit/fsxa-api/issues/47) [#49](https://github.com/e-Spirit/fsxa-api/issues/49)
+* **caasmapper:** add customizable media url builder, to add revision in preview mode ([#63](https://github.com/e-Spirit/fsxa-api/issues/63)) ([88e6c45](https://github.com/e-Spirit/fsxa-api/commit/88e6c45492a2e7e9774c19a72742e8a3bc48a806))
 
+### UPDATE NOTICE
+
+If you are using a CustomMapper to handle CaaS requests, you need to implement following method signature in the mapper's utils object:
+
+```typescript
+buildMediaUrl: (url: string, rev?: number) => string
+```
+
+This method can be used to change returning URLs of CaaSApi_Media_Picture.
+
+## [6.0.1](https://github.com/e-Spirit/fsxa-api/compare/v6.0.0...v6.0.1) (2021-12-21)
+
+### Bug Fixes
+
+- **types:** add FSXAProxyApiConfig type for explicit definition of proxy api config ([#62](https://github.com/e-Spirit/fsxa-api/issues/62)) ([1d4144c](https://github.com/e-Spirit/fsxa-api/commit/1d4144c0ad744727e05616b5b7929ff25afa1253))
+
+# [6.0.0](https://github.com/e-Spirit/fsxa-api/compare/v5.4.2...v6.0.0) (2021-12-07)
+
+### Bug Fixes
+
+- fix version number ([#60](https://github.com/e-Spirit/fsxa-api/issues/60)) ([5e8b3d0](https://github.com/e-Spirit/fsxa-api/commit/5e8b3d0d0212a43e204ca1dd81778aeb185f7c3c))
+
+### Features
+
+- add FSXAProxy, FSXARemoteApi and navigationFilter utilities ([#58](https://github.com/e-Spirit/fsxa-api/issues/58)) ([e909dc0](https://github.com/e-Spirit/fsxa-api/commit/e909dc0e9e49a45ec5da966fabf460fa0a3d9fb2)), closes [#44](https://github.com/e-Spirit/fsxa-api/issues/44) [#55](https://github.com/e-Spirit/fsxa-api/issues/55) [#57](https://github.com/e-Spirit/fsxa-api/issues/57) [#47](https://github.com/e-Spirit/fsxa-api/issues/47) [#49](https://github.com/e-Spirit/fsxa-api/issues/49)
 
 ### BREAKING CHANGES
 
-* The FSXAApi class was removed and new classes FSXAProxyApi and FSXARemoteApi was
-added. Please read the [migration guide in the CHANGELOG](https://github.com/e-Spirit/fsxa-api/blob/alpha/CHANGELOG.md#migration-guide) for more details.
+- The FSXAApi class was removed and new classes FSXAProxyApi and FSXARemoteApi was
+  added. Please read the [migration guide in the CHANGELOG](https://github.com/e-Spirit/fsxa-api/blob/alpha/CHANGELOG.md#migration-guide) for more details.
 
 ### Migration Guide
 
@@ -37,7 +50,7 @@ To be compliant to the new signature, you can wrap the parameters of your method
 _Example_:
 
 ```typescript
-api.fetchElement(req.body.id, req.body.locale, req.body?.additionalParams, req.body?.remote);
+api.fetchElement(req.body.id, req.body.locale, req.body?.additionalParams, req.body?.remote)
 ```
 
 _does not compile_
@@ -48,7 +61,7 @@ api.fetchElement({
   locale: req.body.locale,
   additionalParams: req.body?.additionalParams,
   remoteProject: req.body?.remote,
-});
+})
 ```
 
 _new compliant solution_
@@ -64,17 +77,17 @@ _Example_:
 new FSXAApi(
   FSXAContentMode.PREVIEW,
   {
-    mode: "proxy",
+    mode: 'proxy',
     baseUrl: BASE_URL,
   },
   3
-);
+)
 ```
 
 _does not compile_
 
 ```typescript
-new FSXAProxyApi(BASE_URL, LogLevel.INFO);
+new FSXAProxyApi(BASE_URL, LogLevel.INFO)
 ```
 
 _new compliant solution_
@@ -82,13 +95,13 @@ _new compliant solution_
 #### Usages of FSXAApi with mode = remote
 
 FSXAApi has been removed.
-If you were using the FSXAApi in with `mode: 'remote'` you should switch to the new FSXARemoteApi.
+If you were using the FSXAApi with `mode: 'remote'` you should switch to the new FSXARemoteApi.
 
 _Example_:
 
 ```typescript
 new FSXAApi(FSXAContentMode.PREVIEW, {
-  mode: "remote",
+  mode: 'remote',
   config: {
     apiKey: API_KEY,
     caas: CAAS_URL,
@@ -97,7 +110,7 @@ new FSXAApi(FSXAContentMode.PREVIEW, {
     projectId: PROJECT_ID,
     remotes: REMOTES,
   },
-});
+})
 ```
 
 _does not compile_
@@ -111,7 +124,7 @@ new FSXARemoteApi({
   projectID: PROJECT_ID,
   remotes: REMOTES,
   contentMode: CONTENT_MODE,
-});
+})
 ```
 
 _new compliant solution_
