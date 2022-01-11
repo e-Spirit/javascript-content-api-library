@@ -1,3 +1,16 @@
+# [7.0.0](https://github.com/e-Spirit/fsxa-api/compare/v6.1.0...v7.0.0) (2022-01-11)
+
+
+### Features
+
+* add pagination data to response structure of fetchByFilter ([#64](https://github.com/e-Spirit/fsxa-api/issues/64)) ([8536e9d](https://github.com/e-Spirit/fsxa-api/commit/8536e9d7214abfce8b7dc61246a85b296ffc83a0))
+
+
+### BREAKING CHANGES
+
+* Previously fetchByFilter directly returned an array of returned items. Now this
+data is wrapped in an 'items' property. The returned object also includes pagination data now.
+
 ### BREAKING CHANGE
 
 Previously fetchByFilter directly returned an array of returned items. Now this
