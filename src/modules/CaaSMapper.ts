@@ -500,10 +500,7 @@ export class CaaSMapper {
    * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferencesPerProject<Type extends {}>(
-    data: Type,
-    remoteProjectId?: string
-  ): Promise<Type> {
+  async resolveReferencesPerProject<T extends {}>(data: T, remoteProjectId?: string): Promise<T> {
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
@@ -531,13 +528,21 @@ export class CaaSMapper {
           })
         )
       )
-      const fetchedItems = response.flat()
+      const fetchedItems = response.map(({ items }) => items).flat()
       ids.forEach((id) =>
         referencedItems[id].forEach((path) =>
-          set(data, path, fetchedItems.find((data) => data.id === id) || null)
+          set(
+            data,
+            path,
+            fetchedItems.find((data) => {
+              const hasId = typeof data === 'object' && 'id' in (data as object)
+              if (hasId) {
+                return (data as { id: string }).id === id
+              }
+            })
+          )
         )
       )
-      return data
     }
     return data
   }

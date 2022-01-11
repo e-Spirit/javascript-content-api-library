@@ -8,7 +8,7 @@ import { get } from 'lodash'
 const ENTITIES = new Map([
   ['"', '&quot;'],
   ['&', '&amp;'],
-  ['<', '&lt;']
+  ['<', '&lt;'],
 ])
 
 class XMLParser {

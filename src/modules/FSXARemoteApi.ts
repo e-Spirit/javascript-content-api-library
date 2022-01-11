@@ -1,4 +1,5 @@
 import { CaaSMapper, Logger } from '.'
+import { FetchResponse } from '..'
 import {
   Dataset,
   GCAPage,
@@ -151,12 +152,12 @@ export class FSXARemoteApi implements FSXAApi {
       }
     }
 
-    baseURL += '?'
+    const params: string[] = []
 
     if (additionalParams && Object.keys(additionalParams).length > 0) {
       const stringifiedParams = this.buildRestheartParams(additionalParams)
       if (stringifiedParams) {
-        baseURL += `&${stringifiedParams}`
+        params.push(...stringifiedParams)
       }
     }
 
@@ -180,16 +181,20 @@ export class FSXARemoteApi implements FSXAApi {
       // const query = [...filters.map(filter => JSON.stringify(this._queryBuilder.build(filter)))]
       const query = this._queryBuilder.buildAll(allFilters).map((v) => JSON.stringify(v))
       if (query) {
-        baseURL += '&filter=' + query.join('&filter=')
+        params.push('filter=' + query.join('&filter='))
       }
     }
 
     if (page) {
-      baseURL += '&page=' + page
+      params.push('page=' + page)
     }
 
     if (pagesize) {
-      baseURL += '&pagesize=' + pagesize
+      params.push('pagesize=' + pagesize)
+    }
+
+    if (params.length) {
+      baseURL += `?${params.join('&')}`
     }
 
     return baseURL
@@ -352,7 +357,7 @@ export class FSXARemoteApi implements FSXAApi {
 
   /**
    * This method fetches a filtered page from the configured CaaS.
-   * The {@link FetchElementParams FetchElementParams} object defines options to specify your request. 
+   * The {@link FetchElementParams FetchElementParams} object defines options to specify your request.
    * Check {@link buildCaaSUrl buildCaaSUrl} to know which URL will be used.
    * Example call:
    *
@@ -368,15 +373,15 @@ export class FSXARemoteApi implements FSXAApi {
       "en_GB",
     })
    * ```
-   * @param filters array of {@link QueryBuilderQuery QueryBuilderQuery} to filter you request 
+   * @param filters array of {@link QueryBuilderQuery QueryBuilderQuery} to filter you request
    * @param locale value must be ISO conform, both 'en' and 'en_US' are valid
    * @param page optional the number of the page you will get results from `(default = 1)` (should be bigger than 0)
    * @param pagesize optional the number of document entries you will get back `(default = 30)` (should be between 1-1000)
-   * @param additionalParams optional additional URL parameters 
+   * @param additionalParams optional additional URL parameters
    * @param remoteProject optional name of the remote project
    * @param fetchOptions optional object to pass additional request options (Check {@link RequestInit RequestInit})
    * @returns the mapped and filtered response from the CaaS request,
-   *    if `additionalParams.keys` are set, the result will be unmapped, 
+   *    if `additionalParams.keys` are set, the result will be unmapped,
    *    if `data._embedded['rh:doc']` is undefined, the returning result will be the unmapped `data` object
    */
   async fetchByFilter({
@@ -387,7 +392,7 @@ export class FSXARemoteApi implements FSXAApi {
     additionalParams = {},
     remoteProject,
     fetchOptions,
-  }: FetchByFilterParams) {
+  }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1 || pagesize > 1000) {
       this._logger.warn(
         `[fetchByFilter] pagesize may not be below zero or above 1000 ! Using fallback of pagesize = 30`
@@ -406,7 +411,10 @@ export class FSXARemoteApi implements FSXAApi {
     }
     const url = this.buildCaaSUrl({
       filters,
-      additionalParams,
+      additionalParams: {
+        ...additionalParams,
+        rep: 'hal',
+      },
       remoteProject,
       locale,
       page,
@@ -436,13 +444,32 @@ export class FSXARemoteApi implements FSXAApi {
     )
     const data = await response.json()
 
+    const items = await this.getItemsData(data, additionalParams, mapper)
+
+    return {
+      page,
+      pagesize,
+      totalPages: data['_total_pages'],
+      size: data['_size'],
+      items,
+    }
+  }
+
+  private async getItemsData(
+    data: any,
+    additionalParams: Record<string, any>,
+    mapper: CaaSMapper
+  ): Promise<unknown[]> {
     // we cannot ensure that the response can be mapped through our mapping algorithm if the keys attribute is set
     // so we will disable it
     if (additionalParams.keys) {
       return data._embedded['rh:doc']
     }
 
-    if (!data._embedded || !data._embedded['rh:doc']) return data
+    if (!data._embedded || !data._embedded['rh:doc']) {
+      return data
+    }
+
     return mapper.mapFilterResponse(data._embedded['rh:doc'])
   }
 
@@ -462,7 +489,7 @@ export class FSXARemoteApi implements FSXAApi {
     locale: string
     additionalParams?: Record<string, any>
     resolve?: string[]
-  }) {
+  }): Promise<any> {
     const response = await this.fetchByFilter({
       filters: [
         {
@@ -474,7 +501,7 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       additionalParams,
     })
-    const page = (response[0] as Page)?.data
+    const page = (response.items[0] as Page)?.data
     if (!page) {
       this._logger.info(
         `[fetchProjectProperties] Could not find response data. Project properties might not be defined.`
@@ -504,22 +531,19 @@ export class FSXARemoteApi implements FSXAApi {
     return response
   }
 
-  private buildRestheartParams(params: Record<'keys' | string, Record<string, number>>) {
-    let result: string[] = []
+  private buildRestheartParams(params: Record<string, any>): string[] {
+    const result: string[] = []
     Object.keys(params).forEach((key) => {
-      Object.entries(params[key]).forEach(([param, value]) => {
-        if (typeof params[key][param] === 'object') {
-          this._logger.warn(
-            `[buildRestheartParams] - skipping entry for key=${key}, for it contains an object type.`
-          )
-          return
-        }
-        result.push(`${key}={"${param}":${value}}`)
-      })
+      if (Array.isArray(params[key])) {
+        result.push(`${key}=${params[key].map(JSON.stringify)}`)
+      } else if (typeof params[key] === 'object') {
+        result.push(`${key}=${JSON.stringify(params[key])}`)
+      } else {
+        result.push(`${key}=${params[key]}`)
+      }
     })
-    const concatenatedResult = result.join('&')
 
-    return concatenatedResult
+    return result
   }
 
   /**
@@ -621,12 +645,12 @@ export class FSXARemoteApi implements FSXAApi {
 
   /**
    * This method sets the remote project configuration
-   * @param value the mandatory remote project configuration 
-   * example: 
+   * @param value the mandatory remote project configuration
+   * example:
    * ```typescript
     {
       "media": {
-        "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", 
+        "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
         "locale": "en_GB"
       }
     }
