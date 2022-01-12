@@ -67,7 +67,7 @@ export class CaaSMapper {
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
     Object.keys(this.api.remotes || {}).forEach(
-      (item: string) => (this._remoteReferences[item] = [] as unknown as ReferencedItemsInfo)
+      (item: string) => (this._remoteReferences[item] = {})
     )
     this.logger = logger
   }
@@ -87,7 +87,7 @@ export class CaaSMapper {
    * with different paths are intended
    * @param identifier item identifier
    * @param path after fetch, items are inserted at all registered paths
-   * @param remoteProjectKey optional. If passed, the item will be fetched from the specified project
+   * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
