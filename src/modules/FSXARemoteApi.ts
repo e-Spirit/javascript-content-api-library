@@ -1,3 +1,4 @@
+import { stringify } from 'qs'
 import { CaaSMapper, Logger } from '.'
 import { FetchResponse } from '..'
 import {
@@ -153,12 +154,9 @@ export class FSXARemoteApi implements FSXAApi {
     }
 
     const params: string[] = []
-
-    if (additionalParams && Object.keys(additionalParams).length > 0) {
-      const stringifiedParams = this.buildRestheartParams(additionalParams)
-      if (stringifiedParams) {
-        params.push(...stringifiedParams)
-      }
+    const additionalParamsDefined = additionalParams && Object.keys(additionalParams).length > 0
+    if (additionalParamsDefined) {
+      params.push(this.buildStringifiedQueryParams(additionalParams))
     }
 
     if (filters) {
@@ -212,18 +210,24 @@ export class FSXARemoteApi implements FSXAApi {
    */
   buildNavigationServiceUrl({ locale, initialPath, all }: buildNavigationServiceURLParams = {}) {
     this._logger.debug('[buildNavigationServiceUrl]', { locale, initialPath })
-    if (locale && initialPath) {
-      this._logger.warn('Parameters "locale" and "initialPath" have been given.')
+    const useInitialPath = initialPath && initialPath !== '/'
+    if (locale && useInitialPath) {
+      this._logger.warn(
+        '[buildNavigationServiceUrl]',
+        'Parameters "locale" and "initialPath" have been given.'
+      )
     }
 
     const baseNavigationServiceUrl = `${this.navigationServiceURL}/${this.contentMode}.${this.projectID}`
 
-    if (initialPath && initialPath !== '/') {
+    if (useInitialPath) {
+      this._logger.debug('[buildNavigationServiceUrl]', `Using initial path: ${useInitialPath}`)
       const queryParams = ['depth=99', '&format=caas', `${all ? '&all' : ''}`].join('')
       return `${baseNavigationServiceUrl}/by-seo-route/${initialPath}?${queryParams}`
     }
 
     if (locale) {
+      this._logger.debug('[buildNavigationServiceUrl]', `Using locale: ${locale}`)
       return `${baseNavigationServiceUrl}?depth=99&format=caas&language=${locale}`
     }
 
@@ -327,7 +331,8 @@ export class FSXARemoteApi implements FSXAApi {
   }: FetchElementParams): Promise<T> {
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
-    const response = await fetch(url, {
+    const encodedUrl = encodeURI(url)
+    const response = await fetch(encodedUrl, {
       headers: this.authorizationHeader,
       ...fetchOptions,
     })
@@ -420,8 +425,8 @@ export class FSXARemoteApi implements FSXAApi {
       page,
       pagesize,
     })
-
-    const response = await fetch(url, {
+    const encodedUrl = encodeURI(url)
+    const response = await fetch(encodedUrl, {
       headers: this.authorizationHeader,
       ...fetchOptions,
     })
@@ -528,22 +533,24 @@ export class FSXARemoteApi implements FSXAApi {
         page[key] = filteredResponse.data
       }
     }
-    return response
+    return response.items
   }
 
-  private buildRestheartParams(params: Record<string, any>): string[] {
-    const result: string[] = []
+  private buildStringifiedQueryParams(params: Record<'keys' | string, any>) {
+    const result: Record<string, any> = {}
     Object.keys(params).forEach((key) => {
       if (Array.isArray(params[key])) {
-        result.push(`${key}=${params[key].map(JSON.stringify)}`)
+        result[key] = params[key].map(JSON.stringify)
       } else if (typeof params[key] === 'object') {
-        result.push(`${key}=${JSON.stringify(params[key])}`)
+        result[key] = JSON.stringify(params[key])
       } else {
-        result.push(`${key}=${params[key]}`)
+        result[key] = params[key]
       }
     })
-
-    return result
+    return stringify(result, {
+      indices: false,
+      encode: false,
+    })
   }
 
   /**
