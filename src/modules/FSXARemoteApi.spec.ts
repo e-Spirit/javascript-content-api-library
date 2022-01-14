@@ -5,6 +5,7 @@ import { FSXAApiErrors } from '../enums'
 import { ComparisonFilter, FSXARemoteApiConfig, NavigationItem, QueryBuilderQuery } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { ComparisonQueryOperatorEnum } from './QueryBuilder'
+
 import 'jest-fetch-mock'
 require('jest-fetch-mock').enableFetchMocks()
 
@@ -109,7 +110,7 @@ describe('FSXARemoteAPI', () => {
       const remoteApi = new FSXARemoteApi(config)
       const actualAuthorizationHeaders = remoteApi.authorizationHeader
       const expectedAuthorizationHeaders = { authorization: `apikey="${config.apikey}"` }
-      expect(expectedAuthorizationHeaders).toStrictEqual(actualAuthorizationHeaders)
+      expect(actualAuthorizationHeaders).toStrictEqual(expectedAuthorizationHeaders)
     })
   })
   describe('buildCaaSUrl', () => {
@@ -118,7 +119,7 @@ describe('FSXARemoteAPI', () => {
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl()
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url for a remote project', () => {
       const config = generateRandomConfig()
@@ -126,7 +127,7 @@ describe('FSXARemoteAPI', () => {
       const remoteProjectId = config.remotes.remote.id
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ remoteProject: 'remote' })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${remoteProjectId}.${config.contentMode}.content`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url with a locale but no id', () => {
       const locale = Faker.locale
@@ -134,7 +135,7 @@ describe('FSXARemoteAPI', () => {
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ locale })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when an id is set', () => {
       const id = Faker.datatype.uuid()
@@ -142,7 +143,7 @@ describe('FSXARemoteAPI', () => {
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ id })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${id}`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when additionalParameter are set', () => {
       const additionalParams = { keys: { firstValue: 1, secondValue: 1 } }
@@ -150,7 +151,7 @@ describe('FSXARemoteAPI', () => {
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ additionalParams })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?keys={"firstValue":1,"secondValue":1}`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when id, locale and additionalParameter are set', () => {
       const id = Faker.datatype.uuid()
@@ -160,7 +161,7 @@ describe('FSXARemoteAPI', () => {
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ id, locale, additionalParams })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${id}.${locale}?keys={"firstValue":1,"secondValue":1}&sort={"firstName":1}`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when filters are set', () => {
       const firstValue = Faker.lorem.word()
@@ -187,7 +188,7 @@ describe('FSXARemoteAPI', () => {
       const firstFilter = `filter={"${firstField}":{"${firstOperator}":"${firstValue}"}}`
       const secondFilter = `filter={"${secondField}":{"${secondOperator}":"${secondValue}"}}`
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${firstFilter}&${secondFilter}`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when filters and additionalParams are set', () => {
       const filterField = Faker.lorem.word()
@@ -211,7 +212,32 @@ describe('FSXARemoteAPI', () => {
       const additionalParamsQuery = `keys={"identifier":1}`
       const filterQuery = `filter={"${filterField}":{"${filterOperator}":"${filterValue}"}}`
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${additionalParamsQuery}&${filterQuery}`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
+    })
+    it('should return the correct caas url when filters and complex additionalParams are set', () => {
+      const filterField = Faker.lorem.word()
+      const filterValue = Faker.lorem.word()
+      const filterOperator = ComparisonQueryOperatorEnum.EQUALS
+      const filters: QueryBuilderQuery[] = [
+        {
+          value: filterValue,
+          field: filterField,
+          operator: filterOperator,
+        },
+      ]
+      const additionalParams = {
+        keys: {
+          identifier: 1,
+        },
+        filter: [{ schema: 'newsroom' }, { entityType: { $in: ['item', 'type'] } }],
+      }
+      const config = generateRandomConfig()
+      const remoteApi = new FSXARemoteApi(config)
+      const actualCaaSUrl = remoteApi.buildCaaSUrl({ filters, additionalParams })
+      const additionalParamsQuery = `keys={"identifier":1}&filter={"schema":"newsroom"}&filter={"entityType":{"$in":["item","type"]}}`
+      const filterQuery = `filter={"${filterField}":{"${filterOperator}":"${filterValue}"}}`
+      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${additionalParamsQuery}&${filterQuery}`
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when page is set', () => {
       const page = Faker.datatype.number()
@@ -220,7 +246,7 @@ describe('FSXARemoteAPI', () => {
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ page })
       const pageQuery = `page=${page}`
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${pageQuery}`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when pagesize is set', () => {
       const pagesize = Faker.datatype.number()
@@ -229,7 +255,7 @@ describe('FSXARemoteAPI', () => {
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ pagesize })
       const pagesizeQuery = `pagesize=${pagesize}`
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${pagesizeQuery}`
-      expect(expectedCaaSUrl).toStrictEqual(actualCaaSUrl)
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should throw an error for an invalid remote project', () => {
       const config = generateRandomConfig()
@@ -291,7 +317,7 @@ describe('FSXARemoteAPI', () => {
       remoteApi.fetchElement({ id: uuid, locale })
       const actualURL = fetchMock.mock.calls[0][0]
       const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${uuid}.${locale}`
-      expect(expectedURL).toBe(actualURL)
+      expect(actualURL).toBe(expectedURL)
     })
     it('should throw an not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
@@ -363,7 +389,7 @@ describe('FSXARemoteAPI', () => {
       remoteApi.fetchByFilter({ filters, locale })
       const actualURL = fetchMock.mock.calls[0][0]
       const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter={"${filterField}":{"$eq":"${filterValue}"}}&filter={"locale.language":{"$eq":"${localeLanguage}"}}&filter={"locale.country":{"$eq":"${localeCountry}"}}&page=1&pagesize=30`
-      expect(expectedURL).toBe(actualURL)
+      expect(actualURL).toBe(encodeURI(expectedURL))
     })
     it('should throw an unauthorized error when the response is 401', () => {
       fetchMock.mockResponseOnce('', { status: 401 })
@@ -404,7 +430,7 @@ describe('FSXARemoteAPI', () => {
       const actualURL = fetchMock.mock.calls[0][0]
 
       const expectedURL = `${config.navigationServiceURL}/${config.contentMode}.${config.projectID}?depth=99&format=caas&language=${locale}`
-      expect(expectedURL).toBe(actualURL)
+      expect(actualURL).toBe(expectedURL)
     })
     it('should trigger the fetch method with initialPath = /', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
@@ -414,7 +440,7 @@ describe('FSXARemoteAPI', () => {
       const actualURL = fetchMock.mock.calls[0][0]
 
       const expectedURL = `${config.navigationServiceURL}/${config.contentMode}.${config.projectID}?depth=99&format=caas&language=${locale}`
-      expect(expectedURL).toBe(actualURL)
+      expect(actualURL).toBe(expectedURL)
     })
     it('should trigger the fetch method with initialPath', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
@@ -426,7 +452,7 @@ describe('FSXARemoteAPI', () => {
       const actualURL = fetchMock.mock.calls[0][0]
 
       const expectedURL = `${config.navigationServiceURL}/${config.contentMode}.${config.projectID}/by-seo-route/${initialPath}?depth=99&format=caas&all`
-      expect(expectedURL).toBe(actualURL)
+      expect(actualURL).toBe(expectedURL)
     })
     it('should throw an not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
@@ -445,7 +471,7 @@ describe('FSXARemoteAPI', () => {
       fetchMock.mockResponseOnce(JSON.stringify(expectedResponse))
       const locale = Faker.locale
       const actualResponse = await remoteApi.fetchNavigation({ locale })
-      expect(expectedResponse).toEqual(actualResponse)
+      expect(actualResponse).toEqual(expectedResponse)
     })
   })
   describe('fetchProjectProperties', () => {
@@ -462,9 +488,8 @@ describe('FSXARemoteAPI', () => {
       const locale = localeLanguage + '_' + localeCountry
       remoteApi.fetchProjectProperties({ locale })
       const actualURL = fetchMock.mock.calls[0][0]
-
       const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter={"fsType":{"$eq":"ProjectProperties"}}&filter={"locale.language":{"$eq":"${localeLanguage}"}}&filter={"locale.country":{"$eq":"${localeCountry}"}}&page=1&pagesize=30`
-      expect(expectedURL).toBe(actualURL)
+      expect(actualURL).toBe(encodeURI(expectedURL))
     })
   })
   describe('additionalHooks', () => {
