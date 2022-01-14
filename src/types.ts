@@ -378,12 +378,14 @@ export interface DataEntries {
 export type PageBodyContent = Section | Content2Section | Dataset
 
 export interface PageBody {
+  type: 'PageBody'
   name: string
   previewId: string
   children: PageBodyContent[]
 }
 
 export interface Page {
+  type: 'Page'
   id: string
   refId: string
   previewId: string
@@ -394,18 +396,27 @@ export interface Page {
   meta: DataEntries
 }
 
+export interface Reference {
+  type: 'Reference'
+  referenceId: string
+  referenceType: string
+}
+
 export interface Option {
+  type: 'Option'
   key: string
   value: string
 }
 
 export interface Link {
+  type: 'Link'
   template: string
   data: DataEntries
   meta: DataEntries
 }
 
 export interface Card {
+  type: 'Card'
   id: string
   previewId: string
   template: string
@@ -415,6 +426,7 @@ export interface Card {
 export interface Media {}
 
 export interface GCAPage {
+  type: 'GCAPage'
   id: string
   previewId: string
   name: string
@@ -424,6 +436,7 @@ export interface GCAPage {
 }
 
 export interface ProjectProperties {
+  type: 'ProjectProperties'
   id: string
   previewId: string
   name: string
@@ -451,19 +464,19 @@ export interface Content2Section {
 }
 
 export interface Section {
+  type: 'Section'
   id: string
   previewId: string
-  type: 'Section'
   sectionType: string
   data: DataEntries
   children: Section[]
 }
 
 export interface Dataset {
+  type: 'Dataset'
   id: string
   previewId: string
   schema: string
-  type: 'Dataset'
   entityType: string
   template: string
   children: Section[]
@@ -472,6 +485,7 @@ export interface Dataset {
 }
 
 export interface Image {
+  type: 'Image'
   id: string
   previewId: string
   meta: DataEntries
@@ -489,6 +503,7 @@ export interface Image {
 }
 
 export interface File {
+  type: 'File'
   id: string
   previewId: string
   meta: DataEntries
