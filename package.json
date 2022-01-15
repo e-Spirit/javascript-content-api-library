@@ -142,7 +142,7 @@
   },
   "dependencies": {
     "@types/ws": "^8.2.2",
-    "better-sse": "^0.6.0",
+    "better-sse": "^0.7.1",
     "body-parser": "^1.19.0",
     "chalk": "^4.1.2",
     "cors": "^2.8.5",
@@ -152,7 +152,7 @@
     "reconnecting-websocket": "^4.4.0",
     "saxes": "^5.0.1",
     "tslib": "^2.3.1",
-    "ws": "^8.3.0"
+    "ws": "^8.4.2"
   },
   "peerDependencies": {
     "express": "^4.17.1"
