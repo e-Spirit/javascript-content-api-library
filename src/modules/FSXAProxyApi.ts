@@ -13,6 +13,7 @@ import {
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
+import { FetchResponse } from '..'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -128,7 +129,7 @@ export class FSXAProxyApi implements FSXAApi {
     additionalParams = {},
     remoteProject,
     fetchOptions,
-  }: FetchByFilterParams) {
+  }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(
         'fetchByFilter',
@@ -158,7 +159,10 @@ export class FSXAProxyApi implements FSXAApi {
       locale,
       page,
       pagesize,
-      additionalParams,
+      additionalParams: {
+        ...additionalParams,
+        rep: 'hal',
+      },
       remote: remoteProject,
     }
     this._logger.debug('fetchByFilter', 'trying to fetch with body', body)

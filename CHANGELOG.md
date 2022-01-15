@@ -1,9 +1,41 @@
-# [6.1.0](https://github.com/e-Spirit/fsxa-api/compare/v6.0.1...v6.1.0) (2021-12-23)
+## [7.0.1](https://github.com/e-Spirit/fsxa-api/compare/v7.0.0...v7.0.1) (2022-01-14)
+
+
+### Bug Fixes
+
+* **FSXARemoteApi:** fix parameter parsing and projectProperties ([#67](https://github.com/e-Spirit/fsxa-api/issues/67)) ([edeaf13](https://github.com/e-Spirit/fsxa-api/commit/edeaf13e05f04c2dfbf50772e9d2c5d9e27a54ac))
+
+# [7.0.0](https://github.com/e-Spirit/fsxa-api/compare/v6.1.0...v7.0.0) (2022-01-11)
 
 
 ### Features
 
-* **caasmapper:** add customizable media url builder, to add revision in preview mode ([#63](https://github.com/e-Spirit/fsxa-api/issues/63)) ([88e6c45](https://github.com/e-Spirit/fsxa-api/commit/88e6c45492a2e7e9774c19a72742e8a3bc48a806))
+* add pagination data to response structure of fetchByFilter ([#64](https://github.com/e-Spirit/fsxa-api/issues/64)) ([8536e9d](https://github.com/e-Spirit/fsxa-api/commit/8536e9d7214abfce8b7dc61246a85b296ffc83a0))
+
+
+### BREAKING CHANGES
+
+* Previously fetchByFilter directly returned an array of returned items. Now this
+data is wrapped in an 'items' property. The returned object also includes pagination data now.
+
+### BREAKING CHANGE
+
+Previously fetchByFilter directly returned an array of returned items. Now this
+data is wrapped in an "items" property.
+
+Example:
+```typescript
+const { items } = fetchByFilter({...}) as { items: any[] }
+```
+
+The returned object also includes pagination data ("page" and "pagesize") now.
+If you are using "additionalParams" you can extend the pagination data with "totalPages" and "size" by passing `count: true`. Using "count" has performance implication for it involves querying the collection twice: once for counting and once of actually retrieving the data;
+
+# [6.1.0](https://github.com/e-Spirit/fsxa-api/compare/v6.0.1...v6.1.0) (2021-12-23)
+
+### Features
+
+- **caasmapper:** add customizable media url builder, to add revision in preview mode ([#63](https://github.com/e-Spirit/fsxa-api/issues/63)) ([88e6c45](https://github.com/e-Spirit/fsxa-api/commit/88e6c45492a2e7e9774c19a72742e8a3bc48a806))
 
 ### UPDATE NOTICE
 
