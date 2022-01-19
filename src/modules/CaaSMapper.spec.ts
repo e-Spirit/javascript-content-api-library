@@ -2,7 +2,6 @@ import faker from 'faker'
 import { CaaSMapper, CaaSMapperErrors } from './CaaSMapper'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { Logger, LogLevel } from './Logger'
-import { mocked } from 'ts-jest/utils'
 import { FSXAContentMode } from '../enums'
 import {
   CaaSApi_Body,
@@ -46,7 +45,7 @@ jest.mock('date-fns')
 describe('CaaSMapper', () => {
   const createPath = () => [faker.random.word(), faker.random.word()]
   const createLogger = () => new Logger(LogLevel.NONE, 'Querybuilder')
-  const createApi = () => mocked<FSXARemoteApi>(new (FSXARemoteApi as any)())
+  const createApi = () => jest.mocked<FSXARemoteApi>(new (FSXARemoteApi as any)())
   const createMapper = () => new CaaSMapper(createApi(), 'de', {}, createLogger())
 
   describe('registerReferencedItem', () => {
@@ -305,12 +304,12 @@ describe('CaaSMapper', () => {
           value: now.toISOString(),
           fsType: 'CMS_INPUT_DATE',
         }
-        mocked(parseISO).mockReturnValue(now)
+        jest.mocked(parseISO).mockReturnValue(now)
         await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(now)
         expect(parseISO).toHaveBeenCalledWith(entry.value)
       })
       it('should return null and not call the iso date parser if the value is falsy', async () => {
-        mocked(parseISO).mockReset()
+        jest.mocked(parseISO).mockReset()
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         const entry: CaaSApi_CMSInputDate = {
