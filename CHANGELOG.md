@@ -1,3 +1,10 @@
+## [7.0.2](https://github.com/e-Spirit/fsxa-api/compare/v7.0.1...v7.0.2) (2022-01-20)
+
+
+### Bug Fixes
+
+* **tests:** provide CaaSMapper tests ([6c7389c](https://github.com/e-Spirit/fsxa-api/commit/6c7389c3c261c3e07e57d8064802cb719c023346))
+
 ## [7.0.1](https://github.com/e-Spirit/fsxa-api/compare/v7.0.0...v7.0.1) (2022-01-14)
 
 
