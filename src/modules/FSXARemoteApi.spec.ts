@@ -1,6 +1,6 @@
 import Faker from 'faker'
 import { LogLevel } from '.'
-import { FSXAContentMode } from '..'
+import { FSXAContentMode, NavigationFilter } from '..'
 import { FSXAApiErrors } from '../enums'
 import { ComparisonFilter, FSXARemoteApiConfig, NavigationItem, QueryBuilderQuery } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -591,23 +591,17 @@ describe('FSXARemoteAPI', () => {
       })
     })
     describe('preFilterFetch', () => {
-      it('should provide data which is accessable in navigationFilter', (done) => {
+      it('should provide data which is accessible in navigationFilter', async () => {
         const json = {
+          structure: [],
+          seoRouteMap: {},
           idMap: {
             1: {},
           },
         }
 
         const randomJson = Faker.datatype.json()
-        const navigationFilter = (_: any, __: any, data: any) => {
-          try {
-            expect(data).toBe(randomJson)
-            done()
-          } catch (e) {
-            done(e)
-          }
-          return true
-        }
+        const navigationFilter: NavigationFilter = jest.fn().mockReturnValue(true)
         const preFilterFetch = (data: any) => Promise.resolve(data)
         const config = {
           ...generateRandomConfig(),
@@ -616,10 +610,15 @@ describe('FSXARemoteAPI', () => {
         } as FSXARemoteApiConfig
         fetchMock.mockResponseOnce(JSON.stringify(json))
         const remoteApi = new FSXARemoteApi(config)
-        remoteApi.fetchNavigation({
+        await remoteApi.fetchNavigation({
           locale: Faker.locale,
           authData: randomJson,
         })
+        expect(navigationFilter).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          expect.stringContaining(randomJson)
+        )
       })
     })
   })
