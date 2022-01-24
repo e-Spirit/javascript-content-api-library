@@ -51,8 +51,9 @@ class CaaSEventStream {
   }
 
   onSocketMessage(event: MessageEvent) {
-    this.logger.info('onSocketMessage', 'broadcast', event)
-    this.channel.broadcast(event.type, event.data.toString('utf-8'))
+    const jsonStringMessage = event.data.toString('utf-8')
+    this.logger.info('onSocketMessage', 'broadcast', jsonStringMessage)
+    this.channel.broadcast(jsonStringMessage)
   }
 
   addSession(req: Request, res: Response) {
