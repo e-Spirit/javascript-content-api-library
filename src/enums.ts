@@ -28,3 +28,9 @@ export enum FSXAContentMode {
   PREVIEW = 'preview',
   RELEASE = 'release',
 }
+
+export enum ImageMapAreaType {
+  Circle = 'circle',
+  Rect = 'rect',
+  Poly = 'poly',
+}

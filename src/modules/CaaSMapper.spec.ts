@@ -5,6 +5,7 @@ import { Logger, LogLevel } from './Logger'
 import { FSXAContentMode } from '../enums'
 import {
   CaaSApi_Body,
+  CaaSApi_CMSImageMap,
   CaaSApi_CMSInputCheckbox,
   CaaSApi_CMSInputCombobox,
   CaaSApi_CMSInputDate,
@@ -26,6 +27,7 @@ import {
   CaaSApi_Section,
   CaaSApiMediaPictureResolutions,
   CustomMapper,
+  CaaSApi_ImageMapAreaCircle,
   RichTextElement,
 } from '../types'
 import { parseISO } from 'date-fns'
@@ -38,6 +40,7 @@ import { createGCAPage } from '../testutils/createGCAPage'
 import { createDataset } from '../testutils/createDataset'
 import { createMediaPicture } from '../testutils/createMediaPicture'
 import { createMediaFile } from '../testutils/createMediaFile'
+import { createImageMap } from '../testutils/createImageMap'
 
 jest.mock('./FSXARemoteApi')
 jest.mock('date-fns')
@@ -453,6 +456,37 @@ describe('CaaSMapper', () => {
           )
           // ensure Options were correctly mapped (depends on Option working)
           expect(result.find(($) => $.key === entry.value[index].identifier)).toBeDefined()
+        })
+      })
+    })
+
+    describe('CMS_INPUT_IMAGEMAP', () => {
+      it('should call mapMedia to map media', async () => {
+        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+        jest.spyOn(mapper, 'mapMedia')
+        const path = createPath()
+        const entry = createImageMap()
+        await mapper.mapDataEntry(entry, path)
+        expect(mapper.mapMedia).toHaveBeenCalledWith(entry.value.media, path)
+      })
+      it('should not modify the resolution', async () => {
+        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+        const entry = createImageMap()
+        Object.freeze(entry.value.resolution)
+        await mapper.mapDataEntry(entry, createPath())
+      })
+      it('should call mapDataEntries for each area formData', async () => {
+        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+        const path = createPath()
+        jest.spyOn(mapper, 'mapDataEntries')
+        const entry = createImageMap()
+        await mapper.mapDataEntry(entry, path)
+        entry.value.areas.forEach((area, index) => {
+          expect(mapper.mapDataEntries).toHaveBeenCalledWith(area.link.formData, [
+            ...path,
+            index,
+            'data',
+          ])
         })
       })
     })
@@ -1004,7 +1038,7 @@ describe('CaaSMapper', () => {
       await mapper.mapMediaPicture(media, path)
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [...path, 'meta'])
     })
-    it('should call mapMediaPictureResolutionUrls to map resolution urls', async () => {
+    it('should call map MediaPictureResolutionUrls to map resolution urls', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
       const media = createMediaPicture()
