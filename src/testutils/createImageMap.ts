@@ -20,6 +20,7 @@ export function createImageMap(): CaaSApi_CMSImageMap {
     name: faker.random.word(),
     fsType: 'CMS_INPUT_IMAGEMAP',
     value: {
+      fsType: 'MappingMedium',
       media,
       areas: [
         {
@@ -28,7 +29,7 @@ export function createImageMap(): CaaSApi_CMSImageMap {
             formData: {},
             template: {},
           },
-          areaType: ImageMapAreaType.Circle,
+          areaType: ImageMapAreaType.CIRCLE,
           radius: faker.datatype.number(5),
           center: createPoint2D(),
         } as CaaSApi_ImageMapAreaCircle,
@@ -38,7 +39,7 @@ export function createImageMap(): CaaSApi_CMSImageMap {
             formData: {},
             template: {},
           },
-          areaType: ImageMapAreaType.Rect,
+          areaType: ImageMapAreaType.RECT,
           leftTop: createPoint2D(),
           rightBottom: createPoint2D(),
         } as CaaSApi_ImageMapAreaRect,
@@ -48,7 +49,7 @@ export function createImageMap(): CaaSApi_CMSImageMap {
             formData: {},
             template: {},
           },
-          areaType: ImageMapAreaType.Poly,
+          areaType: ImageMapAreaType.POLY,
           points: [createPoint2D(), createPoint2D(), createPoint2D()],
         } as CaaSApi_ImageMapAreaPoly,
       ],

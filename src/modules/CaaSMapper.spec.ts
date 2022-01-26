@@ -5,7 +5,6 @@ import { Logger, LogLevel } from './Logger'
 import { FSXAContentMode } from '../enums'
 import {
   CaaSApi_Body,
-  CaaSApi_CMSImageMap,
   CaaSApi_CMSInputCheckbox,
   CaaSApi_CMSInputCombobox,
   CaaSApi_CMSInputDate,
@@ -27,7 +26,6 @@ import {
   CaaSApi_Section,
   CaaSApiMediaPictureResolutions,
   CustomMapper,
-  CaaSApi_ImageMapAreaCircle,
   RichTextElement,
 } from '../types'
 import { parseISO } from 'date-fns'
@@ -475,7 +473,7 @@ describe('CaaSMapper', () => {
         Object.freeze(entry.value.resolution)
         await mapper.mapDataEntry(entry, createPath())
       })
-      it('should call mapDataEntries for each area formData', async () => {
+      it("should call mapDataEntries for each area's formData", async () => {
         const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
         const path = createPath()
         jest.spyOn(mapper, 'mapDataEntries')
@@ -488,6 +486,21 @@ describe('CaaSMapper', () => {
             'data',
           ])
         })
+      })
+      it('should work with nested formData image maps', async () => {
+        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+        const path = createPath()
+        jest.spyOn(mapper, 'mapDataEntry')
+        const entry = createImageMap()
+        const childEntry = createImageMap()
+        entry.value.areas[0].link.formData = { childEntry }
+        await mapper.mapDataEntry(entry, path)
+        expect(mapper.mapDataEntry).toHaveBeenCalledWith(childEntry, [
+          ...path,
+          0,
+          'data',
+          'childEntry',
+        ])
       })
     })
 
@@ -1038,7 +1051,7 @@ describe('CaaSMapper', () => {
       await mapper.mapMediaPicture(media, path)
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [...path, 'meta'])
     })
-    it('should call map MediaPictureResolutionUrls to map resolution urls', async () => {
+    it('should call mapMediaPictureResolutionUrls to map resolution urls', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
       const media = createMediaPicture()

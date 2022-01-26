@@ -30,7 +30,7 @@ export enum FSXAContentMode {
 }
 
 export enum ImageMapAreaType {
-  Circle = 'circle',
-  Rect = 'rect',
-  Poly = 'poly',
+  CIRCLE = 'circle',
+  RECT = 'rect',
+  POLY = 'poly',
 }

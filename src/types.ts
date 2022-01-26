@@ -127,19 +127,19 @@ export interface CaaSApi_ImageMapArea {
 }
 
 export interface CaaSApi_ImageMapAreaCircle extends CaaSApi_ImageMapArea {
-  areaType: ImageMapAreaType.Circle
+  areaType: ImageMapAreaType.CIRCLE
   radius: number
   center: Point2D
 }
 
 export interface CaaSApi_ImageMapAreaRect extends CaaSApi_ImageMapArea {
-  areaType: ImageMapAreaType.Rect
+  areaType: ImageMapAreaType.RECT
   leftTop: Point2D
   rightBottom: Point2D
 }
 
 export interface CaaSApi_ImageMapAreaPoly extends CaaSApi_ImageMapArea {
-  areaType: ImageMapAreaType.Poly
+  areaType: ImageMapAreaType.POLY
   points: Point2D[]
 }
 
@@ -147,6 +147,7 @@ export interface CaaSApi_CMSImageMap {
   fsType: 'CMS_INPUT_IMAGEMAP'
   name: string
   value: {
+    fsType: 'MappingMedium'
     media: CaaSApi_Media
     areas: CaaSApi_ImageMapArea[]
     resolution: {
@@ -470,24 +471,24 @@ export interface ImageMapArea {
 }
 
 export interface ImageMapAreaCircle extends ImageMapArea {
-  areaType: ImageMapAreaType.Circle
+  areaType: ImageMapAreaType.CIRCLE
   radius: number
   center: Point2D
 }
 
 export interface ImageMapAreaRect extends ImageMapArea {
-  areaType: ImageMapAreaType.Rect
+  areaType: ImageMapAreaType.RECT
   leftTop: Point2D
   rightBottom: Point2D
 }
 
 export interface ImageMapAreaPoly extends ImageMapArea {
-  areaType: ImageMapAreaType.Poly
+  areaType: ImageMapAreaType.POLY
   points: Point2D[]
 }
 
 export interface ImageMap {
-  media: Media // TODO Media type is incomplete
+  media: Image
   areas: ImageMapArea[]
   resolution: {
     fsType: 'Resolution'

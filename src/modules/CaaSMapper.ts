@@ -373,19 +373,19 @@ export class CaaSMapper {
       data: await this.mapDataEntries(area.link.formData, [...path, 'data']),
     }
     switch (area.areaType) {
-      case ImageMapAreaType.Rect:
+      case ImageMapAreaType.RECT:
         return {
           ...base,
           leftTop: (base as CaaSApi_ImageMapAreaRect).leftTop,
           rightBottom: (base as CaaSApi_ImageMapAreaRect).rightBottom,
         } as ImageMapAreaRect
-      case ImageMapAreaType.Circle:
+      case ImageMapAreaType.CIRCLE:
         return {
           ...base,
           center: (base as CaaSApi_ImageMapAreaCircle).center,
           radius: (base as CaaSApi_ImageMapAreaCircle).radius,
         } as ImageMapAreaCircle
-      case ImageMapAreaType.Poly:
+      case ImageMapAreaType.POLY:
         return {
           ...base,
           points: (base as CaaSApi_ImageMapAreaPoly).points,
@@ -410,7 +410,7 @@ export class CaaSMapper {
     return {
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
       resolution,
-      media: mappedMedia as Media, // FIXME: lie
+      media: mappedMedia as Image,
     }
   }
 
