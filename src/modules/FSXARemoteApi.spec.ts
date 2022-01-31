@@ -591,6 +591,42 @@ describe('FSXARemoteAPI', () => {
       })
     })
     describe('preFilterFetch', () => {
+      it('should call preFilterFetch before calling the navigation filter with its data', async () => {
+        const preFilterFetchData = { filterCriteria: [] }
+        fetchMock.mockResponseOnce(
+          JSON.stringify({
+            idMap: {
+              home: { id: 'id-home' },
+              about: { id: 'id-about' },
+            },
+            seoRouteMap: {},
+            structure: [],
+          })
+        )
+        const navigationFilter = jest.fn()
+        const preFilterFetch = jest.fn().mockImplementation(async () => {
+          expect(navigationFilter).not.toHaveBeenCalled()
+          return preFilterFetchData
+        })
+        const config = {
+          ...generateRandomConfig(),
+          navigationFilter,
+          preFilterFetch,
+        } as FSXARemoteApiConfig
+        const remoteApi = new FSXARemoteApi(config)
+        const authData = Faker.datatype.json()
+        await remoteApi.fetchNavigation({
+          locale: Faker.locale,
+          authData,
+        })
+        expect(preFilterFetch).toHaveBeenCalled()
+        expect(navigationFilter).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          preFilterFetchData
+        )
+      })
+
       it('should provide data which is accessible in navigationFilter', async () => {
         const json = {
           structure: [],
