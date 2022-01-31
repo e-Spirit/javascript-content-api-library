@@ -627,7 +627,7 @@ describe('FSXARemoteAPI', () => {
         )
       })
 
-      it('should provide data which is accessible in navigationFilter', (done) => {
+      it('should provide data which is accessible in navigationFilter', async () => {
         const json = {
           structure: [],
           seoRouteMap: {},

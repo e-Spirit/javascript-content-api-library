@@ -48,7 +48,8 @@
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
-      "npx prettier --write ."
+      "prettier --write",
+      "git add"
     ]
   },
   "config": {
