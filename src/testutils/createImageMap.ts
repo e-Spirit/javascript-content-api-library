@@ -54,7 +54,7 @@ export function createImageMap(): CaaSApi_CMSImageMap {
         } as CaaSApi_ImageMapAreaPoly,
       ],
       resolution: {
-        fsType: 'Resolution',
+        fsType: 'ImageMapResolution',
         uid: faker.datatype.uuid(),
         width: 1920,
         height: 1080,

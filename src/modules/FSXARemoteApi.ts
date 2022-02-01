@@ -355,7 +355,7 @@ export class FSXARemoteApi implements FSXAApi {
       this as any,
       locale,
       { customMapper: this._customMapper },
-      new Logger(LogLevel.ERROR, 'CaaSMapper')
+      new Logger(this._logLevel, 'CaaSMapper')
     )
     return mapper.mapElementResponse(responseJSON)
   }

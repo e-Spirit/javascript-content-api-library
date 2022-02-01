@@ -402,6 +402,7 @@ export class CaaSMapper {
     const {
       value: { media, areas, resolution },
     } = imageMap
+    this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
     const [mappedAreas, mappedMedia] = await Promise.all([
       Promise.all(areas.map(async (area, index) => this.mapImageMapArea(area, [...path, index]))),
       this.mapMedia(media, path),
@@ -474,6 +475,9 @@ export class CaaSMapper {
   }
 
   async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | File | null> {
+    if (item === null) {
+      return null
+    }
     switch (item.mediaType) {
       case 'PICTURE':
         return this.mapMediaPicture(item, path)
@@ -505,6 +509,7 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
+    this.logger.debug('CaaSMapper.mapElementResponse - response', response)
     return this.resolveAllReferences(response as {})
   }
 
