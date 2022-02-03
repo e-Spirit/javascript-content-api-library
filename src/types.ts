@@ -123,7 +123,7 @@ export interface CaaSApi_ImageMapArea {
   link: {
     template: CaaSApi_Template
     formData: CaaSApi_DataEntries
-  }
+  } | null
 }
 
 export interface CaaSApi_ImageMapAreaCircle extends CaaSApi_ImageMapArea {
@@ -465,9 +465,10 @@ export interface Card {
  */
 export interface ImageMapArea {
   areaType: ImageMapAreaType
-  previewId: string
-  template: string
-  data: DataEntries
+  link: {
+    template: string
+    data: DataEntries
+  } | null
 }
 
 export interface ImageMapAreaCircle extends ImageMapArea {
