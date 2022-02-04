@@ -814,7 +814,8 @@ export type FSXARemoteApiConfig = {
 }
 
 export interface FSXAProxyApiConfig {
-  url: string
+  clientUrl: string
+  serverUrl: string
   logLevel: LogLevel
   contentMode: FSXAContentMode
 }
