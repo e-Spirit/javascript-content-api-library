@@ -480,11 +480,14 @@ describe('CaaSMapper', () => {
         const entry = createImageMap()
         await mapper.mapDataEntry(entry, path)
         entry.value.areas.forEach((area, index) => {
-          expect(mapper.mapDataEntries).toHaveBeenCalledWith(area.link.formData, [
-            ...path,
-            index,
-            'data',
-          ])
+          if (area.link) {
+            expect(mapper.mapDataEntries).toHaveBeenCalledWith(area.link.formData, [
+              ...path,
+              'areas',
+              index,
+              'data',
+            ])
+          }
         })
       })
       it('should work with nested formData image maps', async () => {
@@ -493,10 +496,11 @@ describe('CaaSMapper', () => {
         jest.spyOn(mapper, 'mapDataEntry')
         const entry = createImageMap()
         const childEntry = createImageMap()
-        entry.value.areas[0].link.formData = { childEntry }
+        entry.value.areas[0].link!.formData = { childEntry }
         await mapper.mapDataEntry(entry, path)
         expect(mapper.mapDataEntry).toHaveBeenCalledWith(childEntry, [
           ...path,
+          'areas',
           0,
           'data',
           'childEntry',

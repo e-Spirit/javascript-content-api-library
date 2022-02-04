@@ -368,9 +368,10 @@ export class CaaSMapper {
   ): Promise<ImageMapArea | null> {
     const base: Partial<ImageMapArea> = {
       areaType: area.areaType,
-      template: area.link.template.uid,
-      previewId: this.buildPreviewId(area.link.template.identifier),
-      data: await this.mapDataEntries(area.link.formData, [...path, 'data']),
+      link: area.link && {
+        template: area.link.template.uid,
+        data: await this.mapDataEntries(area.link.formData, [...path, 'data']),
+      },
     }
     switch (area.areaType) {
       case ImageMapAreaType.RECT:
@@ -404,7 +405,9 @@ export class CaaSMapper {
     } = imageMap
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
     const [mappedAreas, mappedMedia] = await Promise.all([
-      Promise.all(areas.map(async (area, index) => this.mapImageMapArea(area, [...path, index]))),
+      Promise.all(
+        areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
+      ),
       this.mapMedia(media, path),
     ])
 
