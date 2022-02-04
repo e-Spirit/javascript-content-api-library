@@ -1,4 +1,4 @@
-import { FSXAContentMode } from './enums'
+import { FSXAContentMode, ImageMapAreaType } from './enums'
 import { FSXARemoteApi, LogLevel } from './modules'
 import {
   ArrayQueryOperatorEnum,
@@ -112,6 +112,53 @@ export interface CaaSApi_CMSInputDate {
   value: string | null
 }
 
+export interface Point2D {
+  x: number
+  y: number
+}
+
+export interface CaaSApi_ImageMapArea {
+  fsType: 'Area'
+  areaType: ImageMapAreaType
+  link: {
+    template: CaaSApi_Template
+    formData: CaaSApi_DataEntries
+  } | null
+}
+
+export interface CaaSApi_ImageMapAreaCircle extends CaaSApi_ImageMapArea {
+  areaType: ImageMapAreaType.CIRCLE
+  radius: number
+  center: Point2D
+}
+
+export interface CaaSApi_ImageMapAreaRect extends CaaSApi_ImageMapArea {
+  areaType: ImageMapAreaType.RECT
+  leftTop: Point2D
+  rightBottom: Point2D
+}
+
+export interface CaaSApi_ImageMapAreaPoly extends CaaSApi_ImageMapArea {
+  areaType: ImageMapAreaType.POLY
+  points: Point2D[]
+}
+
+export interface CaaSApi_CMSImageMap {
+  fsType: 'CMS_INPUT_IMAGEMAP'
+  name: string
+  value: {
+    fsType: 'MappingMedium'
+    media: CaaSApi_Media
+    areas: CaaSApi_ImageMapArea[]
+    resolution: {
+      fsType: 'ImageMapResolution'
+      uid: string
+      width: number
+      height: number
+    }
+  }
+}
+
 export interface CaaSApi_FSDataset {
   fsType: 'FS_DATASET'
   name: string
@@ -198,6 +245,7 @@ export type CaaSApi_DataEntry =
   | CaaSApi_CMSInputText
   | CaaSApi_CMSInputTextArea
   | CaaSApi_CMSInputToggle
+  | CaaSApi_CMSImageMap
   | CaaSApi_FSButton
   | CaaSApi_FSCatalog
   | CaaSApi_FSDataset
@@ -421,6 +469,45 @@ export interface Card {
   previewId: string
   template: string
   data: DataEntries
+}
+
+/**
+ * This type is extended by ImageMapAreaCircle, ImageMapAreaRect, ImageMapAreaPoly
+ */
+export interface ImageMapArea {
+  areaType: ImageMapAreaType
+  link: {
+    template: string
+    data: DataEntries
+  } | null
+}
+
+export interface ImageMapAreaCircle extends ImageMapArea {
+  areaType: ImageMapAreaType.CIRCLE
+  radius: number
+  center: Point2D
+}
+
+export interface ImageMapAreaRect extends ImageMapArea {
+  areaType: ImageMapAreaType.RECT
+  leftTop: Point2D
+  rightBottom: Point2D
+}
+
+export interface ImageMapAreaPoly extends ImageMapArea {
+  areaType: ImageMapAreaType.POLY
+  points: Point2D[]
+}
+
+export interface ImageMap {
+  media: Image
+  areas: ImageMapArea[]
+  resolution: {
+    fsType: 'ImageMapResolution'
+    uid: string
+    width: number
+    height: number
+  }
 }
 
 export interface Media {}

@@ -1,12 +1,3 @@
-export const clean = (obj: Record<string, any>) => {
-  for (const propName in obj) {
-    if (obj[propName] === undefined) {
-      delete obj[propName]
-    }
-  }
-  return obj
-}
-
 export const removeFromSeoRouteMap = (seoRouteMap: Record<string, string>, ids: string[]) => {
   Object.keys(seoRouteMap).forEach((key) => {
     if (!ids.includes(seoRouteMap[key])) {
