@@ -372,7 +372,7 @@ export class CaaSMapper {
     }
   }
 
-  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath): Promise<Image> {
+  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath = []): Promise<Image> {
     return {
       id: item.identifier,
       previewId: this.buildPreviewId(item.identifier),
@@ -525,6 +525,8 @@ export class CaaSMapper {
               },
             ],
             locale,
+            pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
+            remoteProject: remoteProjectId,
           })
         )
       )

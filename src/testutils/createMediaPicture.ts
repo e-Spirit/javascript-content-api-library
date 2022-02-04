@@ -2,8 +2,8 @@ import faker from 'faker'
 import { CaaSApi_Media_Picture } from '../types'
 import { createDataEntry } from './createDataEntry'
 
-export const createMediaPicture = (): CaaSApi_Media_Picture => {
-  const base = createDataEntry()
+export const createMediaPicture = (id = faker.datatype.uuid()): CaaSApi_Media_Picture => {
+  const base = createDataEntry(id)
   const name = faker.random.word()
   return {
     ...base,
