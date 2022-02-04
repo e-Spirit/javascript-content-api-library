@@ -1,3 +1,10 @@
+# [7.1.0](https://github.com/e-Spirit/fsxa-api/compare/v7.0.2...v7.1.0) (2022-02-04)
+
+
+### Features
+
+* **caasmapper:** support image maps ([#72](https://github.com/e-Spirit/fsxa-api/issues/72)) ([0a8af2d](https://github.com/e-Spirit/fsxa-api/commit/0a8af2d5b0f7be78fe568be3f849f0bdb6f21e9b))
+
 ## [7.0.2](https://github.com/e-Spirit/fsxa-api/compare/v7.0.1...v7.0.2) (2022-01-20)
 
 
