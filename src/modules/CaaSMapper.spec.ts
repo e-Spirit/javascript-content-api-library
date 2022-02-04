@@ -39,6 +39,7 @@ import { createDataset } from '../testutils/createDataset'
 import { createMediaPicture } from '../testutils/createMediaPicture'
 import { createMediaFile } from '../testutils/createMediaFile'
 import { createImageMap } from '../testutils/createImageMap'
+import { Link, Option, Reference } from '..'
 
 jest.mock('./FSXARemoteApi')
 jest.mock('date-fns')
@@ -178,10 +179,12 @@ describe('CaaSMapper', () => {
           },
           fsType: 'CMS_INPUT_COMBOBOX',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual({
+        const expected: Option = {
           key: entry.value!.identifier,
           value: entry.value!.label,
-        })
+          type: 'Option',
+        }
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(expected)
       })
       it('should map entries to null if their value is falsy', async () => {
         const api = createApi()
@@ -350,11 +353,14 @@ describe('CaaSMapper', () => {
           },
           fsType: 'CMS_INPUT_LINK',
         }
-        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual({
+
+        const expected: Link = {
           template: entry.value.template.uid,
           data: entry.value.formData,
           meta: entry.value.metaFormData,
-        })
+          type: 'Link',
+        }
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(expected)
         expect(mapper.mapDataEntries).toHaveBeenNthCalledWith(1, entry.value.formData, [
           ...path,
           'data',
@@ -768,9 +774,14 @@ describe('CaaSMapper', () => {
           name: faker.random.word(),
           value: {
             fsType: 'Media',
+            name: faker.random.word(),
             identifier: faker.datatype.uuid(),
+            uid: faker.random.word(),
+            uidType: 'MEDIASTORE_LEAF',
+            url: faker.random.word(),
+            mediaType: 'PICTURE',
             remoteProject: 'remote-project',
-          } as any,
+          },
           fsType: 'FS_REFERENCE',
         }
         await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual('[REF]')
@@ -784,24 +795,37 @@ describe('CaaSMapper', () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         const path = createPath()
+
         const entry: CaaSApi_FSReference = {
           name: faker.random.word(),
           value: {
             fsType: 'PageRef',
+            name: faker.random.word(),
             identifier: faker.datatype.uuid(),
+            uid: faker.random.word(),
+            uidType: 'SITESTORE_LEAF',
+            url: faker.random.word(),
             remoteProject: 'remote-project',
-          } as any, // the implementation violates the interface (entry.value.fsType)
+          },
           fsType: 'FS_REFERENCE',
         }
-        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual({
+
+        const expectedPageRef: Reference = {
           referenceId: entry.value!.identifier,
           referenceType: entry.value!.fsType,
-        })
-        ;(entry.value!.fsType as string) = 'GCAPage'
-        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual({
+          type: 'Reference',
+        }
+
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(expectedPageRef)
+        entry.value!.fsType = 'GCAPage'
+        entry.value!.uidType = 'GLOBALSTORE'
+        entry.value!.url = ''
+        const expectedGCARef: Reference = {
           referenceId: entry.value!.identifier,
           referenceType: entry.value!.fsType,
-        })
+          type: 'Reference',
+        }
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(expectedGCARef)
       })
       it('should return corrupted entries as-is', async () => {
         const api = createApi()
