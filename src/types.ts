@@ -196,16 +196,6 @@ export interface CaaSApi_FSCatalog {
   value: CaaSApi_Card[] | null
 }
 
-export interface CaaSApi_MediaRef {
-  fsType: 'Media'
-  name: string
-  identifier: string
-  uid: string
-  uidType: string
-  mediaType: string
-  url: string
-}
-
 export interface CaaSApi_Record {
   fsType: 'Record'
   identifier: string
@@ -219,19 +209,37 @@ export interface CaaSApi_FSIndex {
   value: CaaSApi_Record[]
 }
 
+export interface CaaSApi_BaseRef {
+  fsType: string
+  name: string
+  identifier: string
+  uid: string
+  uidType: string
+  url: string
+  remoteProject?: string
+}
+
+export interface CaaSApi_MediaRef extends CaaSApi_BaseRef {
+  fsType: 'Media'
+  uidType: 'MEDIASTORE_LEAF'
+  mediaType: 'PICTURE' | 'FILE'
+}
+
+export interface CaaSApi_GCARef extends CaaSApi_BaseRef {
+  fsType: 'GCAPage'
+  uidType: 'GLOBALSTORE'
+  url: ''
+}
+
+export interface CaaSApi_PageRefRef extends CaaSApi_BaseRef {
+  fsType: 'PageRef'
+  uidType: 'SITESTORE_LEAF'
+}
+
 export interface CaaSApi_FSReference {
   fsType: 'FS_REFERENCE'
   name: string
-  value: {
-    fsType: 'Media'
-    name: string
-    identifier: string
-    uid: string
-    uidType: string
-    mediaType: 'PICTURE'
-    url: string
-    remoteProject: string
-  } | null
+  value: CaaSApi_BaseRef | CaaSApi_PageRefRef | CaaSApi_GCARef | CaaSApi_MediaRef | null
 }
 
 export type CaaSApi_DataEntry =
