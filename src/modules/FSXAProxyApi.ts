@@ -298,3 +298,23 @@ export class FSXAProxyApi implements FSXAApi {
     return fetch(this.baseUrl + url, options as RequestInit)
   }
 }
+
+export class FSXAProxyApiSingleton {
+  private static _api: FSXAProxyApi
+
+  public static init(baseUrl: string, loglevel = LogLevel.ERROR) {
+    if (this._api) {
+      throw new Error(
+        'init may only be called once! Directly create a FSXAProxyApi, if you need customized parameters'
+      )
+    }
+    this._api = new FSXAProxyApi(baseUrl, loglevel)
+  }
+
+  public static get Instance() {
+    if (!this._api) {
+      throw new Error('Call init first')
+    }
+    return this._api
+  }
+}
