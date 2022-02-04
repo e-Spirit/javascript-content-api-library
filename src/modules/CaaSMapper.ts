@@ -31,7 +31,6 @@ import {
   ImageMapAreaCircle,
   ImageMapAreaPoly,
   ImageMapAreaRect,
-  Media,
   NestedPath,
   Page,
   PageBody,
@@ -44,7 +43,15 @@ import { chunk, set } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import { FSXAContentMode, Link, Option, Reference, RichTextElement, ImageMapAreaType } from '..'
+import {
+  FSXAContentMode,
+  Link,
+  Option,
+  Reference,
+  RichTextElement,
+  ImageMapAreaType,
+  ImageMapResolution,
+} from '..'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -422,6 +429,7 @@ export class CaaSMapper {
     const {
       value: { media, areas, resolution },
     } = imageMap
+
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
     const [mappedAreas, mappedMedia] = await Promise.all([
       Promise.all(
@@ -430,10 +438,17 @@ export class CaaSMapper {
       this.mapMedia(media, path),
     ])
 
+    const imageMapResolution: ImageMapResolution = {
+      width: resolution.width,
+      height: resolution.height,
+      uid: resolution.uid,
+    }
+
     return {
+      type: 'ImageMap',
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
-      resolution,
-      media: mappedMedia as Image,
+      resolution: imageMapResolution,
+      media: mappedMedia?.type === 'Image' ? mappedMedia : null,
     }
   }
 
