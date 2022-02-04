@@ -27,12 +27,13 @@ import {
   CaaSApiMediaPictureResolutions,
   CustomMapper,
   RichTextElement,
+  FetchByFilterParams,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { createNumberEntry } from '../testutils/createNumberEntry'
 import { createPageRef } from '../testutils/createPageRef'
 import { createSection } from '../testutils/createSection'
-import { createDataEntry } from '../testutils/createDataEntry'
+import { createDataEntry, createMediaPictureReference } from '../testutils/createDataEntry'
 import { createProjectProperties } from '../testutils/createProjectProperties'
 import { createGCAPage } from '../testutils/createGCAPage'
 import { createDataset } from '../testutils/createDataset'
@@ -40,6 +41,7 @@ import { createMediaPicture } from '../testutils/createMediaPicture'
 import { createMediaFile } from '../testutils/createMediaFile'
 import { createImageMap } from '../testutils/createImageMap'
 import { Link, Option, Reference } from '..'
+import { createFetchResponse } from '../testutils/createFetchResponse'
 
 jest.mock('./FSXARemoteApi')
 jest.mock('date-fns')
@@ -1262,6 +1264,51 @@ describe('CaaSMapper', () => {
       const data = {}
       await mapper.resolveReferencesPerProject(data)
       expect(api.fetchByFilter).toHaveBeenCalled()
+    })
+    it('should resolve remote media references', async () => {
+      const api = createApi()
+      api.remotes = { 'remote-id1': { id: 'remote-id1', locale: 'de' } }
+      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const mediaPictures = await Promise.all([
+        mapper.mapMediaPicture(createMediaPicture('id1')),
+        mapper.mapMediaPicture(createMediaPicture('id2')),
+        mapper.mapMediaPicture(createMediaPicture('id3')),
+      ])
+      api.fetchByFilter = jest
+        .fn()
+        .mockImplementation(
+          async ({
+            filters,
+            locale,
+            page,
+            pagesize,
+            additionalParams,
+            remoteProject,
+            fetchOptions,
+          }: FetchByFilterParams) => {
+            // Unfortunately jest doesn't support mocking a func call with specific parmaters
+            if (remoteProject !== 'remote-id1') return createFetchResponse([])
+            if (locale !== 'de') return createFetchResponse([])
+            return createFetchResponse(mediaPictures)
+          }
+        )
+      const pageRef = createPageRef()
+      pageRef.page.formData = {
+        media1: createMediaPictureReference('id1', 'remote-id1'),
+        media2: createMediaPictureReference('id2', 'remote-id1'),
+        media3: createMediaPictureReference('id3', 'remote-id1'),
+      }
+      // Mapping also implicitly registers referenced items in mapper instance
+      const page = await mapper.mapPageRef(pageRef)
+
+      const result = await mapper.resolveReferencesPerProject(page, 'remote-id1')
+
+      expect(result.data).toBeDefined()
+      expect(result.data).toStrictEqual({
+        media1: mediaPictures[0],
+        media2: mediaPictures[1],
+        media3: mediaPictures[2],
+      })
     })
   })
 })
