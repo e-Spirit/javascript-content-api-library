@@ -1,26 +1,36 @@
 import { ComparisonQueryOperatorEnum } from './'
 import {
   CaaSApi_Body,
+  CaaSApi_CMSImageMap,
   CaaSApi_Content2Section,
   CaaSApi_DataEntries,
   CaaSApi_DataEntry,
   CaaSApi_Dataset,
   CaaSApi_GCAPage,
+  CaaSApi_ImageMapArea,
+  CaaSApi_ImageMapAreaCircle,
+  CaaSApi_ImageMapAreaPoly,
+  CaaSApi_ImageMapAreaRect,
   CaaSApi_Media,
-  CaaSApi_Media_Picture,
-  CaaSApiMediaPictureResolutions,
   CaaSApi_Media_File,
+  CaaSApi_Media_Picture,
   CaaSApi_PageRef,
   CaaSApi_ProjectProperties,
   CaaSApi_Section,
   CaaSApi_SectionReference,
+  CaaSApiMediaPictureResolutions,
   CustomMapper,
   DataEntries,
   DataEntry,
   Dataset,
+  File,
   GCAPage,
   Image,
-  File,
+  ImageMap,
+  ImageMapArea,
+  ImageMapAreaCircle,
+  ImageMapAreaPoly,
+  ImageMapAreaRect,
   Media,
   NestedPath,
   Page,
@@ -30,11 +40,11 @@ import {
   Section,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { set, chunk } from 'lodash'
+import { chunk, set } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import { FSXAContentMode } from '..'
+import { FSXAContentMode, ImageMapAreaType } from '..'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -167,6 +177,11 @@ export class CaaSMapper {
         return Promise.all(
           entry.value.map((childEntry, index) => this.mapDataEntry(childEntry, [...path, index]))
         )
+      case 'CMS_INPUT_IMAGEMAP':
+        if (!entry || !entry.value) {
+          return null
+        }
+        return this.mapImageMap(entry as CaaSApi_CMSImageMap, path)
       case 'FS_DATASET':
         if (!entry.value) return null
         if (Array.isArray(entry.value)) {
@@ -347,6 +362,62 @@ export class CaaSMapper {
     }
   }
 
+  async mapImageMapArea(
+    area: CaaSApi_ImageMapArea,
+    path: NestedPath
+  ): Promise<ImageMapArea | null> {
+    const base: Partial<ImageMapArea> = {
+      areaType: area.areaType,
+      link: area.link && {
+        template: area.link.template.uid,
+        data: await this.mapDataEntries(area.link.formData, [...path, 'data']),
+      },
+    }
+    switch (area.areaType) {
+      case ImageMapAreaType.RECT:
+        return {
+          ...base,
+          leftTop: (base as CaaSApi_ImageMapAreaRect).leftTop,
+          rightBottom: (base as CaaSApi_ImageMapAreaRect).rightBottom,
+        } as ImageMapAreaRect
+      case ImageMapAreaType.CIRCLE:
+        return {
+          ...base,
+          center: (base as CaaSApi_ImageMapAreaCircle).center,
+          radius: (base as CaaSApi_ImageMapAreaCircle).radius,
+        } as ImageMapAreaCircle
+      case ImageMapAreaType.POLY:
+        return {
+          ...base,
+          points: (base as CaaSApi_ImageMapAreaPoly).points,
+        } as ImageMapAreaPoly
+      default:
+        return null
+    }
+  }
+
+  async mapImageMap(imageMap: CaaSApi_CMSImageMap, path: NestedPath): Promise<ImageMap> {
+    if (!imageMap.value) {
+      throw new Error('ImageMap value is null')
+    }
+    const {
+      value: { media, areas, resolution },
+    } = imageMap
+    this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
+    const [mappedAreas, mappedMedia] = await Promise.all([
+      Promise.all(
+        areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
+      ),
+      this.mapMedia(media, path),
+    ])
+
+    return {
+      areas: mappedAreas.filter(Boolean) as ImageMapArea[],
+      resolution,
+      media: mappedMedia as Image,
+    }
+  }
+
   async mapGCAPage(gcaPage: CaaSApi_GCAPage, path: NestedPath = []): Promise<GCAPage> {
     return {
       id: gcaPage.identifier,
@@ -407,6 +478,9 @@ export class CaaSMapper {
   }
 
   async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | File | null> {
+    if (item === null) {
+      return null
+    }
     switch (item.mediaType) {
       case 'PICTURE':
         return this.mapMediaPicture(item, path)
@@ -438,6 +512,7 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
+    this.logger.debug('CaaSMapper.mapElementResponse - response', response)
     return this.resolveAllReferences(response as {})
   }
 
