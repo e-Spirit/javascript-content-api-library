@@ -65,6 +65,7 @@ export class FSXAProxyApi implements FSXAApi {
    * Creates a new instance with the connection to the FSXARemoteAPI
    * @param baseURL specifies the URL to communicate with
    * @param logLevel specifies the restrictions of logs which will be displayed
+   * @param enableEventStream enables the CaaS event stream
    */
   constructor(baseURL: string, logLevel = LogLevel.ERROR, enableEventStream = false) {
     this.baseUrl = baseURL

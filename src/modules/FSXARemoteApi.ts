@@ -740,6 +740,6 @@ export class FSXARemoteApi implements FSXAApi {
    * @returns true, if a event stream should pipe events from CaaS change events websocket
    */
   public get enableEventStream(): boolean {
-    return this.enableEventStream
+    return this._enableEventStream
   }
 }
