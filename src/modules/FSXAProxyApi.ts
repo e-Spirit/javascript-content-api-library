@@ -33,6 +33,7 @@ export class FSXAProxyApi implements FSXAApi {
     'Content-Type': 'application/json',
   }
   private _logger: Logger
+  private _enableEventStream: boolean
 
   /**
    * This method requests the current state of baseUrl
@@ -54,13 +55,21 @@ export class FSXAProxyApi implements FSXAApi {
   }
 
   /**
+   * @returns true, if a event stream should pipe events from CaaS change events websocket
+   */
+  get enableEventStream() {
+    return this._enableEventStream
+  }
+
+  /**
    * Creates a new instance with the connection to the FSXARemoteAPI
    * @param baseURL specifies the URL to communicate with
    * @param logLevel specifies the restrictions of logs which will be displayed
    */
-  constructor(baseURL: string, logLevel = LogLevel.ERROR) {
+  constructor(baseURL: string, logLevel = LogLevel.ERROR, enableEventStream = false) {
     this.baseUrl = baseURL
     this._logger = new Logger(logLevel, 'FSXAProxyApi')
+    this._enableEventStream = enableEventStream
   }
 
   /**

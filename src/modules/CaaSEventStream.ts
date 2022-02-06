@@ -7,6 +7,10 @@ import { Request, Response } from 'express'
 
 type SocketUrl = () => Promise<string>
 
+/**
+ * The CaaSEventStream is used for a unique (per project) CaaS change event websocket and delegates (channel broadcast)
+ * any incoming events to any registered event-stream (session)
+ */
 class CaaSEventStream {
   logger: Logger
   createSocketUrl: SocketUrl
@@ -35,6 +39,7 @@ class CaaSEventStream {
     this.logger.info('initilized')
   }
 
+  // on any session (de)registration, close or (re)open then websocket
   onCheckState() {
     const hasSessions = this.channel.activeSessions.length > 0
     const isSocketOpenOrConnecting =
@@ -50,12 +55,14 @@ class CaaSEventStream {
     }
   }
 
+  // receive websocket message and broadcast to all open event-streams
   onSocketMessage(event: MessageEvent) {
     const jsonStringMessage = event.data.toString('utf-8')
     this.logger.info('onSocketMessage', 'broadcast', jsonStringMessage)
     this.channel.broadcast(jsonStringMessage)
   }
 
+  // add a new event-stream (session)
   addSession(req: Request, res: Response) {
     const serializer = (data: any) => (typeof data === 'string' ? data : JSON.stringify(data))
     createSession(req, res, { serializer }).then((session) => this.channel.register(session))
@@ -79,6 +86,7 @@ export const bindCaaSEventStream = (
   const { api, remoteProject, additionalParams } = options
   const caasUrl = api.buildCaaSUrl({ remoteProject, additionalParams }).split('?')[0]
 
+  // ensure to have only one socket connection per caasUrl
   if (!(caasUrl in streams)) {
     const logger = options.logger || new Logger(options.logLevel || api.logLevel, 'CaaSEventStream')
     const createSocketUrl = async () => {
@@ -90,5 +98,6 @@ export const bindCaaSEventStream = (
     streams[caasUrl] = new CaaSEventStream(logger, createSocketUrl, options)
   }
 
+  // add this connection to a pool (channel) of listeners for the websocket events
   streams[caasUrl].addSession(req, res)
 }

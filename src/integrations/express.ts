@@ -158,31 +158,34 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     }
   )
 
-  router.get(
-    [STREAM_CHANGE_EVENTS_ROUTE, FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE],
-    async (req, res) => {
-      logger.info('requesting route: ', STREAM_CHANGE_EVENTS_ROUTE, req.query)
+  if (api.enableEventStream) {
+    router.get(
+      [STREAM_CHANGE_EVENTS_ROUTE, FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE],
+      async (req, res) => {
+        logger.info('requesting route: ', STREAM_CHANGE_EVENTS_ROUTE, req.query)
 
-      const params: ConnectEventStreamParams = {}
-      if ('remoteProject' in req.query) {
-        params.remoteProject = `${req.query.remoteProject}`
-      }
-      if ('additionalParams' in req.query) {
-        try {
-          params.additionalParams = JSON.parse(`${req.query.additionalParams}`)
-        } catch (err) {
-          logger.warn(
-            STREAM_CHANGE_EVENTS_ROUTE,
-            `parsing error for additionalParams`,
-            req.query.additionalParams,
-            err
-          )
+        const params: ConnectEventStreamParams = {}
+        if ('remoteProject' in req.query) {
+          params.remoteProject = `${req.query.remoteProject}`
         }
-      }
+        if ('additionalParams' in req.query) {
+          try {
+            params.additionalParams = JSON.parse(`${req.query.additionalParams}`)
+          } catch (err) {
+            logger.warn(
+              STREAM_CHANGE_EVENTS_ROUTE,
+              `parsing error for additionalParams`,
+              req.query.additionalParams,
+              err
+            )
+          }
+        }
 
-      bindCaaSEventStream(req, res, { api, ...params })
-    }
-  )
+        // as the nature of `text/event-stream` the connection is not closed and `req`/`res` will be managed by the module
+        bindCaaSEventStream(req, res, { api, ...params })
+      }
+    )
+  }
 
   router.all('*', (_, res) => {
     logger.info('trying to resolve all routes')

@@ -624,6 +624,7 @@ export interface FSXAConfiguration {
   contentMode?: 'preview' | 'release'
   customMapper?: CustomMapper
   remotes?: Record<string, { id: string; locale: string }>
+  enableEventStream?: boolean
 }
 
 export interface ObjectMap<ValueType = any> {
@@ -791,12 +792,14 @@ export type FSXARemoteApiConfig = {
   customMapper?: CustomMapper
   navigationFilter?: NavigationFilter
   preFilterFetch?: PreFilterFetch
+  enableEventStream?: boolean
 }
 
 export interface FSXAProxyApiConfig {
   url: string
   logLevel: LogLevel
   contentMode: FSXAContentMode
+  enableEventStream?: boolean
 }
 
 export interface FSXAApi {
@@ -809,6 +812,7 @@ export interface FSXAApi {
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
   ) => Promise<Record<string, any> | null>
+  enableEventStream?: boolean
 }
 
 export interface FetchResponse {

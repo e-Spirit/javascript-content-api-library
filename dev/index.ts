@@ -17,6 +17,7 @@ const {
   API_PROJECT_ID,
   API_TENANT_ID,
   API_REMOTES,
+  API_ENABLE_EVENT_STREAM,
 } = process.env
 const remoteApi = new FSXARemoteApi({
   apikey: API_API_KEY!,
@@ -27,6 +28,7 @@ const remoteApi = new FSXARemoteApi({
   tenantID: API_TENANT_ID!,
   remotes: JSON.parse(API_REMOTES || '{}'),
   logLevel: LogLevel.INFO,
+  enableEventStream: !!API_ENABLE_EVENT_STREAM,
 })
 
 app.use(cors())

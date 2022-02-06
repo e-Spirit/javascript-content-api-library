@@ -56,6 +56,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _navigationFilter?: NavigationFilter
   private _preFilterFetch?: PreFilterFetch
   private _logLevel: LogLevel
+  private _enableEventStream: boolean
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -71,6 +72,7 @@ export class FSXARemoteApi implements FSXAApi {
    * @param navigationFilter optional {@link NavigationFilter NavigationFilter}
    * @param preFilterFetch optional {@link PreFilterFetch PreFilterFetch}
    * @param logLevel the used {@link LogLevel LogLevel} for the API `(default LogLevel.ERROR)` - optional
+   * @param enableEventStream enables the event stream - optional
    */
   constructor({
     apikey,
@@ -84,6 +86,7 @@ export class FSXARemoteApi implements FSXAApi {
     navigationFilter,
     preFilterFetch,
     logLevel = LogLevel.ERROR,
+    enableEventStream = false,
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
     this.caasURL = caasURL
@@ -98,6 +101,7 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationFilter = navigationFilter
     this._preFilterFetch = preFilterFetch
+    this._enableEventStream = enableEventStream
   }
 
   /**
@@ -730,5 +734,12 @@ export class FSXARemoteApi implements FSXAApi {
    */
   public get logLevel(): LogLevel {
     return this._logLevel
+  }
+
+  /**
+   * @returns true, if a event stream should pipe events from CaaS change events websocket
+   */
+  public get enableEventStream(): boolean {
+    return this.enableEventStream
   }
 }
