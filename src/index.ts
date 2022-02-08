@@ -7,6 +7,7 @@ export {
   QueryBuilderErrors,
   LogLevel,
   FSXAProxyApi,
+  FSXAApiSingleton,
   FSXARemoteApi,
 } from './modules'
 export * from './enums'

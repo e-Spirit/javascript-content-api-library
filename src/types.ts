@@ -151,7 +151,7 @@ export interface CaaSApi_CMSImageMap {
     media: CaaSApi_Media
     areas: CaaSApi_ImageMapArea[]
     resolution: {
-      fsType: 'ImageMapResolution'
+      fsType: 'Resolution'
       uid: string
       width: number
       height: number
@@ -196,16 +196,6 @@ export interface CaaSApi_FSCatalog {
   value: CaaSApi_Card[] | null
 }
 
-export interface CaaSApi_MediaRef {
-  fsType: 'Media'
-  name: string
-  identifier: string
-  uid: string
-  uidType: string
-  mediaType: string
-  url: string
-}
-
 export interface CaaSApi_Record {
   fsType: 'Record'
   identifier: string
@@ -219,19 +209,37 @@ export interface CaaSApi_FSIndex {
   value: CaaSApi_Record[]
 }
 
+export interface CaaSApi_BaseRef {
+  fsType: string
+  name: string
+  identifier: string
+  uid: string
+  uidType: string
+  url: string
+  remoteProject?: string
+}
+
+export interface CaaSApi_MediaRef extends CaaSApi_BaseRef {
+  fsType: 'Media'
+  uidType: 'MEDIASTORE_LEAF'
+  mediaType: 'PICTURE' | 'FILE'
+}
+
+export interface CaaSApi_GCARef extends CaaSApi_BaseRef {
+  fsType: 'GCAPage'
+  uidType: 'GLOBALSTORE'
+  url: ''
+}
+
+export interface CaaSApi_PageRefRef extends CaaSApi_BaseRef {
+  fsType: 'PageRef'
+  uidType: 'SITESTORE_LEAF'
+}
+
 export interface CaaSApi_FSReference {
   fsType: 'FS_REFERENCE'
   name: string
-  value: {
-    fsType: 'Media'
-    name: string
-    identifier: string
-    uid: string
-    uidType: string
-    mediaType: 'PICTURE'
-    url: string
-    remoteProject: string
-  } | null
+  value: CaaSApi_BaseRef | CaaSApi_PageRefRef | CaaSApi_GCARef | CaaSApi_MediaRef | null
 }
 
 export type CaaSApi_DataEntry =
@@ -426,12 +434,14 @@ export interface DataEntries {
 export type PageBodyContent = Section | Content2Section | Dataset
 
 export interface PageBody {
+  type: 'PageBody'
   name: string
   previewId: string
   children: PageBodyContent[]
 }
 
 export interface Page {
+  type: 'Page'
   id: string
   refId: string
   previewId: string
@@ -442,18 +452,27 @@ export interface Page {
   meta: DataEntries
 }
 
+export interface Reference {
+  type: 'Reference'
+  referenceId: string
+  referenceType: string
+}
+
 export interface Option {
+  type: 'Option'
   key: string
   value: string
 }
 
 export interface Link {
+  type: 'Link'
   template: string
   data: DataEntries
   meta: DataEntries
 }
 
 export interface Card {
+  type: 'Card'
   id: string
   previewId: string
   template: string
@@ -488,20 +507,23 @@ export interface ImageMapAreaPoly extends ImageMapArea {
   points: Point2D[]
 }
 
+export interface ImageMapResolution {
+  uid: string
+  width: number
+  height: number
+}
+
 export interface ImageMap {
-  media: Image
+  type: 'ImageMap'
+  media: Image | null
   areas: ImageMapArea[]
-  resolution: {
-    fsType: 'ImageMapResolution'
-    uid: string
-    width: number
-    height: number
-  }
+  resolution: ImageMapResolution
 }
 
 export interface Media {}
 
 export interface GCAPage {
+  type: 'GCAPage'
   id: string
   previewId: string
   name: string
@@ -511,6 +533,7 @@ export interface GCAPage {
 }
 
 export interface ProjectProperties {
+  type: 'ProjectProperties'
   id: string
   previewId: string
   name: string
@@ -538,19 +561,19 @@ export interface Content2Section {
 }
 
 export interface Section {
+  type: 'Section'
   id: string
   previewId: string
-  type: 'Section'
   sectionType: string
   data: DataEntries
   children: Section[]
 }
 
 export interface Dataset {
+  type: 'Dataset'
   id: string
   previewId: string
   schema: string
-  type: 'Dataset'
   entityType: string
   template: string
   children: Section[]
@@ -559,6 +582,7 @@ export interface Dataset {
 }
 
 export interface Image {
+  type: 'Image'
   id: string
   previewId: string
   meta: DataEntries
@@ -576,6 +600,7 @@ export interface Image {
 }
 
 export interface File {
+  type: 'File'
   id: string
   previewId: string
   meta: DataEntries
@@ -789,7 +814,8 @@ export type FSXARemoteApiConfig = {
 }
 
 export interface FSXAProxyApiConfig {
-  url: string
+  clientUrl: string
+  serverUrl: string
   logLevel: LogLevel
   contentMode: FSXAContentMode
 }
