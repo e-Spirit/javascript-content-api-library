@@ -254,6 +254,8 @@ export class CaaSMapper {
             referenceId: entry.value.identifier,
             referenceType: entry.value.fsType,
           }
+          Object.keys(entry.value).includes('section') &&
+            Object.assign(reference, { section: entry.value.section })
           return reference
         }
         return entry
