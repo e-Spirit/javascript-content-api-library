@@ -1,3 +1,10 @@
+# [8.1.0](https://github.com/e-Spirit/fsxa-api/compare/v8.0.0...v8.1.0) (2022-02-11)
+
+
+### Features
+
+* **FS_Reference:** add optional section to reference types ([fbedc26](https://github.com/e-Spirit/fsxa-api/commit/fbedc26c4cbdc81ba4afa7789d3d5ae1edb41da9))
+
 # [8.0.0](https://github.com/e-Spirit/fsxa-api/compare/v7.1.0...v8.0.0) (2022-02-08)
 
 
