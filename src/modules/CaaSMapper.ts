@@ -599,6 +599,7 @@ export class CaaSMapper {
    */
   async resolveAllReferences<Type extends {}>(data: Type): Promise<Type> {
     const remoteIds = Object.keys(this._remoteReferences)
+    this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
     await Promise.all([
       this.resolveReferencesPerProject(data),
@@ -637,6 +638,7 @@ export class CaaSMapper {
               },
             ],
             locale,
+            remoteProject: remoteProjectKey,
           })
         )
       )

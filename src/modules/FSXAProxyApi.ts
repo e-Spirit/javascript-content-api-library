@@ -54,12 +54,14 @@ export class FSXAProxyApi implements FSXAApi {
 
   /**
    * Creates a new instance with the connection to the FSXARemoteAPI
-   * @param baseURL specifies the URL to communicate with
+   * @param baseUrl specifies the URL to communicate with
    * @param logLevel specifies the restrictions of logs which will be displayed
    */
-  constructor(baseURL: string, logLevel = LogLevel.ERROR) {
-    this.baseUrl = baseURL
+  constructor(baseUrl: string, logLevel = LogLevel.ERROR) {
+    this.baseUrl = baseUrl
     this._logger = new Logger(logLevel, 'FSXAProxyApi')
+
+    this._logger.debug('FSXAProxyApi created', { baseUrl })
   }
 
   /**
