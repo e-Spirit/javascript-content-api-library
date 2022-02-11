@@ -209,6 +209,12 @@ export interface CaaSApi_FSIndex {
   value: CaaSApi_Record[]
 }
 
+export interface CaaSApi_SectionBaseInfo {
+  name: string
+  displayName: string
+  identifier: string
+}
+
 export interface CaaSApi_BaseRef {
   fsType: string
   name: string
@@ -217,6 +223,7 @@ export interface CaaSApi_BaseRef {
   uidType: string
   url: string
   remoteProject?: string
+  section?: CaaSApi_SectionBaseInfo
 }
 
 export interface CaaSApi_MediaRef extends CaaSApi_BaseRef {
@@ -456,6 +463,7 @@ export interface Reference {
   type: 'Reference'
   referenceId: string
   referenceType: string
+  section?: CaaSApi_SectionBaseInfo
 }
 
 export interface Option {
