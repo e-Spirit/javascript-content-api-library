@@ -846,7 +846,7 @@ export interface FSXAApi {
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
   ) => Promise<Record<string, any> | null>
-  enableEventStream?: boolean
+  enableEventStream: (enable?: boolean) => boolean
 }
 
 export interface FetchResponse {

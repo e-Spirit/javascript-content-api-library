@@ -158,7 +158,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     }
   )
 
-  if (api.enableEventStream) {
+  if (api.enableEventStream()) {
     router.get(
       [STREAM_CHANGE_EVENTS_ROUTE, FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE],
       async (req, res) => {
