@@ -78,17 +78,14 @@ export interface CaaSApi_CMSInputNumber {
   value: number
 }
 
-export interface CaaSApi_Link {
-  fsType: 'Link'
-  template: CaaSApi_Template
-  formData: CaaSApi_DataEntries
-  metaFormData: CaaSApi_DataEntries
-}
-
 export interface CaaSApi_CMSInputLink {
   fsType: 'CMS_INPUT_LINK'
   name: string
-  value: CaaSApi_Link
+  value: {
+    template: CaaSApi_Template
+    formData: CaaSApi_DataEntries
+    metaFormData: CaaSApi_DataEntries
+  }
 }
 
 export interface CaaSApi_CMSInputList {
@@ -272,7 +269,6 @@ export type CaaSApi_DataEntry =
   | CaaSApi_CMSInputRadioButton
   | CaaSApi_CMSInputDate
   | CaaSApi_Option
-  | CaaSApi_Link
 
 export interface CaaSApi_DataEntries {
   [key: string]: CaaSApi_DataEntry
