@@ -257,7 +257,7 @@ export class FSXARemoteApi implements FSXAApi {
     this._logger.info('fetchNavigation', 'start', {
       locale,
       initialPath,
-      authData,
+      authDataPassed: !!authData,
     })
     let encodedInitialPath = undefined
     if (initialPath) {

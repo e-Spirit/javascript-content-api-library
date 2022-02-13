@@ -1,3 +1,77 @@
+# [8.1.0](https://github.com/e-Spirit/fsxa-api/compare/v8.0.0...v8.1.0) (2022-02-11)
+
+
+### Features
+
+* **FS_Reference:** add optional section to reference types ([fbedc26](https://github.com/e-Spirit/fsxa-api/commit/fbedc26c4cbdc81ba4afa7789d3d5ae1edb41da9))
+
+# [8.0.0](https://github.com/e-Spirit/fsxa-api/compare/v7.1.0...v8.0.0) (2022-02-08)
+
+
+### Features
+
+* **apiSingleton:** create api singleton and add type parameter ([#78](https://github.com/e-Spirit/fsxa-api/issues/78)) ([2acc38e](https://github.com/e-Spirit/fsxa-api/commit/2acc38e1fb6a063752ef41c697378be688b769c8)), closes [#74](https://github.com/e-Spirit/fsxa-api/issues/74)
+
+
+### BREAKING CHANGES
+
+* **apiSingleton:** "type" attribute needs to be added if objects of changed public interfaces are created in user code.
+Following interfaces have changed:
+* PageBody
+* Page
+* Reference
+* Option
+* Link
+* Card
+* ImageMap
+* GCAPage
+* ProjectProperties
+* Section
+* Dataset
+* Image
+* File
+
+Example: "Option" interface contains a "type" parameter. If your code uses the interface, you need to add the parameter "type". 
+
+compliant:
+```typescript
+const anOption: Option = {
+  type: 'Option',
+  key: 'awesome',
+  value: 'example'
+}
+```
+
+non-compliant:
+```typescript
+const anOption: Option = {
+  key: 'true',
+  value: 'example'
+}
+```
+
+Also interfaces for `FSXAProxyApiConfig` and `CaaSApi_FSReference` have changed. If you are using them in your code, make sure to be compliant to the current implementation.
+Examples for compliant usages:
+
+compliant:
+```typescript
+const config: FSXAProxyApiConfig = {
+  clientUrl: '/someUrl',
+  serverUrl: 'localhost',
+  logLevel: LogLevel.0,
+  contentMode: FSXAContentMode.PREVIEW
+}
+```
+
+compliant:
+```typescript
+const reference: CaaSApi_FSReference = {
+  fsType: 'FS_REFERENCE',
+  name: 'some name',
+  value: null
+}
+```
+
 # [7.1.0](https://github.com/e-Spirit/fsxa-api/compare/v7.0.2...v7.1.0) (2022-02-04)
 
 

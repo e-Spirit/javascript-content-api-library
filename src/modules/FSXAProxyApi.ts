@@ -319,7 +319,14 @@ export class FSXAProxyApi implements FSXAApi {
     if (options?.body && typeof options.body === 'object') {
       options.body = JSON.stringify(options.body)
     }
-    this._logger.info('fetch', 'start', { url, options })
+    this._logger.info('fetch', 'start', {
+      baseUrl: this.baseUrl,
+      url,
+      options,
+      isServer: typeof process === 'undefined' ? undefined : (process as any)?.server,
+      isClient: typeof process === 'undefined' ? undefined : (process as any)?.client,
+      window: typeof window,
+    })
     return fetch(this.baseUrl + url, options as RequestInit)
   }
 }
