@@ -14,6 +14,7 @@ import {
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
 import { FetchResponse } from '..'
+import { locale } from 'faker'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -301,14 +302,8 @@ export class FSXAProxyApi implements FSXAApi {
    * @param remoteProject specifies the remote Project
    * @returns an EventSource
    */
-  connectEventStream({
-    additionalParams,
-    remoteProject,
-  }: ConnectEventStreamParams = {}): EventSource {
-    const url = new URL(this.baseUrl + FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE)
-    if (additionalParams) {
-      url.searchParams.set('additionalParams', JSON.stringify(additionalParams))
-    }
+  connectEventStream({ remoteProject }: ConnectEventStreamParams = {}): EventSource {
+    const url = new URL(this.baseUrl + FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE, location.origin)
     if (remoteProject) {
       url.searchParams.set('remoteProject', remoteProject)
     }

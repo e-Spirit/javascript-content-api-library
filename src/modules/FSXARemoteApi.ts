@@ -537,6 +537,11 @@ export class FSXARemoteApi implements FSXAApi {
     return response.items
   }
 
+  /**
+   * This method fetches a one-time secure token from the configured CaaS.
+   * This token is used to establish the WebSocket connection.
+   * @returns the secure token
+   */
   async fetchSecureToken(): Promise<string | null> {
     const url = `${this.caasURL}/_logic/securetoken?tenant=${this.tenantID}`
     this._logger.info('fetchSecureToken', url)

@@ -2,7 +2,6 @@ import { Channel, createChannel, createSession } from 'better-sse'
 import { FSXARemoteApi, Logger } from './'
 import ReconnectingWebSocket, { Options, ErrorEvent } from 'reconnecting-websocket'
 import WebSocket from 'ws'
-import { ConnectEventStreamParams, LogLevel } from '..'
 import { Request, Response } from 'express'
 
 type SocketUrl = () => Promise<string>
@@ -12,7 +11,7 @@ type SocketUrl = () => Promise<string>
  * any incoming events to any registered event-stream (session)
  */
 class CaaSEventStream {
-  logger: Logger
+  private logger: Logger
   createSocketUrl: SocketUrl
   channel: Channel
   socket: ReconnectingWebSocket
@@ -71,33 +70,29 @@ class CaaSEventStream {
 
 const streams: Record<string, CaaSEventStream> = {}
 
-export type CaaSEventStreamOptions = Options &
-  ConnectEventStreamParams & {
-    api: FSXARemoteApi
-    logger?: Logger
-    logLevel?: LogLevel
-  }
+export const eventStreamHandler = (api: FSXARemoteApi) => {
+  return async (req: Request, res: Response) => {
+    const logger = new Logger(api.logLevel, 'CaaSEventStream')
+    logger.info('requesting route: ', req.url, req.query)
 
-export const bindCaaSEventStream = (
-  req: Request,
-  res: Response,
-  options: CaaSEventStreamOptions
-) => {
-  const { api, remoteProject, additionalParams } = options
-  const caasUrl = api.buildCaaSUrl({ remoteProject, additionalParams }).split('?')[0]
-
-  // ensure to have only one socket connection per caasUrl
-  if (!(caasUrl in streams)) {
-    const logger = options.logger || new Logger(options.logLevel || api.logLevel, 'CaaSEventStream')
-    const createSocketUrl = async () => {
-      const token = await api.fetchSecureToken()
-      const socketUrl = `${caasUrl.replace(/^http/, 'ws')}/_streams/crud?securetoken=${token}`
-      logger.info('createSocketUrl', 'socketUrl', socketUrl)
-      return socketUrl
+    let remoteProject
+    if ('remoteProject' in req.query) {
+      remoteProject = `${req.query.remoteProject}`
     }
-    streams[caasUrl] = new CaaSEventStream(logger, createSocketUrl, options)
-  }
+    const caasUrl = api.buildCaaSUrl({ remoteProject }).split('?')[0]
 
-  // add this connection to a pool (channel) of listeners for the websocket events
-  streams[caasUrl].addSession(req, res)
+    // ensure to have only one socket connection per caasUrl
+    if (!(caasUrl in streams)) {
+      const createSocketUrl = async () => {
+        const token = await api.fetchSecureToken()
+        const socketUrl = `${caasUrl.replace(/^http/, 'ws')}/_streams/crud?securetoken=${token}`
+        logger.info('createSocketUrl', 'socketUrl', socketUrl)
+        return socketUrl
+      }
+      streams[caasUrl] = new CaaSEventStream(logger, createSocketUrl)
+    }
+
+    // add this connection to a pool (channel) of listeners for the websocket events
+    streams[caasUrl].addSession(req, res)
+  }
 }

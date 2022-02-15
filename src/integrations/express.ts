@@ -8,8 +8,8 @@ import {
   FetchNavigationRouteBody,
   FetchElementRouteBody,
 } from '../routes'
-import { FSXARemoteApi, Logger, bindCaaSEventStream } from './../modules'
-import { QueryBuilderQuery, ConnectEventStreamParams } from '../types'
+import { FSXARemoteApi, Logger, eventStreamHandler } from './../modules'
+import { QueryBuilderQuery } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 
 export interface GetExpressRouterContext {
@@ -161,29 +161,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   if (api.enableEventStream()) {
     router.get(
       [STREAM_CHANGE_EVENTS_ROUTE, FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE],
-      async (req, res) => {
-        logger.info('requesting route: ', STREAM_CHANGE_EVENTS_ROUTE, req.query)
-
-        const params: ConnectEventStreamParams = {}
-        if ('remoteProject' in req.query) {
-          params.remoteProject = `${req.query.remoteProject}`
-        }
-        if ('additionalParams' in req.query) {
-          try {
-            params.additionalParams = JSON.parse(`${req.query.additionalParams}`)
-          } catch (err) {
-            logger.warn(
-              STREAM_CHANGE_EVENTS_ROUTE,
-              `parsing error for additionalParams`,
-              req.query.additionalParams,
-              err
-            )
-          }
-        }
-
-        // as the nature of `text/event-stream` the connection is not closed and `req`/`res` will be managed by the module
-        bindCaaSEventStream(req, res, { api, ...params })
-      }
+      eventStreamHandler(api)
     )
   }
 

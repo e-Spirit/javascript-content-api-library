@@ -799,7 +799,6 @@ export type FetchProjectPropertiesParams = {
 }
 
 export type ConnectEventStreamParams = {
-  additionalParams?: Record<'keys' | string, any>
   remoteProject?: string
 }
 

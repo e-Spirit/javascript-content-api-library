@@ -18,10 +18,12 @@ export class FSXAApiSingleton {
         'The FSXA-Api has already been initialized - the api will NOT be initialized again! You can ignore this message in a development scenario.'
       )
     }
+    this._api = api
+
     if (typeof options.enableEventStream !== 'undefined') {
       this._api.enableEventStream(options.enableEventStream)
     }
-    this._api = api
+
     return this._api
   }
 
