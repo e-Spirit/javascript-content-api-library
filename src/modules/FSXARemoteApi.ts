@@ -56,6 +56,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _navigationFilter?: NavigationFilter
   private _preFilterFetch?: PreFilterFetch
   private _logLevel: LogLevel
+  private _enableEventStream: boolean = false
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -549,6 +550,38 @@ export class FSXARemoteApi implements FSXAApi {
     return response.items
   }
 
+  /**
+   * This method fetches a one-time secure token from the configured CaaS.
+   * This token is used to establish the WebSocket connection.
+   * @returns the secure token
+   */
+  async fetchSecureToken(): Promise<string | null> {
+    const url = `${this.caasURL}/_logic/securetoken?tenant=${this.tenantID}`
+    this._logger.info('fetchSecureToken', url)
+    const response = await fetch(url, {
+      headers: this.authorizationHeader,
+    })
+    if (!response.ok) {
+      if (response.status === 404) {
+        this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_FOUND)
+        throw new Error(FSXAApiErrors.NOT_FOUND)
+      } else if (response.status === 401) {
+        this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_AUTHORIZED)
+        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+      } else {
+        this._logger.error(
+          'fetchSecureToken',
+          FSXAApiErrors.UNKNOWN_ERROR,
+          `${response.status} - ${response.statusText}`,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+      }
+    }
+    const { securetoken = null } = await response.json()
+    return securetoken
+  }
+
   private buildStringifiedQueryParams(params: Record<'keys' | string, any>) {
     const result: Record<string, any> = {}
     Object.keys(params).forEach((key) => {
@@ -716,5 +749,14 @@ export class FSXARemoteApi implements FSXAApi {
    */
   public get logLevel(): LogLevel {
     return this._logLevel
+  }
+
+  /**
+   * Getter/Setter to enable the CaaS event stream
+   * @returns true, if a event stream should pipe events from CaaS change events websocket
+   */
+  enableEventStream(enable?: boolean) {
+    if (typeof enable !== 'undefined') this._enableEventStream = enable
+    return this._enableEventStream
   }
 }

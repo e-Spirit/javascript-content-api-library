@@ -3,11 +3,12 @@ import {
   FETCH_BY_FILTER_ROUTE,
   FETCH_NAVIGATION_ROUTE,
   FETCH_ELEMENT_ROUTE,
+  STREAM_CHANGE_EVENTS_ROUTE,
   FetchByFilterBody,
   FetchNavigationRouteBody,
   FetchElementRouteBody,
 } from '../routes'
-import { FSXARemoteApi, Logger } from './../modules'
+import { FSXARemoteApi, Logger, eventStreamHandler } from './../modules'
 import { QueryBuilderQuery } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 
@@ -156,6 +157,14 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
     }
   )
+
+  if (api.enableEventStream()) {
+    router.get(
+      [STREAM_CHANGE_EVENTS_ROUTE, FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE],
+      eventStreamHandler(api)
+    )
+  }
+
   router.all('*', (_, res) => {
     logger.info('trying to resolve all routes')
     return res.json({

@@ -657,6 +657,7 @@ export interface FSXAConfiguration {
   contentMode?: 'preview' | 'release'
   customMapper?: CustomMapper
   remotes?: Record<string, { id: string; locale: string }>
+  enableEventStream?: boolean
 }
 
 export interface ObjectMap<ValueType = any> {
@@ -797,6 +798,10 @@ export type FetchProjectPropertiesParams = {
   fetchOptions?: RequestInit
 }
 
+export type ConnectEventStreamParams = {
+  remoteProject?: string
+}
+
 export type NavigationFilter = <A = unknown, P = unknown>(
   route: NavigationItem,
   authData: A,
@@ -819,6 +824,7 @@ export type FSXARemoteApiConfig = {
   customMapper?: CustomMapper
   navigationFilter?: NavigationFilter
   preFilterFetch?: PreFilterFetch
+  enableEventStream?: boolean
 }
 
 export interface FSXAProxyApiConfig {
@@ -826,6 +832,7 @@ export interface FSXAProxyApiConfig {
   serverUrl: string
   logLevel: LogLevel
   contentMode: FSXAContentMode
+  enableEventStream?: boolean
 }
 
 export interface FSXAApi {
@@ -838,6 +845,7 @@ export interface FSXAApi {
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
   ) => Promise<Record<string, any> | null>
+  enableEventStream: (enable?: boolean) => boolean
 }
 
 export interface FetchResponse {
