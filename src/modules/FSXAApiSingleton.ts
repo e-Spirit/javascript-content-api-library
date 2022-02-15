@@ -23,9 +23,7 @@ export class FSXAApiSingleton {
       return this._api
     }
 
-    this._logger.warn(
-      'The FSXA-Api has already been initialized - the api will NOT be initialized again! You can ignore this message in a development scenario.'
-    )
+    this._logger.info('The FSXA-Api has already been initialized - the api will NOT be initialized again!')
 
     return this._api
   }
