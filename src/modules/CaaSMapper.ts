@@ -480,7 +480,7 @@ export class CaaSMapper {
     }
   }
 
-  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath): Promise<Image> {
+  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath = []): Promise<Image> {
     return {
       type: 'Image',
       id: item.identifier,
@@ -601,6 +601,7 @@ export class CaaSMapper {
    */
   async resolveAllReferences<Type extends {}>(data: Type): Promise<Type> {
     const remoteIds = Object.keys(this._remoteReferences)
+    this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
     await Promise.all([
       this.resolveReferencesPerProject(data),
@@ -639,6 +640,8 @@ export class CaaSMapper {
               },
             ],
             locale,
+            pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
+            remoteProject: remoteProjectId,
           })
         )
       )
