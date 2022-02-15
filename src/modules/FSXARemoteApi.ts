@@ -99,6 +99,19 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationFilter = navigationFilter
     this._preFilterFetch = preFilterFetch
+
+    this._logger.debug('FSXARemoteApi created', {
+      apikey,
+      caasURL,
+      navigationServiceURL,
+      tenantID,
+      projectID,
+      remotes,
+      contentMode,
+      customMapper,
+      navigationFilter,
+      preFilterFetch,
+    })
   }
 
   /**
