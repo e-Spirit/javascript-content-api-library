@@ -13,8 +13,7 @@ import {
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
-import { FetchResponse } from '..'
-import { locale } from 'faker'
+import { CaaSItem, FetchResponse } from '..'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -77,7 +76,7 @@ export class FSXAProxyApi implements FSXAApi {
    * @param fetchOptions specifies the options for the fetching process
    * @returns a JSON from the fetched element
    */
-  async fetchElement<T = Page | GCAPage | Dataset | Image | any | null>({
+  async fetchElement<T = CaaSItem | any | null>({
     id,
     locale,
     additionalParams = {},

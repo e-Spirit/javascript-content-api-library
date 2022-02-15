@@ -55,6 +55,7 @@ import {
   ImageMapAreaType,
   ImageMapResolution,
   CaaSAPI_PermissionGroup,
+  CaaSItem,
 } from '..'
 
 export enum CaaSMapperErrors {
@@ -592,7 +593,7 @@ export class CaaSMapper {
       | CaaSApi_GCAPage
       | CaaSApi_ProjectProperties
     )[]
-  ): Promise<(Page | GCAPage | Dataset | Image)[]> {
+  ): Promise<CaaSItem[]> {
     const mappedItems = (
       await Promise.all(
         items.map((item, index) => {
@@ -613,7 +614,7 @@ export class CaaSMapper {
           }
         })
       )
-    ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
+    ).filter(Boolean) as CaaSItem[]
     return this.resolveAllReferences(mappedItems)
   }
 

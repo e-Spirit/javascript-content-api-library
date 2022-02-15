@@ -1,12 +1,8 @@
 import { stringify } from 'qs'
-import { ArrayQueryOperatorEnum, CaaSMapper, Logger, LogicalQueryOperatorEnum } from '.'
-import { FetchResponse, ProjectProperties } from '..'
+import { CaaSMapper, Logger } from '.'
+import { CaaSItem, FetchResponse, ProjectProperties } from '..'
 import {
-  Dataset,
-  GCAPage,
   NavigationData,
-  Page,
-  Image,
   CustomMapper,
   QueryBuilderQuery,
   FetchNavigationParams,
@@ -336,7 +332,7 @@ export class FSXARemoteApi implements FSXAApi {
    * @param fetchOptions optional object to pass additional request options (Check {@link RequestInit RequestInit})
    * @returns {Promise<T>} a Promise with the mapped result
    */
-  async fetchElement<T = Page | GCAPage | Dataset | Image | any | null>({
+  async fetchElement<T = CaaSItem | any | null>({
     id,
     locale,
     additionalParams = {},

@@ -841,6 +841,8 @@ export type NavigationFilter = <A = unknown, P = unknown>(
 
 export type PreFilterFetch = <T = unknown>(authData?: unknown) => Promise<T>
 
+export type CaaSItem = Page | GCAPage | Dataset | Image
+
 export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
 
 export type FSXARemoteApiConfig = {
@@ -868,9 +870,7 @@ export interface FSXAProxyApiConfig {
 
 export interface FSXAApi {
   mode: 'proxy' | 'remote'
-  fetchElement: <T = Page | GCAPage | Dataset | Image | any | null>(
-    params: FetchElementParams
-  ) => Promise<T>
+  fetchElement: <T = CaaSItem | any | null>(params: FetchElementParams) => Promise<T>
   fetchByFilter: (params: FetchByFilterParams) => Promise<FetchResponse>
   fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
   fetchProjectProperties: (
