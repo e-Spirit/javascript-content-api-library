@@ -1,5 +1,6 @@
 import faker from 'faker'
-import { CaaSApi_FSReference } from '../types'
+import { CaaSApi_CMSInputPermission } from '..'
+import { CaaSApi_FSReference, CaaSAPI_PermissionActivity, CaaSAPI_PermissionGroup } from '../types'
 
 export function createDataEntry(id = faker.datatype.uuid()) {
   return {
@@ -31,5 +32,24 @@ export function createMediaPictureReference(
       url: `${id}-url`,
       remoteProject,
     },
+  }
+}
+
+export function mockPermissionActivity(
+  allowed: CaaSAPI_PermissionGroup[],
+  forbidden: CaaSAPI_PermissionGroup[]
+): CaaSAPI_PermissionActivity {
+  return {
+    activity: faker.random.word(),
+    allowed,
+    forbidden,
+  }
+}
+
+export const mockPermissionGroup = (): CaaSAPI_PermissionGroup => {
+  const groupId = faker.random.word()
+  return {
+    groupName: `${groupId}-name`,
+    groupPath: `/GroupsFile/${groupId}`,
   }
 }

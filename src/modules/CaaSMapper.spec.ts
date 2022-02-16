@@ -28,19 +28,25 @@ import {
   CustomMapper,
   RichTextElement,
   FetchByFilterParams,
+  Permission,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { createNumberEntry } from '../testutils/createNumberEntry'
 import { createPageRef } from '../testutils/createPageRef'
 import { createSection } from '../testutils/createSection'
-import { createDataEntry, createMediaPictureReference } from '../testutils/createDataEntry'
+import {
+  createDataEntry,
+  createMediaPictureReference,
+  mockPermissionActivity,
+  mockPermissionGroup,
+} from '../testutils/createDataEntry'
 import { createProjectProperties } from '../testutils/createProjectProperties'
 import { createGCAPage } from '../testutils/createGCAPage'
 import { createDataset } from '../testutils/createDataset'
 import { createMediaPicture } from '../testutils/createMediaPicture'
 import { createMediaFile } from '../testutils/createMediaFile'
 import { createImageMap } from '../testutils/createImageMap'
-import { Link, Option, Reference } from '..'
+import { CaaSApi_CMSInputPermission, CaaSAPI_PermissionGroup, Link, Option, Reference } from '..'
 import { createFetchResponse } from '../testutils/createFetchResponse'
 
 jest.mock('./FSXARemoteApi')
@@ -896,6 +902,66 @@ describe('CaaSMapper', () => {
         })
       })
     })
+
+    describe('CMS_INPUT_PERMISSION', () => {
+      it('should map each group in all acitivies', async () => {
+        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+        jest.spyOn(mapper, '_mapPermissionGroup')
+        const path = createPath()
+        const groups = [
+          mockPermissionGroup(),
+          mockPermissionGroup(),
+          mockPermissionGroup(),
+          mockPermissionGroup(),
+        ]
+        const entry: CaaSApi_CMSInputPermission = {
+          fsType: 'CMS_INPUT_PERMISSION',
+          name: faker.random.word(),
+          // adding 2 activies, each with 2 groups
+          value: [
+            mockPermissionActivity([groups[0]], [groups[1]]),
+            mockPermissionActivity([groups[2]], [groups[3]]),
+          ],
+        }
+        const result = (await mapper.mapDataEntry(entry, path)) as Permission
+        // no easy type checking here so we check groupId as it's unique to the mapped type
+        result.value.forEach((activity) => {
+          ;[...activity.allowed, ...activity.forbidden].forEach((group) =>
+            expect(group.groupId).toBeDefined()
+          )
+        })
+        // expecting 4 calls due to 4 total groups contained in permission entry
+        expect(mapper._mapPermissionGroup).toHaveBeenCalledTimes(4)
+        entry.value.forEach((activity, index) => {
+          expect(mapper._mapPermissionGroup).toHaveBeenNthCalledWith(
+            index + 1, // nth call
+            groups[index] // child entry
+          )
+        })
+      })
+    })
+  })
+
+  describe('_mapPermissionGroup', () => {
+    it('should add groupId attribute based on last element of groupPath', () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const group = {
+        groupName: 'mygroup-name',
+        groupPath: '/GroupsFile/mygroup',
+      } as CaaSAPI_PermissionGroup
+      const result = mapper._mapPermissionGroup(group)
+      expect(result.groupId).toBe('mygroup')
+    })
+    it('should reuse values of existing attributes', () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const group = {
+        groupName: 'mygroup-name',
+        groupPath: '/GroupsFile/mygroup',
+      } as CaaSAPI_PermissionGroup
+      const result = mapper._mapPermissionGroup(group)
+      expect(result.groupName).toBe('mygroup-name')
+      expect(result.groupPath).toBe('/GroupsFile/mygroup')
+    })
   })
 
   describe('mapDataEntries', () => {
@@ -1060,7 +1126,7 @@ describe('CaaSMapper', () => {
   })
 
   describe('mapDataset', () => {
-    it('should call mapDataEntries to map formData and metaFormData', async () => {
+    it('should call mapDataEntries to map formData', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
       const dataset = createDataset()
