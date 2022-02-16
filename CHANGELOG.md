@@ -5,6 +5,10 @@
 
 * **caas:** Expose CaaS changes (WS) via Server-sent events ([#61](https://github.com/e-Spirit/fsxa-api/issues/61)) ([1a384bf](https://github.com/e-Spirit/fsxa-api/commit/1a384bf84dc97b168334d7b8b730646c8f629c91))
 
+### Bug Fixes
+
+* **CaaSMapper:** Resolve remote references in CaaSMapper
+
 # [8.1.0](https://github.com/e-Spirit/fsxa-api/compare/v8.0.0...v8.1.0) (2022-02-11)
 
 
