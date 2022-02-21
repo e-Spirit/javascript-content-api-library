@@ -380,19 +380,19 @@ describe('FSXARemoteAPI', () => {
       locale = localeLanguage + '_' + localeCountry
       config = generateRandomConfig()
       remoteApi = new FSXARemoteApi(config)
-      ;(json = {
+      json = {
         _embedded: {
           'rh:doc': Faker.datatype.array(),
         },
-      }),
-        (emptyResponse = {
-          _embedded: {
-            'rh:doc': [],
-          },
-        }),
-        (brokenResponse = {
-          _embedded: {},
-        })
+      }
+      emptyResponse = {
+        _embedded: {
+          'rh:doc': [],
+        },
+      }
+      brokenResponse = {
+        _embedded: {},
+      }
     })
     it('should trigger the fetch method with the correct params', () => {
       fetchMock.mockResponseOnce(JSON.stringify(json))
