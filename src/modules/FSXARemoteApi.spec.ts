@@ -363,6 +363,8 @@ describe('FSXARemoteAPI', () => {
     let localeCountry: string
     let locale: string
     let json: Record<string, any>
+    let emptyResponse: Record<string, any>
+    let brokenResponse: Record<string, any>
     beforeEach(() => {
       filterValue = Faker.lorem.word()
       filterField = Faker.lorem.word()
@@ -378,11 +380,19 @@ describe('FSXARemoteAPI', () => {
       locale = localeLanguage + '_' + localeCountry
       config = generateRandomConfig()
       remoteApi = new FSXARemoteApi(config)
-      json = {
+      ;(json = {
         _embedded: {
           'rh:doc': Faker.datatype.array(),
         },
-      }
+      }),
+        (emptyResponse = {
+          _embedded: {
+            'rh:doc': [],
+          },
+        }),
+        (brokenResponse = {
+          _embedded: {},
+        })
     })
     it('should trigger the fetch method with the correct params', () => {
       fetchMock.mockResponseOnce(JSON.stringify(json))
@@ -411,6 +421,42 @@ describe('FSXARemoteAPI', () => {
         size: undefined,
         totalPages: undefined,
         items: json._embedded['rh:doc'],
+      })
+    })
+    it('should return the response', async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(json))
+      const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items: json._embedded['rh:doc'],
+      })
+    })
+    it('should return empty array on empty response', async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(emptyResponse))
+      const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items: [],
+      })
+    })
+    it('should return empty array on broken response', async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(brokenResponse))
+      const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items: [],
       })
     })
   })
