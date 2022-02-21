@@ -485,8 +485,9 @@ export class FSXARemoteApi implements FSXAApi {
       return data._embedded['rh:doc']
     }
 
+    // return empty array if no data was fetched
     if (!data._embedded || !data._embedded['rh:doc']) {
-      return data
+      return []
     }
 
     return mapper.mapFilterResponse(data._embedded['rh:doc'])
