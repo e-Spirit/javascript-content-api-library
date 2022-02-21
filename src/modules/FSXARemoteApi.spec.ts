@@ -363,8 +363,6 @@ describe('FSXARemoteAPI', () => {
     let localeCountry: string
     let locale: string
     let json: Record<string, any>
-    let emptyResponse: Record<string, any>
-    let brokenResponse: Record<string, any>
     beforeEach(() => {
       filterValue = Faker.lorem.word()
       filterField = Faker.lorem.word()
@@ -384,14 +382,6 @@ describe('FSXARemoteAPI', () => {
         _embedded: {
           'rh:doc': Faker.datatype.array(),
         },
-      }
-      emptyResponse = {
-        _embedded: {
-          'rh:doc': [],
-        },
-      }
-      brokenResponse = {
-        _embedded: {},
       }
     })
     it('should trigger the fetch method with the correct params', () => {
@@ -424,6 +414,9 @@ describe('FSXARemoteAPI', () => {
       })
     })
     it('should return empty array on empty response', async () => {
+      // CaaS API omits _embedded attribute in response for empty collections or
+      // queries that don't match any documents.
+      const emptyResponse = {}
       fetchMock.mockResponseOnce(JSON.stringify(emptyResponse))
       const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
       expect(actualRequest).toBeDefined()
@@ -436,6 +429,7 @@ describe('FSXARemoteAPI', () => {
       })
     })
     it('should return empty array on broken response', async () => {
+      const brokenResponse = { _embedded: {} }
       fetchMock.mockResponseOnce(JSON.stringify(brokenResponse))
       const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
       expect(actualRequest).toBeDefined()
