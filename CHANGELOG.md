@@ -1,3 +1,10 @@
+## [8.2.1](https://github.com/e-Spirit/fsxa-api/compare/v8.2.0...v8.2.1) (2022-02-21)
+
+
+### Bug Fixes
+
+* **fetchbyfilter:** fix return value on empty response ([#85](https://github.com/e-Spirit/fsxa-api/issues/85)) ([3ea579b](https://github.com/e-Spirit/fsxa-api/commit/3ea579b7401a1b2c161fa98bcea2c1d310e95efd))
+
 # [8.2.0](https://github.com/e-Spirit/fsxa-api/compare/v8.1.0...v8.2.0) (2022-02-15)
 
 
