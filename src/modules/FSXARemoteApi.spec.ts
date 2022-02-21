@@ -423,18 +423,6 @@ describe('FSXARemoteAPI', () => {
         items: json._embedded['rh:doc'],
       })
     })
-    it('should return the response', async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(json))
-      const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
-      expect(actualRequest).toBeDefined()
-      expect(actualRequest).toStrictEqual({
-        page: 1,
-        pagesize: 30,
-        size: undefined,
-        totalPages: undefined,
-        items: json._embedded['rh:doc'],
-      })
-    })
     it('should return empty array on empty response', async () => {
       fetchMock.mockResponseOnce(JSON.stringify(emptyResponse))
       const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
