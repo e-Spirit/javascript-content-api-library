@@ -405,19 +405,19 @@ export class CaaSMapper {
       case ImageMapAreaType.RECT:
         return {
           ...base,
-          leftTop: (base as CaaSApi_ImageMapAreaRect).leftTop,
-          rightBottom: (base as CaaSApi_ImageMapAreaRect).rightBottom,
+          leftTop: (area as CaaSApi_ImageMapAreaRect).leftTop,
+          rightBottom: (area as CaaSApi_ImageMapAreaRect).rightBottom,
         } as ImageMapAreaRect
       case ImageMapAreaType.CIRCLE:
         return {
           ...base,
-          center: (base as CaaSApi_ImageMapAreaCircle).center,
-          radius: (base as CaaSApi_ImageMapAreaCircle).radius,
+          center: (area as CaaSApi_ImageMapAreaCircle).center,
+          radius: (area as CaaSApi_ImageMapAreaCircle).radius,
         } as ImageMapAreaCircle
       case ImageMapAreaType.POLY:
         return {
           ...base,
-          points: (base as CaaSApi_ImageMapAreaPoly).points,
+          points: (area as CaaSApi_ImageMapAreaPoly).points,
         } as ImageMapAreaPoly
       default:
         return null
