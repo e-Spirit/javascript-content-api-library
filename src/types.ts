@@ -249,6 +249,36 @@ export interface CaaSApi_FSReference {
   value: CaaSApi_BaseRef | CaaSApi_PageRefRef | CaaSApi_GCARef | CaaSApi_MediaRef | null
 }
 
+export interface CaaSAPI_PermissionGroup {
+  groupName: string
+  groupPath: string
+}
+
+export interface CaaSAPI_PermissionActivity {
+  activity: string
+  allowed: CaaSAPI_PermissionGroup[]
+  forbidden: CaaSAPI_PermissionGroup[]
+}
+
+export interface CaaSApi_CMSInputPermission {
+  fsType: 'CMS_INPUT_PERMISSION'
+  name: string
+  value: CaaSAPI_PermissionActivity[]
+}
+
+export interface PermissionGroup extends CaaSAPI_PermissionGroup {
+  groupId: string
+}
+
+export interface PermissionActivity extends CaaSAPI_PermissionActivity {
+  allowed: PermissionGroup[]
+  forbidden: PermissionGroup[]
+}
+
+export interface Permission extends CaaSApi_CMSInputPermission {
+  value: PermissionActivity[]
+}
+
 export type CaaSApi_DataEntry =
   | CaaSApi_CMSInputCheckbox
   | CaaSApi_CMSInputCombobox
@@ -269,6 +299,7 @@ export type CaaSApi_DataEntry =
   | CaaSApi_CMSInputRadioButton
   | CaaSApi_CMSInputDate
   | CaaSApi_Option
+  | CaaSApi_CMSInputPermission
 
 export interface CaaSApi_DataEntries {
   [key: string]: CaaSApi_DataEntry
