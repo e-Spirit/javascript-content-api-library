@@ -1,3 +1,10 @@
+# [8.3.0](https://github.com/e-Spirit/fsxa-api/compare/v8.2.1...v8.3.0) (2022-02-25)
+
+
+### Features
+
+* **caasmapper:** enrich permission entries with group id attribute ([#84](https://github.com/e-Spirit/fsxa-api/issues/84)) ([575422f](https://github.com/e-Spirit/fsxa-api/commit/575422fff951a0ef7044782964ea6a5761756efb))
+
 ## [8.2.1](https://github.com/e-Spirit/fsxa-api/compare/v8.2.0...v8.2.1) (2022-02-21)
 
 
