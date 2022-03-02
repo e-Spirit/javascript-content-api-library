@@ -1,6 +1,6 @@
 import { stringify } from 'qs'
-import { CaaSMapper, Logger } from '.'
-import { FetchResponse } from '..'
+import { ArrayQueryOperatorEnum, CaaSMapper, Logger, LogicalQueryOperatorEnum } from '.'
+import { FetchResponse, ProjectProperties } from '..'
 import {
   Dataset,
   GCAPage,
@@ -521,34 +521,48 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       additionalParams,
     })
-    const page = (response.items[0] as Page)?.data
-    if (!page) {
+
+    const projectProperties = response.items[0] as ProjectProperties
+    const projectPropertiesData = projectProperties?.data
+    if (!projectPropertiesData) {
       this._logger.info(
         `[fetchProjectProperties] Could not find response data. Project properties might not be defined.`
       )
       return
     }
 
-    const fetchedItem = Object.keys(page)
-      .filter((key) => resolve.includes(page[key]?.referenceType))
-      .map((key) => {
-        const { referenceId } = page[key]
-        return this.fetchElement({ id: referenceId, locale })
-      })
+    // We need to match keys from projectSettings to ElementIds later to insert them directly
+    const idToKeyMap: Record<string, string> = {}
 
-    const resolvedPromises = (await Promise.all(fetchedItem)).flat()
-    resolvedPromises.forEach((item) => {
-      const { data } = item as any
-      page[item.id] = data
+    const objectKeysToResolve = Object.keys(projectPropertiesData).filter((key) =>
+      resolve.includes(projectPropertiesData[key]?.referenceType)
+    )
+
+    const idsToFetch = objectKeysToResolve.map((key) => {
+      idToKeyMap[projectPropertiesData[key].referenceId] = key
+      return projectPropertiesData[key].referenceId
     })
 
-    for (const key in page) {
-      if (resolve.includes(page[key]?.referenceType)) {
-        const filteredResponse = await this.fetchElement({ id: page[key].referenceId, locale })
-        page[key] = filteredResponse.data
-      }
+    if (idsToFetch.length > 100) {
+      this._logger.warn(
+        'ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
+      )
     }
-    return response.items
+    const { items: fetchedElements } = await this.fetchByFilter({
+      locale: locale,
+      filters: [
+        { field: 'identifier', operator: ComparisonQueryOperatorEnum.IN, value: idsToFetch },
+      ],
+      pagesize: 100,
+    })
+
+    //Insert fetched Data into projectProperties
+    fetchedElements.forEach((element) => {
+      projectPropertiesData[idToKeyMap[(element as any).id]] = (element as any).data
+    })
+
+    // TODO: remove this Array Wrapping --> Breaking Change
+    return [projectProperties]
   }
 
   /**
