@@ -1,3 +1,10 @@
+## [8.3.1](https://github.com/e-Spirit/fsxa-api/compare/v8.3.0...v8.3.1) (2022-03-02)
+
+
+### Bug Fixes
+
+* **fetchprojectproperties:** reduce mutliple sequential CaaS calls to a single call ([#88](https://github.com/e-Spirit/fsxa-api/issues/88)) ([fce32bb](https://github.com/e-Spirit/fsxa-api/commit/fce32bb9dd10c404f34a68d67a560ab14eef8a09))
+
 # [8.3.0](https://github.com/e-Spirit/fsxa-api/compare/v8.2.1...v8.3.0) (2022-02-25)
 
 
