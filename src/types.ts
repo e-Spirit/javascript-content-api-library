@@ -843,6 +843,8 @@ export type PreFilterFetch = <T = unknown>(authData?: unknown) => Promise<T>
 
 export type CaaSItem = Page | GCAPage | Dataset | Image
 
+export type CustomFilter<T = unknown> = (items: T[]) => T[]
+
 export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
 
 export type FSXARemoteApiConfig = {
@@ -857,6 +859,7 @@ export type FSXARemoteApiConfig = {
   customMapper?: CustomMapper
   navigationFilter?: NavigationFilter
   preFilterFetch?: PreFilterFetch
+  customFilter?: CustomFilter
   enableEventStream?: boolean
 }
 

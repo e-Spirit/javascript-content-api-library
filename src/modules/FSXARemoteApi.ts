@@ -1,6 +1,6 @@
 import { stringify } from 'qs'
 import { CaaSMapper, Logger } from '.'
-import { CaaSItem, FetchResponse, ProjectProperties } from '..'
+import { CaaSItem, CustomFilter, ProjectProperties, FetchResponse } from '..'
 import {
   NavigationData,
   CustomMapper,
@@ -53,6 +53,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _preFilterFetch?: PreFilterFetch
   private _logLevel: LogLevel
   private _enableEventStream: boolean = false
+  private _customFilter?: CustomFilter
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -80,6 +81,7 @@ export class FSXARemoteApi implements FSXAApi {
     customMapper,
     navigationFilter,
     preFilterFetch,
+    customFilter,
     logLevel = LogLevel.ERROR,
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
@@ -95,6 +97,7 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationFilter = navigationFilter
     this._preFilterFetch = preFilterFetch
+    this._customFilter = customFilter
 
     this._logger.debug('FSXARemoteApi created', {
       apikey,
@@ -357,9 +360,15 @@ export class FSXARemoteApi implements FSXAApi {
       }
     }
     const responseJSON = await response.json()
+
+    // apply customFilter
+    const filteredResponse = this._customFilter
+      ? this._customFilter([responseJSON])[0]
+      : responseJSON
+
     if (additionalParams.keys) {
       // If additionalParams are provided we cannot map the response since we do not know which keys are provided
-      return responseJSON
+      return filteredResponse
     }
     const mapper = new CaaSMapper(
       this as any,
@@ -367,7 +376,8 @@ export class FSXARemoteApi implements FSXAApi {
       { customMapper: this._customMapper },
       new Logger(this._logLevel, 'CaaSMapper')
     )
-    return mapper.mapElementResponse(responseJSON)
+
+    return mapper.mapElementResponse(filteredResponse)
   }
 
   /**
@@ -449,6 +459,7 @@ export class FSXARemoteApi implements FSXAApi {
           throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
+
     const mapper = new CaaSMapper(
       this as FSXARemoteApi,
       locale,
@@ -459,14 +470,17 @@ export class FSXARemoteApi implements FSXAApi {
     )
     const data = await response.json()
 
-    const items = await this.getItemsData(data, additionalParams, mapper)
+    let items = await this.getItemsData(data, additionalParams, mapper)
+
+    // apply customFilter
+    const filteredItems = this._customFilter ? this._customFilter(items) : items
 
     return {
       page,
       pagesize,
       totalPages: data['_total_pages'],
       size: data['_size'],
-      items,
+      items: filteredItems,
     }
   }
 
