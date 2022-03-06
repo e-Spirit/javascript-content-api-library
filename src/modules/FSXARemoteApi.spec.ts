@@ -413,6 +413,34 @@ describe('FSXARemoteAPI', () => {
         items: json._embedded['rh:doc'],
       })
     })
+    it('should return empty array on empty response', async () => {
+      // CaaS API omits _embedded attribute in response for empty collections or
+      // queries that don't match any documents.
+      const emptyResponse = {}
+      fetchMock.mockResponseOnce(JSON.stringify(emptyResponse))
+      const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items: [],
+      })
+    })
+    it('should return empty array on broken response', async () => {
+      const brokenResponse = { _embedded: {} }
+      fetchMock.mockResponseOnce(JSON.stringify(brokenResponse))
+      const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items: [],
+      })
+    })
   })
   describe('fetchNavigation', () => {
     let remoteApi: FSXARemoteApi

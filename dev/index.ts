@@ -17,6 +17,7 @@ const {
   API_PROJECT_ID,
   API_TENANT_ID,
   API_REMOTES,
+  API_ENABLE_EVENT_STREAM,
 } = process.env
 const remoteApi = new FSXARemoteApi({
   apikey: API_API_KEY!,
@@ -27,6 +28,7 @@ const remoteApi = new FSXARemoteApi({
   tenantID: API_TENANT_ID!,
   remotes: JSON.parse(API_REMOTES || '{}'),
   logLevel: LogLevel.INFO,
+  enableEventStream: !!API_ENABLE_EVENT_STREAM,
 })
 
 app.use(cors())
@@ -36,14 +38,25 @@ app.listen(3002, async () => {
   console.log('Listening at http://localhost:3002')
   try {
     const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
-    const response = await proxyAPI.fetchNavigation({
+    /*const response = await proxyAPI.fetchNavigation({
       locale: 'de_DE',
       initialPath: '/',
     })
 
     createFile({
-      dirName: 'dev/dist/proxy',
+      dirName: 'dev/dist',
       fileName: 'navigation.json',
+      content: response,
+    })*/
+
+    const response = await proxyAPI.fetchElement({
+      id: '6eeb4e54-6cc4-46f8-b895-637a6dea7796',
+      locale: 'en_GB'
+    })
+
+    createFile({
+      dirName: 'dev/dist',
+      fileName: 'content.json',
       content: response,
     })
   } catch (e) {

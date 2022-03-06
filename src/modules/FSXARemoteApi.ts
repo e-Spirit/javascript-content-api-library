@@ -1,6 +1,6 @@
 import { stringify } from 'qs'
-import { CaaSMapper, Logger } from '.'
-import { FetchResponse } from '..'
+import { ArrayQueryOperatorEnum, CaaSMapper, Logger, LogicalQueryOperatorEnum } from '.'
+import { FetchResponse, ProjectProperties } from '..'
 import {
   Dataset,
   GCAPage,
@@ -56,6 +56,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _navigationFilter?: NavigationFilter
   private _preFilterFetch?: PreFilterFetch
   private _logLevel: LogLevel
+  private _enableEventStream: boolean = false
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -98,6 +99,19 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationFilter = navigationFilter
     this._preFilterFetch = preFilterFetch
+
+    this._logger.debug('FSXARemoteApi created', {
+      apikey,
+      caasURL,
+      navigationServiceURL,
+      tenantID,
+      projectID,
+      remotes,
+      contentMode,
+      customMapper,
+      navigationFilter,
+      preFilterFetch,
+    })
   }
 
   /**
@@ -471,8 +485,9 @@ export class FSXARemoteApi implements FSXAApi {
       return data._embedded['rh:doc']
     }
 
+    // return empty array if no data was fetched
     if (!data._embedded || !data._embedded['rh:doc']) {
-      return data
+      return []
     }
 
     return mapper.mapFilterResponse(data._embedded['rh:doc'])
@@ -506,34 +521,80 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       additionalParams,
     })
-    const page = (response.items[0] as Page)?.data
-    if (!page) {
+
+    const projectProperties = response.items[0] as ProjectProperties
+    const projectPropertiesData = projectProperties?.data
+    if (!projectPropertiesData) {
       this._logger.info(
         `[fetchProjectProperties] Could not find response data. Project properties might not be defined.`
       )
       return
     }
 
-    const fetchedItem = Object.keys(page)
-      .filter((key) => resolve.includes(page[key]?.referenceType))
-      .map((key) => {
-        const { referenceId } = page[key]
-        return this.fetchElement({ id: referenceId, locale })
-      })
+    // We need to match keys from projectSettings to ElementIds later to insert them directly
+    const idToKeyMap: Record<string, string> = {}
 
-    const resolvedPromises = (await Promise.all(fetchedItem)).flat()
-    resolvedPromises.forEach((item) => {
-      const { data } = item as any
-      page[item.id] = data
+    const objectKeysToResolve = Object.keys(projectPropertiesData).filter((key) =>
+      resolve.includes(projectPropertiesData[key]?.referenceType)
+    )
+
+    const idsToFetch = objectKeysToResolve.map((key) => {
+      idToKeyMap[projectPropertiesData[key].referenceId] = key
+      return projectPropertiesData[key].referenceId
     })
 
-    for (const key in page) {
-      if (resolve.includes(page[key]?.referenceType)) {
-        const filteredResponse = await this.fetchElement({ id: page[key].referenceId, locale })
-        page[key] = filteredResponse.data
+    if (idsToFetch.length > 100) {
+      this._logger.warn(
+        'ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
+      )
+    }
+    const { items: fetchedElements } = await this.fetchByFilter({
+      locale: locale,
+      filters: [
+        { field: 'identifier', operator: ComparisonQueryOperatorEnum.IN, value: idsToFetch },
+      ],
+      pagesize: 100,
+    })
+
+    //Insert fetched Data into projectProperties
+    fetchedElements.forEach((element) => {
+      projectPropertiesData[idToKeyMap[(element as any).id]] = (element as any).data
+    })
+
+    // TODO: remove this Array Wrapping --> Breaking Change
+    return [projectProperties]
+  }
+
+  /**
+   * This method fetches a one-time secure token from the configured CaaS.
+   * This token is used to establish the WebSocket connection.
+   * @returns the secure token
+   */
+  async fetchSecureToken(): Promise<string | null> {
+    const url = `${this.caasURL}/_logic/securetoken?tenant=${this.tenantID}`
+    this._logger.info('fetchSecureToken', url)
+    const response = await fetch(url, {
+      headers: this.authorizationHeader,
+    })
+    if (!response.ok) {
+      if (response.status === 404) {
+        this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_FOUND)
+        throw new Error(FSXAApiErrors.NOT_FOUND)
+      } else if (response.status === 401) {
+        this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_AUTHORIZED)
+        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+      } else {
+        this._logger.error(
+          'fetchSecureToken',
+          FSXAApiErrors.UNKNOWN_ERROR,
+          `${response.status} - ${response.statusText}`,
+          await response.text()
+        )
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
-    return response.items
+    const { securetoken = null } = await response.json()
+    return securetoken
   }
 
   private buildStringifiedQueryParams(params: Record<'keys' | string, any>) {
@@ -703,5 +764,14 @@ export class FSXARemoteApi implements FSXAApi {
    */
   public get logLevel(): LogLevel {
     return this._logLevel
+  }
+
+  /**
+   * Getter/Setter to enable the CaaS event stream
+   * @returns true, if a event stream should pipe events from CaaS change events websocket
+   */
+  enableEventStream(enable?: boolean) {
+    if (typeof enable !== 'undefined') this._enableEventStream = enable
+    return this._enableEventStream
   }
 }

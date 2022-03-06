@@ -27,19 +27,27 @@ import {
   CaaSApiMediaPictureResolutions,
   CustomMapper,
   RichTextElement,
+  FetchByFilterParams,
+  Permission,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { createNumberEntry } from '../testutils/createNumberEntry'
 import { createPageRef } from '../testutils/createPageRef'
 import { createSection } from '../testutils/createSection'
-import { createDataEntry } from '../testutils/createDataEntry'
+import {
+  createDataEntry,
+  createMediaPictureReference,
+  mockPermissionActivity,
+  mockPermissionGroup,
+} from '../testutils/createDataEntry'
 import { createProjectProperties } from '../testutils/createProjectProperties'
 import { createGCAPage } from '../testutils/createGCAPage'
 import { createDataset } from '../testutils/createDataset'
 import { createMediaPicture } from '../testutils/createMediaPicture'
 import { createMediaFile } from '../testutils/createMediaFile'
 import { createImageMap } from '../testutils/createImageMap'
-import { Link, Option, Reference } from '..'
+import { CaaSApi_CMSInputPermission, CaaSAPI_PermissionGroup, Link, Option, Reference } from '..'
+import { createFetchResponse } from '../testutils/createFetchResponse'
 
 jest.mock('./FSXARemoteApi')
 jest.mock('date-fns')
@@ -894,6 +902,66 @@ describe('CaaSMapper', () => {
         })
       })
     })
+
+    describe('CMS_INPUT_PERMISSION', () => {
+      it('should map each group in all acitivies', async () => {
+        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+        jest.spyOn(mapper, '_mapPermissionGroup')
+        const path = createPath()
+        const groups = [
+          mockPermissionGroup(),
+          mockPermissionGroup(),
+          mockPermissionGroup(),
+          mockPermissionGroup(),
+        ]
+        const entry: CaaSApi_CMSInputPermission = {
+          fsType: 'CMS_INPUT_PERMISSION',
+          name: faker.random.word(),
+          // adding 2 activies, each with 2 groups
+          value: [
+            mockPermissionActivity([groups[0]], [groups[1]]),
+            mockPermissionActivity([groups[2]], [groups[3]]),
+          ],
+        }
+        const result = (await mapper.mapDataEntry(entry, path)) as Permission
+        // no easy type checking here so we check groupId as it's unique to the mapped type
+        result.value.forEach((activity) => {
+          ;[...activity.allowed, ...activity.forbidden].forEach((group) =>
+            expect(group.groupId).toBeDefined()
+          )
+        })
+        // expecting 4 calls due to 4 total groups contained in permission entry
+        expect(mapper._mapPermissionGroup).toHaveBeenCalledTimes(4)
+        entry.value.forEach((activity, index) => {
+          expect(mapper._mapPermissionGroup).toHaveBeenNthCalledWith(
+            index + 1, // nth call
+            groups[index] // child entry
+          )
+        })
+      })
+    })
+  })
+
+  describe('_mapPermissionGroup', () => {
+    it('should add groupId attribute based on last element of groupPath', () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const group = {
+        groupName: 'mygroup-name',
+        groupPath: '/GroupsFile/mygroup',
+      } as CaaSAPI_PermissionGroup
+      const result = mapper._mapPermissionGroup(group)
+      expect(result.groupId).toBe('mygroup')
+    })
+    it('should reuse values of existing attributes', () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const group = {
+        groupName: 'mygroup-name',
+        groupPath: '/GroupsFile/mygroup',
+      } as CaaSAPI_PermissionGroup
+      const result = mapper._mapPermissionGroup(group)
+      expect(result.groupName).toBe('mygroup-name')
+      expect(result.groupPath).toBe('/GroupsFile/mygroup')
+    })
   })
 
   describe('mapDataEntries', () => {
@@ -1058,7 +1126,7 @@ describe('CaaSMapper', () => {
   })
 
   describe('mapDataset', () => {
-    it('should call mapDataEntries to map formData and metaFormData', async () => {
+    it('should call mapDataEntries to map formData', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
       const dataset = createDataset()
@@ -1262,6 +1330,51 @@ describe('CaaSMapper', () => {
       const data = {}
       await mapper.resolveReferencesPerProject(data)
       expect(api.fetchByFilter).toHaveBeenCalled()
+    })
+    it('should resolve remote media references', async () => {
+      const api = createApi()
+      api.remotes = { 'remote-id1': { id: 'remote-id1', locale: 'de' } }
+      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const mediaPictures = await Promise.all([
+        mapper.mapMediaPicture(createMediaPicture('id1')),
+        mapper.mapMediaPicture(createMediaPicture('id2')),
+        mapper.mapMediaPicture(createMediaPicture('id3')),
+      ])
+      api.fetchByFilter = jest
+        .fn()
+        .mockImplementation(
+          async ({
+            filters,
+            locale,
+            page,
+            pagesize,
+            additionalParams,
+            remoteProject,
+            fetchOptions,
+          }: FetchByFilterParams) => {
+            // Unfortunately jest doesn't support mocking a func call with specific parmaters
+            if (remoteProject !== 'remote-id1') return createFetchResponse([])
+            if (locale !== 'de') return createFetchResponse([])
+            return createFetchResponse(mediaPictures)
+          }
+        )
+      const pageRef = createPageRef()
+      pageRef.page.formData = {
+        media1: createMediaPictureReference('id1', 'remote-id1'),
+        media2: createMediaPictureReference('id2', 'remote-id1'),
+        media3: createMediaPictureReference('id3', 'remote-id1'),
+      }
+      // Mapping also implicitly registers referenced items in mapper instance
+      const page = await mapper.mapPageRef(pageRef)
+
+      const result = await mapper.resolveReferencesPerProject(page, 'remote-id1')
+
+      expect(result.data).toBeDefined()
+      expect(result.data).toStrictEqual({
+        media1: mediaPictures[0],
+        media2: mediaPictures[1],
+        media3: mediaPictures[2],
+      })
     })
   })
 })

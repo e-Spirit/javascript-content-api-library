@@ -1,3 +1,35 @@
+## [8.3.1](https://github.com/e-Spirit/fsxa-api/compare/v8.3.0...v8.3.1) (2022-03-02)
+
+
+### Bug Fixes
+
+* **fetchprojectproperties:** reduce mutliple sequential CaaS calls to a single call ([#88](https://github.com/e-Spirit/fsxa-api/issues/88)) ([fce32bb](https://github.com/e-Spirit/fsxa-api/commit/fce32bb9dd10c404f34a68d67a560ab14eef8a09))
+
+# [8.3.0](https://github.com/e-Spirit/fsxa-api/compare/v8.2.1...v8.3.0) (2022-02-25)
+
+
+### Features
+
+* **caasmapper:** enrich permission entries with group id attribute ([#84](https://github.com/e-Spirit/fsxa-api/issues/84)) ([575422f](https://github.com/e-Spirit/fsxa-api/commit/575422fff951a0ef7044782964ea6a5761756efb))
+
+## [8.2.1](https://github.com/e-Spirit/fsxa-api/compare/v8.2.0...v8.2.1) (2022-02-21)
+
+
+### Bug Fixes
+
+* **fetchbyfilter:** fix return value on empty response ([#85](https://github.com/e-Spirit/fsxa-api/issues/85)) ([3ea579b](https://github.com/e-Spirit/fsxa-api/commit/3ea579b7401a1b2c161fa98bcea2c1d310e95efd))
+
+# [8.2.0](https://github.com/e-Spirit/fsxa-api/compare/v8.1.0...v8.2.0) (2022-02-15)
+
+
+### Features
+
+* **caas:** Expose CaaS changes (WS) via Server-sent events ([#61](https://github.com/e-Spirit/fsxa-api/issues/61)) ([1a384bf](https://github.com/e-Spirit/fsxa-api/commit/1a384bf84dc97b168334d7b8b730646c8f629c91))
+
+### Bug Fixes
+
+* **CaaSMapper:** Resolve remote references in CaaSMapper
+
 # [8.1.0](https://github.com/e-Spirit/fsxa-api/compare/v8.0.0...v8.1.0) (2022-02-11)
 
 

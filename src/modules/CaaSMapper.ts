@@ -37,6 +37,9 @@ import {
   PageBodyContent,
   ProjectProperties,
   Section,
+  Permission,
+  PermissionActivity,
+  PermissionGroup,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, set } from 'lodash'
@@ -51,6 +54,7 @@ import {
   RichTextElement,
   ImageMapAreaType,
   ImageMapResolution,
+  CaaSAPI_PermissionGroup,
 } from '..'
 
 export enum CaaSMapperErrors {
@@ -277,6 +281,18 @@ export class CaaSMapper {
           value: entry.label,
         }
         return option
+      case 'CMS_INPUT_PERMISSION':
+        const permission: Permission = {
+          fsType: entry.fsType,
+          name: entry.name,
+          value: entry.value.map((activity) => {
+            return {
+              allowed: activity.allowed.map((group) => this._mapPermissionGroup(group)),
+              forbidden: activity.forbidden.map((group) => this._mapPermissionGroup(group)),
+            } as PermissionActivity
+          }),
+        }
+        return permission
       default:
         return entry
     }
@@ -309,6 +325,14 @@ export class CaaSMapper {
       })
     )
     return richTextElements
+  }
+
+  _mapPermissionGroup(group: CaaSAPI_PermissionGroup): PermissionGroup {
+    return {
+      groupId: group.groupPath.split('/').pop(),
+      groupName: group.groupName,
+      groupPath: group.groupPath,
+    } as PermissionGroup
   }
 
   async mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): Promise<DataEntries> {
@@ -509,7 +533,7 @@ export class CaaSMapper {
     }
   }
 
-  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath): Promise<Image> {
+  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath = []): Promise<Image> {
     return {
       type: 'Image',
       id: item.identifier,
@@ -630,6 +654,7 @@ export class CaaSMapper {
    */
   async resolveAllReferences<Type extends {}>(data: Type): Promise<Type> {
     const remoteIds = Object.keys(this._remoteReferences)
+    this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
     await Promise.all([
       this.resolveReferencesPerProject(data),
@@ -668,6 +693,8 @@ export class CaaSMapper {
               },
             ],
             locale,
+            pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
+            remoteProject: remoteProjectId,
           })
         )
       )

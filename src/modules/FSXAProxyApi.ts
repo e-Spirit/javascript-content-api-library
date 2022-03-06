@@ -9,10 +9,12 @@ import {
   FetchProjectPropertiesParams,
   FetchElementParams,
   FSXAApi,
+  ConnectEventStreamParams,
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
 import { FetchResponse } from '..'
+import { locale } from 'faker'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -32,6 +34,7 @@ export class FSXAProxyApi implements FSXAApi {
     'Content-Type': 'application/json',
   }
   private _logger: Logger
+  private _enableEventStream: boolean = false
 
   /**
    * This method requests the current state of baseUrl
@@ -54,12 +57,15 @@ export class FSXAProxyApi implements FSXAApi {
 
   /**
    * Creates a new instance with the connection to the FSXARemoteAPI
-   * @param baseURL specifies the URL to communicate with
+   * @param baseUrl specifies the URL to communicate with
    * @param logLevel specifies the restrictions of logs which will be displayed
+   * @param enableEventStream enables the CaaS event stream
    */
-  constructor(baseURL: string, logLevel = LogLevel.ERROR) {
-    this.baseUrl = baseURL
+  constructor(baseUrl: string, logLevel = LogLevel.ERROR) {
+    this.baseUrl = baseUrl
     this._logger = new Logger(logLevel, 'FSXAProxyApi')
+
+    this._logger.debug('FSXAProxyApi created', { baseUrl })
   }
 
   /**
@@ -281,6 +287,30 @@ export class FSXAProxyApi implements FSXAApi {
     }
 
     return response.json()
+  }
+
+  /**
+   * Getter/Setter to enable the CaaS event stream
+   * @returns true, if a event stream should pipe events from CaaS change events websocket
+   */
+  enableEventStream(enable?: boolean) {
+    if (typeof enable !== 'undefined') this._enableEventStream = enable
+    return this._enableEventStream
+  }
+
+  /**
+   * This method initilises an `EventSoure` pointing to the CaaS change event stream.
+   * @param additionalParams sets parameters for the fetching process
+   * @param remoteProject specifies the remote Project
+   * @returns an EventSource
+   */
+  connectEventStream({ remoteProject }: ConnectEventStreamParams = {}): EventSource {
+    const url = new URL(this.baseUrl + FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE, location.origin)
+    if (remoteProject) {
+      url.searchParams.set('remoteProject', remoteProject)
+    }
+    this._logger.info('connectEventStream', 'start', `${url}`)
+    return new EventSource(url)
   }
 
   private fetch({ url, options }: { url: string; options: RequestOptions }) {
