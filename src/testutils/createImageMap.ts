@@ -6,11 +6,11 @@ import {
   Point2D,
 } from '../types'
 import faker from 'faker'
-import { createMediaPicture } from './createMediaPicture'
+import { createImageMapMedia } from './createImageMapMedia'
 import { ImageMapAreaType } from '../enums'
 
 export function createImageMap(): CaaSApi_CMSImageMap {
-  const media = createMediaPicture()
+  const media = createImageMapMedia()
   const createPoint2D = (): Point2D => ({
     x: faker.datatype.number(5),
     y: faker.datatype.number(5),

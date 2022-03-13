@@ -466,7 +466,7 @@ export class CaaSMapper {
       height: resolution.height,
       uid: resolution.uid,
     }
-    const mappedMedia = media ? this.mapImageMapMedia(media, imageMapResolution) : null
+    const mappedMedia = media ? this.mapImageMapMedia(media, imageMapResolution.uid) : null
 
     return {
       type: 'ImageMap',
@@ -538,7 +538,7 @@ export class CaaSMapper {
     }
   }
 
-  mapImageMapMedia(item: CaaSApi_ImageMapMedia, imageMapResolution: ImageMapResolution): Image {
+  mapImageMapMedia(item: CaaSApi_ImageMapMedia, resolutionUid: string): Image {
     return {
       type: 'Image',
       id: item.identifier,
@@ -546,7 +546,7 @@ export class CaaSMapper {
       meta: {},
       description: null,
       resolutions: {
-        [imageMapResolution.uid]: {
+        [resolutionUid]: {
           url: item.url,
           ...item.pictureMetaData,
         },
