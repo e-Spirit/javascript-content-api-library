@@ -361,14 +361,9 @@ export class FSXARemoteApi implements FSXAApi {
     }
     const responseJSON = await response.json()
 
-    // apply customFilter
-    const filteredResponse = this._customFilter
-      ? this._customFilter([responseJSON])[0]
-      : responseJSON
-
     if (additionalParams.keys) {
       // If additionalParams are provided we cannot map the response since we do not know which keys are provided
-      return filteredResponse
+      return responseJSON
     }
     const mapper = new CaaSMapper(
       this as any,
@@ -377,7 +372,14 @@ export class FSXARemoteApi implements FSXAApi {
       new Logger(this._logLevel, 'CaaSMapper')
     )
 
-    return mapper.mapElementResponse(filteredResponse)
+    const element: T = await mapper.mapElementResponse(responseJSON)
+
+    // apply customFilter
+    const filteredElement = this._customFilter
+      ? (this._customFilter as CustomFilter<T>)([element])[0]
+      : element
+
+    return filteredElement
   }
 
   /**
