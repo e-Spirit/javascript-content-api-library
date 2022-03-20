@@ -423,7 +423,7 @@ export class CaaSMapper {
       areaType: area.areaType,
       link: area.link && {
         template: area.link.template.uid,
-        data: await this.mapDataEntries(area.link.formData, [...path, 'data']),
+        data: await this.mapDataEntries(area.link.formData, [...path, 'link', 'data']),
       },
     }
     switch (area.areaType) {
@@ -461,17 +461,11 @@ export class CaaSMapper {
     const mappedAreas = await Promise.all(
       areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
     )
-    const imageMapResolution: ImageMapResolution = {
-      width: resolution.width,
-      height: resolution.height,
-      uid: resolution.uid,
-    }
-    const mappedMedia = media ? this.mapImageMapMedia(media, imageMapResolution.uid) : null
+    const mappedMedia = media ? this.mapImageMapMedia(media, resolution.uid) : null
 
     return {
       type: 'ImageMap',
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
-      resolution: imageMapResolution,
       media: mappedMedia,
     }
   }

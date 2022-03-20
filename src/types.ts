@@ -565,7 +565,6 @@ export interface ImageMap {
   type: 'ImageMap'
   media: Image | null
   areas: ImageMapArea[]
-  resolution: ImageMapResolution
 }
 
 export interface Media {}
