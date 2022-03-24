@@ -97,8 +97,22 @@ export class FSXARemoteApi implements FSXAApi {
     this._logLevel = logLevel
     this._logger = new Logger(logLevel, 'FSXARemoteApi')
     this._queryBuilder = new QueryBuilder(this._logger)
-    this._navigationFilter = navigationFilter
-    this._preFilterFetch = preFilterFetch
+    this._navigationFilter =
+      navigationFilter &&
+      ((route, authData, preFilterFetchData, context) => {
+        return navigationFilter(route, authData, preFilterFetchData, {
+          fsxaApi: this,
+          ...context,
+        })
+      })
+    this._preFilterFetch =
+      preFilterFetch &&
+      ((authData, context) => {
+        return preFilterFetch(authData, {
+          fsxaApi: this,
+          ...context,
+        })
+      })
 
     this._logger.debug('FSXARemoteApi created', {
       apikey,
