@@ -70,8 +70,6 @@ export interface CaaSApi_CMSInputToggle {
   value: boolean | null
 }
 
-export interface CaaSApi_CMSInputCheckbox {}
-
 export interface CaaSApi_CMSInputNumber {
   fsType: 'CMS_INPUT_NUMBER'
   name: string
