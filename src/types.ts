@@ -141,12 +141,21 @@ export interface CaaSApi_ImageMapAreaPoly extends CaaSApi_ImageMapArea {
   points: Point2D[]
 }
 
+export interface CaaSApi_ImageMapMedia
+  extends Pick<
+    CaaSApi_Media,
+    'fsType' | 'name' | 'displayName' | 'identifier' | 'uid' | 'uidType' | 'mediaType'
+  > {
+  url: string
+  pictureMetaData: Omit<CaaSApi_Media_Picture_Resolution_MetaData, 'url'>
+}
+
 export interface CaaSApi_CMSImageMap {
   fsType: 'CMS_INPUT_IMAGEMAP'
   name: string
   value: {
     fsType: 'MappingMedium'
-    media: CaaSApi_Media
+    media: CaaSApi_ImageMapMedia
     areas: CaaSApi_ImageMapArea[]
     resolution: {
       fsType: 'Resolution'
@@ -554,7 +563,6 @@ export interface ImageMap {
   type: 'ImageMap'
   media: Image | null
   areas: ImageMapArea[]
-  resolution: ImageMapResolution
 }
 
 export interface Media {}

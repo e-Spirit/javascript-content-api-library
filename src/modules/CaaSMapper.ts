@@ -40,6 +40,7 @@ import {
   Permission,
   PermissionActivity,
   PermissionGroup,
+  CaaSApi_ImageMapMedia,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, set } from 'lodash'
@@ -422,26 +423,26 @@ export class CaaSMapper {
       areaType: area.areaType,
       link: area.link && {
         template: area.link.template.uid,
-        data: await this.mapDataEntries(area.link.formData, [...path, 'data']),
+        data: await this.mapDataEntries(area.link.formData, [...path, 'link', 'data']),
       },
     }
     switch (area.areaType) {
       case ImageMapAreaType.RECT:
         return {
           ...base,
-          leftTop: (base as CaaSApi_ImageMapAreaRect).leftTop,
-          rightBottom: (base as CaaSApi_ImageMapAreaRect).rightBottom,
+          leftTop: (area as CaaSApi_ImageMapAreaRect).leftTop,
+          rightBottom: (area as CaaSApi_ImageMapAreaRect).rightBottom,
         } as ImageMapAreaRect
       case ImageMapAreaType.CIRCLE:
         return {
           ...base,
-          center: (base as CaaSApi_ImageMapAreaCircle).center,
-          radius: (base as CaaSApi_ImageMapAreaCircle).radius,
+          center: (area as CaaSApi_ImageMapAreaCircle).center,
+          radius: (area as CaaSApi_ImageMapAreaCircle).radius,
         } as ImageMapAreaCircle
       case ImageMapAreaType.POLY:
         return {
           ...base,
-          points: (base as CaaSApi_ImageMapAreaPoly).points,
+          points: (area as CaaSApi_ImageMapAreaPoly).points,
         } as ImageMapAreaPoly
       default:
         return null
@@ -457,24 +458,15 @@ export class CaaSMapper {
     } = imageMap
 
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
-    const [mappedAreas, mappedMedia] = await Promise.all([
-      Promise.all(
-        areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
-      ),
-      this.mapMedia(media, path),
-    ])
-
-    const imageMapResolution: ImageMapResolution = {
-      width: resolution.width,
-      height: resolution.height,
-      uid: resolution.uid,
-    }
+    const mappedAreas = await Promise.all(
+      areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
+    )
+    const mappedMedia = media ? this.mapImageMapMedia(media, resolution.uid) : null
 
     return {
       type: 'ImageMap',
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
-      resolution: imageMapResolution,
-      media: mappedMedia?.type === 'Image' ? mappedMedia : null,
+      media: mappedMedia,
     }
   }
 
@@ -537,6 +529,22 @@ export class CaaSMapper {
       fileName: item.fileName,
       fileMetaData: item.fileMetaData,
       url: item.url,
+    }
+  }
+
+  mapImageMapMedia(item: CaaSApi_ImageMapMedia, resolutionUid: string): Image {
+    return {
+      type: 'Image',
+      id: item.identifier,
+      previewId: this.buildPreviewId(item.identifier),
+      meta: {},
+      description: null,
+      resolutions: {
+        [resolutionUid]: {
+          url: item.url,
+          ...item.pictureMetaData,
+        },
+      },
     }
   }
 
