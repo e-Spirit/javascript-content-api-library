@@ -884,7 +884,7 @@ export interface FSXAApi {
   fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
-  ) => Promise<Record<string, any> | null>
+  ) => Promise<ProjectProperties | null>
   enableEventStream: (enable?: boolean) => boolean
 }
 
