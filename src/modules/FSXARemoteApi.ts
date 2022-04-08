@@ -523,7 +523,7 @@ export class FSXARemoteApi implements FSXAApi {
     locale: string
     additionalParams?: Record<string, any>
     resolve?: string[]
-  }): Promise<any> {
+  }): Promise<ProjectProperties | null> {
     const response = await this.fetchByFilter({
       filters: [
         {
@@ -542,7 +542,7 @@ export class FSXARemoteApi implements FSXAApi {
       this._logger.info(
         `[fetchProjectProperties] Could not find response data. Project properties might not be defined.`
       )
-      return
+      return null
     }
 
     // We need to match keys from projectSettings to ElementIds later to insert them directly
@@ -559,7 +559,7 @@ export class FSXARemoteApi implements FSXAApi {
 
     if (idsToFetch.length > 100) {
       this._logger.warn(
-        'ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
+        '[fetchProjectProperties] ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
       )
     }
     const { items: fetchedElements } = await this.fetchByFilter({
@@ -575,8 +575,7 @@ export class FSXARemoteApi implements FSXAApi {
       projectPropertiesData[idToKeyMap[(element as any).id]] = (element as any).data
     })
 
-    // TODO: remove this Array Wrapping --> Breaking Change
-    return [projectProperties]
+    return projectProperties
   }
 
   /**

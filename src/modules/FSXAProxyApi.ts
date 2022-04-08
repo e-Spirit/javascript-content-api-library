@@ -10,6 +10,7 @@ import {
   FetchElementParams,
   FSXAApi,
   ConnectEventStreamParams,
+  ProjectProperties,
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
@@ -255,7 +256,7 @@ export class FSXAProxyApi implements FSXAApi {
     locale,
     resolver = ['GCAPage'],
     fetchOptions,
-  }: FetchProjectPropertiesParams): Promise<Record<string, any> | null> {
+  }: FetchProjectPropertiesParams): Promise<ProjectProperties | null> {
     this._logger.info('fetchProjectProperties', 'start', { locale })
     const body = {
       locale,
@@ -272,7 +273,7 @@ export class FSXAProxyApi implements FSXAApi {
         ...fetchOptions,
       },
     })
-    this._logger.info('fetchNavigation', 'response', {
+    this._logger.info('fetchProjectProperties', 'response', {
       url: response.url,
       status: response.status,
     })
