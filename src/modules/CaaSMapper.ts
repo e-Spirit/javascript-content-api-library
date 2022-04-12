@@ -281,6 +281,7 @@ export class CaaSMapper {
         return option
       case 'CMS_INPUT_PERMISSION':
         const permission: Permission = {
+          type: 'Permission',
           fsType: entry.fsType,
           name: entry.name,
           value: entry.value.map((activity) => {
@@ -556,7 +557,8 @@ export class CaaSMapper {
   }
 
   async mapElementResponse(
-    element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any
+    element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any,
+    filterContext?: unknown
   ): Promise<Dataset | Page | Image | GCAPage | null | any> {
     let response
     switch (element.fsType) {
@@ -576,13 +578,7 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
-    this.logger.debug('CaaSMapper.mapElementResponse - response', response)
-    return this.resolveAllReferences(response as {})
-  }
-
-  async mapPageRefResponse(pageRef: CaaSApi_PageRef): Promise<Page> {
-    const mappedPage = await this.mapPageRef(pageRef)
-    return this.resolveAllReferences(mappedPage)
+    return this.resolveAllReferences(response as {}, filterContext)
   }
 
   async mapFilterResponse(
@@ -592,7 +588,8 @@ export class CaaSMapper {
       | CaaSApi_Media
       | CaaSApi_GCAPage
       | CaaSApi_ProjectProperties
-    )[]
+    )[],
+    filterContext?: unknown
   ): Promise<(Page | GCAPage | Dataset | Image)[]> {
     const mappedItems = (
       await Promise.all(
@@ -615,7 +612,7 @@ export class CaaSMapper {
         })
       )
     ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
-    return this.resolveAllReferences(mappedItems)
+    return this.resolveAllReferences(mappedItems, filterContext)
   }
 
   /**
@@ -624,13 +621,15 @@ export class CaaSMapper {
    * @param data
    * @returns data
    */
-  async resolveAllReferences<Type extends {}>(data: Type): Promise<Type> {
+  async resolveAllReferences<Type extends {}>(data: Type, filterContext?: unknown): Promise<Type> {
     const remoteIds = Object.keys(this._remoteReferences)
     this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
     await Promise.all([
-      this.resolveReferencesPerProject(data),
-      ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(data, remoteId)),
+      this.resolveReferencesPerProject(data, undefined, filterContext),
+      ...remoteIds.map((remoteId) =>
+        this.resolveReferencesPerProject(data, remoteId, filterContext)
+      ),
     ])
 
     // force a single resolution for image map media
@@ -648,7 +647,11 @@ export class CaaSMapper {
    * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferencesPerProject<T extends {}>(data: T, remoteProjectId?: string): Promise<T> {
+  async resolveReferencesPerProject<T extends {}>(
+    data: T,
+    remoteProjectId?: string,
+    filterContext?: unknown
+  ): Promise<T> {
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
@@ -675,6 +678,7 @@ export class CaaSMapper {
             locale,
             pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
             remoteProject: remoteProjectId,
+            filterContext,
           })
         )
       )

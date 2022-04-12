@@ -1261,32 +1261,13 @@ describe('CaaSMapper', () => {
     })
   })
 
-  describe('mapPageRefResponse', () => {
-    it('should call mapPageRef to map the given page ref', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const pageRef = createPageRef()
-      jest.spyOn(mapper, 'mapPageRef')
-      await mapper.mapPageRefResponse(pageRef)
-      expect(mapper.mapPageRef).toHaveBeenCalledWith(pageRef)
-    })
-    it('should call and return the result resolveAllReferences given a mapped page', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const pageRef = createPageRef()
-      mapper.mapPageRef = jest.fn().mockImplementation(($) => $)
-      mapper.resolveAllReferences = jest.fn().mockImplementation(($) => $)
-      const result = await mapper.mapPageRefResponse(pageRef)
-      expect(mapper.resolveAllReferences).toHaveBeenCalledWith(pageRef)
-      expect(result).toBe(pageRef)
-    })
-  })
-
   describe('resolveAllReferences', () => {
     it('should call resolveReferencesPerProject for the current project', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       mapper.resolveReferencesPerProject = jest.fn()
       const data = {}
       await mapper.resolveAllReferences(data)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, undefined, undefined)
     })
     it('should call resolveReferencesPerProject for all remote projects', async () => {
       const api = createApi()
@@ -1302,9 +1283,9 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem('id3', [], 'remote-id3')
       const data = {}
       await mapper.resolveAllReferences(data)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id1')
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id2')
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id3')
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id1', undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id2', undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id3', undefined)
     })
     it('should return the given data', async () => {
       const api = createApi()

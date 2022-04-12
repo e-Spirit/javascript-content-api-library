@@ -1,21 +1,20 @@
 import { stringify } from 'qs'
-import { ArrayQueryOperatorEnum, CaaSMapper, Logger, LogicalQueryOperatorEnum } from '.'
+import { CaaSMapper, Logger } from '.'
 import { FetchResponse, ProjectProperties } from '..'
 import {
-  Dataset,
-  GCAPage,
   NavigationData,
-  Page,
-  Image,
   CustomMapper,
   QueryBuilderQuery,
   FetchNavigationParams,
   FetchElementParams,
   FetchByFilterParams,
-  NavigationFilter,
-  PreFilterFetch,
   FSXARemoteApiConfig,
   FSXAApi,
+  CaasItemFilter,
+  NavigationItemFilter,
+  RemoteApiFilterOptions,
+  CaasItem,
+  RemoteProjectConfiguration,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
@@ -53,25 +52,25 @@ export class FSXARemoteApi implements FSXAApi {
   private _customMapper?: CustomMapper
   private _queryBuilder: QueryBuilder
   private _logger: Logger
-  private _navigationFilter?: NavigationFilter
-  private _preFilterFetch?: PreFilterFetch
+  private _navigationItemFilter?: NavigationItemFilter
+  private _caasItemFilter?: CaasItemFilter
   private _logLevel: LogLevel
   private _enableEventStream: boolean = false
 
   /**
    * The constructor of this class initializes the configuration for the api.
-   * It requires an {@link FSXARemoteApiConfig FSXARemoteApiConfig} object with following parameters.
-   * @param apikey
-   * @param caasURL
-   * @param navigationServiceURL
-   * @param tenantID
-   * @param projectID
-   * @param remotes optional {@link RemoteProjectConfiguration RemoteProjectConfiguration}
-   * @param contentMode 'release' | 'preview'
-   * @param customMapper optional {@link CustomMapper CustomMapper}
-   * @param navigationFilter optional {@link NavigationFilter NavigationFilter}
-   * @param preFilterFetch optional {@link PreFilterFetch PreFilterFetch}
-   * @param logLevel the used {@link LogLevel LogLevel} for the API `(default LogLevel.ERROR)` - optional
+   *
+   * @param config {@link FSXARemoteApiConfig FSXARemoteApiConfig}
+   * @param config.apikey
+   * @param config.caasURL
+   * @param config.navigationServiceURL
+   * @param config.tenantID
+   * @param config.projectID
+   * @param config.remotes optional {@link RemoteProjectConfiguration RemoteProjectConfiguration}
+   * @param config.contentMode 'release' | 'preview'
+   * @param config.customMapper optional {@link CustomMapper CustomMapper}
+   * @param config.filterOptions optional {@link RemoteApiFilterOptions RemoteApiFilterOptions} (EXPERIMENTAL)
+   * @param config.logLevel the used {@link LogLevel LogLevel} for the API `(default LogLevel.ERROR)` - optional
    */
   constructor({
     apikey,
@@ -82,8 +81,7 @@ export class FSXARemoteApi implements FSXAApi {
     remotes,
     contentMode,
     customMapper,
-    navigationFilter,
-    preFilterFetch,
+    filterOptions,
     logLevel = LogLevel.ERROR,
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
@@ -97,22 +95,8 @@ export class FSXARemoteApi implements FSXAApi {
     this._logLevel = logLevel
     this._logger = new Logger(logLevel, 'FSXARemoteApi')
     this._queryBuilder = new QueryBuilder(this._logger)
-    this._navigationFilter =
-      navigationFilter &&
-      ((route, authData, preFilterFetchData, context) => {
-        return navigationFilter(route, authData, preFilterFetchData, {
-          fsxaApi: this,
-          ...context,
-        })
-      })
-    this._preFilterFetch =
-      preFilterFetch &&
-      ((authData, context) => {
-        return preFilterFetch(authData, {
-          fsxaApi: this,
-          ...context,
-        })
-      })
+    this._navigationItemFilter = filterOptions?.navigationItemFilter
+    this._caasItemFilter = filterOptions?.caasItemFilter
 
     this._logger.debug('FSXARemoteApi created', {
       apikey,
@@ -122,9 +106,9 @@ export class FSXARemoteApi implements FSXAApi {
       projectID,
       remotes,
       contentMode,
-      customMapper,
-      navigationFilter,
-      preFilterFetch,
+      customMapper: this._customMapper,
+      navigationItemFilter: this._navigationItemFilter,
+      caasItemFilter: this._caasItemFilter,
     })
   }
 
@@ -269,19 +253,19 @@ export class FSXARemoteApi implements FSXAApi {
    * @param locale value must be ISO conform, both 'en' and 'en_US' are valid."
    * @param initialPath optional value can be provided when you want to access a subtree of the navigation
    * @param fetchOptions optional object to pass additional request options (Check {@link RequestInit RequestInit})
-   * @param authData an optional value with authorization data for the navigation filter
+   * @param filterContext an optional value with additional context used for filtering
    * @returns {Promise<NavigationData | null>} a Promise with the Navigation Service data or null
    */
   async fetchNavigation({
     locale,
     initialPath,
     fetchOptions,
-    authData,
+    filterContext,
   }: FetchNavigationParams): Promise<NavigationData | null> {
-    this._logger.info('fetchNavigation', 'start', {
+    this._logger.debug('fetchNavigation', 'start', {
       locale,
       initialPath,
-      authDataPassed: !!authData,
+      filterContext,
     })
     let encodedInitialPath = undefined
     if (initialPath) {
@@ -295,12 +279,12 @@ export class FSXARemoteApi implements FSXAApi {
     const headers = {
       'Accept-Language': '*',
     }
-    this._logger.info('fetchNavigation', 'url', url)
+    this._logger.debug('fetchNavigation', 'url', url)
     const response = await fetch(url, {
       headers,
       ...fetchOptions,
     })
-    this._logger.info('fetchNavigation', 'response', response.status)
+    this._logger.debug('fetchNavigation', 'response', response.status)
     if (!response.ok) {
       switch (response.status) {
         case 404:
@@ -309,33 +293,41 @@ export class FSXARemoteApi implements FSXAApi {
           throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
-    this._logger.info('fetchNavigation', 'response ok', response.ok)
-    return this.getFilteredNavigation(response, authData)
+    this._logger.debug('fetchNavigation', 'response ok', response.ok)
+    return this.getFilteredNavigation(response, filterContext)
   }
 
-  private async getFilteredNavigation(response: Response, authData: unknown) {
-    if (!this._navigationFilter) {
+  private async getFilteredNavigation(response: Response, filterContext?: unknown) {
+    if (!this._navigationItemFilter) {
       return response.json()
     }
-    this._logger.info('fetchNavigation', 'navigationFilter', this._navigationFilter)
     const navigation = await response.json()
     const idMap = navigation.idMap
     const routes = Object.keys(idMap).map((route) => idMap[route])
-    let confirmResponseJson: unknown | null
-    try {
-      confirmResponseJson = this._preFilterFetch ? await this._preFilterFetch(authData) : null
-    } catch ({ message }) {
-      this._logger.error('fetchNavigation', 'preFilterFetch', message)
-    }
-    const filteredRoutes = routes.filter((item) =>
-      this._navigationFilter!(item, authData, confirmResponseJson)
+    this._logger.debug(
+      'fetchNavigation',
+      'getFilteredNavigation',
+      'unfiltered routes count',
+      routes.length
     )
-    const allowedRoutes = filteredRoutes.map((item) => item.id)
-    const seo = removeFromSeoRouteMap(navigation.seoRouteMap, allowedRoutes)
-    const structure = removeFromStructure(navigation.structure, allowedRoutes)
-    const filteredIdMap = removeFromIdMap(navigation.idMap, allowedRoutes)
-    this._logger.info('fetchNavigation', 'new nav is build', filteredIdMap.length)
-    return { ...navigation, idMap: filteredIdMap, seoRouteMap: seo, structure }
+
+    const filteredRoutes = await this._navigationItemFilter!({
+      navigationItems: routes,
+      filterContext,
+    })
+    this._logger.debug(
+      'fetchNavigation',
+      'getFilteredNavigation',
+      'filtered routes count',
+      filteredRoutes.length
+    )
+
+    const allowedRouteIds = filteredRoutes.map((item) => item.id)
+    const seo = removeFromSeoRouteMap(navigation.seoRouteMap, allowedRouteIds)
+    const structure = removeFromStructure(navigation.structure, allowedRouteIds)
+    const filteredIdMap = removeFromIdMap(navigation.idMap, allowedRouteIds)
+    const filteredNavigation = { ...navigation, idMap: filteredIdMap, seoRouteMap: seo, structure }
+    return filteredNavigation
   }
 
   /**
@@ -350,12 +342,13 @@ export class FSXARemoteApi implements FSXAApi {
    * @param fetchOptions optional object to pass additional request options (Check {@link RequestInit RequestInit})
    * @returns {Promise<T>} a Promise with the mapped result
    */
-  async fetchElement<T = Page | GCAPage | Dataset | Image | any | null>({
+  async fetchElement<T = CaasItem | any | null>({
     id,
     locale,
     additionalParams = {},
     remoteProject,
     fetchOptions,
+    filterContext,
   }: FetchElementParams): Promise<T> {
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
@@ -385,7 +378,19 @@ export class FSXARemoteApi implements FSXAApi {
       { customMapper: this._customMapper },
       new Logger(this._logLevel, 'CaaSMapper')
     )
-    return mapper.mapElementResponse(responseJSON)
+    const mappedElement = await mapper.mapElementResponse(responseJSON, filterContext)
+    if (!this._caasItemFilter) return mappedElement
+
+    const filteredElement = (
+      await this._caasItemFilter({
+        caasItems: [mappedElement],
+        filterContext,
+      })
+    )[0]
+    if (!filteredElement) {
+      throw new Error(FSXAApiErrors.NOT_FOUND)
+    }
+    return filteredElement
   }
 
   /**
@@ -425,6 +430,7 @@ export class FSXARemoteApi implements FSXAApi {
     additionalParams = {},
     remoteProject,
     fetchOptions,
+    filterContext,
   }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
@@ -477,7 +483,24 @@ export class FSXARemoteApi implements FSXAApi {
     )
     const data = await response.json()
 
-    const items = await this.getItemsData(data, additionalParams, mapper)
+    let items = await this.getItemsData(data, additionalParams, mapper, filterContext)
+
+    if (items && items.length !== 0 && this._caasItemFilter) {
+      this._logger.debug(
+        'fetchByFilter',
+        'caasItemFilter is defined, filtering items',
+        items.map((caasItem) => {
+          return {
+            type: (caasItem as any).type,
+            id: (caasItem as any).id,
+          }
+        })
+      )
+      items = await this._caasItemFilter({
+        caasItems: items,
+        filterContext,
+      })
+    }
 
     return {
       page,
@@ -491,7 +514,8 @@ export class FSXARemoteApi implements FSXAApi {
   private async getItemsData(
     data: any,
     additionalParams: Record<string, any>,
-    mapper: CaaSMapper
+    mapper: CaaSMapper,
+    filterContext?: unknown
   ): Promise<unknown[]> {
     // we cannot ensure that the response can be mapped through our mapping algorithm if the keys attribute is set
     // so we will disable it
@@ -504,9 +528,10 @@ export class FSXARemoteApi implements FSXAApi {
       return []
     }
 
-    return mapper.mapFilterResponse(data._embedded['rh:doc'])
+    return mapper.mapFilterResponse(data._embedded['rh:doc'], filterContext)
   }
 
+  // TODO: Fix unecessary array wrapping with a future major jump (as it's breaking)
   /**
    * This method fetches the project properties from the configured CaaS.
    * It uses {@link fetchByFilter fetchByFilter} to get them.
@@ -519,10 +544,12 @@ export class FSXARemoteApi implements FSXAApi {
     locale,
     additionalParams = {},
     resolve = ['GCAPage'],
+    filterContext,
   }: {
     locale: string
     additionalParams?: Record<string, any>
     resolve?: string[]
+    filterContext?: unknown
   }): Promise<ProjectProperties | null> {
     const response = await this.fetchByFilter({
       filters: [
@@ -534,12 +561,14 @@ export class FSXARemoteApi implements FSXAApi {
       ],
       locale,
       additionalParams,
+      filterContext,
     })
+    if (!response.items[0]) return null
 
     const projectProperties = response.items[0] as ProjectProperties
     const projectPropertiesData = projectProperties?.data
     if (!projectPropertiesData) {
-      this._logger.info(
+      this._logger.debug(
         `[fetchProjectProperties] Could not find response data. Project properties might not be defined.`
       )
       return null
@@ -568,6 +597,7 @@ export class FSXARemoteApi implements FSXAApi {
         { field: 'identifier', operator: ComparisonQueryOperatorEnum.IN, value: idsToFetch },
       ],
       pagesize: 100,
+      filterContext,
     })
 
     //Insert fetched Data into projectProperties
@@ -575,7 +605,19 @@ export class FSXARemoteApi implements FSXAApi {
       projectPropertiesData[idToKeyMap[(element as any).id]] = (element as any).data
     })
 
-    return projectProperties
+    if (!this._caasItemFilter) return projectProperties
+    this._logger.debug(
+      'fetchProjectProperties',
+      'itemFilter',
+      'Filter is defined, using additional context',
+      filterContext
+    )
+    const filteredResult = this._caasItemFilter({
+      caasItems: [projectProperties],
+      filterContext,
+    })
+    if (Array.isArray(filteredResult)) return filteredResult[0]
+    return null
   }
 
   /**
