@@ -138,9 +138,9 @@ export class FSXAProxyApi implements FSXAApi {
     if (pagesize < 1) {
       this._logger.warn(
         'fetchByFilter',
-        'pagesize must be greater then zero! Using fallback of 30.'
+        'pagesize must be greater than zero! Using fallback of 30.'
       )
-      pagesize = 1
+      pagesize = 30
     }
 
     if (page < 1) {
