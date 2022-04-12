@@ -427,12 +427,12 @@ export class FSXARemoteApi implements FSXAApi {
     fetchOptions,
   }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1) {
-      this._logger.warn(`[fetchByFilter] pagesize must be greater then zero! Using fallback of 30.`)
+      this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
       pagesize = 30
     }
 
     if (page < 1) {
-      this._logger.warn(`[fetchByFilter] page must be greater then zero! Using fallback of 1.`)
+      this._logger.warn(`[fetchByFilter] page must be greater than zero! Using fallback of 1.`)
       page = 1
     }
 
