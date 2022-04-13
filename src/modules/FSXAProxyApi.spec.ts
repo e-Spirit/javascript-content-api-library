@@ -147,7 +147,7 @@ describe('FSXAProxyAPI', () => {
       expect(actualBody.remote).toEqual(remoteProject)
       expect(actualReferrer).toEqual('')
     })
-    it('should automatically set the pagesize to 1 when the pagesize is too low', () => {
+    it('should automatically set the pagesize to 30 (default) when the pagesize is too low', () => {
       fetchMock.mockResponseOnce('{}')
 
       proxyApi.fetchByFilter({
@@ -157,9 +157,9 @@ describe('FSXAProxyAPI', () => {
       })
 
       const actualBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
-      expect(actualBody.pagesize).toEqual(1)
+      expect(actualBody.pagesize).toEqual(30)
     })
-    it('should automatically set the pagesize to 1 when the page is too low', () => {
+    it('should automatically set the page to 1 when the page is too low', () => {
       fetchMock.mockResponseOnce('{}')
 
       proxyApi.fetchByFilter({
