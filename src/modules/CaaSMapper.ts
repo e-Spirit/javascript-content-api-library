@@ -11,10 +11,11 @@ import {
   CaaSApi_ImageMapAreaCircle,
   CaaSApi_ImageMapAreaPoly,
   CaaSApi_ImageMapAreaRect,
-  CaaSApi_Media,
   CaaSApi_Media_File,
   CaaSApi_Media_Picture,
+  CaaSApi_Media,
   CaaSApi_PageRef,
+  CaaSAPI_PermissionGroup,
   CaaSApi_ProjectProperties,
   CaaSApi_Section,
   CaaSApi_SectionReference,
@@ -31,32 +32,26 @@ import {
   ImageMapAreaCircle,
   ImageMapAreaPoly,
   ImageMapAreaRect,
+  Link,
   NestedPath,
+  Option,
   Page,
   PageBody,
   PageBodyContent,
-  ProjectProperties,
-  Section,
   Permission,
   PermissionActivity,
   PermissionGroup,
-  CaaSApi_ImageMapMedia,
+  ProjectProperties,
+  Reference,
+  RichTextElement,
+  Section,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, set } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import {
-  FSXAContentMode,
-  Link,
-  Option,
-  Reference,
-  RichTextElement,
-  ImageMapAreaType,
-  ImageMapResolution,
-  CaaSAPI_PermissionGroup,
-} from '..'
+import { FSXAContentMode, ImageMapAreaType } from '../enums'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -68,6 +63,8 @@ const REFERENCED_ITEMS_CHUNK_SIZE = 30
 interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
 }
+
+type PreResolveMapper = (data: any) => any
 
 export class CaaSMapper {
   public logger: Logger
@@ -102,6 +99,10 @@ export class CaaSMapper {
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
   } = {}
+  // stores pre resolve mappers
+  _preResolveMappers: {
+    [identifier: string]: PreResolveMapper
+  } = {}
 
   /**
    * registers a referenced Item to be fetched later. If a remoteProjectId is passed,
@@ -110,9 +111,24 @@ export class CaaSMapper {
    * @param identifier item identifier
    * @param path after fetch, items are inserted at all registered paths
    * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
+   * @param preResolveMapper optional. If passed, the item will be mapped to this function after fetching but before resolving
    * @returns placeholder string
    */
-  registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
+  registerReferencedItem(
+    identifier: string,
+    path: NestedPath,
+    remoteProjectId?: string,
+    preResolveMapper?: PreResolveMapper
+  ): string {
+    if (typeof remoteProjectId === 'function' && !preResolveMapper) {
+      preResolveMapper = remoteProjectId
+      remoteProjectId = undefined
+    }
+
+    if (preResolveMapper) {
+      this._preResolveMappers[identifier] = preResolveMapper
+    }
+
     const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
       return this.api.remotes[key].id === remoteProjectId
     })
@@ -461,7 +477,25 @@ export class CaaSMapper {
     const mappedAreas = await Promise.all(
       areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
     )
-    const mappedMedia = media ? this.mapImageMapMedia(media, resolution.uid) : null
+
+    const preResolveMapper = (data: any) => {
+      if (data?.resolutions?.[resolution.uid]) {
+        // keep only the selected resolution
+        data.resolutions = { [resolution.uid]: data.resolutions[resolution.uid] }
+      }
+      return data
+    }
+
+    let mappedMedia = null
+    if (media) {
+      // @ts-expect-error force `Image` caused by reference resolving mechanism
+      mappedMedia = this.registerReferencedItem(
+        media.identifier,
+        [...path, 'media'],
+        media.remoteProject,
+        preResolveMapper
+      ) as Image
+    }
 
     return {
       type: 'ImageMap',
@@ -529,22 +563,6 @@ export class CaaSMapper {
       fileName: item.fileName,
       fileMetaData: item.fileMetaData,
       url: item.url,
-    }
-  }
-
-  mapImageMapMedia(item: CaaSApi_ImageMapMedia, resolutionUid: string): Image {
-    return {
-      type: 'Image',
-      id: item.identifier,
-      previewId: this.buildPreviewId(item.identifier),
-      meta: {},
-      description: null,
-      resolutions: {
-        [resolutionUid]: {
-          url: item.url,
-          ...item.pictureMetaData,
-        },
-      },
     }
   }
 
@@ -678,20 +696,18 @@ export class CaaSMapper {
         )
       )
       const fetchedItems = response.map(({ items }) => items).flat()
-      ids.forEach((id) =>
-        referencedItems[id].forEach((path) =>
-          set(
-            data,
-            path,
-            fetchedItems.find((data) => {
-              const hasId = typeof data === 'object' && 'id' in (data as object)
-              if (hasId) {
-                return (data as { id: string }).id === id
-              }
-            })
-          )
-        )
-      )
+      ids.forEach((id) => {
+        let ref = fetchedItems.find((data) => {
+          const hasId = typeof data === 'object' && 'id' in (data as object)
+          if (hasId) {
+            return (data as { id: string }).id === id
+          }
+        })
+        if (id in this._preResolveMappers) {
+          ref = this._preResolveMappers[id](ref)
+        }
+        referencedItems[id].forEach((path) => set(data, path, ref))
+      })
     }
     return data
   }
