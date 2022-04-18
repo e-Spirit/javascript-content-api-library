@@ -1,3 +1,10 @@
+# [8.4.0](https://github.com/e-Spirit/fsxa-api/compare/v8.3.1...v8.4.0) (2022-03-24)
+
+
+### Features
+
+* provide context to NavigationFilter and PreFilterFetch ([#90](https://github.com/e-Spirit/fsxa-api/issues/90)) ([8b63f23](https://github.com/e-Spirit/fsxa-api/commit/8b63f238316ceca6d9fe13f86d4cfa89ca4bf6de))
+
 ## [8.3.1](https://github.com/e-Spirit/fsxa-api/compare/v8.3.0...v8.3.1) (2022-03-02)
 
 

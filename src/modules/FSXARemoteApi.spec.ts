@@ -651,7 +651,8 @@ describe('FSXARemoteAPI', () => {
         expect(navigationFilter).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          preFilterFetchData
+          preFilterFetchData,
+          expect.anything()
         )
       })
 
@@ -681,7 +682,8 @@ describe('FSXARemoteAPI', () => {
         expect(navigationFilter).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          expect.stringContaining(randomJson)
+          expect.stringContaining(randomJson),
+          expect.anything()
         )
       })
     })

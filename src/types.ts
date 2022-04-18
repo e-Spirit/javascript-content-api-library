@@ -833,13 +833,22 @@ export type ConnectEventStreamParams = {
   remoteProject?: string
 }
 
-export type NavigationFilter = <A = unknown, P = unknown>(
+export interface AppContext<T = unknown> {
+  app?: T
+  fsxaApi?: FSXAApi
+}
+
+export type NavigationFilter<A = unknown, P = unknown, C = unknown> = (
   route: NavigationItem,
   authData: A,
-  preFilterFetchData: P
+  preFilterFetchData: P,
+  context?: AppContext<C>
 ) => boolean
 
-export type PreFilterFetch = <T = unknown>(authData?: unknown) => Promise<T>
+export type PreFilterFetch<T = unknown, C = unknown> = (
+  authData?: unknown,
+  context?: AppContext<C>
+) => Promise<T>
 
 export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
 
