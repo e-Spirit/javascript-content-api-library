@@ -47,7 +47,7 @@ import {
   Section,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, set } from 'lodash'
+import { chunk, set, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -63,8 +63,6 @@ const REFERENCED_ITEMS_CHUNK_SIZE = 30
 interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
 }
-
-type PreResolveMapper = (data: any) => any
 
 export class CaaSMapper {
   public logger: Logger
@@ -95,13 +93,11 @@ export class CaaSMapper {
   _referencedItems: {
     [identifier: string]: NestedPath[]
   } = {}
+  // stores the forced resolution for image map media, which could applied after reference resolving
+  _imageMapForcedResolutions: { path: NestedPath; resolution: string }[] = []
   // stores References to remote Items
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
-  } = {}
-  // stores pre resolve mappers
-  _preResolveMappers: {
-    [identifier: string]: PreResolveMapper
   } = {}
 
   /**
@@ -111,24 +107,9 @@ export class CaaSMapper {
    * @param identifier item identifier
    * @param path after fetch, items are inserted at all registered paths
    * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
-   * @param preResolveMapper optional. If passed, the item will be mapped to this function after fetching but before resolving
    * @returns placeholder string
    */
-  registerReferencedItem(
-    identifier: string,
-    path: NestedPath,
-    remoteProjectId?: string,
-    preResolveMapper?: PreResolveMapper
-  ): string {
-    if (typeof remoteProjectId === 'function' && !preResolveMapper) {
-      preResolveMapper = remoteProjectId
-      remoteProjectId = undefined
-    }
-
-    if (preResolveMapper) {
-      this._preResolveMappers[identifier] = preResolveMapper
-    }
-
+  registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
     const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
       return this.api.remotes[key].id === remoteProjectId
     })
@@ -478,29 +459,15 @@ export class CaaSMapper {
       areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
     )
 
-    const preResolveMapper = (data: any) => {
-      if (data?.resolutions?.[resolution.uid]) {
-        // keep only the selected resolution
-        data.resolutions = { [resolution.uid]: data.resolutions[resolution.uid] }
-      }
-      return data
-    }
-
-    let mappedMedia = null
     if (media) {
-      // @ts-expect-error force `Image` caused by reference resolving mechanism
-      mappedMedia = this.registerReferencedItem(
-        media.identifier,
-        [...path, 'media'],
-        media.remoteProject,
-        preResolveMapper
-      ) as Image
+      this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
+      this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
     }
 
     return {
       type: 'ImageMap',
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
-      media: mappedMedia,
+      media: null, // would be replaced while reference resolving
     }
   }
 
@@ -657,6 +624,14 @@ export class CaaSMapper {
       this.resolveReferencesPerProject(data),
       ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(data, remoteId)),
     ])
+
+    // force a single resolution for image map media
+    this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
+      update(data, [...path, 'resolutions'], (resolutions) =>
+        resolution in resolutions ? { [resolution]: resolutions[resolution] } : resolutions
+      )
+    })
+
     return data
   }
 
@@ -696,18 +671,20 @@ export class CaaSMapper {
         )
       )
       const fetchedItems = response.map(({ items }) => items).flat()
-      ids.forEach((id) => {
-        let ref = fetchedItems.find((data) => {
-          const hasId = typeof data === 'object' && 'id' in (data as object)
-          if (hasId) {
-            return (data as { id: string }).id === id
-          }
-        })
-        if (id in this._preResolveMappers) {
-          ref = this._preResolveMappers[id](ref)
-        }
-        referencedItems[id].forEach((path) => set(data, path, ref))
-      })
+      ids.forEach((id) =>
+        referencedItems[id].forEach((path) =>
+          set(
+            data,
+            path,
+            fetchedItems.find((data) => {
+              const hasId = typeof data === 'object' && 'id' in (data as object)
+              if (hasId) {
+                return (data as { id: string }).id === id
+              }
+            })
+          )
+        )
+      )
     }
     return data
   }
