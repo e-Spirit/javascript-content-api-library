@@ -9,8 +9,6 @@ export enum FSXAApiErrors {
   MISSING_NAVIGATION_SERVICE_URL = 'No CaaS-URL was passed via the configuration. [navigationService]',
   MISSING_PROJECT_ID = 'No projectId was passed via the configuration. [projectId]',
   MISSING_TENANT_ID = 'No tenantId was passed via the configuration. [tenantId]',
-  ILLEGAL_PAGE_SIZE = 'The pagesize parameter must be between 1 and 1000.',
-  ILLEGAL_PAGE_NUMBER = 'Given page number must be larger than 0',
   NOT_AUTHORIZED = 'Your passed ApiKey has no access to the requested resource',
   NOT_FOUND = 'Resource could not be found',
   MISSING_REMOTE_LOCALE = 'The specified remote project did not include a locale',

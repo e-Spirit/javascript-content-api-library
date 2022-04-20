@@ -70,8 +70,6 @@ export interface CaaSApi_CMSInputToggle {
   value: boolean | null
 }
 
-export interface CaaSApi_CMSInputCheckbox {}
-
 export interface CaaSApi_CMSInputNumber {
   fsType: 'CMS_INPUT_NUMBER'
   name: string
@@ -141,6 +139,15 @@ export interface CaaSApi_ImageMapAreaRect extends CaaSApi_ImageMapArea {
 export interface CaaSApi_ImageMapAreaPoly extends CaaSApi_ImageMapArea {
   areaType: ImageMapAreaType.POLY
   points: Point2D[]
+}
+
+export interface CaaSApi_ImageMapMedia
+  extends Pick<
+    CaaSApi_Media,
+    'fsType' | 'name' | 'displayName' | 'identifier' | 'uid' | 'uidType' | 'mediaType'
+  > {
+  url: string
+  pictureMetaData: Omit<CaaSApi_Media_Picture_Resolution_MetaData, 'url'>
 }
 
 export interface CaaSApi_CMSImageMap {
@@ -877,7 +884,7 @@ export interface FSXAApi {
   fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
-  ) => Promise<Record<string, any> | null>
+  ) => Promise<ProjectProperties | null>
   enableEventStream: (enable?: boolean) => boolean
 }
 
