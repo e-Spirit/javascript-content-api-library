@@ -19,7 +19,7 @@ const projectProperties = await proxyAPI.fetchProjectProperties(parameters)
 ```
 
 - **imageMap:** The `resolution` property is now part of the `media` property.
-  Details can be found in the [here](https://github.com/e-Spirit/fsxa-api/blob/v9.0.0/src/types.ts#L12).
+  Details can be found in the [here](https://github.com/e-Spirit/fsxa-api/blob/v9.0.0/src/types.ts#L556).
 
 New format:
 
