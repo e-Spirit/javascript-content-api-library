@@ -1,3 +1,14 @@
+# [9.0.0](https://github.com/e-Spirit/fsxa-api/compare/v8.4.0...v9.0.0) (2022-04-21)
+
+
+* Next release (#92) ([bf6c071](https://github.com/e-Spirit/fsxa-api/commit/bf6c071f66c40eaa95d6da29c9f3e9cabfb3f14e)), closes [#92](https://github.com/e-Spirit/fsxa-api/issues/92) [#91](https://github.com/e-Spirit/fsxa-api/issues/91) [#89](https://github.com/e-Spirit/fsxa-api/issues/89) [#95](https://github.com/e-Spirit/fsxa-api/issues/95) [#93](https://github.com/e-Spirit/fsxa-api/issues/93)
+
+
+### BREAKING CHANGES
+
+* The method `fetchProjectProperties` has a new return type and interface `ImageMap` has a
+new structure.
+
 - **fetchProjectProperties:** The return type of the method has changed. The function no longer returns an array of `ProjectProperties`.
   Instead it now returns only the `ProjectProperties` object if found.
 
