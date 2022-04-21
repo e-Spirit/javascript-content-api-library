@@ -473,17 +473,6 @@ describe('CaaSMapper', () => {
     })
 
     describe('CMS_INPUT_IMAGEMAP', () => {
-      it('should call mapImageMapMedia to map media', async () => {
-        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-        jest.spyOn(mapper, 'mapImageMapMedia')
-        const path = createPath()
-        const entry = createImageMap()
-        await mapper.mapDataEntry(entry, path)
-        expect(mapper.mapImageMapMedia).toHaveBeenCalledWith(
-          entry.value.media,
-          entry.value.resolution.uid
-        )
-      })
       it('should not modify the resolution', async () => {
         const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
         const entry = createImageMap()

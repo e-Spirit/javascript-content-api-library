@@ -155,7 +155,7 @@ export interface CaaSApi_CMSImageMap {
   name: string
   value: {
     fsType: 'MappingMedium'
-    media: CaaSApi_ImageMapMedia
+    media: CaaSApi_MediaRef
     areas: CaaSApi_ImageMapArea[]
     resolution: {
       fsType: 'Resolution'
@@ -551,12 +551,6 @@ export interface ImageMapAreaRect extends ImageMapArea {
 export interface ImageMapAreaPoly extends ImageMapArea {
   areaType: ImageMapAreaType.POLY
   points: Point2D[]
-}
-
-export interface ImageMapResolution {
-  uid: string
-  width: number
-  height: number
 }
 
 export interface ImageMap {
