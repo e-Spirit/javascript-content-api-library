@@ -360,9 +360,12 @@ export class CaaSMapper {
         return this.mapContent2Section(content)
       case 'Section':
       case 'SectionReference':
+      case 'GCASection':
         return this.mapSection(content, path)
       default:
-        throw new Error(CaaSMapperErrors.UNKNOWN_BODY_CONTENT)
+        throw new Error(
+          CaaSMapperErrors.UNKNOWN_BODY_CONTENT + ` fsType=[${(content as any)?.fsType}]`
+        )
     }
   }
 
