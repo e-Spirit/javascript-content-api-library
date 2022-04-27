@@ -345,7 +345,7 @@ export interface CaaSApi_Dataset {
 }
 
 export interface CaaSApi_Section {
-  fsType: 'Section'
+  fsType: 'Section' | 'GCASection'
   name: string
   displayName: string
   identifier: string
@@ -363,7 +363,7 @@ export interface CaaSApi_SectionReference {
 }
 
 export interface CaaSApi_Body {
-  fsType: 'Body'
+  fsType: 'Body' | 'GCABody'
   name: string
   identifier: string
   children: (CaaSApi_Section | CaaSApi_Content2Section | CaaSApi_SectionReference)[]
