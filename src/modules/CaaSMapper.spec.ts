@@ -1117,6 +1117,18 @@ describe('CaaSMapper', () => {
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [...path, 'data'])
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [...path, 'meta'])
     })
+    it('should call mapPageBody for all children', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const path = createPath()
+      const gcaPage = createGCAPage()
+      const body1: CaaSApi_Body = { ...createDataEntry(), fsType: 'Body', children: [] }
+      const body2: CaaSApi_Body = { ...createDataEntry(), fsType: 'Body', children: [] }
+      gcaPage.children.push(body1, body2)
+      mapper.mapPageBody = jest.fn().mockImplementation(async ($) => `mapped-${$.uid}`)
+      await mapper.mapGCAPage(gcaPage, path)
+      expect(mapper.mapPageBody).toHaveBeenCalledWith(body1, [...path, 'children', 0])
+      expect(mapper.mapPageBody).toHaveBeenCalledWith(body2, [...path, 'children', 1])
+    })
   })
 
   describe('mapDataset', () => {

@@ -380,6 +380,7 @@ export interface CaaSApi_GCAPage {
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   metaFormData: CaaSApi_DataEntries
+  children: CaaSApi_Body[]
 }
 export interface CaaSApi_ProjectProperties {
   _id: string
@@ -567,6 +568,7 @@ export interface GCAPage {
   previewId: string
   name: string
   layout: string
+  children: PageBody[]
   data: DataEntries
   meta: DataEntries
 }

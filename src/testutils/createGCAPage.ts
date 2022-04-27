@@ -18,5 +18,6 @@ export const createGCAPage = (): CaaSApi_GCAPage => {
       ...template,
       fsType: 'PageTemplate',
     },
+    children: [],
   }
 }
