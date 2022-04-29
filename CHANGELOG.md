@@ -1,91 +1,134 @@
-# [8.4.0](https://github.com/e-Spirit/fsxa-api/compare/v8.3.1...v8.4.0) (2022-03-24)
+# [9.0.0](https://github.com/e-Spirit/fsxa-api/compare/v8.4.0...v9.0.0) (2022-04-21)
 
 
-### Features
-
-* provide context to NavigationFilter and PreFilterFetch ([#90](https://github.com/e-Spirit/fsxa-api/issues/90)) ([8b63f23](https://github.com/e-Spirit/fsxa-api/commit/8b63f238316ceca6d9fe13f86d4cfa89ca4bf6de))
-
-## [8.3.1](https://github.com/e-Spirit/fsxa-api/compare/v8.3.0...v8.3.1) (2022-03-02)
-
-
-### Bug Fixes
-
-* **fetchprojectproperties:** reduce mutliple sequential CaaS calls to a single call ([#88](https://github.com/e-Spirit/fsxa-api/issues/88)) ([fce32bb](https://github.com/e-Spirit/fsxa-api/commit/fce32bb9dd10c404f34a68d67a560ab14eef8a09))
-
-# [8.3.0](https://github.com/e-Spirit/fsxa-api/compare/v8.2.1...v8.3.0) (2022-02-25)
-
-
-### Features
-
-* **caasmapper:** enrich permission entries with group id attribute ([#84](https://github.com/e-Spirit/fsxa-api/issues/84)) ([575422f](https://github.com/e-Spirit/fsxa-api/commit/575422fff951a0ef7044782964ea6a5761756efb))
-
-## [8.2.1](https://github.com/e-Spirit/fsxa-api/compare/v8.2.0...v8.2.1) (2022-02-21)
-
-
-### Bug Fixes
-
-* **fetchbyfilter:** fix return value on empty response ([#85](https://github.com/e-Spirit/fsxa-api/issues/85)) ([3ea579b](https://github.com/e-Spirit/fsxa-api/commit/3ea579b7401a1b2c161fa98bcea2c1d310e95efd))
-
-# [8.2.0](https://github.com/e-Spirit/fsxa-api/compare/v8.1.0...v8.2.0) (2022-02-15)
-
-
-### Features
-
-* **caas:** Expose CaaS changes (WS) via Server-sent events ([#61](https://github.com/e-Spirit/fsxa-api/issues/61)) ([1a384bf](https://github.com/e-Spirit/fsxa-api/commit/1a384bf84dc97b168334d7b8b730646c8f629c91))
-
-### Bug Fixes
-
-* **CaaSMapper:** Resolve remote references in CaaSMapper
-
-# [8.1.0](https://github.com/e-Spirit/fsxa-api/compare/v8.0.0...v8.1.0) (2022-02-11)
-
-
-### Features
-
-* **FS_Reference:** add optional section to reference types ([fbedc26](https://github.com/e-Spirit/fsxa-api/commit/fbedc26c4cbdc81ba4afa7789d3d5ae1edb41da9))
-
-# [8.0.0](https://github.com/e-Spirit/fsxa-api/compare/v7.1.0...v8.0.0) (2022-02-08)
-
-
-### Features
-
-* **apiSingleton:** create api singleton and add type parameter ([#78](https://github.com/e-Spirit/fsxa-api/issues/78)) ([2acc38e](https://github.com/e-Spirit/fsxa-api/commit/2acc38e1fb6a063752ef41c697378be688b769c8)), closes [#74](https://github.com/e-Spirit/fsxa-api/issues/74)
+* Next release (#92) ([bf6c071](https://github.com/e-Spirit/fsxa-api/commit/bf6c071f66c40eaa95d6da29c9f3e9cabfb3f14e)), closes [#92](https://github.com/e-Spirit/fsxa-api/issues/92) [#91](https://github.com/e-Spirit/fsxa-api/issues/91) [#89](https://github.com/e-Spirit/fsxa-api/issues/89) [#95](https://github.com/e-Spirit/fsxa-api/issues/95) [#93](https://github.com/e-Spirit/fsxa-api/issues/93)
 
 
 ### BREAKING CHANGES
 
-* **apiSingleton:** "type" attribute needs to be added if objects of changed public interfaces are created in user code.
-Following interfaces have changed:
-* PageBody
-* Page
-* Reference
-* Option
-* Link
-* Card
-* ImageMap
-* GCAPage
-* ProjectProperties
-* Section
-* Dataset
-* Image
-* File
+* The method `fetchProjectProperties` has a new return type and interface `ImageMap` has a
+new structure.
 
-Example: "Option" interface contains a "type" parameter. If your code uses the interface, you need to add the parameter "type". 
+- **fetchProjectProperties:** The return type of the method has changed. The function no longer returns an array of `ProjectProperties`.
+  Instead it now returns only the `ProjectProperties` object if found.
+
+Example:
+
+```typescript
+const projectProperties = await proxyAPI.fetchProjectProperties(parameters)
+```
+
+- **imageMap:** The `resolution` property is now part of the `media` property.
+  Details can be found in the [here](https://github.com/e-Spirit/fsxa-api/blob/v9.0.0/src/types.ts#L556).
+
+New format:
+
+```json
+"st_imagemap": {
+  "type": "ImageMap",
+  "areas": [],
+  "media": {
+    "type": "Image",
+    "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx",
+    "previewId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx.en_GB",
+    "meta": {},
+    "description": null,
+    "resolutions": {
+      "myresolution": {
+        "fileSize": 31415,
+        "extension": "jpg",
+        "mimeType": "image/jpeg",
+        "width": 4711,
+        "height": 4711,
+        "url": "https://customer-media.e-spirit.cloud/.../image.jpg?rev=4711"
+      }
+    }
+  }
+}
+```
+
+# [8.4.0](https://github.com/e-Spirit/fsxa-api/compare/v8.3.1...v8.4.0) (2022-03-24)
+
+### Features
+
+- provide context to NavigationFilter and PreFilterFetch ([#90](https://github.com/e-Spirit/fsxa-api/issues/90)) ([8b63f23](https://github.com/e-Spirit/fsxa-api/commit/8b63f238316ceca6d9fe13f86d4cfa89ca4bf6de))
+
+## [8.3.1](https://github.com/e-Spirit/fsxa-api/compare/v8.3.0...v8.3.1) (2022-03-02)
+
+### Bug Fixes
+
+- **fetchprojectproperties:** reduce mutliple sequential CaaS calls to a single call ([#88](https://github.com/e-Spirit/fsxa-api/issues/88)) ([fce32bb](https://github.com/e-Spirit/fsxa-api/commit/fce32bb9dd10c404f34a68d67a560ab14eef8a09))
+
+# [8.3.0](https://github.com/e-Spirit/fsxa-api/compare/v8.2.1...v8.3.0) (2022-02-25)
+
+### Features
+
+- **caasmapper:** enrich permission entries with group id attribute ([#84](https://github.com/e-Spirit/fsxa-api/issues/84)) ([575422f](https://github.com/e-Spirit/fsxa-api/commit/575422fff951a0ef7044782964ea6a5761756efb))
+
+## [8.2.1](https://github.com/e-Spirit/fsxa-api/compare/v8.2.0...v8.2.1) (2022-02-21)
+
+### Bug Fixes
+
+- **fetchbyfilter:** fix return value on empty response ([#85](https://github.com/e-Spirit/fsxa-api/issues/85)) ([3ea579b](https://github.com/e-Spirit/fsxa-api/commit/3ea579b7401a1b2c161fa98bcea2c1d310e95efd))
+
+# [8.2.0](https://github.com/e-Spirit/fsxa-api/compare/v8.1.0...v8.2.0) (2022-02-15)
+
+### Features
+
+- **caas:** Expose CaaS changes (WS) via Server-sent events ([#61](https://github.com/e-Spirit/fsxa-api/issues/61)) ([1a384bf](https://github.com/e-Spirit/fsxa-api/commit/1a384bf84dc97b168334d7b8b730646c8f629c91))
+
+### Bug Fixes
+
+- **CaaSMapper:** Resolve remote references in CaaSMapper
+
+# [8.1.0](https://github.com/e-Spirit/fsxa-api/compare/v8.0.0...v8.1.0) (2022-02-11)
+
+### Features
+
+- **FS_Reference:** add optional section to reference types ([fbedc26](https://github.com/e-Spirit/fsxa-api/commit/fbedc26c4cbdc81ba4afa7789d3d5ae1edb41da9))
+
+# [8.0.0](https://github.com/e-Spirit/fsxa-api/compare/v7.1.0...v8.0.0) (2022-02-08)
+
+### Features
+
+- **apiSingleton:** create api singleton and add type parameter ([#78](https://github.com/e-Spirit/fsxa-api/issues/78)) ([2acc38e](https://github.com/e-Spirit/fsxa-api/commit/2acc38e1fb6a063752ef41c697378be688b769c8)), closes [#74](https://github.com/e-Spirit/fsxa-api/issues/74)
+
+### BREAKING CHANGES
+
+- **apiSingleton:** "type" attribute needs to be added if objects of changed public interfaces are created in user code.
+  Following interfaces have changed:
+- PageBody
+- Page
+- Reference
+- Option
+- Link
+- Card
+- ImageMap
+- GCAPage
+- ProjectProperties
+- Section
+- Dataset
+- Image
+- File
+
+Example: "Option" interface contains a "type" parameter. If your code uses the interface, you need to add the parameter "type".
 
 compliant:
+
 ```typescript
 const anOption: Option = {
   type: 'Option',
   key: 'awesome',
-  value: 'example'
+  value: 'example',
 }
 ```
 
 non-compliant:
+
 ```typescript
 const anOption: Option = {
   key: 'true',
-  value: 'example'
+  value: 'example',
 }
 ```
 
@@ -93,6 +136,7 @@ Also interfaces for `FSXAProxyApiConfig` and `CaaSApi_FSReference` have changed.
 Examples for compliant usages:
 
 compliant:
+
 ```typescript
 const config: FSXAProxyApiConfig = {
   clientUrl: '/someUrl',
@@ -103,47 +147,43 @@ const config: FSXAProxyApiConfig = {
 ```
 
 compliant:
+
 ```typescript
 const reference: CaaSApi_FSReference = {
   fsType: 'FS_REFERENCE',
   name: 'some name',
-  value: null
+  value: null,
 }
 ```
 
 # [7.1.0](https://github.com/e-Spirit/fsxa-api/compare/v7.0.2...v7.1.0) (2022-02-04)
 
-
 ### Features
 
-* **caasmapper:** support image maps ([#72](https://github.com/e-Spirit/fsxa-api/issues/72)) ([0a8af2d](https://github.com/e-Spirit/fsxa-api/commit/0a8af2d5b0f7be78fe568be3f849f0bdb6f21e9b))
+- **caasmapper:** support image maps ([#72](https://github.com/e-Spirit/fsxa-api/issues/72)) ([0a8af2d](https://github.com/e-Spirit/fsxa-api/commit/0a8af2d5b0f7be78fe568be3f849f0bdb6f21e9b))
 
 ## [7.0.2](https://github.com/e-Spirit/fsxa-api/compare/v7.0.1...v7.0.2) (2022-01-20)
 
-
 ### Bug Fixes
 
-* **tests:** provide CaaSMapper tests ([6c7389c](https://github.com/e-Spirit/fsxa-api/commit/6c7389c3c261c3e07e57d8064802cb719c023346))
+- **tests:** provide CaaSMapper tests ([6c7389c](https://github.com/e-Spirit/fsxa-api/commit/6c7389c3c261c3e07e57d8064802cb719c023346))
 
 ## [7.0.1](https://github.com/e-Spirit/fsxa-api/compare/v7.0.0...v7.0.1) (2022-01-14)
 
-
 ### Bug Fixes
 
-* **FSXARemoteApi:** fix parameter parsing and projectProperties ([#67](https://github.com/e-Spirit/fsxa-api/issues/67)) ([edeaf13](https://github.com/e-Spirit/fsxa-api/commit/edeaf13e05f04c2dfbf50772e9d2c5d9e27a54ac))
+- **FSXARemoteApi:** fix parameter parsing and projectProperties ([#67](https://github.com/e-Spirit/fsxa-api/issues/67)) ([edeaf13](https://github.com/e-Spirit/fsxa-api/commit/edeaf13e05f04c2dfbf50772e9d2c5d9e27a54ac))
 
 # [7.0.0](https://github.com/e-Spirit/fsxa-api/compare/v6.1.0...v7.0.0) (2022-01-11)
 
-
 ### Features
 
-* add pagination data to response structure of fetchByFilter ([#64](https://github.com/e-Spirit/fsxa-api/issues/64)) ([8536e9d](https://github.com/e-Spirit/fsxa-api/commit/8536e9d7214abfce8b7dc61246a85b296ffc83a0))
-
+- add pagination data to response structure of fetchByFilter ([#64](https://github.com/e-Spirit/fsxa-api/issues/64)) ([8536e9d](https://github.com/e-Spirit/fsxa-api/commit/8536e9d7214abfce8b7dc61246a85b296ffc83a0))
 
 ### BREAKING CHANGES
 
-* Previously fetchByFilter directly returned an array of returned items. Now this
-data is wrapped in an 'items' property. The returned object also includes pagination data now.
+- Previously fetchByFilter directly returned an array of returned items. Now this
+  data is wrapped in an 'items' property. The returned object also includes pagination data now.
 
 ### BREAKING CHANGE
 
@@ -151,6 +191,7 @@ Previously fetchByFilter directly returned an array of returned items. Now this
 data is wrapped in an "items" property.
 
 Example:
+
 ```typescript
 const { items } = fetchByFilter({...}) as { items: any[] }
 ```

@@ -1,6 +1,11 @@
 import faker from 'faker'
 import { CaaSApi_CMSInputPermission } from '..'
-import { CaaSApi_FSReference, CaaSAPI_PermissionActivity, CaaSAPI_PermissionGroup } from '../types'
+import {
+  CaaSApi_FSReference,
+  CaaSApi_MediaRef,
+  CaaSAPI_PermissionActivity,
+  CaaSAPI_PermissionGroup,
+} from '../types'
 
 export function createDataEntry(id = faker.datatype.uuid()) {
   return {
@@ -15,6 +20,22 @@ export function createDataEntry(id = faker.datatype.uuid()) {
   }
 }
 
+export function createMediaPictureReferenceValue(
+  id = faker.datatype.uuid(),
+  remoteProject = `${id}-remoteProject`
+): CaaSApi_MediaRef {
+  return {
+    fsType: 'Media',
+    name: faker.random.word(),
+    identifier: id,
+    uid: id,
+    uidType: 'MEDIASTORE_LEAF',
+    mediaType: 'PICTURE',
+    url: `${id}-url`,
+    remoteProject,
+  }
+}
+
 export function createMediaPictureReference(
   id = faker.datatype.uuid(),
   remoteProject = `${id}-remoteProject`
@@ -22,16 +43,7 @@ export function createMediaPictureReference(
   return {
     fsType: 'FS_REFERENCE',
     name: faker.random.word(),
-    value: {
-      fsType: 'Media',
-      name: faker.random.word(),
-      identifier: id,
-      uid: id,
-      uidType: 'MEDIASTORE_LEAF',
-      mediaType: 'PICTURE',
-      url: `${id}-url`,
-      remoteProject,
-    },
+    value: createMediaPictureReferenceValue(id, remoteProject),
   }
 }
 

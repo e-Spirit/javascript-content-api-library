@@ -473,14 +473,6 @@ describe('CaaSMapper', () => {
     })
 
     describe('CMS_INPUT_IMAGEMAP', () => {
-      it('should call mapMedia to map media', async () => {
-        const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-        jest.spyOn(mapper, 'mapMedia')
-        const path = createPath()
-        const entry = createImageMap()
-        await mapper.mapDataEntry(entry, path)
-        expect(mapper.mapMedia).toHaveBeenCalledWith(entry.value.media, path)
-      })
       it('should not modify the resolution', async () => {
         const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
         const entry = createImageMap()
@@ -499,6 +491,7 @@ describe('CaaSMapper', () => {
               ...path,
               'areas',
               index,
+              'link',
               'data',
             ])
           }
@@ -516,6 +509,7 @@ describe('CaaSMapper', () => {
           ...path,
           'areas',
           0,
+          'link',
           'data',
           'childEntry',
         ])
@@ -1146,18 +1140,6 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'mapDataEntries')
       await mapper.mapMediaPicture(media, path)
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [...path, 'meta'])
-    })
-    it('should call mapMediaPictureResolutionUrls to map resolution urls', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const path = createPath()
-      const media = createMediaPicture()
-      const { resolutionsMetaData, changeInfo } = media
-      jest.spyOn(mapper, 'mapMediaPictureResolutionUrls')
-      await mapper.mapMediaPicture(media, path)
-      expect(mapper.mapMediaPictureResolutionUrls).toHaveBeenCalledWith(
-        resolutionsMetaData,
-        changeInfo!.revision
-      )
     })
   })
 

@@ -11,10 +11,11 @@ import {
   CaaSApi_ImageMapAreaCircle,
   CaaSApi_ImageMapAreaPoly,
   CaaSApi_ImageMapAreaRect,
-  CaaSApi_Media,
   CaaSApi_Media_File,
   CaaSApi_Media_Picture,
+  CaaSApi_Media,
   CaaSApi_PageRef,
+  CaaSAPI_PermissionGroup,
   CaaSApi_ProjectProperties,
   CaaSApi_Section,
   CaaSApi_SectionReference,
@@ -31,31 +32,26 @@ import {
   ImageMapAreaCircle,
   ImageMapAreaPoly,
   ImageMapAreaRect,
+  Link,
   NestedPath,
+  Option,
   Page,
   PageBody,
   PageBodyContent,
-  ProjectProperties,
-  Section,
   Permission,
   PermissionActivity,
   PermissionGroup,
+  ProjectProperties,
+  Reference,
+  RichTextElement,
+  Section,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, set } from 'lodash'
+import { chunk, set, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import {
-  FSXAContentMode,
-  Link,
-  Option,
-  Reference,
-  RichTextElement,
-  ImageMapAreaType,
-  ImageMapResolution,
-  CaaSAPI_PermissionGroup,
-} from '..'
+import { FSXAContentMode, ImageMapAreaType } from '../enums'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -97,6 +93,8 @@ export class CaaSMapper {
   _referencedItems: {
     [identifier: string]: NestedPath[]
   } = {}
+  // stores the forced resolution for image map media, which could applied after reference resolving
+  _imageMapForcedResolutions: { path: NestedPath; resolution: string }[] = []
   // stores References to remote Items
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
@@ -451,26 +449,26 @@ export class CaaSMapper {
       areaType: area.areaType,
       link: area.link && {
         template: area.link.template.uid,
-        data: await this.mapDataEntries(area.link.formData, [...path, 'data']),
+        data: await this.mapDataEntries(area.link.formData, [...path, 'link', 'data']),
       },
     }
     switch (area.areaType) {
       case ImageMapAreaType.RECT:
         return {
           ...base,
-          leftTop: (base as CaaSApi_ImageMapAreaRect).leftTop,
-          rightBottom: (base as CaaSApi_ImageMapAreaRect).rightBottom,
+          leftTop: (area as CaaSApi_ImageMapAreaRect).leftTop,
+          rightBottom: (area as CaaSApi_ImageMapAreaRect).rightBottom,
         } as ImageMapAreaRect
       case ImageMapAreaType.CIRCLE:
         return {
           ...base,
-          center: (base as CaaSApi_ImageMapAreaCircle).center,
-          radius: (base as CaaSApi_ImageMapAreaCircle).radius,
+          center: (area as CaaSApi_ImageMapAreaCircle).center,
+          radius: (area as CaaSApi_ImageMapAreaCircle).radius,
         } as ImageMapAreaCircle
       case ImageMapAreaType.POLY:
         return {
           ...base,
-          points: (base as CaaSApi_ImageMapAreaPoly).points,
+          points: (area as CaaSApi_ImageMapAreaPoly).points,
         } as ImageMapAreaPoly
       default:
         return null
@@ -486,24 +484,19 @@ export class CaaSMapper {
     } = imageMap
 
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
-    const [mappedAreas, mappedMedia] = await Promise.all([
-      Promise.all(
-        areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
-      ),
-      this.mapMedia(media, path),
-    ])
+    const mappedAreas = await Promise.all(
+      areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
+    )
 
-    const imageMapResolution: ImageMapResolution = {
-      width: resolution.width,
-      height: resolution.height,
-      uid: resolution.uid,
+    if (media) {
+      this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
+      this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
     }
 
     return {
       type: 'ImageMap',
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
-      resolution: imageMapResolution,
-      media: mappedMedia?.type === 'Image' ? mappedMedia : null,
+      media: null, // would be replaced while reference resolving
     }
   }
 
@@ -660,6 +653,14 @@ export class CaaSMapper {
       this.resolveReferencesPerProject(data),
       ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(data, remoteId)),
     ])
+
+    // force a single resolution for image map media
+    this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
+      update(data, [...path, 'resolutions'], (resolutions) =>
+        resolution in resolutions ? { [resolution]: resolutions[resolution] } : resolutions
+      )
+    })
+
     return data
   }
 

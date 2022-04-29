@@ -155,7 +155,7 @@ export class FSXARemoteApi implements FSXAApi {
    * @param additionalParams additional URL parameters
    * @param filters filters for CaaS documents - for more details read the [CaaS Platform documentation](https://docs.e-spirit.com/module/caas-platform/CaaS_Platform_Documentation_EN.html#use-of-filters)
    * @param page number of the page you want to access
-   * @param pagesize number of the resulting CaaS documents (x < 101)
+   * @param pagesize number of the resulting CaaS documents
    * @returns a string that contains the CaaS URL with the configured parameters as query parameters
    */
   buildCaaSUrl({
@@ -408,8 +408,8 @@ export class FSXARemoteApi implements FSXAApi {
    * ```
    * @param filters array of {@link QueryBuilderQuery QueryBuilderQuery} to filter you request
    * @param locale value must be ISO conform, both 'en' and 'en_US' are valid
-   * @param page optional the number of the page you will get results from `(default = 1)` (should be bigger than 0)
-   * @param pagesize optional the number of document entries you will get back `(default = 30)` (should be between 1-1000)
+   * @param page optional the number of the page you will get results from `(default = 1)` (must be greater than 0)
+   * @param pagesize optional the number of document entries you will get back `(default = 30)` (must be greater than 0)
    * @param additionalParams optional additional URL parameters
    * @param remoteProject optional name of the remote project
    * @param fetchOptions optional object to pass additional request options (Check {@link RequestInit RequestInit})
@@ -426,22 +426,16 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
   }: FetchByFilterParams): Promise<FetchResponse> {
-    if (pagesize < 1 || pagesize > 1000) {
-      this._logger.warn(
-        `[fetchByFilter] pagesize may not be below zero or above 1000 ! Using fallback of pagesize = 30`
-      )
+    if (pagesize < 1) {
+      this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
       pagesize = 30
     }
 
     if (page < 1) {
-      this._logger.warn(`[fetchByFilter] page may not be below zero! Using fallback of page = 1`)
+      this._logger.warn(`[fetchByFilter] page must be greater than zero! Using fallback of 1.`)
       page = 1
     }
 
-    if (page > 100) {
-      this._logger.warn(`[fetchByFilter] page may not be above 100! Using fallback of page = 100`)
-      page = 100
-    }
     const url = this.buildCaaSUrl({
       filters,
       additionalParams: {
@@ -464,6 +458,12 @@ export class FSXARemoteApi implements FSXAApi {
         case 401:
           throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
         default:
+          if (response.status === 400) {
+            try {
+              const { message } = await response.json()
+              this._logger.error(`[fetchByFilter] Bad Request: ${message}`)
+            } catch (ignore) {}
+          }
           throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
@@ -523,7 +523,7 @@ export class FSXARemoteApi implements FSXAApi {
     locale: string
     additionalParams?: Record<string, any>
     resolve?: string[]
-  }): Promise<any> {
+  }): Promise<ProjectProperties | null> {
     const response = await this.fetchByFilter({
       filters: [
         {
@@ -542,7 +542,7 @@ export class FSXARemoteApi implements FSXAApi {
       this._logger.info(
         `[fetchProjectProperties] Could not find response data. Project properties might not be defined.`
       )
-      return
+      return null
     }
 
     // We need to match keys from projectSettings to ElementIds later to insert them directly
@@ -559,7 +559,7 @@ export class FSXARemoteApi implements FSXAApi {
 
     if (idsToFetch.length > 100) {
       this._logger.warn(
-        'ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
+        '[fetchProjectProperties] ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
       )
     }
     const { items: fetchedElements } = await this.fetchByFilter({
@@ -575,8 +575,7 @@ export class FSXARemoteApi implements FSXAApi {
       projectPropertiesData[idToKeyMap[(element as any).id]] = (element as any).data
     })
 
-    // TODO: remove this Array Wrapping --> Breaking Change
-    return [projectProperties]
+    return projectProperties
   }
 
   /**
