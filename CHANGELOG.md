@@ -1,3 +1,10 @@
+## [9.0.1](https://github.com/e-Spirit/fsxa-api/compare/v9.0.0...v9.0.1) (2022-05-02)
+
+
+### Bug Fixes
+
+* **gcapage mapper:** add processing of children to gcapage mapping ([#97](https://github.com/e-Spirit/fsxa-api/issues/97)) ([a2076db](https://github.com/e-Spirit/fsxa-api/commit/a2076db145159b2881bce28ca0769f9cce3eac0a))
+
 # [9.0.0](https://github.com/e-Spirit/fsxa-api/compare/v8.4.0...v9.0.0) (2022-04-21)
 
 
