@@ -360,9 +360,12 @@ export class CaaSMapper {
         return this.mapContent2Section(content)
       case 'Section':
       case 'SectionReference':
+      case 'GCASection':
         return this.mapSection(content, path)
       default:
-        throw new Error(CaaSMapperErrors.UNKNOWN_BODY_CONTENT)
+        throw new Error(
+          CaaSMapperErrors.UNKNOWN_BODY_CONTENT + ` fsType=[${(content as any)?.fsType}]`
+        )
     }
   }
 
@@ -478,6 +481,11 @@ export class CaaSMapper {
       previewId: this.buildPreviewId(gcaPage.identifier),
       name: gcaPage.name,
       layout: gcaPage.template.uid,
+      children: await Promise.all(
+        gcaPage.children.map((child, index) =>
+          this.mapPageBody(child, [...path, 'children', index])
+        )
+      ),
       data: await this.mapDataEntries(gcaPage.formData, [...path, 'data']),
       meta: await this.mapDataEntries(gcaPage.metaFormData, [...path, 'meta']),
     }
