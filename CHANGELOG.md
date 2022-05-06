@@ -1,3 +1,10 @@
+## [9.0.2](https://github.com/e-Spirit/fsxa-api/compare/v9.0.1...v9.0.2) (2022-05-06)
+
+
+### Bug Fixes
+
+* remove prototype pollution in minimist sub-dependency ([be7376a](https://github.com/e-Spirit/fsxa-api/commit/be7376ada2b91219d4898b34dee22ffbdc8d0360))
+
 ## [9.0.1](https://github.com/e-Spirit/fsxa-api/compare/v9.0.0...v9.0.1) (2022-05-02)
 
 
