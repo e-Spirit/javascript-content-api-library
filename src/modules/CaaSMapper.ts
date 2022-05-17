@@ -165,7 +165,7 @@ export class CaaSMapper {
         const richTextElements: RichTextElement[] = entry.value
           ? await this.xmlParser.parse(entry.value)
           : []
-        return richTextElements
+        return this.mapLinksInRichTextElements(richTextElements, path)
       case 'CMS_INPUT_NUMBER':
       case 'CMS_INPUT_TEXT':
       case 'CMS_INPUT_TEXTAREA':
@@ -294,6 +294,35 @@ export class CaaSMapper {
       default:
         return entry
     }
+  }
+
+  async mapLinksInRichTextElements(richTextElements: RichTextElement[], path: NestedPath) {
+    await Promise.all(
+      richTextElements.map(async (richTextElement, index) => {
+        if (richTextElement.type === 'link') {
+          const link = {
+            type: 'Link',
+            template: richTextElement.data.type as string,
+            data: await this.mapDataEntries(richTextElement.data.data, [
+              ...path,
+              index,
+              'data',
+              'data',
+            ]),
+            meta: {},
+          }
+          richTextElement.data = link
+        }
+        if (Array.isArray(richTextElement.content)) {
+          richTextElement.content = await this.mapLinksInRichTextElements(richTextElement.content, [
+            ...path,
+            index,
+            'content',
+          ])
+        }
+      })
+    )
+    return richTextElements
   }
 
   _mapPermissionGroup(group: CaaSAPI_PermissionGroup): PermissionGroup {
