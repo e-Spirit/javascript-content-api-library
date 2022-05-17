@@ -1,3 +1,16 @@
+# [10.0.0](https://github.com/e-Spirit/fsxa-api/compare/v9.0.2...v10.0.0) (2022-05-17)
+
+
+### Features
+
+* **caas-mapper:** mapped links in doms ([#104](https://github.com/e-Spirit/fsxa-api/issues/104)) ([39a62eb](https://github.com/e-Spirit/fsxa-api/commit/39a62eb66933956e086adebe80f48ed64070ea75))
+
+
+### BREAKING CHANGES
+
+* **caas-mapper:** The structure of the CaasMapper output for Links in RichTextElements has been
+updated. Refer the CHANGELOG.md for more details.
+
 Links inside of RichtTextElements will now be mapped in the same way as the value of CMS_INPUT_LINK.
 
 Make sure your implementation is compliant with the new signature of `Link | Record<string, any>`.
