@@ -797,7 +797,7 @@ export interface MappedFilter {
 export interface RichTextElement {
   type: 'block' | 'text' | 'paragraph' | 'list' | 'listitem' | 'linebreak' | 'link' | string
   content: RichTextElement[] | string
-  data: Record<string, any>
+  data: Link | Record<string, any>
 }
 
 export type FetchNavigationParams = {

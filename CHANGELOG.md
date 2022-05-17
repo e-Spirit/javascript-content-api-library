@@ -1,3 +1,8 @@
+Links inside of RichtTextElements will now be mapped in the same way as the value of CMS_INPUT_LINK.
+
+Make sure your implementation is compliant with the new signature of `Link | Record<string, any>`.
+Please refer the fsxa-api [type-mapping](https://github.com/e-Spirit/fsxa-api#type-mapping).
+
 ## [9.0.2](https://github.com/e-Spirit/fsxa-api/compare/v9.0.1...v9.0.2) (2022-05-06)
 
 
