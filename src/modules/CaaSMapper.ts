@@ -668,9 +668,12 @@ export class CaaSMapper {
 
     // force a single resolution for image map media
     this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
-      update(data, [...path, 'resolutions'], (resolutions) =>
-        resolution in resolutions ? { [resolution]: resolutions[resolution] } : resolutions
-      )
+      update(data, [...path, 'resolutions'], (resolutions) => {
+        if (resolutions && resolution in resolutions) {
+          return { [resolution]: resolutions[resolution] }
+        }
+        return resolutions
+      })
     })
 
     return data
