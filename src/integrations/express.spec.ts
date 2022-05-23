@@ -128,29 +128,25 @@ describe('Express-Integration', () => {
       await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE' })
       expect(fetchNavigationSpy).toHaveBeenCalledTimes(1)
       expect(fetchNavigationSpy).toHaveBeenCalledWith({
-        authData: undefined,
         initialPath: '/',
         locale: 'de_DE',
       })
       await proxyApi.fetchNavigation({ initialPath: '', locale: 'de_DE' })
       expect(fetchNavigationSpy).toHaveBeenCalledTimes(2)
       expect(fetchNavigationSpy).toHaveBeenCalledWith({
-        authData: undefined,
         initialPath: '/',
         locale: 'de_DE',
       })
       await proxyApi.fetchNavigation({ initialPath: '/foobar', locale: 'de_DE' })
       expect(fetchNavigationSpy).toHaveBeenCalledTimes(3)
       expect(fetchNavigationSpy).toHaveBeenCalledWith({
-        authData: undefined,
         initialPath: '/foobar',
         locale: 'de_DE',
       })
       const json = Faker.datatype.json()
-      await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE', authData: json })
+      await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE' })
       expect(fetchNavigationSpy).toHaveBeenCalledTimes(4)
       expect(fetchNavigationSpy).toHaveBeenCalledWith({
-        authData: json,
         initialPath: '/',
         locale: 'de_DE',
       })

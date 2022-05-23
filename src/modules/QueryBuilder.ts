@@ -46,7 +46,7 @@ export class QueryBuilder {
 
   build(filter: QueryBuilderQuery): MappedFilter | null {
     // throw an error if no operator is specified
-    this.logger.log('[QueryBuilder.build]: Received Filter', filter)
+    this.logger.debug('[QueryBuilder.build]: Received Filter', filter)
     if (filter.operator == null) throw new Error(QueryBuilderErrors.MISSING_OPERATOR)
 
     switch (filter.operator) {

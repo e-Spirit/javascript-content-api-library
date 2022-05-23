@@ -1,8 +1,8 @@
 import Faker from 'faker'
 import { LogLevel } from '.'
-import { FSXAContentMode, NavigationFilter } from '..'
+import { FSXAContentMode } from '..'
 import { FSXAApiErrors } from '../enums'
-import { ComparisonFilter, FSXARemoteApiConfig, NavigationItem, QueryBuilderQuery } from '../types'
+import { NavigationItem, QueryBuilderQuery } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { ComparisonQueryOperatorEnum } from './QueryBuilder'
 
@@ -572,120 +572,5 @@ describe('FSXARemoteAPI', () => {
         },
       ],
     }
-    describe('navigationFilter', () => {
-      const navigationFilter = (route: NavigationItem): boolean =>
-        route.label === firstlabel || route.label === secondlabel
-      const config = { ...generateRandomConfig(), navigationFilter }
-      const remoteApi = new FSXARemoteApi(config)
-      let navigation: any
-      beforeAll(async () => {
-        fetchMock.mockResponseOnce(JSON.stringify(responseJSON))
-        navigation = await remoteApi.fetchNavigation({ locale: Faker.locale })
-      })
-      it('should not be the same json', () => {
-        expect(navigation).not.toEqual(responseJSON)
-      })
-      it('should have correctly filtered the idMap ', async () => {
-        const idMapLength = Object.keys(navigation.idMap).length
-        const firstEntry = navigation.idMap[firstId]
-        const secondEntry = navigation.idMap[secondId]
-        const thirdEntry = navigation.idMap[thirdId]
-        expect(idMapLength).toEqual(2)
-        expect(firstEntry).toBeTruthy()
-        expect(secondEntry).toBeTruthy()
-        expect(thirdEntry).toBeFalsy()
-      })
-      it('should have correctly filtered the seoRouteMap', async () => {
-        const idMapLength = Object.keys(navigation.seoRouteMap).length
-        const firstEntry = navigation.seoRouteMap[firstSeoRoute]
-        const secondEntry = navigation.seoRouteMap[secondSeoRoute]
-        const thirdEntry = navigation.seoRouteMap[thirdSeoRoute]
-
-        expect(idMapLength).toEqual(2)
-        expect(firstEntry).toBeTruthy()
-        expect(secondEntry).toBeTruthy()
-        expect(thirdEntry).toBeFalsy()
-      })
-      it('should have correctly filtered the structure', async () => {
-        const idMapLength = navigation.structure.length
-        const firstEntry = navigation.structure.find((item: any) => item.id === firstId)
-        const secondEntry = firstEntry.children.find((item: any) => item.id === secondId)
-        const thirdEntry = navigation.structure.find((item: any) => item.id === thirdId)
-
-        expect(idMapLength).toEqual(1)
-        expect(firstEntry).toBeTruthy()
-        expect(secondEntry).toBeTruthy()
-        expect(thirdEntry).toBeFalsy()
-      })
-    })
-    describe('preFilterFetch', () => {
-      it('should call preFilterFetch before calling the navigation filter with its data', async () => {
-        const preFilterFetchData = { filterCriteria: [] }
-        fetchMock.mockResponseOnce(
-          JSON.stringify({
-            idMap: {
-              home: { id: 'id-home' },
-              about: { id: 'id-about' },
-            },
-            seoRouteMap: {},
-            structure: [],
-          })
-        )
-        const navigationFilter = jest.fn()
-        const preFilterFetch = jest.fn().mockImplementation(async () => {
-          expect(navigationFilter).not.toHaveBeenCalled()
-          return preFilterFetchData
-        })
-        const config = {
-          ...generateRandomConfig(),
-          navigationFilter,
-          preFilterFetch,
-        } as FSXARemoteApiConfig
-        const remoteApi = new FSXARemoteApi(config)
-        const authData = Faker.datatype.json()
-        await remoteApi.fetchNavigation({
-          locale: Faker.locale,
-          authData,
-        })
-        expect(preFilterFetch).toHaveBeenCalled()
-        expect(navigationFilter).toHaveBeenCalledWith(
-          expect.anything(),
-          expect.anything(),
-          preFilterFetchData,
-          expect.anything()
-        )
-      })
-
-      it('should provide data which is accessible in navigationFilter', async () => {
-        const json = {
-          structure: [],
-          seoRouteMap: {},
-          idMap: {
-            1: {},
-          },
-        }
-
-        const randomJson = Faker.datatype.json()
-        const navigationFilter: NavigationFilter = jest.fn().mockReturnValue(true)
-        const preFilterFetch = (data: any) => Promise.resolve(data)
-        const config = {
-          ...generateRandomConfig(),
-          navigationFilter,
-          preFilterFetch,
-        } as FSXARemoteApiConfig
-        fetchMock.mockResponseOnce(JSON.stringify(json))
-        const remoteApi = new FSXARemoteApi(config)
-        await remoteApi.fetchNavigation({
-          locale: Faker.locale,
-          authData: randomJson,
-        })
-        expect(navigationFilter).toHaveBeenCalledWith(
-          expect.anything(),
-          expect.anything(),
-          expect.stringContaining(randomJson),
-          expect.anything()
-        )
-      })
-    })
   })
 })

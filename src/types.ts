@@ -1,5 +1,5 @@
 import { FSXAContentMode, ImageMapAreaType } from './enums'
-import { FSXARemoteApi, LogLevel } from './modules'
+import { FSXARemoteApi, FSXAProxyApi, LogLevel } from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
@@ -283,6 +283,7 @@ export interface PermissionActivity extends CaaSAPI_PermissionActivity {
 }
 
 export interface Permission extends CaaSApi_CMSInputPermission {
+  type: string
   value: PermissionActivity[]
 }
 
@@ -681,6 +682,8 @@ export type CustomMapper = (
   }
 ) => Promise<any>
 
+export type CaasItem = Page | GCAPage | Dataset | Image | ProjectProperties
+
 export interface FSXAConfiguration {
   apiKey: string
   navigationService: string
@@ -804,7 +807,7 @@ export type FetchNavigationParams = {
   locale: string
   initialPath?: string
   fetchOptions?: RequestInit
-  authData?: any
+  filterContext?: unknown
 }
 
 export type FetchByFilterParams = {
@@ -815,6 +818,7 @@ export type FetchByFilterParams = {
   additionalParams?: Record<'keys' | string, any>
   remoteProject?: string
   fetchOptions?: RequestInit
+  filterContext?: unknown
 }
 
 export type FetchElementParams = {
@@ -823,6 +827,7 @@ export type FetchElementParams = {
   additionalParams?: Record<'keys' | string, any>
   remoteProject?: string
   fetchOptions?: RequestInit
+  filterContext?: unknown
 }
 
 export type FetchProjectPropertiesParams = {
@@ -840,19 +845,33 @@ export interface AppContext<T = unknown> {
   fsxaApi?: FSXAApi
 }
 
-export type NavigationFilter<A = unknown, P = unknown, C = unknown> = (
-  route: NavigationItem,
-  authData: A,
-  preFilterFetchData: P,
-  context?: AppContext<C>
-) => boolean
-
-export type PreFilterFetch<T = unknown, C = unknown> = (
-  authData?: unknown,
-  context?: AppContext<C>
-) => Promise<T>
-
 export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
+
+export interface CaasItemFilterParams<FilterContextType> {
+  caasItems: (CaasItem | any)[]
+  filterContext?: FilterContextType
+}
+export type CaasItemFilter<FilterContextType = unknown> = (
+  params: CaasItemFilterParams<FilterContextType>
+) => Promise<(CaasItem | any)[]> | (CaasItem | any)[]
+
+export interface NavigationItemFilterParams<FilterContextType = unknown> {
+  navigationItems: NavigationItem[]
+  filterContext?: FilterContextType
+}
+export type NavigationItemFilter<FilterContextType = unknown> = (
+  params: NavigationItemFilterParams<FilterContextType>
+) => Promise<NavigationItem[]> | NavigationItem[]
+
+/**
+ * Options for filtering data in the {@link FSXARemoteApi FSXARemoteApi}
+ *
+ * @experimental
+ */
+export interface RemoteApiFilterOptions<FilterContextType = unknown> {
+  navigationItemFilter?: NavigationItemFilter<FilterContextType>
+  caasItemFilter?: CaasItemFilter<FilterContextType>
+}
 
 export type FSXARemoteApiConfig = {
   apikey: string
@@ -864,9 +883,18 @@ export type FSXARemoteApiConfig = {
   remotes?: RemoteProjectConfiguration
   logLevel?: LogLevel
   customMapper?: CustomMapper
-  navigationFilter?: NavigationFilter
-  preFilterFetch?: PreFilterFetch
+  filterOptions?: RemoteApiFilterOptions
   enableEventStream?: boolean
+}
+
+export type FilterContextProvider = () => unknown | null
+/**
+ * Options for filtering data in the {@link FSXAProxyApi FSXAProxyApi}
+ *
+ * @experimental
+ */
+export interface ProxyApiFilterOptions {
+  filterContextProvider?: FilterContextProvider
 }
 
 export interface FSXAProxyApiConfig {

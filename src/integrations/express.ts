@@ -7,6 +7,7 @@ import {
   FetchByFilterBody,
   FetchNavigationRouteBody,
   FetchElementRouteBody,
+  FetchProjectPropertiesBody,
 } from '../routes'
 import { FSXARemoteApi, Logger, eventStreamHandler } from './../modules'
 import { QueryBuilderQuery } from '../types'
@@ -27,7 +28,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   router.post(
     [FETCH_ELEMENT_ROUTE, FSXAProxyRoutes.FETCH_ELEMENT_ROUTE],
     async (req: express.Request<any, any, FetchElementRouteBody>, res) => {
-      logger.info('requesting route: ', FETCH_ELEMENT_ROUTE, req.body)
+      logger.info('Received POST on route: ', FETCH_ELEMENT_ROUTE)
+      logger.debug('POST request body', req.body)
+
       if (!req.body || req.body.locale == null) {
         logger.error(FETCH_ELEMENT_ROUTE, 'missing locale', req.body)
         return res.json({
@@ -35,14 +38,13 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         })
       }
       try {
-        logger.info('trying to resolve response')
         const response = await api.fetchElement({
           id: req.body.id,
           locale: req.body.locale,
           additionalParams: req.body?.additionalParams,
           remoteProject: req.body?.remote,
+          filterContext: req.body?.filterContext,
         })
-        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
         logger.error('could not fetch element: ', err.message)
@@ -62,7 +64,8 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   router.post(
     [FETCH_NAVIGATION_ROUTE, FSXAProxyRoutes.FETCH_NAVIGATION_ROUTE],
     async (req: express.Request<any, any, FetchNavigationRouteBody>, res) => {
-      logger.info('fetchNavigation', 'req', { body: req.body })
+      logger.info('Received POST on route', FETCH_NAVIGATION_ROUTE)
+      logger.debug('POST request body', req.body)
 
       if (req.body.locale == null) {
         logger.error(FETCH_NAVIGATION_ROUTE, 'missing locale', req.body)
@@ -70,17 +73,15 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
       }
-      logger.info('trying to resolve response')
       try {
         const response = await api.fetchNavigation({
           initialPath: req.body.initialPath || '/',
           locale: req.body.locale,
-          authData: req.body.authData,
+          filterContext: req.body.filterContext,
         })
-        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
-        logger.error('was not able to fetch Navigation: ', err.message)
+        logger.error('was not able to fetch Navigation: ' + err.message)
         if (
           err.message === FSXAApiErrors.NOT_FOUND ||
           err.message === FSXAApiErrors.UNKNOWN_REMOTE
@@ -95,7 +96,8 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   router.post(
     [FETCH_BY_FILTER_ROUTE, FSXAProxyRoutes.FETCH_BY_FILTER_ROUTE],
     async (req: express.Request<any, any, FetchByFilterBody>, res) => {
-      logger.info('post on Route:', FETCH_BY_FILTER_ROUTE)
+      logger.info('Received POST on route', FETCH_BY_FILTER_ROUTE)
+      logger.debug('POST request body', req.body)
       if (!req.body || req.body.locale == null) {
         logger.error(FETCH_BY_FILTER_ROUTE, 'missing locale', req.body)
         return res.json({
@@ -104,7 +106,6 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
 
       try {
-        logger.info('trying to resolve response')
         const response = await api.fetchByFilter({
           filters: req.body.filter || [],
           locale: req.body.locale,
@@ -112,8 +113,8 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           pagesize: req.body.pagesize ? req.body.pagesize : undefined,
           additionalParams: req.body.additionalParams || {},
           remoteProject: req.body.remote ? req.body.remote : undefined,
+          filterContext: req.body.filterContext,
         })
-        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch by filter: ', err.message)
@@ -129,8 +130,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   )
   router.post(
     FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
-    async (req: express.Request<any, any, FetchByFilterBody>, res) => {
-      logger.info('posting on route: ', FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE)
+    async (req: express.Request<any, any, FetchProjectPropertiesBody>, res) => {
+      logger.info('Received POST on route', FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE)
+      logger.debug('POST request body', req.body)
       if (!req.body || req.body.locale == null) {
         logger.error(FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE, 'missing locale', req.body)
         return res.json({
@@ -139,11 +141,12 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       }
 
       try {
-        logger.info('trying to resolve response')
         const response = await api.fetchProjectProperties({
           locale: req.body.locale,
+          additionalParams: req.body.additionalParams,
+          resolve: req.body.resolver,
+          filterContext: req.body.filterContext,
         })
-        logger.debug('response: ', response)
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch project properties', err.message)

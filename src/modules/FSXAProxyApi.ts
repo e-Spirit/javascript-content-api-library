@@ -10,12 +10,13 @@ import {
   FetchElementParams,
   FSXAApi,
   ConnectEventStreamParams,
+  ProxyApiFilterOptions,
+  FilterContextProvider,
   ProjectProperties,
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
 import { FetchResponse } from '..'
-import { locale } from 'faker'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -36,6 +37,7 @@ export class FSXAProxyApi implements FSXAApi {
   }
   private _logger: Logger
   private _enableEventStream: boolean = false
+  private _filterContextProvider?: FilterContextProvider
 
   /**
    * This method requests the current state of baseUrl
@@ -60,12 +62,12 @@ export class FSXAProxyApi implements FSXAApi {
    * Creates a new instance with the connection to the FSXARemoteAPI
    * @param baseUrl specifies the URL to communicate with
    * @param logLevel specifies the restrictions of logs which will be displayed
-   * @param enableEventStream enables the CaaS event stream
+   * @param filterOptions optional {@link ProxyApiFilterOptions ProxyApiFilterOptions} (EXPERIMENTAL)
    */
-  constructor(baseUrl: string, logLevel = LogLevel.ERROR) {
+  constructor(baseUrl: string, logLevel = LogLevel.ERROR, filterOptions?: ProxyApiFilterOptions) {
     this.baseUrl = baseUrl
     this._logger = new Logger(logLevel, 'FSXAProxyApi')
-
+    this._filterContextProvider = filterOptions?.filterContextProvider
     this._logger.debug('FSXAProxyApi created', { baseUrl })
   }
 
@@ -85,8 +87,17 @@ export class FSXAProxyApi implements FSXAApi {
     remoteProject,
     fetchOptions,
   }: FetchElementParams): Promise<T> {
-    const body = { id, locale, additionalParams, remote: remoteProject }
-    this._logger.info('fetchElement', 'trying to fetch body', body)
+    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
+
+    const body = {
+      id,
+      locale,
+      additionalParams,
+      remote: remoteProject,
+      filterContext,
+    }
+    this._logger.debug('fetchElement', 'trying to fetch body', body)
+
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_ELEMENT_ROUTE,
       options: {
@@ -149,6 +160,8 @@ export class FSXAProxyApi implements FSXAApi {
       page = 1
     }
 
+    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
+
     const body = {
       filter: filters,
       locale,
@@ -159,6 +172,7 @@ export class FSXAProxyApi implements FSXAApi {
         rep: 'hal',
       },
       remote: remoteProject,
+      filterContext,
     }
     this._logger.debug('fetchByFilter', 'trying to fetch with body', body)
     const response = await this.fetch({
@@ -198,16 +212,20 @@ export class FSXAProxyApi implements FSXAApi {
     initialPath,
     locale,
     fetchOptions,
-    authData,
   }: FetchNavigationParams): Promise<NavigationData | null> {
-    this._logger.info('fetchNavigation', 'start', { locale, initialPath })
+    this._logger.debug('fetchNavigation', 'start', {
+      locale,
+      initialPath,
+      filterContextProvider: this._filterContextProvider,
+    })
 
+    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
     const body = {
       initialPath,
       locale,
-      authData,
+      filterContext,
     }
-    this._logger.info('fetchNavigation', 'body', { body })
+    this._logger.debug('fetchNavigation', 'body', { body })
 
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_NAVIGATION_ROUTE,
@@ -218,7 +236,7 @@ export class FSXAProxyApi implements FSXAApi {
         ...fetchOptions,
       },
     })
-    this._logger.info('fetchNavigation', 'response', {
+    this._logger.debug('fetchNavigation', 'response', {
       url: response.url,
       status: response.status,
     })
@@ -246,12 +264,15 @@ export class FSXAProxyApi implements FSXAApi {
     resolver = ['GCAPage'],
     fetchOptions,
   }: FetchProjectPropertiesParams): Promise<ProjectProperties | null> {
-    this._logger.info('fetchProjectProperties', 'start', { locale })
+    this._logger.debug('fetchProjectProperties', 'start', { locale })
+
+    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
     const body = {
       locale,
       resolver,
+      filterContext,
     }
-    this._logger.info('fetchProjectProperties', 'trying to fetch body', body)
+    this._logger.debug('fetchProjectProperties', 'trying to fetch body', body)
 
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
@@ -262,7 +283,7 @@ export class FSXAProxyApi implements FSXAApi {
         ...fetchOptions,
       },
     })
-    this._logger.info('fetchProjectProperties', 'response', {
+    this._logger.debug('fetchProjectProperties', 'response', {
       url: response.url,
       status: response.status,
     })
@@ -307,7 +328,7 @@ export class FSXAProxyApi implements FSXAApi {
     if (options?.body && typeof options.body === 'object') {
       options.body = JSON.stringify(options.body)
     }
-    this._logger.info('fetch', 'start', {
+    this._logger.debug('fetch', 'start', {
       baseUrl: this.baseUrl,
       url,
       options,

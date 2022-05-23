@@ -10,7 +10,7 @@ export const getFetchElementRoute = (id: string) => `${FETCH_ELEMENT_ROUTE.repla
 export interface FetchNavigationRouteBody {
   initialPath?: string
   locale?: string
-  authData?: unknown
+  filterContext?: unknown
 }
 
 export interface FetchElementRouteBody {
@@ -18,6 +18,7 @@ export interface FetchElementRouteBody {
   locale: string
   additionalParams?: Record<string, unknown>
   remote?: string
+  filterContext?: unknown
 }
 
 export interface FetchByFilterBody {
@@ -27,4 +28,12 @@ export interface FetchByFilterBody {
   pagesize?: number
   additionalParams: Record<string, unknown>
   remote: string
+  filterContext?: unknown
+}
+
+export interface FetchProjectPropertiesBody {
+  locale: string
+  additionalParams: Record<string, unknown>
+  resolver?: string[]
+  filterContext?: unknown
 }
