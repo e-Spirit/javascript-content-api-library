@@ -1,3 +1,10 @@
+# [10.1.0](https://github.com/e-Spirit/fsxa-api/compare/v10.0.0...v10.1.0) (2022-05-23)
+
+
+### Features
+
+* **filtering:** add support for filtering CaaS and navigation items ([#99](https://github.com/e-Spirit/fsxa-api/issues/99)) ([5e350a7](https://github.com/e-Spirit/fsxa-api/commit/5e350a7bd8ebf369d52b645a569baf1350fb5eca))
+
 # [10.0.0](https://github.com/e-Spirit/fsxa-api/compare/v9.0.2...v10.0.0) (2022-05-17)
 
 
