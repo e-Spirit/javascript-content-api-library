@@ -45,9 +45,10 @@ import {
   Reference,
   RichTextElement,
   Section,
+  Media,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, set, update } from 'lodash'
+import { chunk, has, set, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -495,15 +496,17 @@ export class CaaSMapper {
       areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
     )
 
+    let image = null
     if (media) {
-      this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
+      image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
       this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
     }
 
     return {
       type: 'ImageMap',
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
-      media: null, // would be replaced while reference resolving
+      // image is just a "fake" image, it's a string that is used for an unresolved reference (see also TNG-1169)
+      media: image as unknown as Image,
     }
   }
 
@@ -668,12 +671,15 @@ export class CaaSMapper {
 
     // force a single resolution for image map media
     this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
-      update(data, [...path, 'resolutions'], (resolutions) => {
-        if (resolutions && resolution in resolutions) {
-          return { [resolution]: resolutions[resolution] }
-        }
-        return resolutions
-      })
+      // the path only exist on resolved imagemaps (s. TNG-1169)
+      if (has(data, [...path, 'resolutions'])) {
+        update(data, [...path, 'resolutions'], (resolutions) => {
+          if (resolution in resolutions) {
+            return { [resolution]: resolutions[resolution] }
+          }
+          return resolutions
+        })
+      }
     })
 
     return data
