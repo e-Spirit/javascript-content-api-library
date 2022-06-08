@@ -42,7 +42,7 @@ import {
 } from '../testutils/createDataEntry'
 import { createProjectProperties } from '../testutils/createProjectProperties'
 import { createGCAPage } from '../testutils/createGCAPage'
-import { createDataset } from '../testutils/createDataset'
+import { createDataset, createDatasetReference } from '../testutils/createDataset'
 import { createMediaPicture } from '../testutils/createMediaPicture'
 import { createMediaFile } from '../testutils/createMediaFile'
 import { createImageMap } from '../testutils/createImageMap'
@@ -559,19 +559,7 @@ describe('CaaSMapper', () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         mapper.registerReferencedItem = jest.fn().mockReturnValue('[REF]')
-        const entry: CaaSApi_FSDataset = {
-          name: faker.random.word(),
-          value: {
-            fsType: 'DatasetReference',
-            target: {
-              fsType: 'Dataset',
-              schema: 'some-schema',
-              identifier: 'some-identifier',
-              entityType: 'some-entity-type',
-            },
-          },
-          fsType: 'FS_DATASET',
-        }
+        const entry = createDatasetReference()
         await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual('[REF]')
         expect(mapper.registerReferencedItem).toHaveBeenCalled()
       })
@@ -1223,6 +1211,7 @@ describe('CaaSMapper', () => {
       await mapper.mapElementResponse(element)
       expect(mapper.mapDataset).toHaveBeenCalledWith(element, [])
       expect(mapper.resolveAllReferences).toHaveBeenCalled()
+      expect(mapper.parentIdentifiers).toEqual([element.identifier])
     })
     it('should call mapPageRef on pageRef elements', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1232,6 +1221,7 @@ describe('CaaSMapper', () => {
       await mapper.mapElementResponse(element)
       expect(mapper.mapPageRef).toHaveBeenCalledWith(element, [])
       expect(mapper.resolveAllReferences).toHaveBeenCalled()
+      expect(mapper.parentIdentifiers).toEqual([element.identifier])
     })
     it('should call mapMedia on media elements', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1250,6 +1240,7 @@ describe('CaaSMapper', () => {
       await mapper.mapElementResponse(element)
       expect(mapper.mapGCAPage).toHaveBeenCalledWith(element, [])
       expect(mapper.resolveAllReferences).toHaveBeenCalled()
+      expect(mapper.parentIdentifiers).toEqual([element.identifier])
     })
     it('should return unknown elements as-is', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1258,6 +1249,7 @@ describe('CaaSMapper', () => {
       ;(element.fsType as string) = 'unknown-element'
       await expect(mapper.mapElementResponse(element)).resolves.toBe(element)
       expect(mapper.resolveAllReferences).not.toHaveBeenCalled()
+      expect(mapper.parentIdentifiers).toEqual([element.identifier])
     })
   })
 
@@ -1293,6 +1285,32 @@ describe('CaaSMapper', () => {
       const data = {}
       await expect(mapper.resolveAllReferences(data)).resolves.toBe(data)
     })
+    it('should not resolve parent references', async () => {
+      const api = createApi()
+      const mapper = new CaaSMapper(api, 'de', { parentIdentifiers: ['parent-id'] }, createLogger())
+
+      const parentDatasetRef = createDatasetReference('parent-id')
+      const anotherDatasetRef = createDatasetReference('another-id')
+      const anotherDataset = await mapper.mapDataset(createDataset('another-id'))
+
+      api.fetchByFilter = jest
+        .fn()
+        .mockImplementation(async () => createFetchResponse([anotherDataset]))
+
+      const pageRef = createPageRef()
+      pageRef.page.formData = {
+        parent: parentDatasetRef,
+        another: anotherDatasetRef,
+      }
+
+      const page = await mapper.mapPageRef(pageRef)
+      const result = await mapper.resolveAllReferences(page)
+
+      expect(result.data.another).toHaveProperty('entityType')
+
+      // this needs to fail with TNG-1169
+      expect(result.data.parent).toEqual('[REFERENCED-ITEM-parent-id]')
+    })
   })
 
   describe('resolveReferencesPerProject', () => {
@@ -1305,6 +1323,20 @@ describe('CaaSMapper', () => {
       const data = {}
       await mapper.resolveReferencesPerProject(data)
       expect(api.fetchByFilter).toHaveBeenCalled()
+    })
+    it('should not fetch parent references', async () => {
+      const api = createApi()
+      api.fetchByFilter = jest.fn().mockImplementation(async () => [])
+      const mapper = new CaaSMapper(api, 'de', { parentIdentifiers: ['parent-id'] }, createLogger())
+      mapper.registerReferencedItem('another-id', ['root', 'another-id'])
+      mapper.registerReferencedItem('parent-id', ['root', 'parent-id'])
+      const data = {}
+      await mapper.resolveReferencesPerProject(data)
+      expect(api.fetchByFilter.mock.calls.length).toBe(1)
+      expect(api.fetchByFilter.mock.calls[0][0].parentIdentifiers).toEqual(['parent-id'])
+      expect(api.fetchByFilter.mock.calls[0][0].filters).toEqual([
+        { operator: '$in', value: ['another-id'], field: 'identifier' },
+      ])
     })
     it('should resolve remote media references', async () => {
       const api = createApi()
