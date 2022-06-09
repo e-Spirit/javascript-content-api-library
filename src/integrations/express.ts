@@ -111,6 +111,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           locale: req.body.locale,
           page: req.body.page ? req.body.page : undefined,
           pagesize: req.body.pagesize ? req.body.pagesize : undefined,
+          sort: req.body.sort ? req.body.sort : [],
           additionalParams: req.body.additionalParams || {},
           remoteProject: req.body.remote ? req.body.remote : undefined,
           filterContext: req.body.filterContext,

@@ -1,4 +1,4 @@
-import { QueryBuilderQuery } from './types'
+import { QueryBuilderQuery, SortParams } from './types'
 
 export const FETCH_ELEMENT_ROUTE = '/elements/:id'
 export const FETCH_NAVIGATION_ROUTE = '/navigation'
@@ -26,6 +26,7 @@ export interface FetchByFilterBody {
   filter: QueryBuilderQuery[]
   page?: number
   pagesize?: number
+  sort?: SortParams[]
   additionalParams: Record<string, unknown>
   remote: string
   filterContext?: unknown

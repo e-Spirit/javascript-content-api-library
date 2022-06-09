@@ -810,6 +810,11 @@ export type FetchNavigationParams = {
   filterContext?: unknown
 }
 
+export type SortParams = {
+  name: string
+  order?: 'asc' | 'desc'
+}
+
 export type FetchByFilterParams = {
   filters: QueryBuilderQuery[]
   locale: string
@@ -820,6 +825,7 @@ export type FetchByFilterParams = {
   fetchOptions?: RequestInit
   filterContext?: unknown
   parentIdentifiers?: string[]
+  sort?: SortParams[]
 }
 
 export type FetchElementParams = {

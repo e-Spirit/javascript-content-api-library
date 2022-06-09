@@ -53,7 +53,7 @@ In this section all available methods will be explained using examples.
 To be able to use the FSXA-API, a new object must be created.
 How you create the object depends on how you want to use the FSXA-API.
 
-If you want to use the information provided by the CaaS in your frontend, you have to use the `proxy` mode.  
+If you want to use the information provided by the CaaS in your frontend, you have to use the `proxy` mode.
 If you want to use it in your server, you have to use the `remote` mode.
 
 However, to have a fully running application, we recommend using the FSXA-API in your server as well as in your frontend.
@@ -309,7 +309,7 @@ fsxaApi.fetchElement('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'en-EN', {
 Returns the matching CaaS data entries.
 
 Expects as input parameter an array of filters and a language abbreviation.
-Optionally a page number, page size and additional parameters can be passed.
+Optionally a page number, page size, sort and additional parameters can be passed.
 <br />
 Optionally, a remoteProject can be passed. If one is passed, the element will be fetched from this project instead of the default one.
 
@@ -325,23 +325,27 @@ One filter object must have a:
 
 [More information to the filters](#filter)
 
-In this example we search for all elements with the `fsType` equals `Example`. We want the `2nd` page with a maximum of `50` entries. However, we do not want the `identifier` to appear:
+In this example we search for all elements with the `fsType` equals `Example`. We want the `2nd` page with a maximum of `50` entries. The results should be sorted by fsType descending. However, we do not want the `identifier` to appear:
 
 ```typescript
-fsxaApi.fetchByFilter(
-  [
-    {
-      field: 'fsType',
-      operator: ComparisonQueryOperatorEnum.EQUALS,
-      value: 'Example',
-    },
-  ],
-  'en',
-  2,
-  50,
-  { keys: { identifier: 0 } }
+fsxaApi.fetchByFilter({
+    filters: [
+      {
+        field: 'fsType',
+        operator: ComparisonQueryOperatorEnum.EQUALS,
+        value: 'Example',
+      },
+    ],
+    locale: 'en',
+    page: 2,
+    pagesize: 50,
+    additionalParams: { keys: { identifier: 0 } },
+    sort: [{name:'fsType', order:'desc'}],
+  }
 )
 ```
+
+The default sorting is by the id descending. Multisort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
 
 ### fetchProjectProperties
 

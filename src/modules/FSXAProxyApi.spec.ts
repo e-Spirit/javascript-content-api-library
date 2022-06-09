@@ -1,5 +1,5 @@
 import { ComparisonQueryOperatorEnum } from './QueryBuilder'
-import { QueryBuilderQuery } from './../types'
+import { QueryBuilderQuery, SortParams } from './../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { FSXAProxyApi } from './FSXAProxyApi'
 import Faker from 'faker'
@@ -117,6 +117,7 @@ describe('FSXAProxyAPI', () => {
 
       const page = 2
       const pagesize = 10
+      const sort = [{ name: 'type', order: 'desc' }] as SortParams[]
       const additionalParams = { keys: { identifier: 1 } }
       const remoteProject = 'remote'
       const fetchOptions = { referrer: '' } as RequestInit
@@ -126,6 +127,7 @@ describe('FSXAProxyAPI', () => {
         locale,
         page,
         pagesize,
+        sort,
         additionalParams,
         remoteProject,
         fetchOptions,
@@ -140,6 +142,7 @@ describe('FSXAProxyAPI', () => {
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.page).toEqual(page)
       expect(actualBody.pagesize).toEqual(pagesize)
+      expect(actualBody.sort).toEqual(sort)
       expect(actualBody.additionalParams).toStrictEqual({
         ...additionalParams,
         rep: 'hal',

@@ -131,6 +131,7 @@ export class FSXAProxyApi implements FSXAApi {
    * @param additionalParams specifies additional parameters for the fetching process
    * @param remoteProject specifies the remote project for the fetching process
    * @param fetchOptions specifies options in the fetching process
+   * @param sort specifies the fields to sort. Default is by id descending. Multiple sortParams are possible. First parameter is prioritized over subsequent.
    * @returns a JSON from the fetched elements
    *
    * @example
@@ -146,6 +147,7 @@ export class FSXAProxyApi implements FSXAApi {
     additionalParams = {},
     remoteProject,
     fetchOptions,
+    sort = [],
   }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(
@@ -167,6 +169,7 @@ export class FSXAProxyApi implements FSXAApi {
       locale,
       page,
       pagesize,
+      sort,
       additionalParams: {
         ...additionalParams,
         rep: 'hal',

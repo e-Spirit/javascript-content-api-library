@@ -2,7 +2,7 @@ import Faker from 'faker'
 import { LogLevel } from '.'
 import { FSXAContentMode } from '..'
 import { FSXAApiErrors } from '../enums'
-import { NavigationItem, QueryBuilderQuery } from '../types'
+import { NavigationItem, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { ComparisonQueryOperatorEnum } from './QueryBuilder'
 
@@ -389,6 +389,17 @@ describe('FSXARemoteAPI', () => {
       remoteApi.fetchByFilter({ filters, locale })
       const actualURL = fetchMock.mock.calls[0][0]
       const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter={"${filterField}":{"$eq":"${filterValue}"}}&filter={"locale.language":{"$eq":"${localeLanguage}"}}&filter={"locale.country":{"$eq":"${localeCountry}"}}&page=1&pagesize=30`
+      expect(actualURL).toBe(encodeURI(expectedURL))
+    })
+    it('should trigger the fetch method with the sort param', () => {
+      fetchMock.mockResponseOnce(JSON.stringify(json))
+      const sort = [
+        { name: 'displayName', order: 'asc' },
+        { name: 'template.name', order: 'desc' },
+      ] as SortParams[]
+      remoteApi.fetchByFilter({ filters, locale, sort })
+      const actualURL = fetchMock.mock.calls[0][0]
+      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter={"${filterField}":{"$eq":"${filterValue}"}}&filter={"locale.language":{"$eq":"${localeLanguage}"}}&filter={"locale.country":{"$eq":"${localeCountry}"}}&page=1&pagesize=30&sort=${sort[0].name}&sort=-${sort[1].name}`
       expect(actualURL).toBe(encodeURI(expectedURL))
     })
     it('should throw an unauthorized error when the response is 401', () => {

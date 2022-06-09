@@ -15,6 +15,7 @@ import {
   RemoteApiFilterOptions,
   CaasItem,
   RemoteProjectConfiguration,
+  SortParams,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
@@ -32,6 +33,7 @@ type buildCaaSUrlParams = {
   locale?: string
   page?: number
   pagesize?: number
+  sort?: SortParams[]
   additionalParams?: Record<'keys' | string, any>
   remoteProject?: string
   id?: string
@@ -150,6 +152,7 @@ export class FSXARemoteApi implements FSXAApi {
     filters,
     page,
     pagesize,
+    sort,
   }: buildCaaSUrlParams = {}) {
     let project = this.projectID
     if (remoteProject) {
@@ -201,6 +204,11 @@ export class FSXARemoteApi implements FSXAApi {
 
     if (pagesize) {
       params.push('pagesize=' + pagesize)
+    }
+    if (sort && sort.length) {
+      sort.forEach(({ name, order }: SortParams) => {
+        params.push(`sort=${order === 'desc' ? '-' : ''}${name}`)
+      })
     }
 
     if (params.length) {
@@ -415,6 +423,7 @@ export class FSXARemoteApi implements FSXAApi {
    * @param locale value must be ISO conform, both 'en' and 'en_US' are valid
    * @param page optional the number of the page you will get results from `(default = 1)` (must be greater than 0)
    * @param pagesize optional the number of document entries you will get back `(default = 30)` (must be greater than 0)
+   * @param sort optional the parameter to sort the results by `(default = [])`.
    * @param additionalParams optional additional URL parameters
    * @param remoteProject optional name of the remote project
    * @param fetchOptions optional object to pass additional request options (Check {@link RequestInit RequestInit})
@@ -432,6 +441,7 @@ export class FSXARemoteApi implements FSXAApi {
     fetchOptions,
     filterContext,
     parentIdentifiers = [],
+    sort = [],
   }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
@@ -453,6 +463,7 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       page,
       pagesize,
+      sort,
     })
     const encodedUrl = encodeURI(url)
     const response = await fetch(encodedUrl, {
