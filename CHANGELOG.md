@@ -1,3 +1,10 @@
+## [10.1.1](https://github.com/e-Spirit/fsxa-api/compare/v10.1.0...v10.1.1) (2022-06-10)
+
+
+### Bug Fixes
+
+* **references:** suppresses reference loops ([#106](https://github.com/e-Spirit/fsxa-api/issues/106)) ([b24e927](https://github.com/e-Spirit/fsxa-api/commit/b24e927ff35c245d1dc84993f1d3c7229a076798))
+
 # [10.1.0](https://github.com/e-Spirit/fsxa-api/compare/v10.0.0...v10.1.0) (2022-05-23)
 
 
