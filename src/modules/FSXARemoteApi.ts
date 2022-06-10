@@ -431,6 +431,7 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
     filterContext,
+    parentIdentifiers = [],
   }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
@@ -478,6 +479,7 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       {
         customMapper: this._customMapper,
+        parentIdentifiers,
       },
       new Logger(this._logLevel, 'CaaSMapper')
     )

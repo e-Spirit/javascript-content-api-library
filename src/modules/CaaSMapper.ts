@@ -45,9 +45,10 @@ import {
   Reference,
   RichTextElement,
   Section,
+  Media,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, set, update } from 'lodash'
+import { chunk, has, set, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -70,18 +71,21 @@ export class CaaSMapper {
   locale: string
   xmlParser: XMLParser
   customMapper?: CustomMapper
+  parentIdentifiers: string[]
 
   constructor(
     api: FSXARemoteApi,
     locale: string,
     utils: {
       customMapper?: CustomMapper
+      parentIdentifiers?: string[]
     },
     logger: Logger
   ) {
     this.api = api
     this.locale = locale
     this.customMapper = utils.customMapper
+    this.parentIdentifiers = utils.parentIdentifiers ?? []
     this.xmlParser = new XMLParser(logger)
     Object.keys(this.api.remotes || {}).forEach(
       (item: string) => (this._remoteReferences[item] = {})
@@ -492,15 +496,17 @@ export class CaaSMapper {
       areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
     )
 
+    let image = null
     if (media) {
-      this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
+      image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
       this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
     }
 
     return {
       type: 'ImageMap',
       areas: mappedAreas.filter(Boolean) as ImageMapArea[],
-      media: null, // would be replaced while reference resolving
+      // image is just a "fake" image, it's a string that is used for an unresolved reference (see also TNG-1169)
+      media: image as unknown as Image,
     }
   }
 
@@ -590,6 +596,7 @@ export class CaaSMapper {
     filterContext?: unknown
   ): Promise<Dataset | Page | Image | GCAPage | null | any> {
     let response
+    this.parentIdentifiers.push(element.identifier)
     switch (element.fsType) {
       case 'Dataset':
         response = await this.mapDataset(element, [])
@@ -623,6 +630,7 @@ export class CaaSMapper {
     const mappedItems = (
       await Promise.all(
         items.map((item, index) => {
+          this.parentIdentifiers.push(item.identifier)
           switch (item.fsType) {
             case 'Dataset':
               return this.mapDataset(item, [index])
@@ -663,9 +671,15 @@ export class CaaSMapper {
 
     // force a single resolution for image map media
     this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
-      update(data, [...path, 'resolutions'], (resolutions) =>
-        resolution in resolutions ? { [resolution]: resolutions[resolution] } : resolutions
-      )
+      // the path only exist on resolved imagemaps (s. TNG-1169)
+      if (has(data, [...path, 'resolutions'])) {
+        update(data, [...path, 'resolutions'], (resolutions) => {
+          if (resolution in resolutions) {
+            return { [resolution]: resolutions[resolution] }
+          }
+          return resolutions
+        })
+      }
     })
 
     return data
@@ -691,7 +705,9 @@ export class CaaSMapper {
     const locale =
       remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
 
-    const ids = Object.keys(referencedItems)
+    const allIds = Object.keys(referencedItems)
+    // hint: handle unresolved references TNG-1169
+    const ids = allIds.filter((id) => !this.parentIdentifiers.includes(id))
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
     if (ids?.length > 0) {
       const response = await Promise.all(
@@ -708,6 +724,7 @@ export class CaaSMapper {
             pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
             remoteProject: remoteProjectId,
             filterContext,
+            parentIdentifiers: this.parentIdentifiers,
           })
         )
       )

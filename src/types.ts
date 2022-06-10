@@ -819,6 +819,7 @@ export type FetchByFilterParams = {
   remoteProject?: string
   fetchOptions?: RequestInit
   filterContext?: unknown
+  parentIdentifiers?: string[]
 }
 
 export type FetchElementParams = {
