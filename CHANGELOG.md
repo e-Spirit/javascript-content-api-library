@@ -1,3 +1,10 @@
+# [10.2.0](https://github.com/e-Spirit/fsxa-api/compare/v10.1.1...v10.2.0) (2022-06-14)
+
+
+### Features
+
+* **fetchbyfilter:** add sort param to fetchByFilter ([#109](https://github.com/e-Spirit/fsxa-api/issues/109)) ([c3ea102](https://github.com/e-Spirit/fsxa-api/commit/c3ea1020f1da5cc52fb18bc4fa2e12361532ea04))
+
 ## [10.1.1](https://github.com/e-Spirit/fsxa-api/compare/v10.1.0...v10.1.1) (2022-06-10)
 
 
