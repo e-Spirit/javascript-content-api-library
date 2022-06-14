@@ -179,6 +179,7 @@ describe('Express-Integration', () => {
         locale: 'de_DE',
         page: 1,
         pagesize: 30,
+        sort: [],
         remoteProject: undefined,
       })
       const filters_2: QueryBuilderQuery[] = [
