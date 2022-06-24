@@ -1,3 +1,4 @@
+import NodeCache from 'node-cache'
 import { stringify } from 'qs'
 import { CaaSMapper, Logger } from '.'
 import { FetchResponse, ProjectProperties } from '..'
@@ -58,6 +59,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _caasItemFilter?: CaasItemFilter
   private _logLevel: LogLevel
   private _enableEventStream: boolean = false
+  private _cache: NodeCache
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -99,6 +101,11 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationItemFilter = filterOptions?.navigationItemFilter
     this._caasItemFilter = filterOptions?.caasItemFilter
+
+    this._cache = new NodeCache({
+      stdTTL: 9999999,
+      maxKeys: 500,
+    })
 
     this._logger.debug('FSXARemoteApi created', {
       apikey,
@@ -284,25 +291,35 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       all: true,
     })
-    const headers = {
-      'Accept-Language': '*',
-    }
-    this._logger.debug('fetchNavigation', 'url', url)
-    const response = await fetch(url, {
-      headers,
-      ...fetchOptions,
-    })
-    this._logger.debug('fetchNavigation', 'response', response.status)
-    if (!response.ok) {
-      switch (response.status) {
-        case 404:
-          throw new Error(FSXAApiErrors.NOT_FOUND)
-        default:
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+
+    if (!this._cache.has(url)) {
+      this._logger.info('[fetchNavigation] CACHE MISS', url)
+
+      const headers = {
+        'Accept-Language': '*',
       }
+      this._logger.debug('fetchNavigation', 'url', url)
+      const response = await fetch(url, {
+        headers,
+        ...fetchOptions,
+      })
+      this._logger.debug('fetchNavigation', 'response', response.status)
+      if (!response.ok) {
+        switch (response.status) {
+          case 404:
+            throw new Error(FSXAApiErrors.NOT_FOUND)
+          default:
+            throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        }
+      }
+      this._logger.debug('fetchNavigation', 'response ok', response.ok)
+      const cacheItem = this.getFilteredNavigation(response, filterContext)
+
+      this._cache.set(url, cacheItem)
+    } else {
+      this._logger.info('[fetchNavigation] CACHE HIT', url)
     }
-    this._logger.debug('fetchNavigation', 'response ok', response.ok)
-    return this.getFilteredNavigation(response, filterContext)
+    return this._cache.get(url) as any
   }
 
   private async getFilteredNavigation(response: Response, filterContext?: unknown) {
@@ -361,44 +378,55 @@ export class FSXARemoteApi implements FSXAApi {
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
     const encodedUrl = encodeURI(url)
-    const response = await fetch(encodedUrl, {
-      headers: this.authorizationHeader,
-      ...fetchOptions,
-    })
-    if (!response.ok) {
-      switch (response.status) {
-        case 404:
-          throw new Error(FSXAApiErrors.NOT_FOUND)
-        case 401:
-          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
-        default:
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
-      }
-    }
-    const responseJSON = await response.json()
-    if (additionalParams.keys) {
-      // If additionalParams are provided we cannot map the response since we do not know which keys are provided
-      return responseJSON
-    }
-    const mapper = new CaaSMapper(
-      this as any,
-      locale,
-      { customMapper: this._customMapper },
-      new Logger(this._logLevel, 'CaaSMapper')
-    )
-    const mappedElement = await mapper.mapElementResponse(responseJSON, filterContext)
-    if (!this._caasItemFilter) return mappedElement
 
-    const filteredElement = (
-      await this._caasItemFilter({
-        caasItems: [mappedElement],
-        filterContext,
+    if (!this._cache.has(encodedUrl)) {
+      this._logger.info('[fetchElement] CACHE MISS', encodedUrl)
+
+      const response = await fetch(encodedUrl, {
+        headers: this.authorizationHeader,
+        ...fetchOptions,
       })
-    )[0]
-    if (!filteredElement) {
+      if (!response.ok) {
+        switch (response.status) {
+          case 404:
+            throw new Error(FSXAApiErrors.NOT_FOUND)
+          case 401:
+            throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+          default:
+            throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        }
+      }
+      const responseJSON = await response.json()
+      if (additionalParams.keys) {
+        // If additionalParams are provided we cannot map the response since we do not know which keys are provided
+        return responseJSON
+      }
+      const mapper = new CaaSMapper(
+        this as any,
+        locale,
+        { customMapper: this._customMapper },
+        new Logger(this._logLevel, 'CaaSMapper')
+      )
+      const mappedElement = await mapper.mapElementResponse(responseJSON, filterContext)
+      if (!this._caasItemFilter) return mappedElement
+
+      const filteredElement = (
+        await this._caasItemFilter({
+          caasItems: [mappedElement],
+          filterContext,
+        })
+      )[0]
+      filteredElement && this._cache.set(encodedUrl, filteredElement)
+    } else {
+      this._logger.info('[fetchElement] CACHE HIT', encodedUrl)
+    }
+
+    const cachedElement: any = this._cache.get(encodedUrl)
+    if (!cachedElement) {
       throw new Error(FSXAApiErrors.NOT_FOUND)
     }
-    return filteredElement
+
+    return cachedElement
   }
 
   /**
@@ -466,62 +494,70 @@ export class FSXARemoteApi implements FSXAApi {
       sort,
     })
     const encodedUrl = encodeURI(url)
-    const response = await fetch(encodedUrl, {
-      headers: this.authorizationHeader,
-      ...fetchOptions,
-    })
 
-    if (!response.ok) {
-      switch (response.status) {
-        case 401:
-          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
-        default:
-          if (response.status === 400) {
-            try {
-              const { message } = await response.json()
-              this._logger.error(`[fetchByFilter] Bad Request: ${message}`)
-            } catch (ignore) {}
-          }
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
-      }
-    }
-    const mapper = new CaaSMapper(
-      this as FSXARemoteApi,
-      locale,
-      {
-        customMapper: this._customMapper,
-        parentIdentifiers,
-      },
-      new Logger(this._logLevel, 'CaaSMapper')
-    )
-    const data = await response.json()
+    if (!this._cache.has(encodedUrl)) {
+      this._logger.info('[fetchByFilter] CACHE MISS', encodedUrl)
 
-    let items = await this.getItemsData(data, additionalParams, mapper, filterContext)
-
-    if (items && items.length !== 0 && this._caasItemFilter) {
-      this._logger.debug(
-        'fetchByFilter',
-        'caasItemFilter is defined, filtering items',
-        items.map((caasItem) => {
-          return {
-            type: (caasItem as any).type,
-            id: (caasItem as any).id,
-          }
-        })
-      )
-      items = await this._caasItemFilter({
-        caasItems: items,
-        filterContext,
+      const response = await fetch(encodedUrl, {
+        headers: this.authorizationHeader,
+        ...fetchOptions,
       })
+
+      if (!response.ok) {
+        switch (response.status) {
+          case 401:
+            throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+          default:
+            if (response.status === 400) {
+              try {
+                const { message } = await response.json()
+                this._logger.error(`[fetchByFilter] Bad Request: ${message}`)
+              } catch (ignore) {}
+            }
+            throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        }
+      }
+      const mapper = new CaaSMapper(
+        this as FSXARemoteApi,
+        locale,
+        {
+          customMapper: this._customMapper,
+        },
+        new Logger(this._logLevel, 'CaaSMapper')
+      )
+      const data = await response.json()
+
+      let items = await this.getItemsData(data, additionalParams, mapper, filterContext)
+
+      if (items && items.length !== 0 && this._caasItemFilter) {
+        this._logger.debug(
+          'fetchByFilter',
+          'caasItemFilter is defined, filtering items',
+          items.map((caasItem) => {
+            return {
+              type: (caasItem as any).type,
+              id: (caasItem as any).id,
+            }
+          })
+        )
+        items = await this._caasItemFilter({
+          caasItems: items,
+          filterContext,
+        })
+      }
+      const cacheItem = {
+        page,
+        pagesize,
+        totalPages: data['_total_pages'],
+        size: data['_size'],
+        items,
+      }
+      this._cache.set(encodedUrl, cacheItem)
+    } else {
+      this._logger.info('[fetchByFilter] CACHE HIT', encodedUrl)
     }
 
-    return {
-      page,
-      pagesize,
-      totalPages: data['_total_pages'],
-      size: data['_size'],
-      items,
-    }
+    return this._cache.get(encodedUrl) as any
   }
 
   private async getItemsData(
