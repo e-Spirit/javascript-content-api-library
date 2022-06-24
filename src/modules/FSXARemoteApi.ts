@@ -629,7 +629,7 @@ export class FSXARemoteApi implements FSXAApi {
       caasItems: [projectProperties],
       filterContext,
     })
-    if (Array.isArray(filteredResult)) return filteredResult[0]
+    if (Array.isArray(filteredResult) && filteredResult.length > 0) return filteredResult[0]
     return null
   }
 
