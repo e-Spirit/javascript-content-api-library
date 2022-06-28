@@ -716,7 +716,7 @@ export interface NavigationItem {
   customData: any
   permissions?: {
     allowed: string[]
-    denied: string[]
+    forbidden: string[]
   }
 }
 
