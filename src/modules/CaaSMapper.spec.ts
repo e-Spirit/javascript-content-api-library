@@ -1070,14 +1070,21 @@ describe('CaaSMapper', () => {
       const path = createPath()
       const pageRef = createPageRef()
       const { formData, metaFormData } = pageRef.page
+      const pageRefMetaFormData = pageRef.metaFormData
       jest.spyOn(mapper, 'mapDataEntries')
       formData.num1 = createNumberEntry(1)
       formData.num2 = createNumberEntry(2)
       metaFormData.num1 = createNumberEntry(4)
       metaFormData.num2 = createNumberEntry(8)
+      pageRefMetaFormData.num1 = createNumberEntry(16)
+      pageRefMetaFormData.num2 = createNumberEntry(32)
       await mapper.mapPageRef(pageRef, path)
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [...path, 'data'])
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [...path, 'meta'])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(pageRefMetaFormData, [
+        ...path,
+        'metaPageRef',
+      ])
     })
   })
 

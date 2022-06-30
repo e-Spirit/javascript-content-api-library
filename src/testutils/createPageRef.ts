@@ -10,6 +10,7 @@ export function createPageRef(): CaaSApi_PageRef {
     ...base,
     url: `https://fs.${base.uid}local`,
     fsType: 'PageRef',
+    metaFormData: {},
     page: {
       ...page,
       fsType: 'Page',
