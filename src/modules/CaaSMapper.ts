@@ -536,6 +536,7 @@ export class CaaSMapper {
       entityType: dataset.entityType,
       data: await this.mapDataEntries(dataset.formData, [...path, 'data']),
       route: dataset.route,
+      routes: dataset.routes,
       template: dataset.template?.uid,
       children: [],
     }

@@ -287,6 +287,11 @@ export interface Permission extends CaaSApi_CMSInputPermission {
   value: PermissionActivity[]
 }
 
+export interface DatasetRoute {
+  pageRef: string
+  route: string
+}
+
 export type CaaSApi_DataEntry =
   | CaaSApi_CMSInputCheckbox
   | CaaSApi_CMSInputCombobox
@@ -343,6 +348,7 @@ export interface CaaSApi_Dataset {
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   route: string
+  routes: DatasetRoute[]
 }
 
 export interface CaaSApi_Section {
@@ -621,6 +627,7 @@ export interface Dataset {
   children: Section[]
   data: DataEntries
   route: string
+  routes: DatasetRoute[]
 }
 
 export interface Image {
