@@ -18,6 +18,8 @@ const {
   API_TENANT_ID,
   API_REMOTES,
   API_ENABLE_EVENT_STREAM,
+  API_CACHE_ENABLED,
+  API_CACHE_TIME_IN_S,
 } = process.env
 const remoteApi = new FSXARemoteApi({
   apikey: API_API_KEY!,
@@ -29,6 +31,8 @@ const remoteApi = new FSXARemoteApi({
   remotes: JSON.parse(API_REMOTES || '{}'),
   logLevel: LogLevel.INFO,
   enableEventStream: !!API_ENABLE_EVENT_STREAM,
+  isCacheEnabled: API_CACHE_ENABLED! === 'true',
+  cacheTimeInS: parseInt(API_CACHE_TIME_IN_S!, 10),
 })
 
 app.use(cors())
@@ -51,7 +55,7 @@ app.listen(3002, async () => {
 
     const response = await proxyAPI.fetchElement({
       id: '6eeb4e54-6cc4-46f8-b895-637a6dea7796',
-      locale: 'en_GB'
+      locale: 'en_GB',
     })
 
     createFile({

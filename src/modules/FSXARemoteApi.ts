@@ -60,6 +60,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _logLevel: LogLevel
   private _enableEventStream: boolean = false
   private _cache: NodeCache
+  private _isCacheEnabled: boolean = false
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -75,6 +76,8 @@ export class FSXARemoteApi implements FSXAApi {
    * @param config.customMapper optional {@link CustomMapper CustomMapper}
    * @param config.filterOptions optional {@link RemoteApiFilterOptions RemoteApiFilterOptions} (EXPERIMENTAL)
    * @param config.logLevel the used {@link LogLevel LogLevel} for the API `(default LogLevel.ERROR)` - optional
+   * @param config.isCacheEnabled flag that activates cache for performance boost - optional
+   * @param config.cacheTimeInS cache active for time in seconds `(default 1440 (seconds) = 1 day)` - optional
    */
   constructor({
     apikey,
@@ -87,6 +90,8 @@ export class FSXARemoteApi implements FSXAApi {
     customMapper,
     filterOptions,
     logLevel = LogLevel.ERROR,
+    isCacheEnabled = false,
+    cacheTimeInS = 1440,
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
     this.caasURL = caasURL
@@ -101,10 +106,12 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationItemFilter = filterOptions?.navigationItemFilter
     this._caasItemFilter = filterOptions?.caasItemFilter
+    this._isCacheEnabled = isCacheEnabled
 
+    // Docu: https://github.com/node-cache/node-cache
     this._cache = new NodeCache({
-      stdTTL: 9999999,
-      maxKeys: 500,
+      stdTTL: cacheTimeInS, // parseInt(process.env.API_CACHE_TIME as string, 10) || 1440, // default 1 day
+      maxKeys: -1, // -1 disables the key limit.
     })
 
     this._logger.debug('FSXARemoteApi created', {
@@ -292,12 +299,11 @@ export class FSXARemoteApi implements FSXAApi {
       all: true,
     })
 
-    if (!this._cache.has(url)) {
-      this._logger.info('[fetchNavigation] CACHE MISS', url)
-
+    if (!this._isCacheEnabled || !this._cache?.has(url)) {
       const headers = {
         'Accept-Language': '*',
       }
+      this._isCacheEnabled && this._logger.info('fetchNavigation - save to cache', url)
       this._logger.debug('fetchNavigation', 'url', url)
       const response = await fetch(url, {
         headers,
@@ -313,13 +319,17 @@ export class FSXARemoteApi implements FSXAApi {
         }
       }
       this._logger.debug('fetchNavigation', 'response ok', response.ok)
-      const cacheItem = this.getFilteredNavigation(response, filterContext)
+      const filteredNavigation = this.getFilteredNavigation(response, filterContext)
 
-      this._cache.set(url, cacheItem)
+      if (this._isCacheEnabled) {
+        this._cache.set(url, filteredNavigation)
+      } else {
+        return filteredNavigation
+      }
     } else {
-      this._logger.info('[fetchNavigation] CACHE HIT', url)
+      this._logger.info('fetchNavigation - retrieve from cache', url)
     }
-    return this._cache.get(url) as any
+    return this._cache.get(url) as Promise<NavigationData | null>
   }
 
   private async getFilteredNavigation(response: Response, filterContext?: unknown) {
@@ -379,8 +389,10 @@ export class FSXARemoteApi implements FSXAApi {
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
     const encodedUrl = encodeURI(url)
 
-    if (!this._cache.has(encodedUrl)) {
-      this._logger.info('[fetchElement] CACHE MISS', encodedUrl)
+    let filteredElement
+
+    if (!this._isCacheEnabled || !this._cache.has(encodedUrl)) {
+      this._isCacheEnabled && this._logger.info('[fetchElement] - save to cache', encodedUrl)
 
       const response = await fetch(encodedUrl, {
         headers: this.authorizationHeader,
@@ -408,25 +420,31 @@ export class FSXARemoteApi implements FSXAApi {
         new Logger(this._logLevel, 'CaaSMapper')
       )
       const mappedElement = await mapper.mapElementResponse(responseJSON, filterContext)
-      if (!this._caasItemFilter) return mappedElement
 
-      const filteredElement = (
+      if (!this._caasItemFilter) {
+        mappedElement && this._isCacheEnabled && this._cache.set(encodedUrl, mappedElement)
+        return mappedElement
+      }
+
+      filteredElement = (
         await this._caasItemFilter({
           caasItems: [mappedElement],
           filterContext,
         })
       )[0]
-      filteredElement && this._cache.set(encodedUrl, filteredElement)
+      filteredElement && this._isCacheEnabled && this._cache.set(encodedUrl, filteredElement)
     } else {
-      this._logger.info('[fetchElement] CACHE HIT', encodedUrl)
+      this._logger.info('[fetchElement] - retrieve from cache', encodedUrl)
     }
 
-    const cachedElement: any = this._cache.get(encodedUrl)
-    if (!cachedElement) {
+    if (this._isCacheEnabled) {
+      filteredElement = this._cache.get(encodedUrl)
+    }
+    if (!filteredElement) {
       throw new Error(FSXAApiErrors.NOT_FOUND)
     }
 
-    return cachedElement
+    return filteredElement
   }
 
   /**
@@ -495,8 +513,8 @@ export class FSXARemoteApi implements FSXAApi {
     })
     const encodedUrl = encodeURI(url)
 
-    if (!this._cache.has(encodedUrl)) {
-      this._logger.info('[fetchByFilter] CACHE MISS', encodedUrl)
+    if (!this._isCacheEnabled || !this._cache?.has(encodedUrl)) {
+      this._isCacheEnabled && this._logger.info('[fetchByFilter] - save to cache', encodedUrl)
 
       const response = await fetch(encodedUrl, {
         headers: this.authorizationHeader,
@@ -545,19 +563,23 @@ export class FSXARemoteApi implements FSXAApi {
           filterContext,
         })
       }
-      const cacheItem = {
+      const responseItem = {
         page,
         pagesize,
         totalPages: data['_total_pages'],
         size: data['_size'],
         items,
       }
-      this._cache.set(encodedUrl, cacheItem)
+      if (this._isCacheEnabled) {
+        this._cache.set(encodedUrl, responseItem)
+      } else {
+        return responseItem
+      }
     } else {
-      this._logger.info('[fetchByFilter] CACHE HIT', encodedUrl)
+      this._logger.info('[fetchByFilter] - retrieve from cache', encodedUrl)
     }
 
-    return this._cache.get(encodedUrl) as any
+    return this._cache.get(encodedUrl) as FetchResponse
   }
 
   private async getItemsData(
@@ -877,5 +899,12 @@ export class FSXARemoteApi implements FSXAApi {
   enableEventStream(enable?: boolean) {
     if (typeof enable !== 'undefined') this._enableEventStream = enable
     return this._enableEventStream
+  }
+
+  /**
+   * Method to flush (remove) all keys from the cache.
+   */
+  invalidateCache() {
+    this._cache.flushAll()
   }
 }
