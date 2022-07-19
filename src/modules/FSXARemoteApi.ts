@@ -625,11 +625,11 @@ export class FSXARemoteApi implements FSXAApi {
       'Filter is defined, using additional context',
       filterContext
     )
-    const filteredResult = this._caasItemFilter({
+    const filteredResult = await this._caasItemFilter({
       caasItems: [projectProperties],
       filterContext,
     })
-    if (Array.isArray(filteredResult)) return filteredResult[0]
+    if (Array.isArray(filteredResult) && filteredResult.length > 0) return filteredResult[0]
     return null
   }
 
