@@ -380,16 +380,16 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
-| Enum                                         | Operation |
-| -------------------------------------------- | --------- |
-| LogicalQueryOperatorEnum.GREATER_THAN_EQUALS | \$gte     |
-| LogicalQueryOperatorEnum.GREATER_THAN        | \$gt      |
-| LogicalQueryOperatorEnum.EQUALS              | \$eq      |
-| LogicalQueryOperatorEnum.IN                  | \$in      |
-| LogicalQueryOperatorEnum.LESS_THAN           | \$lt      |
-| LogicalQueryOperatorEnum.LESS_THAN_EQUALS    | \$lte     |
-| LogicalQueryOperatorEnum.NOT_EQUALS          | \$ne      |
-| LogicalQueryOperatorEnum.NOT_IN              | \$nin     |
+| Enum                                            | Operation |
+| ----------------------------------------------- | --------- |
+| ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS | \$gte     |
+| ComparisonQueryOperatorEnum.GREATER_THAN        | \$gt      |
+| ComparisonQueryOperatorEnum.EQUALS              | \$eq      |
+| ComparisonQueryOperatorEnum.IN                  | \$in      |
+| ComparisonQueryOperatorEnum.LESS_THAN           | \$lt      |
+| ComparisonQueryOperatorEnum.LESS_THAN_EQUALS    | \$lte     |
+| ComparisonQueryOperatorEnum.NOT_EQUALS          | \$ne      |
+| ComparisonQueryOperatorEnum.NOT_IN              | \$nin     |
 
 ### Array Query Operators
 
