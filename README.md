@@ -391,6 +391,13 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 | ComparisonQueryOperatorEnum.NOT_EQUALS          | \$ne      |
 | ComparisonQueryOperatorEnum.NOT_IN              | \$nin     |
 
+### Evaluation Query Operators
+These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-evaluation/)
+
+| Enum                                         | Operation |
+| -------------------------------------------- | --------- |
+| EvaluationQueryOperatorEnum.REGEX            | \$regex   |
+
 ### Array Query Operators
 
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)

@@ -1,5 +1,7 @@
 import { MappedFilter, QueryBuilderQuery } from '../types'
 import { Logger } from './Logger'
+import { isValidRegex } from '../utils'
+import { isGeneratorFunction } from 'util/types'
 
 export enum ComparisonQueryOperatorEnum {
   GREATER_THAN_EQUALS = '$gte',
@@ -10,6 +12,10 @@ export enum ComparisonQueryOperatorEnum {
   LESS_THAN_EQUALS = '$lte',
   NOT_EQUALS = '$ne',
   NOT_IN = '$nin',
+}
+
+export enum EvaluationQueryOperatorEnum {
+  REGEX = '$regex',
 }
 
 export enum LogicalQueryOperatorEnum {
@@ -31,6 +37,8 @@ export enum QueryBuilderErrors {
   MISSING_FILTERS = 'No filters property was specified',
   NOT_A_NUMBER = 'This filter requires a number as value',
   NOT_AN_ARRAY = 'This filter requires an array as value',
+  NOT_A_STRING = 'This filter requires a strinig as value',
+  INVALID_REGEX = 'This is not a valid regular expression',
 }
 
 export class QueryBuilder {
@@ -100,6 +108,18 @@ export class QueryBuilder {
             [filter.operator]: filter.value,
           },
         }
+      case EvaluationQueryOperatorEnum.REGEX:
+        if (!filter.field) throw new Error(QueryBuilderErrors.MISSING_FIELD)
+        if (!filter.value) throw new Error(QueryBuilderErrors.MISSING_VALUE)
+        // throw an error if not a string
+        if (typeof filter.value !== 'string') throw new Error(QueryBuilderErrors.NOT_A_STRING)
+        // throw error if regex is invalid
+        if (!isValidRegex(filter.value)) throw new Error(QueryBuilderErrors.INVALID_REGEX)
+        return {
+          [filter.field]: {
+            [filter.operator]: filter.value,
+          },
+        }
       case ComparisonQueryOperatorEnum.IN:
       case ComparisonQueryOperatorEnum.NOT_IN:
       case ArrayQueryOperatorEnum.ALL:
@@ -111,7 +131,8 @@ export class QueryBuilder {
             [filter.operator]: filter.value,
           },
         }
+      default:
+        throw new Error(QueryBuilderErrors.UNKNOWN_OPERATOR)
     }
-    throw new Error(QueryBuilderErrors.UNKNOWN_OPERATOR)
   }
 }
