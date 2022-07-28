@@ -13,11 +13,8 @@ import Faker from 'faker'
 dotenv.config({ path: './integrationtests/.env' })
 
 const {
-    INTEGRATION_TEST_API_API_KEY,
-    INTEGRATION_TEST_API_NAVIGATION_SERVICE,
-    INTEGRATION_TEST_API_CAAS,
-    INTEGRATION_TEST_API_TENANT_ID,
-    INTEGRATION_TEST_API_PROJECT_ID,
+    INTEGRATION_TEST_API_KEY,
+    INTEGRATION_TEST_CAAS,
 } = process.env
 
 // promisify server start so we can await it in jest
@@ -30,13 +27,14 @@ const startSever = (app: Express) =>
 
 describe('FSXAProxyAPI', () => {
     const randomProjectID = Faker.datatype.uuid()
+    const tenantID = "fsxa-api-integration-test"
     const remoteApi = new FSXARemoteApi({
-        apikey: INTEGRATION_TEST_API_API_KEY!,
-        caasURL: INTEGRATION_TEST_API_CAAS!,
+        apikey: INTEGRATION_TEST_API_KEY!,
+        caasURL: INTEGRATION_TEST_CAAS!,
         contentMode: FSXAContentMode.PREVIEW,
-        navigationServiceURL: INTEGRATION_TEST_API_NAVIGATION_SERVICE!,
+        navigationServiceURL: 'https://your-navigationservice.e-spirit.cloud/navigation'!,
         projectID: randomProjectID,
-        tenantID: INTEGRATION_TEST_API_TENANT_ID!,
+        tenantID: tenantID,
         remotes: {},
         logLevel: LogLevel.INFO,
         enableEventStream: false,
@@ -57,10 +55,10 @@ describe('FSXAProxyAPI', () => {
 
         // create instance of caas client to easily read and write testing data to caas
         caasClient = await CaaSTestingClient.init({
-            apikey: INTEGRATION_TEST_API_API_KEY!,
-            caasURL: INTEGRATION_TEST_API_CAAS!,
+            apikey: INTEGRATION_TEST_API_KEY!,
+            caasURL: INTEGRATION_TEST_CAAS!,
             projectID: randomProjectID,
-            tenantID: INTEGRATION_TEST_API_TENANT_ID!,
+            tenantID: tenantID,
             contentMode: FSXAContentMode.PREVIEW,
         })
     })
