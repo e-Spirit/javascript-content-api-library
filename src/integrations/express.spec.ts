@@ -8,7 +8,12 @@ import {
   LogLevel,
 } from '../modules'
 import getExpressRouter, { ExpressRouterIntegrationErrors, getMappedFilters } from './express'
-import { FETCH_BY_FILTER_ROUTE, FETCH_NAVIGATION_ROUTE, FETCH_ELEMENT_ROUTE } from '../routes'
+import {
+  FETCH_BY_FILTER_ROUTE,
+  FETCH_NAVIGATION_ROUTE,
+  FETCH_ELEMENT_ROUTE,
+  HEALTH_ROUTE,
+} from '../routes'
 import 'cross-fetch/polyfill'
 import { Page, QueryBuilderQuery, NavigationData } from '../types'
 import { FSXAContentMode } from '../enums'
@@ -62,6 +67,13 @@ describe('Express-Integration', () => {
 
   afterAll(() => {
     server.close()
+  })
+
+  describe(HEALTH_ROUTE, () => {
+    it('should exist and always return http status 200', async () => {
+      let getHealth = await fetch(`http://localhost:${PORT}/api/fsxa/health`, { method: 'GET' })
+      expect(getHealth.status).toEqual(200)
+    })
   })
 
   describe(FETCH_ELEMENT_ROUTE, () => {
