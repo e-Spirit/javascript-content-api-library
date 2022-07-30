@@ -3,6 +3,7 @@ import { QueryBuilderQuery, SortParams } from './types'
 export const FETCH_ELEMENT_ROUTE = '/elements/:id'
 export const FETCH_NAVIGATION_ROUTE = '/navigation'
 export const FETCH_BY_FILTER_ROUTE = '/filter'
+export const HEALTH_ROUTE = '/health'
 export const STREAM_CHANGE_EVENTS_ROUTE = '/change-stream'
 
 export const getFetchElementRoute = (id: string) => `${FETCH_ELEMENT_ROUTE.replace(':id', id)}`

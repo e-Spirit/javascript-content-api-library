@@ -1,3 +1,10 @@
+## [10.2.1](https://github.com/e-Spirit/fsxa-api/compare/v10.2.0...v10.2.1) (2022-07-19)
+
+
+### Bug Fixes
+
+* **FSXARemoteApi:** fix missing await and length check ([#111](https://github.com/e-Spirit/fsxa-api/issues/111)) ([81cea34](https://github.com/e-Spirit/fsxa-api/commit/81cea3493eae37c9b2d5c6f4f5bda5ff43dc6bdb))
+
 # [10.2.0](https://github.com/e-Spirit/fsxa-api/compare/v10.1.1...v10.2.0) (2022-06-14)
 
 
