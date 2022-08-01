@@ -30,7 +30,8 @@
     "build": "tsc --module commonjs && rollup -c rollup.config.ts",
     "build:local": "rimraf fsxa-api-*.tgz && npm version prerelease --no-git-tag-version --preid alpha && npm run build && npm pack",
     "start": "rollup -c rollup.config.ts -w",
-    "test": "jest",
+    "test": "jest --verbose ./src",
+    "test:integration":"jest --verbose ./integrationtests",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --coverage --watch",
     "test:prod": "npm run lint && npm run test -- --no-cache",
@@ -41,7 +42,7 @@
     "semantic-release:dry-run": "semantic-release --dry-run",
     "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
     "precommit": "lint-staged",
-    "prepush": "jest",
+    "prepush": "jest --verbose ./src",
     "commitmsg": "commitlint -E HUSKY_GIT_PARAMS",
     "dts": "./node_modules/.bin/npm-dts generate -e ./src/FSXAApi.ts",
     "dev": "npx nodemon dev/index.ts --ignore ./**/dist"
