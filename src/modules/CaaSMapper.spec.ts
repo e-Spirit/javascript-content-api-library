@@ -1153,6 +1153,29 @@ describe('CaaSMapper', () => {
       await mapper.mapDataset(dataset, path)
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [...path, 'data'])
     })
+    it('should contain routes property in response', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const path = createPath()
+      const dataset = createDataset()
+      const mappedDataset = await mapper.mapDataset(dataset, path)
+      expect(mappedDataset.routes).toEqual(dataset.routes)
+    })
+    it('should return mapped res without routes when routes property in dataset is missing', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const path = createPath()
+      const dataset = createDataset()
+
+      const mappedDatasetWithRoutes = await mapper.mapDataset(dataset, path)
+      //@ts-ignore
+      delete dataset.routes
+
+      const mappedDatasetWithoutRoutes = await mapper.mapDataset(dataset, path)
+
+      //@ts-ignore
+      delete mappedDatasetWithRoutes.routes
+
+      expect(mappedDatasetWithRoutes).toEqual(mappedDatasetWithoutRoutes)
+    })
   })
 
   describe('mapMediaPicture', () => {
