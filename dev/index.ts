@@ -37,28 +37,28 @@ app.use('/api', expressIntegration({ api: remoteApi }))
 app.listen(3002, async () => {
   console.log('Listening at http://localhost:3002')
   try {
+    const locale = 'en_GB'
+
     const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
-    /*const response = await proxyAPI.fetchNavigation({
-      locale: 'de_DE',
-      initialPath: '/',
-    })
+    const navigationResponse = await proxyAPI.fetchNavigation({ locale, initialPath: '/' })
 
     createFile({
       dirName: 'dev/dist',
-      fileName: 'navigation.json',
-      content: response,
-    })*/
-
-    const response = await proxyAPI.fetchElement({
-      id: '6eeb4e54-6cc4-46f8-b895-637a6dea7796',
-      locale: 'en_GB'
+      fileName: `navigation.${locale}.json`,
+      content: navigationResponse,
     })
 
-    createFile({
-      dirName: 'dev/dist',
-      fileName: 'content.json',
-      content: response,
-    })
+    if (navigationResponse) {
+      const pageInNavigationId = navigationResponse.seoRouteMap[navigationResponse.pages.index]
+      const { caasDocumentId } = navigationResponse.idMap[pageInNavigationId]
+      const homepageResponse = await proxyAPI.fetchElement({ id: caasDocumentId, locale })
+
+      createFile({
+        dirName: 'dev/dist',
+        fileName: `homepage.${locale}.json`,
+        content: homepageResponse,
+      })
+    }
   } catch (e) {
     console.log(e)
   }

@@ -416,6 +416,7 @@ export interface CaaSApi_PageRef {
   url: string
   page: CaaSApi_Page
   displayName: string
+  metaFormData?: CaaSApi_DataEntries
 }
 
 export interface CaaSApi_Media_Base {
@@ -497,6 +498,7 @@ export interface Page {
   children: PageBody[]
   data: DataEntries
   meta: DataEntries
+  metaPageRef?: DataEntries
 }
 
 export interface Reference {
