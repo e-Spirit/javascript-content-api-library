@@ -31,5 +31,11 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          INTEGRATION_TEST_API_KEY: ${{secrets.INTEGRATION_TEST_API_KEY}}
+          INTEGRATION_TEST_CAAS: ${{secrets.INTEGRATION_TEST_CAAS}}
+
       - name: Dry run publish
         run: npm run semantic-release:dry-run

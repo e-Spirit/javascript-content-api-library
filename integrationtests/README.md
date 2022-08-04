@@ -1,13 +1,16 @@
 # Integration Tests
+
 Here you can find a guide for using integration tests of the FSXAApi.
 
 ## Requirements
+
 Add .env file in folder "/src/integrationtests/" (for reference check .env.template).
 
 IMPORTANT: Make sure to only use an isolated testing environment as data gets written and deleted there.
 
 ## Write testing data to caas
-Make sure to always include "_id" and "locale" properties in your testing data, otherwise using the CaaSTestingClient won't work properly!
+
+Make sure to always include "\_id" and "locale" properties in your testing data, otherwise using the CaasTestingClient won't work properly!
 
 You can perform a simple typecheck with the "TestDocument" interface like this:
 
@@ -19,19 +22,19 @@ const yourTestDoc:TestDocument = {
     language:'some language',
     identifier: 'some identifier'
   },
-  more custom properties... 
+  more custom properties...
 }
 ```
 
-In your test file use the "CaaSTestingClient" from "./utils" to easily read and write testing data to the CaaS. Start with intitializing the caasClient:
+In your test file use the "CaasTestingClient" from "./utils" to easily read and write testing data to the CaaS. Start with intitializing the caasClient:
 
 ```typescript
-const caasClient = new CaaSTestingClient.init({
+const caasClient = new CaasTestingClient.init({
   apikey: INTEGRATION_TEST_API_API_KEY!,
   caasURL: INTEGRATION_TEST_API_CAAS!,
-  projectID: randomlyGeneratedProjectId, // make this randomly generated
+  projectID: randomlyGeneratedProjectId, // use a random id to isolate test data
   tenantID: INTEGRATION_TEST_API_TENANT_ID!,
-  contentMode: FSXAContentMode.PREVIEW
+  contentMode: FSXAContentMode.PREVIEW,
 })
 ```
 
@@ -56,4 +59,3 @@ const res = await caasClient.getCollection()
 const parsedRes = await res.json()
 await caasClient.removeCollection(parsedRes._etag.$oid)
 ```
-
