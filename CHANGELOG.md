@@ -1,3 +1,10 @@
+## [10.3.2](https://github.com/e-Spirit/fsxa-api/compare/v10.3.1...v10.3.2) (2022-08-08)
+
+
+### Bug Fixes
+
+* **fsxaremoteapi:** uri encoding of user input ([#121](https://github.com/e-Spirit/fsxa-api/issues/121)) ([6fc9ca8](https://github.com/e-Spirit/fsxa-api/commit/6fc9ca80bf195f6ec3f9affa4e97a649a3adb2ff))
+
 ## [10.3.1](https://github.com/e-Spirit/fsxa-api/compare/v10.3.0...v10.3.1) (2022-08-02)
 
 
