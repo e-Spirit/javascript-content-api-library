@@ -160,11 +160,12 @@ export class FSXARemoteApi implements FSXAApi {
     }
 
     let baseURL = `${this.caasURL}/${this.tenantID}/${project}.${this.contentMode}.content`
+    let encodedBaseURL = encodeURI(baseURL)
 
     if (id) {
-      baseURL += `/${id}`
+      encodedBaseURL += `/${encodeURIComponent(id)}`
       if (locale) {
-        baseURL += `.${locale}`
+        encodedBaseURL += `.${encodeURIComponent(locale)}`
       }
     }
 
@@ -192,30 +193,34 @@ export class FSXARemoteApi implements FSXAApi {
       }
       const allFilters = [...filters, ...localeFilter]
       // const query = [...filters.map(filter => JSON.stringify(this._queryBuilder.build(filter)))]
-      const query = this._queryBuilder.buildAll(allFilters).map((v) => JSON.stringify(v))
+
+      const query = this._queryBuilder
+        .buildAll(allFilters)
+        .map((v) => encodeURIComponent(JSON.stringify(v)))
+
       if (query) {
         params.push('filter=' + query.join('&filter='))
       }
     }
 
     if (page) {
-      params.push('page=' + page)
+      params.push('page=' + encodeURIComponent(page))
     }
 
     if (pagesize) {
-      params.push('pagesize=' + pagesize)
+      params.push('pagesize=' + encodeURIComponent(pagesize))
     }
     if (sort && sort.length) {
       sort.forEach(({ name, order }: SortParams) => {
-        params.push(`sort=${order === 'desc' ? '-' : ''}${name}`)
+        params.push(`sort=${order === 'desc' ? '-' : ''}${encodeURIComponent(name)}`)
       })
     }
 
     if (params.length) {
-      baseURL += `?${params.join('&')}`
+      encodedBaseURL += `?${params.join('&')}`
     }
 
-    return baseURL
+    return encodedBaseURL
   }
 
   /**
@@ -248,7 +253,9 @@ export class FSXARemoteApi implements FSXAApi {
 
     if (locale) {
       this._logger.debug('[buildNavigationServiceUrl]', `Using locale: ${locale}`)
-      return `${baseNavigationServiceUrl}?depth=99&format=caas&language=${locale}`
+      return `${baseNavigationServiceUrl}?depth=99&format=caas&language=${encodeURIComponent(
+        locale
+      )}`
     }
 
     return baseNavigationServiceUrl
@@ -277,6 +284,12 @@ export class FSXARemoteApi implements FSXAApi {
     })
     let encodedInitialPath = undefined
     if (initialPath) {
+      const forbiddenChars = ['?', '#']
+      if (forbiddenChars.some((char) => initialPath.includes(char))) {
+        // error is unknown so that we don't give away how our encoding works
+        this._logger.error('[fetchNavigation] Forbidden char in initial path')
+        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+      }
       encodedInitialPath = encodeURI(initialPath)
     }
     const url = this.buildNavigationServiceUrl({
@@ -360,8 +373,7 @@ export class FSXARemoteApi implements FSXAApi {
   }: FetchElementParams): Promise<T> {
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
-    const encodedUrl = encodeURI(url)
-    const response = await fetch(encodedUrl, {
+    const response = await fetch(url, {
       headers: this.authorizationHeader,
       ...fetchOptions,
     })
@@ -465,8 +477,7 @@ export class FSXARemoteApi implements FSXAApi {
       pagesize,
       sort,
     })
-    const encodedUrl = encodeURI(url)
-    const response = await fetch(encodedUrl, {
+    const response = await fetch(url, {
       headers: this.authorizationHeader,
       ...fetchOptions,
     })
@@ -678,7 +689,8 @@ export class FSXARemoteApi implements FSXAApi {
     })
     return stringify(result, {
       indices: false,
-      encode: false,
+      encode: true,
+      encoder: encodeURIComponent,
     })
   }
 
