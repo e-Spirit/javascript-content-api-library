@@ -14,6 +14,12 @@ export const createDataset = (id?: string): CaaSApi_Dataset => {
     schema: `${base.uid}-schema`,
     entityType: `${base.uid}-entityType`,
     route: `${base.uid}-route`,
+    routes: [
+      {
+        pageRef: 'abc',
+        route: '/def/abc',
+      },
+    ],
     template: {
       ...template,
       fsType: 'PageTemplate',

@@ -8,7 +8,7 @@ import {
   ComparisonQueryOperatorEnum,
   EvaluationQueryOperatorEnum,
 } from '../src/modules/QueryBuilder'
-import { CaaSTestingClient } from './utils'
+import { CaasTestingClient } from './utils'
 import { TestDocument } from './types'
 import { Server } from 'http'
 import Faker from 'faker'
@@ -42,7 +42,7 @@ describe('FSXAProxyAPI', () => {
 
   let proxyAPI: FSXAProxyApi
   let server: Server
-  let caasClient: CaaSTestingClient
+  let caasClient: CaasTestingClient
 
   beforeAll(async () => {
     // start express server
@@ -54,7 +54,7 @@ describe('FSXAProxyAPI', () => {
     proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
 
     // create instance of caas client to easily read and write testing data to caas
-    caasClient = await CaaSTestingClient.init({
+    caasClient = await CaasTestingClient.init({
       apikey: INTEGRATION_TEST_API_KEY!,
       caasURL: INTEGRATION_TEST_CAAS!,
       projectID: randomProjectID,
@@ -410,6 +410,7 @@ describe('FSXAProxyAPI', () => {
         expect(items[0]._id).toEqual(doc3._id + '.en_GB')
       })
     })
+
     describe('filter with REGEX operator', () => {
       it('api returns matching data if simple regex matches', async () => {
         const regex = 'gray|grey'

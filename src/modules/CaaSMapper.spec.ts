@@ -1079,6 +1079,30 @@ describe('CaaSMapper', () => {
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [...path, 'data'])
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [...path, 'meta'])
     })
+    it('should call mapDataEntries for PageRef FormData', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const path = createPath()
+      const pageRef = createPageRef()
+      jest.spyOn(mapper, 'mapDataEntries')
+      delete pageRef.metaFormData
+      // w/o metadata
+      await mapper.mapPageRef(pageRef, path)
+      expect(mapper.mapDataEntries).not.toHaveBeenCalledWith(pageRef.metaFormData, [
+        ...path,
+        'metaPageRef',
+      ])
+      // w/ metadata
+      pageRef.metaFormData = {
+        ...(pageRef.metaFormData ?? {}),
+        num1: createNumberEntry(4),
+        num2: createNumberEntry(8),
+      }
+      await mapper.mapPageRef(pageRef, path)
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(pageRef.metaFormData, [
+        ...path,
+        'metaPageRef',
+      ])
+    })
   })
 
   describe('mapProjectProperties', () => {
@@ -1128,6 +1152,29 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'mapDataEntries')
       await mapper.mapDataset(dataset, path)
       expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [...path, 'data'])
+    })
+    it('should contain routes property in response', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const path = createPath()
+      const dataset = createDataset()
+      const mappedDataset = await mapper.mapDataset(dataset, path)
+      expect(mappedDataset.routes).toEqual(dataset.routes)
+    })
+    it('should return mapped res without routes when routes property in dataset is missing', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const path = createPath()
+      const dataset = createDataset()
+
+      const mappedDatasetWithRoutes = await mapper.mapDataset(dataset, path)
+      //@ts-ignore
+      delete dataset.routes
+
+      const mappedDatasetWithoutRoutes = await mapper.mapDataset(dataset, path)
+
+      //@ts-ignore
+      delete mappedDatasetWithRoutes.routes
+
+      expect(mappedDatasetWithRoutes).toEqual(mappedDatasetWithoutRoutes)
     })
   })
 
@@ -1346,6 +1393,8 @@ describe('CaaSMapper', () => {
         mapper.mapMediaPicture(createMediaPicture('id1')),
         mapper.mapMediaPicture(createMediaPicture('id2')),
         mapper.mapMediaPicture(createMediaPicture('id3')),
+        mapper.mapMediaPicture(createMediaPicture('id4')),
+        mapper.mapMediaPicture(createMediaPicture('id5')),
       ])
       api.fetchByFilter = jest
         .fn()
@@ -1371,6 +1420,14 @@ describe('CaaSMapper', () => {
         media2: createMediaPictureReference('id2', 'remote-id1'),
         media3: createMediaPictureReference('id3', 'remote-id1'),
       }
+      pageRef.page.metaFormData = {
+        ...pageRef.page.metaFormData,
+        media4: createMediaPictureReference('id4', 'remote-id1'),
+      }
+      pageRef.metaFormData = {
+        ...pageRef.metaFormData,
+        media5: createMediaPictureReference('id5', 'remote-id1'),
+      }
       // Mapping also implicitly registers referenced items in mapper instance
       const page = await mapper.mapPageRef(pageRef)
 
@@ -1382,6 +1439,8 @@ describe('CaaSMapper', () => {
         media2: mediaPictures[1],
         media3: mediaPictures[2],
       })
+      expect(result.meta).toStrictEqual({ media4: mediaPictures[3] })
+      expect(result.metaPageRef).toStrictEqual({ media5: mediaPictures[4] })
     })
   })
 })

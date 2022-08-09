@@ -1,3 +1,24 @@
+## [10.3.2](https://github.com/e-Spirit/fsxa-api/compare/v10.3.1...v10.3.2) (2022-08-08)
+
+
+### Bug Fixes
+
+* **fsxaremoteapi:** uri encoding of user input ([#121](https://github.com/e-Spirit/fsxa-api/issues/121)) ([6fc9ca8](https://github.com/e-Spirit/fsxa-api/commit/6fc9ca80bf195f6ec3f9affa4e97a649a3adb2ff))
+
+## [10.3.1](https://github.com/e-Spirit/fsxa-api/compare/v10.3.0...v10.3.1) (2022-08-02)
+
+
+### Bug Fixes
+
+* **datasetroutes:** add dataset routes to types and mapper ([#114](https://github.com/e-Spirit/fsxa-api/issues/114)) ([3b56a17](https://github.com/e-Spirit/fsxa-api/commit/3b56a1728212375b80cbafbcb0a2aaea3d582acb))
+
+# [10.3.0](https://github.com/e-Spirit/fsxa-api/compare/v10.2.1...v10.3.0) (2022-08-02)
+
+
+### Features
+
+* **pageref-metadata:** also respond the `PageRef` metadata if exists ([#117](https://github.com/e-Spirit/fsxa-api/issues/117)) ([64ebcf1](https://github.com/e-Spirit/fsxa-api/commit/64ebcf16e474f62d337532f8a5e9a97a20a4b619))
+
 ## [10.2.1](https://github.com/e-Spirit/fsxa-api/compare/v10.2.0...v10.2.1) (2022-07-19)
 
 

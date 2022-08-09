@@ -2,7 +2,6 @@ import { TestDocument } from './types'
 import 'cross-fetch/polyfill'
 import { FSXAContentMode } from '../src/enums'
 
-
 export enum RequestMethodEnum {
   GET = 'GET',
   POST = 'POST',
@@ -22,7 +21,7 @@ interface CaaSTestingClientData {
 /**
  * The CaaSTestingClient is used as a helper to quickly add and remove testing data directly to the CaaS
  */
-export class CaaSTestingClient {
+export class CaasTestingClient {
   baseUrl: string
   headers: HeadersInit
   projectId: string
@@ -44,7 +43,7 @@ export class CaaSTestingClient {
    * @returns CaaSTestingClient
    */
   static async init(CaaSTestingClientData: CaaSTestingClientData) {
-    const caasClient = new CaaSTestingClient(CaaSTestingClientData)
+    const caasClient = new CaasTestingClient(CaaSTestingClientData)
     await caasClient.createCollection()
     return caasClient
   }

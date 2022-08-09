@@ -148,11 +148,11 @@ describe('FSXARemoteAPI', () => {
     it('should return the correct caas url when additionalParameter are set', () => {
       const value = { firstValue: 1, secondValue: 1 }
       const additionalParams = { keys: value }
-      const encryptedValue = encodeURIComponent(JSON.stringify(value))
+      const encodedValue = encodeURIComponent(JSON.stringify(value))
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ additionalParams })
-      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?keys=${encryptedValue}`
+      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?keys=${encodedValue}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when id, locale and additionalParameter are set', () => {
@@ -161,14 +161,12 @@ describe('FSXARemoteAPI', () => {
       const keysValue = { firstValue: 1, secondValue: 1 }
       const sortValue = { firstName: 1 }
       const additionalParams = { keys: keysValue, sort: sortValue }
-      const encryptedKeysValue = encodeURIComponent(
-        JSON.stringify({ firstValue: 1, secondValue: 1 })
-      )
-      const encryptedSortValue = encodeURIComponent(JSON.stringify({ firstName: 1 }))
+      const encodedKeysValue = encodeURIComponent(JSON.stringify({ firstValue: 1, secondValue: 1 }))
+      const encodedSortValue = encodeURIComponent(JSON.stringify({ firstName: 1 }))
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ id, locale, additionalParams })
-      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${id}.${locale}?keys=${encryptedKeysValue}&sort=${encryptedSortValue}`
+      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${id}.${locale}?keys=${encodedKeysValue}&sort=${encodedSortValue}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when filters are set', () => {
@@ -193,13 +191,13 @@ describe('FSXARemoteAPI', () => {
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ filters })
-      const encryptedFirstFilterValue = encodeURIComponent(
+      const encodedFirstFilterValue = encodeURIComponent(
         `{"${firstField}":{"${firstOperator}":"${firstValue}"}}`
       )
-      const encryptedSecondFilterValue = encodeURIComponent(
+      const encodedSecondFilterValue = encodeURIComponent(
         `{"${secondField}":{"${secondOperator}":"${secondValue}"}}`
       )
-      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?filter=${encryptedFirstFilterValue}&filter=${encryptedSecondFilterValue}`
+      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?filter=${encodedFirstFilterValue}&filter=${encodedSecondFilterValue}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when filters and additionalParams are set', () => {
@@ -221,11 +219,11 @@ describe('FSXARemoteAPI', () => {
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ filters, additionalParams })
-      const encryptedAdditionalParamsValue = encodeURIComponent(`{"identifier":1}`)
-      const encryptedFilterValue = encodeURIComponent(
+      const encodedAdditionalParamsValue = encodeURIComponent(`{"identifier":1}`)
+      const encodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"${filterOperator}":"${filterValue}"}}`
       )
-      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?keys=${encryptedAdditionalParamsValue}&filter=${encryptedFilterValue}`
+      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?keys=${encodedAdditionalParamsValue}&filter=${encodedFilterValue}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url when filters and complex additionalParams are set', () => {
@@ -245,19 +243,19 @@ describe('FSXARemoteAPI', () => {
         },
         filter: [{ schema: 'newsroom' }, { entityType: { $in: ['item', 'type'] } }],
       }
-      const firstEncryptedParamsValue = encodeURIComponent(JSON.stringify({ identifier: 1 }))
-      const secondEncryptedParamsValue = encodeURIComponent(JSON.stringify({ schema: 'newsroom' }))
-      const thirdEncryptedParamsValue = encodeURIComponent(
+      const firstEncodedParamsValue = encodeURIComponent(JSON.stringify({ identifier: 1 }))
+      const secondEncodedParamsValue = encodeURIComponent(JSON.stringify({ schema: 'newsroom' }))
+      const thirdEncodedParamsValue = encodeURIComponent(
         JSON.stringify({ entityType: { $in: ['item', 'type'] } })
       )
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ filters, additionalParams })
-      const additionalParamsQuery = `keys=${firstEncryptedParamsValue}&filter=${secondEncryptedParamsValue}&filter=${thirdEncryptedParamsValue}`
-      const encryptedFilterValue = encodeURIComponent(
+      const additionalParamsQuery = `keys=${firstEncodedParamsValue}&filter=${secondEncodedParamsValue}&filter=${thirdEncodedParamsValue}`
+      const encodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"${filterOperator}":"${filterValue}"}}`
       )
-      const filterQuery = `filter=${encryptedFilterValue}`
+      const filterQuery = `filter=${encodedFilterValue}`
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${additionalParamsQuery}&${filterQuery}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
@@ -494,16 +492,16 @@ describe('FSXARemoteAPI', () => {
       fetchMock.mockResponseOnce(JSON.stringify(json))
       remoteApi.fetchByFilter({ filters, locale })
       const actualURL = fetchMock.mock.calls[0][0]
-      const firstEncryptedFilterValue = encodeURIComponent(
+      const firstEncodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"$eq":"${filterValue}"}}`
       )
-      const secondEncryptedFilterValue = encodeURIComponent(
+      const secondEncodedFilterValue = encodeURIComponent(
         `{"locale.language":{"$eq":"${localeLanguage}"}}`
       )
-      const thirdEncryptedFilterValue = encodeURIComponent(
+      const thirdEncodedFilterValue = encodeURIComponent(
         `{"locale.country":{"$eq":"${localeCountry}"}}`
       )
-      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncryptedFilterValue}&filter=${secondEncryptedFilterValue}&filter=${thirdEncryptedFilterValue}&page=1&pagesize=30`
+      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncodedFilterValue}&filter=${secondEncodedFilterValue}&filter=${thirdEncodedFilterValue}&page=1&pagesize=30`
       expect(actualURL).toBe(expectedURL)
     })
     it('should trigger the fetch method with the sort param', () => {
@@ -514,16 +512,16 @@ describe('FSXARemoteAPI', () => {
       ] as SortParams[]
       remoteApi.fetchByFilter({ filters, locale, sort })
       const actualURL = fetchMock.mock.calls[0][0]
-      const firstEncryptedFilterValue = encodeURIComponent(
+      const firstEncodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"$eq":"${filterValue}"}}`
       )
-      const secondEncryptedFilterValue = encodeURIComponent(
+      const secondEncodedFilterValue = encodeURIComponent(
         `{"locale.language":{"$eq":"${localeLanguage}"}}`
       )
-      const thirdEncryptedFilterValue = encodeURIComponent(
+      const thirdEncodedFilterValue = encodeURIComponent(
         `{"locale.country":{"$eq":"${localeCountry}"}}`
       )
-      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncryptedFilterValue}&filter=${secondEncryptedFilterValue}&filter=${thirdEncryptedFilterValue}&page=1&pagesize=30&sort=${sort[0].name}&sort=-${sort[1].name}`
+      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncodedFilterValue}&filter=${secondEncodedFilterValue}&filter=${thirdEncodedFilterValue}&page=1&pagesize=30&sort=${sort[0].name}&sort=-${sort[1].name}`
       expect(actualURL).toBe(expectedURL)
     })
     it('should throw an unauthorized error when the response is 401', () => {
@@ -675,14 +673,14 @@ describe('FSXARemoteAPI', () => {
       const locale = localeLanguage + '_' + localeCountry
       remoteApi.fetchProjectProperties({ locale })
       const actualURL = fetchMock.mock.calls[0][0]
-      const firstEncryptedFilterValue = encodeURIComponent(`{"fsType":{"$eq":"ProjectProperties"}}`)
-      const secondEncryptedFilterValue = encodeURIComponent(
+      const firstEncodedFilterValue = encodeURIComponent(`{"fsType":{"$eq":"ProjectProperties"}}`)
+      const secondEncodedFilterValue = encodeURIComponent(
         `{"locale.language":{"$eq":"${localeLanguage}"}}`
       )
-      const thirdEncryptedFilterValue = encodeURIComponent(
+      const thirdEncodedFilterValue = encodeURIComponent(
         `{"locale.country":{"$eq":"${localeCountry}"}}`
       )
-      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncryptedFilterValue}&filter=${secondEncryptedFilterValue}&filter=${thirdEncryptedFilterValue}&page=1&pagesize=30`
+      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncodedFilterValue}&filter=${secondEncodedFilterValue}&filter=${thirdEncodedFilterValue}&page=1&pagesize=30`
       expect(actualURL).toBe(expectedURL)
     })
     it('should trigger fetchByFilter with encoded params when special chars in locale are used', () => {
@@ -692,14 +690,14 @@ describe('FSXARemoteAPI', () => {
       const locale = localeLanguage + '_' + localeCountry
       remoteApi.fetchProjectProperties({ locale })
       const actualURL = fetchMock.mock.calls[0][0]
-      const firstEncryptedFilterValue = encodeURIComponent(`{"fsType":{"$eq":"ProjectProperties"}}`)
-      const secondEncryptedFilterValue = encodeURIComponent(
+      const firstEncodedFilterValue = encodeURIComponent(`{"fsType":{"$eq":"ProjectProperties"}}`)
+      const secondEncodedFilterValue = encodeURIComponent(
         `{"locale.language":{"$eq":"${localeLanguage}"}}`
       )
-      const thirdEncryptedFilterValue = encodeURIComponent(
+      const thirdEncodeddFilterValue = encodeURIComponent(
         `{"locale.country":{"$eq":"${localeCountry}"}}`
       )
-      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncryptedFilterValue}&filter=${secondEncryptedFilterValue}&filter=${thirdEncryptedFilterValue}&page=1&pagesize=30`
+      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncodedFilterValue}&filter=${secondEncodedFilterValue}&filter=${thirdEncodeddFilterValue}&page=1&pagesize=30`
       expect(actualURL).toBe(expectedURL)
     })
   })
