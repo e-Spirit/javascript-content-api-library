@@ -159,6 +159,84 @@ describe('FSXAProxyAPI', () => {
       })
       expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
     })
+
+    it('references are resolved if they also occur within other references', async () => {
+      const image: TestDocument = {
+        _id: 'b6718992-8229-452b-be0e-7ee41bf93716',
+        fsType: 'Media',
+        identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
+        mediaType: 'PICTURE',
+        locale: {
+          identifier: 'DE',
+          country: 'DE',
+          language: 'de',
+        },
+      }
+
+      const dataset: TestDocument = {
+        _id: 'fae0687b-c365-4851-919e-566f4d587201',
+        fsType: 'Dataset',
+        identifier: 'fae0687b-c365-4851-919e-566f4d587201',
+        formData: {
+          image: {
+            fsType: 'FS_REFERENCE',
+            value: {
+              fsType: 'Media',
+              identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
+              url: 'https://veka-caas-api.e-spirit.cloud/veka-prod/cf7060f8-7878-4b46-a9de-8b265973117e.preview.content/b6718992-8229-452b-be0e-7ee41bf93716.en_GB',
+            },
+          },
+        },
+        locale: {
+          identifier: 'DE',
+          country: 'DE',
+          language: 'de',
+        },
+      }
+
+      const pageRef: TestDocument = {
+        _id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
+        fsType: 'PageRef',
+        identifier: '2584ae4a-604c-4fa2-93b6-22537d25321d',
+        page: {
+          fsType: 'Page',
+          identifier: 'e0511f2e-9309-4e6c-8281-a3ab55e46aef',
+          template: {
+            fsType: 'PageTemplate',
+          },
+          formData: {
+            dataset: {
+              fsType: 'FS_DATASET',
+              value: {
+                fsType: 'DatasetReference',
+                identifier: 'fae0687b-c365-4851-919e-566f4d587201',
+                target: { identifier: 'fae0687b-c365-4851-919e-566f4d587201' },
+              },
+            },
+            image: {
+              fsType: 'FS_REFERENCE',
+              value: {
+                fsType: 'Media',
+                identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
+              },
+            },
+          },
+          children: [],
+        },
+        locale: {
+          identifier: 'DE',
+          country: 'DE',
+          language: 'de',
+        },
+      }
+
+      await caasClient.addDocsToCollection([image, pageRef, dataset])
+      const res = await proxyAPI.fetchElement({
+        id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
+        locale: 'de_DE',
+      })
+      expect(res.data.dataset.data.image.id).toBe(image._id)
+    })
   })
   describe('fetchByFilter', () => {
     const country = 'GB'

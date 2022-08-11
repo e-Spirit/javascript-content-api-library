@@ -10,7 +10,7 @@ IMPORTANT: Make sure to only use an isolated testing environment as data gets wr
 
 ## Write testing data to caas
 
-Make sure to always include "\_id" and "locale" properties in your testing data, otherwise using the CaasTestingClient won't work properly!
+Make sure to always include "\_id" and "locale" properties in your testing data, otherwise using the CaasTestingClient won't work properly! If you write data to the CaaS the "\_id" property needs to be without locale ending ".en_GB" etc.
 
 You can perform a simple typecheck with the "TestDocument" interface like this:
 
