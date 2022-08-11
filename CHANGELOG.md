@@ -1,3 +1,10 @@
+# [10.5.0](https://github.com/e-Spirit/fsxa-api/compare/v10.4.0...v10.5.0) (2022-08-11)
+
+
+### Features
+
+* **types:** accept boolean as filter value ([#122](https://github.com/e-Spirit/fsxa-api/issues/122)) ([c40817c](https://github.com/e-Spirit/fsxa-api/commit/c40817cbc62e3158f36842c18ad1efb273e2c8d7))
+
 # [10.4.0](https://github.com/e-Spirit/fsxa-api/compare/v10.3.2...v10.4.0) (2022-08-11)
 
 
