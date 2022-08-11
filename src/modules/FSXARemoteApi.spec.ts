@@ -4,7 +4,7 @@ import { FSXAContentMode } from '..'
 import { FSXAApiErrors } from '../enums'
 import { NavigationItem, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import { ComparisonQueryOperatorEnum } from './QueryBuilder'
+import { ArrayQueryOperatorEnum, ComparisonQueryOperatorEnum } from './QueryBuilder'
 
 import 'jest-fetch-mock'
 require('jest-fetch-mock').enableFetchMocks()
@@ -573,6 +573,26 @@ describe('FSXARemoteAPI', () => {
         totalPages: undefined,
         items: [],
       })
+    })
+    it('boolean values pass the typecheck', () => {
+      const comparisonFilter: QueryBuilderQuery[] = [
+        {
+          value: true,
+          field: filterField,
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+        },
+      ]
+      const arrayFilter: QueryBuilderQuery[] = [
+        {
+          value: [true, false, true],
+          field: filterField,
+          operator: ArrayQueryOperatorEnum.ALL,
+        },
+      ]
+      fetchMock.mockResponseOnce(JSON.stringify(json))
+      remoteApi.fetchByFilter({ filters: comparisonFilter, locale })
+      remoteApi.fetchByFilter({ filters: arrayFilter, locale })
+      expect(fetchMock).toBeCalledTimes(2)
     })
   })
   describe('fetchNavigation', () => {

@@ -750,7 +750,7 @@ export interface NavigationData {
   }
 }
 
-export type ComparisonFilterValue = string | number | RegExp
+export type ComparisonFilterValue = string | number | RegExp | boolean
 
 export type ComparisonFilter =
   | {
@@ -798,7 +798,7 @@ export type LogicalFilter =
 export type ArrayFilter = {
   field: string
   operator: ArrayQueryOperatorEnum.ALL
-  value: string[] | number[]
+  value: string[] | number[] | boolean[]
 }
 
 export type EvaluationFilter = {
