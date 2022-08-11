@@ -4,7 +4,10 @@ import cors from 'cors'
 import { FSXAContentMode, FSXAProxyApi, LogLevel, QueryBuilderQuery } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
 import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
-import { ComparisonQueryOperatorEnum } from '../src/modules/QueryBuilder'
+import {
+  ComparisonQueryOperatorEnum,
+  EvaluationQueryOperatorEnum,
+} from '../src/modules/QueryBuilder'
 import { CaasTestingClient } from './utils'
 import { TestDocument } from './types'
 import { Server } from 'http'
@@ -405,6 +408,101 @@ describe('FSXAProxyAPI', () => {
         })
         expect(items.length).toEqual(1)
         expect(items[0]._id).toEqual(doc3._id + '.en_GB')
+      })
+    })
+
+    describe('filter with REGEX operator', () => {
+      it('api returns matching data if simple regex matches', async () => {
+        const regex = 'gray|grey'
+        const doc1: TestDocument = {
+          _id: Faker.datatype.uuid(),
+          filterProp: 'gray',
+          locale: {
+            identifier,
+            country,
+            language,
+          },
+        }
+        const doc2: TestDocument = {
+          _id: Faker.datatype.uuid(),
+          filterProp: 'grey',
+          locale: {
+            identifier,
+            country,
+            language,
+          },
+        }
+        const doc3: TestDocument = {
+          _id: Faker.datatype.uuid(),
+          filterProp: 'green',
+          locale: {
+            identifier,
+            country,
+            language,
+          },
+        }
+        const docs = [doc1, doc2, doc3]
+        await caasClient.addDocsToCollection(docs)
+        const regexFilter: QueryBuilderQuery = {
+          field: 'filterProp',
+          operator: EvaluationQueryOperatorEnum.REGEX,
+          value: regex,
+        }
+        const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
+          filters: [regexFilter],
+          locale: language + '_' + country,
+        })
+        expect(items.length).toEqual(2)
+        for (const item of items) {
+          // @ts-ignore
+          expect(item.filterProp).toMatch(new RegExp(regex))
+        }
+      })
+      it('api returns matching data if complex regex with special chars matches', async () => {
+        const regex = '[!@#$%^&*(),.?"+:{}|<>]'
+        const doc1: TestDocument = {
+          _id: Faker.datatype.uuid(),
+          filterProp: 'gray+',
+          locale: {
+            identifier,
+            country,
+            language,
+          },
+        }
+        const doc2: TestDocument = {
+          _id: Faker.datatype.uuid(),
+          filterProp: 'grey!',
+          locale: {
+            identifier,
+            country,
+            language,
+          },
+        }
+        const doc3: TestDocument = {
+          _id: Faker.datatype.uuid(),
+          filterProp: 'green',
+          locale: {
+            identifier,
+            country,
+            language,
+          },
+        }
+        const docs = [doc1, doc2, doc3]
+        await caasClient.addDocsToCollection(docs)
+        const regexFilter: QueryBuilderQuery = {
+          field: 'filterProp',
+          operator: EvaluationQueryOperatorEnum.REGEX,
+          value: regex,
+        }
+        const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
+          filters: [regexFilter],
+          locale: language + '_' + country,
+        })
+        expect(items.length).toEqual(2)
+        for (const item of items) {
+          // @ts-ignore
+          expect(item.filterProp).toMatch(new RegExp(regex))
+        }
       })
     })
   })

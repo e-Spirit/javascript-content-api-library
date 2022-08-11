@@ -26,3 +26,13 @@ export const removeFromIdMap = (idMap: any, ids: string[]) => {
   }
   return copyOfIdMap
 }
+
+export const isValidRegex = (str: string) => {
+  try {
+    // throws an error if not a valid regex
+    const regex = new RegExp(str)
+    return true
+  } catch (e) {
+    return false
+  }
+}

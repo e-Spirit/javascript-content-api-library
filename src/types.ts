@@ -4,6 +4,7 @@ import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
+  EvaluationQueryOperatorEnum,
 } from './modules/QueryBuilder'
 import XMLParser from './modules/XMLParser'
 
@@ -800,7 +801,13 @@ export type ArrayFilter = {
   value: string[] | number[]
 }
 
-export type QueryBuilderQuery = LogicalFilter | ComparisonFilter | ArrayFilter
+export type EvaluationFilter = {
+  field: string
+  operator: EvaluationQueryOperatorEnum.REGEX
+  value: string
+}
+
+export type QueryBuilderQuery = LogicalFilter | ComparisonFilter | ArrayFilter | EvaluationFilter
 
 export interface MappedFilter {
   [key: string]: MappedFilter | MappedFilter[] | ComparisonFilterValue | ComparisonFilterValue[]

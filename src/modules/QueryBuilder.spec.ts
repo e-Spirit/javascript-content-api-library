@@ -3,6 +3,7 @@ import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
+  EvaluationQueryOperatorEnum,
   QueryBuilderErrors,
   Logger,
   LogLevel,
@@ -16,9 +17,9 @@ describe('QueryBuilder', () => {
   describe('build', () => {
     it('should throw an error if no operator is provided', () => {
       expect(() =>
+        // @ts-ignore
         builder.build({
           field: 'foo.bar',
-          // @ts-ignore
           value: 'foobar',
         })
       ).toThrow(QueryBuilderErrors.MISSING_OPERATOR)
@@ -648,6 +649,60 @@ describe('QueryBuilder', () => {
         ).toEqual({
           foobar: {
             [ComparisonQueryOperatorEnum.NOT_IN]: ['foo', 'bar'],
+          },
+        })
+      })
+    })
+
+    describe(EvaluationQueryOperatorEnum.REGEX, () => {
+      it('should throw an error if no field is provided', () => {
+        expect(() =>
+          // @ts-ignore
+          builder.build({
+            operator: EvaluationQueryOperatorEnum.REGEX,
+            value: 'foobar',
+          })
+        ).toThrow(QueryBuilderErrors.MISSING_FIELD)
+      })
+
+      it('should throw an error if no value is provided', () => {
+        expect(() =>
+          // @ts-ignore
+          builder.build({
+            operator: EvaluationQueryOperatorEnum.REGEX,
+            field: foobar,
+          })
+        ).toThrow(QueryBuilderErrors.MISSING_VALUE)
+      })
+      it('should throw an error if value is not a string', () => {
+        expect(() =>
+          builder.build({
+            operator: EvaluationQueryOperatorEnum.REGEX,
+            field: foobar,
+            // @ts-ignore
+            value: 123,
+          })
+        ).toThrow(QueryBuilderErrors.NOT_A_STRING)
+      })
+      it('should throw an error if regex string is invalid', () => {
+        expect(() =>
+          builder.build({
+            operator: EvaluationQueryOperatorEnum.REGEX,
+            field: foobar,
+            value: '[',
+          })
+        ).toThrow(QueryBuilderErrors.INVALID_REGEX)
+      })
+      it('simple test', () => {
+        expect(
+          builder.build({
+            operator: EvaluationQueryOperatorEnum.REGEX,
+            value: 'foo',
+            field: foobar,
+          })
+        ).toEqual({
+          foobar: {
+            [EvaluationQueryOperatorEnum.REGEX]: 'foo',
           },
         })
       })
