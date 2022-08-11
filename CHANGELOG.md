@@ -1,3 +1,10 @@
+# [10.4.0](https://github.com/e-Spirit/fsxa-api/compare/v10.3.2...v10.4.0) (2022-08-11)
+
+
+### Features
+
+* **querybuilder:** add regex operator to querybuilder ([#119](https://github.com/e-Spirit/fsxa-api/issues/119)) ([1fad61a](https://github.com/e-Spirit/fsxa-api/commit/1fad61afe70a37bac6bacf52a7d7da9df9c73f4b))
+
 ## [10.3.2](https://github.com/e-Spirit/fsxa-api/compare/v10.3.1...v10.3.2) (2022-08-08)
 
 
