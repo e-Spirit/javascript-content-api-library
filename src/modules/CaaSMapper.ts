@@ -46,6 +46,7 @@ import {
   RichTextElement,
   Section,
   Media,
+  CaasApi_item,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, has, set, update } from 'lodash'
@@ -60,6 +61,7 @@ export enum CaaSMapperErrors {
 }
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
+const DEFAULT_MAX_NESTING_LEVEL = 10
 
 interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
@@ -71,26 +73,32 @@ export class CaaSMapper {
   locale: string
   xmlParser: XMLParser
   customMapper?: CustomMapper
-  parentIdentifiers: string[]
+  cachedItems: CaasApi_item[]
+  nestingLevel: number
+  maxNestingLevel: number
 
   constructor(
     api: FSXARemoteApi,
     locale: string,
     utils: {
       customMapper?: CustomMapper
-      parentIdentifiers?: string[]
+      cachedItems?: CaasApi_item[]
+      nestingLevel?: number
+      maxNestingLevel?: number
     },
     logger: Logger
   ) {
     this.api = api
     this.locale = locale
     this.customMapper = utils.customMapper
-    this.parentIdentifiers = utils.parentIdentifiers ?? []
+    this.cachedItems = utils.cachedItems ?? []
+    this.nestingLevel = (utils.nestingLevel ?? 0) + 1
     this.xmlParser = new XMLParser(logger)
     Object.keys(this.api.remotes || {}).forEach(
       (item: string) => (this._remoteReferences[item] = {})
     )
     this.logger = logger
+    this.maxNestingLevel = utils.maxNestingLevel ?? DEFAULT_MAX_NESTING_LEVEL
   }
 
   // stores references to items of current Project
@@ -599,42 +607,48 @@ export class CaaSMapper {
     element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any,
     filterContext?: unknown
   ): Promise<Dataset | Page | Image | GCAPage | null | any> {
-    let response
-    this.parentIdentifiers.push(element.identifier)
+    let mappedElement: any
+
+    // save unmapped elements to cache
+    if (
+      this.cachedItems.findIndex((cachedItem) => cachedItem.identifier === element.identifier) < 0
+    )
+      this.cachedItems.push(element)
+
     switch (element.fsType) {
       case 'Dataset':
-        response = await this.mapDataset(element, [])
+        mappedElement = await this.mapDataset(element, [])
         break
       case 'PageRef':
-        response = await this.mapPageRef(element, [])
+        mappedElement = await this.mapPageRef(element, [])
         break
       case 'Media':
-        response = await this.mapMedia(element, [])
+        mappedElement = await this.mapMedia(element, [])
         break
       case 'GCAPage':
-        response = await this.mapGCAPage(element, [])
+        mappedElement = await this.mapGCAPage(element, [])
         break
       default:
         // we could not map the element --> just returning the raw values
         return element
     }
-    return this.resolveAllReferences(response as {}, filterContext)
+    return this.resolveAllReferences(mappedElement as {}, filterContext)
   }
 
   async mapFilterResponse(
-    items: (
-      | CaaSApi_Dataset
-      | CaaSApi_PageRef
-      | CaaSApi_Media
-      | CaaSApi_GCAPage
-      | CaaSApi_ProjectProperties
-    )[],
+    items: CaasApi_item[],
     filterContext?: unknown
   ): Promise<(Page | GCAPage | Dataset | Image)[]> {
     const mappedItems = (
       await Promise.all(
         items.map((item, index) => {
-          this.parentIdentifiers.push(item.identifier)
+          // save unmapped items to cache
+          if (
+            this.cachedItems.findIndex((cachedItem) => cachedItem.identifier === item.identifier) <
+            0
+          )
+            this.cachedItems.push(item)
+
           switch (item.fsType) {
             case 'Dataset':
               return this.mapDataset(item, [index])
@@ -709,36 +723,46 @@ export class CaaSMapper {
     const locale =
       remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
 
-    const allIds = Object.keys(referencedItems)
+    const allReferencedItemsIds = Object.keys(referencedItems)
     // hint: handle unresolved references TNG-1169
-    const ids = allIds.filter((id) => !this.parentIdentifiers.includes(id))
-    const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
-    if (ids?.length > 0) {
-      const response = await Promise.all(
-        idChunks.map((ids) =>
-          this.api.fetchByFilter({
-            filters: [
-              {
-                operator: ComparisonQueryOperatorEnum.IN,
-                value: ids,
-                field: 'identifier',
-              },
-            ],
-            locale,
-            pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
-            remoteProject: remoteProjectId,
-            filterContext,
-            parentIdentifiers: this.parentIdentifiers,
-          })
-        )
-      )
+
+    const cachedIds = this.cachedItems.map((item) => item.identifier)
+    const idsToFetch = allReferencedItemsIds.filter((id) => !cachedIds.includes(id))
+    const idChunks = chunk(idsToFetch, REFERENCED_ITEMS_CHUNK_SIZE)
+
+    if (this.nestingLevel < this.maxNestingLevel) {
+      const response =
+        idsToFetch.length > 0
+          ? await Promise.all(
+              idChunks.map((ids) =>
+                this.api.fetchByFilterInternal({
+                  filters: [
+                    {
+                      operator: ComparisonQueryOperatorEnum.IN,
+                      value: ids,
+                      field: 'identifier',
+                    },
+                  ],
+                  locale,
+                  pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
+                  remoteProject: remoteProjectId,
+                  filterContext,
+                  nestingLevel: this.nestingLevel,
+                  cachedItems: this.cachedItems,
+                })
+              )
+            )
+          : []
       const fetchedItems = response.map(({ items }) => items).flat()
-      ids.forEach((id) =>
+      const cachedItems = await this.fetchFromCache(allReferencedItemsIds)
+      const allItems = [...cachedItems, ...fetchedItems]
+
+      allReferencedItemsIds.forEach((id) =>
         referencedItems[id].forEach((path) =>
           set(
             data,
             path,
-            fetchedItems.find((data) => {
+            allItems.find((data) => {
               const hasId = typeof data === 'object' && 'id' in (data as object)
               if (hasId) {
                 return (data as { id: string }).id === id
@@ -749,5 +773,13 @@ export class CaaSMapper {
       )
     }
     return data
+  }
+  /**
+   * This method will grab multiple elements from cachedItems and map the response with the mapFilterResponseMethod
+   */
+  async fetchFromCache(ids: string[]) {
+    const cachedItems = this.cachedItems.filter((cachedItem) => ids.includes(cachedItem.identifier))
+    this.nestingLevel++
+    return await this.mapFilterResponse(cachedItems)
   }
 }

@@ -16,6 +16,7 @@ import {
   CaasItem,
   RemoteProjectConfiguration,
   SortParams,
+  CaasApi_item,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
@@ -58,6 +59,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _caasItemFilter?: CaasItemFilter
   private _logLevel: LogLevel
   private _enableEventStream: boolean = false
+  private _maxNestingLevel?: number
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -85,6 +87,7 @@ export class FSXARemoteApi implements FSXAApi {
     customMapper,
     filterOptions,
     logLevel = LogLevel.ERROR,
+    maxNestingLevel,
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
     this.caasURL = caasURL
@@ -99,6 +102,7 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationItemFilter = filterOptions?.navigationItemFilter
     this._caasItemFilter = filterOptions?.caasItemFilter
+    this._maxNestingLevel = maxNestingLevel
 
     this._logger.debug('FSXARemoteApi created', {
       apikey,
@@ -395,7 +399,7 @@ export class FSXARemoteApi implements FSXAApi {
     const mapper = new CaaSMapper(
       this as any,
       locale,
-      { customMapper: this._customMapper },
+      { customMapper: this._customMapper, maxNestingLevel: this._maxNestingLevel },
       new Logger(this._logLevel, 'CaaSMapper')
     )
     const mappedElement = await mapper.mapElementResponse(responseJSON, filterContext)
@@ -452,9 +456,37 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
     filterContext,
-    parentIdentifiers = [],
     sort = [],
   }: FetchByFilterParams): Promise<FetchResponse> {
+    return this.fetchByFilterInternal({
+      filters,
+      locale,
+      page,
+      pagesize,
+      additionalParams,
+      remoteProject,
+      fetchOptions,
+      filterContext,
+      sort,
+    })
+  }
+
+  async fetchByFilterInternal({
+    filters,
+    locale,
+    page = 1,
+    pagesize = 30,
+    additionalParams = {},
+    remoteProject,
+    fetchOptions,
+    filterContext,
+    cachedItems,
+    nestingLevel,
+    sort = [],
+  }: FetchByFilterParams & {
+    cachedItems?: CaasApi_item[]
+    nestingLevel?: number
+  }): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
       pagesize = 30
@@ -501,7 +533,9 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       {
         customMapper: this._customMapper,
-        parentIdentifiers,
+        cachedItems,
+        nestingLevel,
+        maxNestingLevel: this._maxNestingLevel,
       },
       new Logger(this._logLevel, 'CaaSMapper')
     )

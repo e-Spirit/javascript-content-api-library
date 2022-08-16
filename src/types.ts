@@ -694,6 +694,13 @@ export type CustomMapper = (
 
 export type CaasItem = Page | GCAPage | Dataset | Image | ProjectProperties
 
+export type CaasApi_item =
+  | CaaSApi_Dataset
+  | CaaSApi_PageRef
+  | CaaSApi_Media
+  | CaaSApi_GCAPage
+  | CaaSApi_ProjectProperties
+
 export interface FSXAConfiguration {
   apiKey: string
   navigationService: string
@@ -840,7 +847,6 @@ export type FetchByFilterParams = {
   remoteProject?: string
   fetchOptions?: RequestInit
   filterContext?: unknown
-  parentIdentifiers?: string[]
   sort?: SortParams[]
 }
 
@@ -908,6 +914,7 @@ export type FSXARemoteApiConfig = {
   customMapper?: CustomMapper
   filterOptions?: RemoteApiFilterOptions
   enableEventStream?: boolean
+  maxNestingLevel?: number
 }
 
 export type FilterContextProvider = () => unknown | null
