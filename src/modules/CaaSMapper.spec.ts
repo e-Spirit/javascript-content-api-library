@@ -1250,53 +1250,171 @@ describe('CaaSMapper', () => {
   })
 
   describe('mapElementResponse', () => {
-    it('should call mapDataset on dataset elements', async () => {
+    it('should call resolveAllReferences with mappedDataset on dataset elements', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const element = createDataset()
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapDataset')
+      jest.spyOn(mapper, 'addItemsToCache')
       await mapper.mapElementResponse(element)
       expect(mapper.mapDataset).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-      expect(mapper.parentIdentifiers).toEqual([element.identifier])
+      const mappedElement = await mapper.mapDataset(element, [])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith(mappedElement, undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
     })
-    it('should call mapPageRef on pageRef elements', async () => {
+    it('should call resolveAllReferences with mappedPageRef on pageRef elements', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const element = createPageRef()
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapPageRef')
+      jest.spyOn(mapper, 'addItemsToCache')
       await mapper.mapElementResponse(element)
       expect(mapper.mapPageRef).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-      expect(mapper.parentIdentifiers).toEqual([element.identifier])
+      const mappedElement = await mapper.mapPageRef(element, [])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith(mappedElement, undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
     })
-    it('should call mapMedia on media elements', async () => {
+    it('should call resolveAllReferences with mappedMedia on media elements', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const element = createMediaFile()
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapMedia')
+      jest.spyOn(mapper, 'addItemsToCache')
       await mapper.mapElementResponse(element)
       expect(mapper.mapMedia).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
+      const mappedElement = await mapper.mapMediaFile(element, [])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith(mappedElement, undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
     })
-    it('should call mapGCAPage on dataset elements', async () => {
+    it('should call resolveAllReferences with mappedGCAPage on gcapage elements', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const element = createGCAPage()
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapGCAPage')
+      jest.spyOn(mapper, 'addItemsToCache')
       await mapper.mapElementResponse(element)
       expect(mapper.mapGCAPage).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-      expect(mapper.parentIdentifiers).toEqual([element.identifier])
+      const mappedElement = await mapper.mapGCAPage(element)
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith(mappedElement, undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
     })
     it('should return unknown elements as-is', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const element = createDataset()
+      ;(element.fsType as string) = 'unknown-element'
+      jest.spyOn(mapper, 'resolveAllReferences')
+      jest.spyOn(mapper, 'addItemsToCache')
+      await expect(mapper.mapElementResponse(element)).resolves.toBe(element)
+      expect(mapper.resolveAllReferences).not.toHaveBeenCalled()
+      expect(mapper.addItemsToCache).not.toHaveBeenCalled()
+    })
+    it('shoud save mapped elements to cachedItems if they do not exist there', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const dataset = createDataset()
+      const mappedDataset = await mapper.mapDataset(dataset, [])
+      const pageRef = createPageRef()
+      const mappedPageReg = await mapper.mapPageRef(pageRef, [])
+      const mediaFile = createMediaFile()
+      const mappedMediaFile = await mapper.mapMediaFile(mediaFile, [])
+      const gcapage = createGCAPage()
+      const mappedGCAPage = await mapper.mapGCAPage(gcapage, [])
+      const unknownType = createDataset()
+      ;(unknownType.fsType as string) = 'unknown-element'
+      const allElements = [dataset, pageRef, mediaFile, gcapage, unknownType]
+      // unknownType will not be cached, value is returned directly
+      const allCachedElements = [mappedDataset, mappedPageReg, mappedMediaFile, mappedGCAPage]
+      for (const element of allElements) await mapper.mapElementResponse(element)
+      await mapper.mapElementResponse(dataset) // double call to check if exisitng items are skipped
+      for (const cachedElement of allCachedElements)
+        expect(mapper.cachedItems).toContainEqual(cachedElement)
+      expect(mapper.cachedItems.length).toEqual(4)
+    })
+  })
+
+  describe('mapFilterResponse', () => {
+    it('should call resolveAllReferences with mappedDataset on dataset elements', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const element = createDataset()
+      jest.spyOn(mapper, 'resolveAllReferences')
+      jest.spyOn(mapper, 'mapDataset')
+      jest.spyOn(mapper, 'addItemsToCache')
+      await mapper.mapFilterResponse([element])
+      expect(mapper.mapDataset).toHaveBeenCalledWith(element, [0])
+      const mappedElement = await mapper.mapDataset(element, [])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith([mappedElement], undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
+    })
+    it('should call resolveAllReferences with mappedPageRef on pageRef elements', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const element = createPageRef()
+      jest.spyOn(mapper, 'resolveAllReferences')
+      jest.spyOn(mapper, 'mapPageRef')
+      jest.spyOn(mapper, 'addItemsToCache')
+      await mapper.mapFilterResponse([element])
+      expect(mapper.mapPageRef).toHaveBeenCalledWith(element, [0])
+      const mappedElement = await mapper.mapPageRef(element, [])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith([mappedElement], undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
+    })
+    it('should call resolveAllReferences with mappedMedia on media elements', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const element = createMediaFile()
+      jest.spyOn(mapper, 'resolveAllReferences')
+      jest.spyOn(mapper, 'mapMedia')
+      jest.spyOn(mapper, 'addItemsToCache')
+      await mapper.mapFilterResponse([element])
+      expect(mapper.mapMedia).toHaveBeenCalledWith(element, [0])
+      const mappedElement = await mapper.mapMediaFile(element, [])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith([mappedElement], undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
+    })
+    it('should call resolveAllReferences with mappedGCAPage on gcapage elements', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const element = createGCAPage()
+      jest.spyOn(mapper, 'resolveAllReferences')
+      jest.spyOn(mapper, 'mapGCAPage')
+      jest.spyOn(mapper, 'addItemsToCache')
+      await mapper.mapFilterResponse([element])
+      expect(mapper.mapGCAPage).toHaveBeenCalledWith(element, [0])
+      const mappedElement = await mapper.mapGCAPage(element, [])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith([mappedElement], undefined)
+      expect(mapper.addItemsToCache).toHaveBeenCalledWith([mappedElement])
+    })
+    it('should call resolveAllReferences with unknown elements as-are', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       jest.spyOn(mapper, 'resolveAllReferences')
       const element = createDataset()
       ;(element.fsType as string) = 'unknown-element'
-      await expect(mapper.mapElementResponse(element)).resolves.toBe(element)
-      expect(mapper.resolveAllReferences).not.toHaveBeenCalled()
-      expect(mapper.parentIdentifiers).toEqual([element.identifier])
+      await expect(mapper.mapFilterResponse([element])).resolves.toStrictEqual([element])
+      expect(mapper.resolveAllReferences).toHaveBeenCalledWith([element], undefined)
+      expect(mapper.resolveAllReferences).toHaveBeenCalledTimes(1)
+      expect(mapper.cachedItems).toContainEqual(element)
+    })
+    it('shoud save mapped elements to cachedItems if they do not exist there', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const dataset = createDataset()
+      const mappedDataset = await mapper.mapDataset(dataset, [])
+      const pageRef = createPageRef()
+      const mappedPageReg = await mapper.mapPageRef(pageRef, [])
+      const mediaFile = createMediaFile()
+      const mappedMediaFile = await mapper.mapMediaFile(mediaFile, [])
+      const gcapage = createGCAPage()
+      const mappedGCAPage = await mapper.mapGCAPage(gcapage, [])
+      const unknownType = createDataset()
+      ;(unknownType.fsType as string) = 'unknown-element'
+      const allElements = [dataset, pageRef, mediaFile, gcapage, unknownType]
+      const allCachedElements = [
+        mappedDataset,
+        mappedPageReg,
+        mappedMediaFile,
+        mappedGCAPage,
+        unknownType,
+      ]
+      await mapper.mapFilterResponse(allElements)
+      await mapper.mapFilterResponse([dataset]) // double call to check if exisitng items are skipped
+      for (const cachedElement of allCachedElements)
+        expect(mapper.cachedItems).toContainEqual(cachedElement)
+      expect(mapper.cachedItems.length).toEqual(5)
     })
   })
 
@@ -1332,58 +1450,92 @@ describe('CaaSMapper', () => {
       const data = {}
       await expect(mapper.resolveAllReferences(data)).resolves.toBe(data)
     })
-    it('should not resolve parent references', async () => {
+    it('should return mapped data with resolved references if data contains references', async () => {
       const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', { parentIdentifiers: ['parent-id'] }, createLogger())
+      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
 
-      const parentDatasetRef = createDatasetReference('parent-id')
-      const anotherDatasetRef = createDatasetReference('another-id')
-      const anotherDataset = await mapper.mapDataset(createDataset('another-id'))
-
-      api.fetchByFilter = jest
+      const parentDataset = createDataset('parent-dataset-id')
+      const nestedDataset = createDataset('nested-dataset-id')
+      const nestedDatasetReference = createDatasetReference('nested-dataset-id')
+      parentDataset.formData = { nestedDataset: nestedDatasetReference }
+      const mappedNestedDataset = await mapper.mapDataset(nestedDataset)
+      api.fetchByFilterInternal = jest
         .fn()
-        .mockImplementation(async () => createFetchResponse([anotherDataset]))
+        .mockImplementation(async () => createFetchResponse([mappedNestedDataset]))
 
-      const pageRef = createPageRef()
-      pageRef.page.formData = {
-        parent: parentDatasetRef,
-        another: anotherDatasetRef,
-      }
+      const mappedParentDataset = await mapper.mapDataset(parentDataset)
+      const result = await mapper.resolveAllReferences(mappedParentDataset)
 
-      const page = await mapper.mapPageRef(pageRef)
-      const result = await mapper.resolveAllReferences(page)
-
-      expect(result.data.another).toHaveProperty('entityType')
-
-      // this needs to fail with TNG-1169
-      expect(result.data.parent).toEqual('[REFERENCED-ITEM-parent-id]')
+      expect(result.data.nestedDataset).toEqual(mappedNestedDataset)
+      expect(api.fetchByFilterInternal).toHaveBeenCalledTimes(1)
+    })
+    it('should increase nesting level if nesting level is lower than max limit', async () => {
+      const api = createApi()
+      const mapper = new CaaSMapper(
+        api,
+        'de',
+        { nestingLevel: 1, maxNestingLevel: 2 }, // set nesting limit
+        createLogger()
+      )
+      const dataset = createDataset()
+      const mappedDataset = await mapper.mapDataset(dataset)
+      await mapper.resolveAllReferences(mappedDataset)
+      expect(mapper.nestingLevel).toEqual(2)
+    })
+    it('should return mapped data as it is if nesting limit is reached', async () => {
+      const api = createApi()
+      const mapper = new CaaSMapper(
+        api,
+        'de',
+        { nestingLevel: 1, maxNestingLevel: 1 }, // set nesting limit
+        createLogger()
+      )
+      const parentDataset = createDataset('parent-dataset-id')
+      const nestedDatasetReference = createDatasetReference('nested-dataset-id')
+      parentDataset.formData = { nestedDataset: nestedDatasetReference }
+      api.fetchByFilterInternal = jest
+        .fn()
+        .mockImplementation(async () =>
+          createFetchResponse([{ id: 'nested-dataset-id', data: 'something went wrong' }])
+        )
+      const mappedParentDataset = await mapper.mapDataset(parentDataset)
+      const result = await mapper.resolveAllReferences(mappedParentDataset)
+      expect(result).toEqual(mappedParentDataset)
+      expect(api.fetchByFilterInternal).not.toHaveBeenCalled()
+      // // this needs to fail with TNG-1169
+      expect(result.data.nestedDataset).toEqual('[REFERENCED-ITEM-nested-dataset-id]')
     })
   })
 
   describe('resolveReferencesPerProject', () => {
     it('should fetch references from the api', async () => {
       const api = createApi()
-      api.fetchByFilter = jest.fn().mockImplementation(async () => [])
+      api.fetchByFilterInternal = jest.fn().mockImplementation(async () => [])
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       mapper.registerReferencedItem('id1', ['root', 'id1'])
       mapper.registerReferencedItem('id2', ['root', 'id2'])
       const data = {}
       await mapper.resolveReferencesPerProject(data)
-      expect(api.fetchByFilter).toHaveBeenCalled()
+      expect(api.fetchByFilterInternal).toHaveBeenCalled()
     })
-    it('should not fetch parent references', async () => {
+    it('should hit cache instead of CaaS if referenced item has been in cache', async () => {
       const api = createApi()
-      api.fetchByFilter = jest.fn().mockImplementation(async () => [])
-      const mapper = new CaaSMapper(api, 'de', { parentIdentifiers: ['parent-id'] }, createLogger())
-      mapper.registerReferencedItem('another-id', ['root', 'another-id'])
-      mapper.registerReferencedItem('parent-id', ['root', 'parent-id'])
-      const data = {}
-      await mapper.resolveReferencesPerProject(data)
-      expect(api.fetchByFilter.mock.calls.length).toBe(1)
-      expect(api.fetchByFilter.mock.calls[0][0].parentIdentifiers).toEqual(['parent-id'])
-      expect(api.fetchByFilter.mock.calls[0][0].filters).toEqual([
-        { operator: '$in', value: ['another-id'], field: 'identifier' },
-      ])
+      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const caasDataset = createDataset('id1')
+      const mappedCaasDataset = await mapper.mapDataset(caasDataset)
+      api.fetchByFilterInternal = jest
+        .fn()
+        .mockImplementation(async () => createFetchResponse([mappedCaasDataset]))
+      const cachedDataset = createDataset('id2')
+      const mappedCachedDataset = await mapper.mapDataset(cachedDataset)
+      mapper.cachedItems.push(mappedCachedDataset)
+      mapper.registerReferencedItem('id1', ['id1'])
+      mapper.registerReferencedItem('id2', ['id2'])
+      const unresolvedData = { id1: '', id2: '' }
+      const resolvedData = await mapper.resolveReferencesPerProject(unresolvedData)
+      expect(api.fetchByFilterInternal).toHaveBeenCalledTimes(1)
+      expect(resolvedData.id1).toEqual(mappedCaasDataset)
+      expect(resolvedData.id2).toEqual(mappedCachedDataset)
     })
     it('should resolve remote media references', async () => {
       const api = createApi()
@@ -1396,7 +1548,7 @@ describe('CaaSMapper', () => {
         mapper.mapMediaPicture(createMediaPicture('id4')),
         mapper.mapMediaPicture(createMediaPicture('id5')),
       ])
-      api.fetchByFilter = jest
+      api.fetchByFilterInternal = jest
         .fn()
         .mockImplementation(
           async ({

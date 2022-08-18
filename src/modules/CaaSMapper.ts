@@ -628,9 +628,7 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
-    const clonedMappedElement = cloneDeep(mappedElement) // we need to clone, otherwise a circular reference will cause an error
-    if (!this.cachedItems.includes(clonedMappedElement)) this.cachedItems.push(clonedMappedElement)
-
+    this.addItemsToCache([mappedElement])
     return this.resolveAllReferences(mappedElement as {}, filterContext)
   }
 
@@ -659,13 +657,19 @@ export class CaaSMapper {
         })
       )
     ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
-
-    mappedItems.forEach((mappedItem) => {
-      const clonedMappedItem = cloneDeep(mappedItem) // we need to clone, otherwise a circular reference will cause an error
-      if (!this.cachedItems.includes(clonedMappedItem)) this.cachedItems.push(clonedMappedItem)
-    })
-
+    this.addItemsToCache(mappedItems)
     return this.resolveAllReferences(mappedItems, filterContext)
+  }
+
+  // type is hacked, because there is "any" type in mapElementResponse
+  addItemsToCache(items: (CaasItem & { identifier?: string })[]) {
+    const cachedItemsIds = this.cachedItems.map((item) => item.id)
+    items.forEach((item) => {
+      if (!cachedItemsIds.includes(item?.identifier || item?.id)) {
+        const clonedItem = cloneDeep(item) // we need to clone, otherwise a circular reference will cause an error
+        this.cachedItems.push(clonedItem)
+      }
+    })
   }
 
   /**
@@ -758,8 +762,8 @@ export class CaaSMapper {
           })
         )
       )
-      const fetchedItems = response.map(({ items }) => items).flat()
-      resolvedItems = merge(resolvedItems, fetchedItems)
+      const fetchedItems = response.map(({ items }) => items).flat() as CaasItem[]
+      resolvedItems = [...resolvedItems, ...fetchedItems]
     }
 
     allReferencedItemsIds.forEach((id) =>
