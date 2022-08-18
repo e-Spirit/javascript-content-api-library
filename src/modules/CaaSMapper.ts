@@ -47,13 +47,15 @@ import {
   Section,
   Media,
   CaasApi_item,
+  CaasItem,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, has, set, update } from 'lodash'
+import { chunk, cloneDeep, has, merge, set, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { FSXAContentMode, ImageMapAreaType } from '../enums'
+import { resourceLimits } from 'worker_threads'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -61,7 +63,7 @@ export enum CaaSMapperErrors {
 }
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
-const DEFAULT_MAX_NESTING_LEVEL = 10
+const DEFAULT_MAX_NESTING_LEVEL = 3
 
 interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
@@ -73,7 +75,7 @@ export class CaaSMapper {
   locale: string
   xmlParser: XMLParser
   customMapper?: CustomMapper
-  cachedItems: CaasApi_item[]
+  cachedItems: CaasItem[]
   nestingLevel: number
   maxNestingLevel: number
 
@@ -82,7 +84,7 @@ export class CaaSMapper {
     locale: string,
     utils: {
       customMapper?: CustomMapper
-      cachedItems?: CaasApi_item[]
+      cachedItems?: CaasItem[]
       nestingLevel?: number
       maxNestingLevel?: number
     },
@@ -92,7 +94,7 @@ export class CaaSMapper {
     this.locale = locale
     this.customMapper = utils.customMapper
     this.cachedItems = utils.cachedItems ?? []
-    this.nestingLevel = (utils.nestingLevel ?? 0) + 1
+    this.nestingLevel = utils.nestingLevel ?? 0
     this.xmlParser = new XMLParser(logger)
     Object.keys(this.api.remotes || {}).forEach(
       (item: string) => (this._remoteReferences[item] = {})
@@ -609,12 +611,6 @@ export class CaaSMapper {
   ): Promise<Dataset | Page | Image | GCAPage | null | any> {
     let mappedElement: any
 
-    // save unmapped elements to cache
-    if (
-      this.cachedItems.findIndex((cachedItem) => cachedItem.identifier === element.identifier) < 0
-    )
-      this.cachedItems.push(element)
-
     switch (element.fsType) {
       case 'Dataset':
         mappedElement = await this.mapDataset(element, [])
@@ -632,6 +628,9 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
+    const clonedMappedElement = cloneDeep(mappedElement) // we need to clone, otherwise a circular reference will cause an error
+    if (!this.cachedItems.includes(clonedMappedElement)) this.cachedItems.push(clonedMappedElement)
+
     return this.resolveAllReferences(mappedElement as {}, filterContext)
   }
 
@@ -642,13 +641,6 @@ export class CaaSMapper {
     const mappedItems = (
       await Promise.all(
         items.map((item, index) => {
-          // save unmapped items to cache
-          if (
-            this.cachedItems.findIndex((cachedItem) => cachedItem.identifier === item.identifier) <
-            0
-          )
-            this.cachedItems.push(item)
-
           switch (item.fsType) {
             case 'Dataset':
               return this.mapDataset(item, [index])
@@ -667,6 +659,12 @@ export class CaaSMapper {
         })
       )
     ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
+
+    mappedItems.forEach((mappedItem) => {
+      const clonedMappedItem = cloneDeep(mappedItem) // we need to clone, otherwise a circular reference will cause an error
+      if (!this.cachedItems.includes(clonedMappedItem)) this.cachedItems.push(clonedMappedItem)
+    })
+
     return this.resolveAllReferences(mappedItems, filterContext)
   }
 
@@ -677,6 +675,9 @@ export class CaaSMapper {
    * @returns data
    */
   async resolveAllReferences<Type extends {}>(data: Type, filterContext?: unknown): Promise<Type> {
+    if (this.nestingLevel >= this.maxNestingLevel) return data
+    this.nestingLevel++
+
     const remoteIds = Object.keys(this._remoteReferences)
     this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
@@ -726,60 +727,56 @@ export class CaaSMapper {
     const allReferencedItemsIds = Object.keys(referencedItems)
     // hint: handle unresolved references TNG-1169
 
-    const cachedIds = this.cachedItems.map((item) => item.identifier)
-    const idsToFetch = allReferencedItemsIds.filter((id) => !cachedIds.includes(id))
-    const idChunks = chunk(idsToFetch, REFERENCED_ITEMS_CHUNK_SIZE)
+    let resolvedItems: CaasItem[] = []
+    const idsToFetchFromCaas: string[] = []
 
-    if (this.nestingLevel < this.maxNestingLevel) {
-      const response =
-        idsToFetch.length > 0
-          ? await Promise.all(
-              idChunks.map((ids) =>
-                this.api.fetchByFilterInternal({
-                  filters: [
-                    {
-                      operator: ComparisonQueryOperatorEnum.IN,
-                      value: ids,
-                      field: 'identifier',
-                    },
-                  ],
-                  locale,
-                  pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
-                  remoteProject: remoteProjectId,
-                  filterContext,
-                  nestingLevel: this.nestingLevel,
-                  cachedItems: this.cachedItems,
-                })
-              )
-            )
-          : []
-      const fetchedItems = response.map(({ items }) => items).flat()
-      const cachedItems = await this.fetchFromCache(allReferencedItemsIds)
-      const allItems = [...cachedItems, ...fetchedItems]
+    allReferencedItemsIds.forEach((id) => {
+      const cachedItem = this.cachedItems.find((item) => item.id === id)
+      if (cachedItem) resolvedItems.push(cachedItem)
+      else idsToFetchFromCaas.push(id)
+    })
 
-      allReferencedItemsIds.forEach((id) =>
-        referencedItems[id].forEach((path) =>
-          set(
-            data,
-            path,
-            allItems.find((data) => {
-              const hasId = typeof data === 'object' && 'id' in (data as object)
-              if (hasId) {
-                return (data as { id: string }).id === id
-              }
-            })
-          )
+    const idChunks = chunk(idsToFetchFromCaas, REFERENCED_ITEMS_CHUNK_SIZE)
+
+    if (idsToFetchFromCaas.length > 0) {
+      const response = await Promise.all(
+        idChunks.map((ids) =>
+          this.api.fetchByFilterInternal({
+            filters: [
+              {
+                operator: ComparisonQueryOperatorEnum.IN,
+                value: ids,
+                field: 'identifier',
+              },
+            ],
+            locale,
+            pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
+            remoteProject: remoteProjectId,
+            filterContext,
+            nestingLevel: this.nestingLevel,
+            cachedItems: this.cachedItems,
+          })
         )
       )
+      const fetchedItems = response.map(({ items }) => items).flat()
+      resolvedItems = merge(resolvedItems, fetchedItems)
     }
+
+    allReferencedItemsIds.forEach((id) =>
+      referencedItems[id].forEach((path) => {
+        set(
+          data,
+          path,
+          resolvedItems.find((data) => {
+            const hasId = typeof data === 'object' && 'id' in (data as object)
+            if (hasId) {
+              return (data as { id: string }).id === id
+            }
+          })
+        )
+      })
+    )
+
     return data
-  }
-  /**
-   * This method will grab multiple elements from cachedItems and map the response with the mapFilterResponseMethod
-   */
-  async fetchFromCache(ids: string[]) {
-    const cachedItems = this.cachedItems.filter((cachedItem) => ids.includes(cachedItem.identifier))
-    this.nestingLevel++
-    return await this.mapFilterResponse(cachedItems)
   }
 }
