@@ -1,6 +1,7 @@
-import { TestDocument } from './types'
+import { Locale } from './types'
 import 'cross-fetch/polyfill'
 import { FSXAContentMode } from '../src/enums'
+import { CaasApi_item } from '../src'
 
 export enum RequestMethodEnum {
   GET = 'GET',
@@ -91,9 +92,9 @@ export class CaasTestingClient {
    * @param docs doc to add
    * @returns Http Response
    */
-  async addDocToCollection(doc: TestDocument) {
-    const encodedLocale = encodeURIComponent(`${doc.locale.language}_${doc.locale.country}`)
-    const encodedId = encodeURIComponent(doc._id)
+  async addDocToCollection(doc: CaasApi_item, locale: Locale) {
+    const encodedLocale = encodeURIComponent(`${locale.language}_${locale.country}`)
+    const encodedId = encodeURIComponent(doc.identifier)
     const url = this.baseUrl + `/${encodedId}.${encodedLocale}`
     const docWithLocale = { ...doc, _id: undefined }
     return await fetch(url, {
@@ -108,10 +109,11 @@ export class CaasTestingClient {
    * @param docs docs to add
    * @returns Http Response
    */
-  async addDocsToCollection(docs: TestDocument[]) {
+  async addDocsToCollection(docs: CaasApi_item[], locale: Locale) {
     const docsWithLocale = docs.map((doc) => {
-      const docWithLocale = { ...doc }
-      docWithLocale._id += `.${doc.locale.language}_${doc.locale.country}`
+      const docWithLocale: any = { ...doc }
+      docWithLocale.locale = locale
+      docWithLocale._id = doc.identifier + `.${locale.language}_${locale.country}`
       return docWithLocale
     })
     return await fetch(this.baseUrl, {

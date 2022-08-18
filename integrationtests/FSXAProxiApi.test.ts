@@ -12,6 +12,11 @@ import { CaasTestingClient } from './utils'
 import { TestDocument } from './types'
 import { Server } from 'http'
 import Faker from 'faker'
+import { createDataset, createDatasetReference } from '../src/testutils/createDataset'
+import { createMediaFile } from '../src/testutils/createMediaFile'
+import { createMediaPictureReference } from '../src/testutils/createDataEntry'
+import { createMediaPicture } from '../src/testutils/createMediaPicture'
+import { createPageRef } from '../src/testutils/createPageRef'
 
 dotenv.config({ path: './integrationtests/.env' })
 
@@ -26,7 +31,7 @@ const startSever = (app: Express) =>
   })
 
 describe('FSXAProxyAPI', () => {
-  const randomProjectID = Faker.datatype.uuid()
+  const randomProjectID = 'integration-tests-lukas'
   const tenantID = 'fsxa-api-integration-test'
   const remoteApi = new FSXARemoteApi({
     apikey: INTEGRATION_TEST_API_KEY!,
@@ -38,6 +43,7 @@ describe('FSXAProxyAPI', () => {
     remotes: {},
     logLevel: LogLevel.INFO,
     enableEventStream: false,
+    maxNestingLevel: 8,
   })
 
   let proxyAPI: FSXAProxyApi
@@ -63,6 +69,15 @@ describe('FSXAProxyAPI', () => {
     })
   })
 
+  // TODO
+  // possible issue: if tests are ran in parallel and they all access the same collection
+  // there could be an issue because they all access the same data
+  // soloution: before each test: create random collection for the test
+  // its probably also better to run tests in dedicated database named with hostname suffix and delete this before each test
+
+  // another issue: database can be trashed, if tests break unexpectedly
+  // soloution: name collection after hostname and delete before running the tests
+
   afterAll(async () => {
     const res = await caasClient.getCollection()
     const parsedRes = await res.json()
@@ -70,652 +85,325 @@ describe('FSXAProxyAPI', () => {
     server.close()
   })
   describe('fetchElement', () => {
+    const locale = {
+      identifier: 'de_DE',
+      country: 'DE',
+      language: 'de',
+    }
     it('api returns matching doc if valid id is passed', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      await caasClient.addDocToCollection(dataset, locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset._id,
+        locale: `${locale.language}_${locale.country}`,
         additionalParams: {},
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset._id)
     })
     it('api returns projection of doc if additional params are set', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        displayName: Faker.commerce.productName(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      await caasClient.addDocToCollection(dataset, locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset._id,
+        locale: `${locale.language}_${locale.country}`,
         additionalParams: {
           keys: [{ displayName: 1 }],
         },
       })
-      expect(res.displayName).toEqual(doc.displayName)
+      expect(res.displayName).toEqual(dataset.displayName)
     })
     it('api returns projection of doc if additional params with special chars are set', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        "specialChars *'();:@&=+$,/?%#[]": Faker.commerce.productName(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset: any = createDataset()
+      dataset["specialChars *'();:@&=+$,/?%#[]"] = Faker.commerce.productName()
+      await caasClient.addDocToCollection(dataset, locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset._id,
+        locale: `${locale.language}_${locale.country}`,
         additionalParams: {
           keys: [{ "specialChars *'();:@&=+$,/?%#[]": 1 }],
         },
       })
-      expect(res["specialChars *'();:@&=+$,/?%#[]"]).toEqual(doc["specialChars *'();:@&=+$,/?%#[]"])
+      expect(res["specialChars *'();:@&=+$,/?%#[]"]).toEqual(
+        dataset["specialChars *'();:@&=+$,/?%#[]"]
+      )
     })
     it('api returns doc if special chars are used in locale', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: "specialChars *'();:@&=+$,?%#[]", // forward slash / does not work
-        },
+      const dataset = createDataset()
+      const localeWithSpecialChars = {
+        identifier: Faker.random.locale(),
+        country: Faker.random.locale(),
+        language: "specialChars *'();:@&=+$,?%#[]", // forward slash / does not work
       }
-      await caasClient.addDocToCollection(doc)
+
+      await caasClient.addDocToCollection(dataset, localeWithSpecialChars)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset._id,
+        locale: `${localeWithSpecialChars.language}_${localeWithSpecialChars.country}`,
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset._id)
     })
     it('api returns doc if special chars are used in id', async () => {
-      const doc: TestDocument = {
-        _id: "*'();:@&=+$,?%#[]", // forward slash / does not work
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset("*'();:@&=+$,?%#[]")
+      await caasClient.addDocToCollection(dataset, locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset._id,
+        locale: `${locale.language}_${locale.country}`,
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset._id)
     })
-
     it('api returns resolved references if references are nested', async () => {
-      const image: TestDocument = {
-        _id: 'b6718992-8229-452b-be0e-7ee41bf93716',
-        fsType: 'Media',
-        identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
-        mediaType: 'PICTURE',
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      // dataset contains reference to image
-      const dataset: TestDocument = {
-        _id: 'fae0687b-c365-4851-919e-566f4d587201',
-        fsType: 'Dataset',
-        identifier: 'fae0687b-c365-4851-919e-566f4d587201',
-        formData: {
-          image: {
-            fsType: 'FS_REFERENCE',
-            value: {
-              fsType: 'Media',
-              identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
-              url: 'https://veka-caas-api.e-spirit.cloud/veka-prod/cf7060f8-7878-4b46-a9de-8b265973117e.preview.content/b6718992-8229-452b-be0e-7ee41bf93716.en_GB',
-            },
-          },
-        },
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      // page ref contains reference to dataset
-      const pageRef: TestDocument = {
-        _id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        fsType: 'PageRef',
-        identifier: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        page: {
-          fsType: 'Page',
-          identifier: 'e0511f2e-9309-4e6c-8281-a3ab55e46aef',
-          template: {
-            fsType: 'PageTemplate',
-          },
-          formData: {
-            dataset: {
-              fsType: 'FS_DATASET',
-              value: {
-                fsType: 'DatasetReference',
-                identifier: 'fae0687b-c365-4851-919e-566f4d587201',
-                target: { identifier: 'fae0687b-c365-4851-919e-566f4d587201' },
-              },
-            },
-          },
-          children: [],
-        },
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      await caasClient.addDocsToCollection([image, pageRef, dataset])
-      const { data } = await proxyAPI.fetchElement({
-        id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        locale: 'de_DE',
+      const mediaPicture = createMediaPicture('pic-id')
+      const mediaPictureReference = createMediaPictureReference('pic-id')
+      const dataset = createDataset('ds-id')
+      const datasetReference = createDatasetReference('ds-id')
+      dataset.formData.image = mediaPictureReference
+      const pageRef = createPageRef()
+      pageRef.page.formData.dataset = datasetReference
+      await caasClient.addDocsToCollection([pageRef, mediaPicture, dataset], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
       })
-
-      expect(data.dataset.data.image.id).toBe(image._id)
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
     })
+    it('api returns [REFERENCED-ITEM-[id]] if nesting limit is hit', async () => {
+      const dataset = createDataset('ds-id')
+      const datasetReference = createDatasetReference('ds-id')
+      dataset.formData.dsref = datasetReference
+      const pageRef = createPageRef()
+      pageRef.page.formData.dataset = datasetReference
+      await caasClient.addDocsToCollection([dataset, pageRef], locale)
 
-    it('api returns [REFERENCED-ITEM-[id]] if reference is circular', async () => {
-      // dataset contains reference to itself
-      const dataset: TestDocument = {
-        _id: 'fae0687b-c365-4851-919e-566f4d587201',
-        fsType: 'Dataset',
-        identifier: 'fae0687b-c365-4851-919e-566f4d587201',
-        formData: {
-          dataset: {
-            fsType: 'FS_DATASET',
-            value: {
-              fsType: 'DatasetReference',
-              identifier: 'fae0687b-c365-4851-919e-566f4d587201',
-              target: { identifier: 'fae0687b-c365-4851-919e-566f4d587201' },
-            },
-          },
-        },
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      // page ref contains reference to dataset
-      const pageRef: TestDocument = {
-        _id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        fsType: 'PageRef',
-        identifier: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        page: {
-          fsType: 'Page',
-          identifier: 'e0511f2e-9309-4e6c-8281-a3ab55e46aef',
-          template: {
-            fsType: 'PageTemplate',
-          },
-          formData: {
-            dataset: {
-              fsType: 'FS_DATASET',
-              value: {
-                fsType: 'DatasetReference',
-                identifier: 'fae0687b-c365-4851-919e-566f4d587201',
-                target: { identifier: 'fae0687b-c365-4851-919e-566f4d587201' },
-              },
-            },
-          },
-          children: [],
-        },
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      await caasClient.addDocsToCollection([pageRef, dataset])
-      const { data } = await proxyAPI.fetchElement({
-        id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        locale: 'de_DE',
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
       })
-
-      expect(data.dataset.data.dataset).toBe(`[REFERENCED-ITEM-${dataset._id}]`)
+      console.log(JSON.stringify(res, null, 2))
+      // expect(data.dataset.data.dataset).toBe(`[REFERENCED-ITEM-${dataset._id}]`)
     })
-
     it('references are resolved if they also occur within other references', async () => {
-      const image: TestDocument = {
-        _id: 'b6718992-8229-452b-be0e-7ee41bf93716',
-        fsType: 'Media',
-        identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
-        mediaType: 'PICTURE',
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      const dataset: TestDocument = {
-        _id: 'fae0687b-c365-4851-919e-566f4d587201',
-        fsType: 'Dataset',
-        identifier: 'fae0687b-c365-4851-919e-566f4d587201',
-        formData: {
-          image: {
-            fsType: 'FS_REFERENCE',
-            value: {
-              fsType: 'Media',
-              identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
-              url: 'https://veka-caas-api.e-spirit.cloud/veka-prod/cf7060f8-7878-4b46-a9de-8b265973117e.preview.content/b6718992-8229-452b-be0e-7ee41bf93716.en_GB',
-            },
-          },
-        },
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      const pageRef: TestDocument = {
-        _id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        fsType: 'PageRef',
-        identifier: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        page: {
-          fsType: 'Page',
-          identifier: 'e0511f2e-9309-4e6c-8281-a3ab55e46aef',
-          template: {
-            fsType: 'PageTemplate',
-          },
-          formData: {
-            dataset: {
-              fsType: 'FS_DATASET',
-              value: {
-                fsType: 'DatasetReference',
-                identifier: 'fae0687b-c365-4851-919e-566f4d587201',
-                target: { identifier: 'fae0687b-c365-4851-919e-566f4d587201' },
-              },
-            },
-            image: {
-              fsType: 'FS_REFERENCE',
-              value: {
-                fsType: 'Media',
-                identifier: 'b6718992-8229-452b-be0e-7ee41bf93716',
-              },
-            },
-          },
-          children: [],
-        },
-        locale: {
-          identifier: 'DE',
-          country: 'DE',
-          language: 'de',
-        },
-      }
-
-      await caasClient.addDocsToCollection([image, pageRef, dataset])
-      const { data } = await proxyAPI.fetchElement({
-        id: '2584ae4a-604c-4fa2-93b6-22537d25321d',
-        locale: 'de_DE',
+      const mediaPicture = createMediaPicture('pic-id')
+      const mediaPictureReference = createMediaPictureReference('pic-id')
+      const dataset = createDataset('ds-id')
+      const datasetReference = createDatasetReference('ds-id')
+      dataset.formData.image = mediaPictureReference
+      const pageRef = createPageRef()
+      pageRef.page.formData = { dataset: datasetReference, image: mediaPictureReference }
+      await caasClient.addDocsToCollection([mediaPicture, pageRef, dataset], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
       })
-      expect(data.dataset.data.image.id).toBe(image._id)
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
     })
+
+    // TODO: test reference from german locale to english locale
+    // TODO: test multiple circular references
   })
   describe('fetchByFilter', () => {
-    const country = 'GB'
-    const language = 'en'
-    const identifier = 'EN'
+    const locale = {
+      identifier: 'de_DE',
+      country: 'DE',
+      language: 'de',
+    }
     describe('filter with EQUALS operator', () => {
       it('api returns only matching data if filter is applied', async () => {
-        const a = Faker.datatype.uuid()
-        const b = Faker.datatype.uuid()
-        const doc1: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: a,
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc2: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: a,
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc3: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: b,
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const docs = [doc1, doc2, doc3]
-        await caasClient.addDocsToCollection(docs)
+        const filterPropA = Faker.datatype.uuid()
+        const filterPropB = Faker.datatype.uuid()
+        const dataset1 = createDataset()
+        dataset1.displayName = filterPropA
+        const dataset2 = createDataset()
+        dataset2.displayName = filterPropA
+        const dataset3 = createDataset()
+        dataset3.displayName = filterPropB
+        const docs = [dataset1, dataset2, dataset3]
+        await caasClient.addDocsToCollection(docs, locale)
         const comparisonFilter: QueryBuilderQuery = {
-          field: 'filterProp',
+          field: 'displayName',
           operator: ComparisonQueryOperatorEnum.EQUALS,
-          value: a,
+          value: filterPropA,
         }
         const { items } = await proxyAPI.fetchByFilter({
           filters: [comparisonFilter],
-          locale: 'en_GB',
+          locale: `${locale.language}_${locale.country}`,
+          additionalParams: {
+            keys: [{ displayName: 1 }],
+          },
         })
-        // only return elements that match, not more
         expect(items.length).toEqual(2)
         for (const item of items) {
           // @ts-ignore
-          expect(item.filterProp).toEqual(a)
+          expect(item.displayName).toEqual(filterPropA)
         }
       })
       it('api returns sorted data if sort option is passed', async () => {
         const filterProp = Faker.datatype.uuid()
-        const doc1: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'B',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc2: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'A',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc3: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'C',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const docs = [doc1, doc2, doc3]
-        await caasClient.addDocsToCollection(docs)
+        const dataset1 = createDataset()
+        dataset1.displayName = 'B'
+        dataset1.schema = filterProp
+        const dataset2 = createDataset()
+        dataset2.displayName = 'A'
+        dataset2.schema = filterProp
+        const dataset3 = createDataset()
+        dataset3.displayName = 'C'
+        dataset3.schema = filterProp
+        const docs = [dataset1, dataset2, dataset3]
+        await caasClient.addDocsToCollection(docs, locale)
         const comparisonFilter: QueryBuilderQuery = {
-          field: 'filterProp',
+          field: 'schema',
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: filterProp,
         }
         const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
           filters: [comparisonFilter],
-          locale: 'en_GB',
-          sort: [{ name: 'sortProp' }],
+          locale: `${locale.language}_${locale.country}`,
+          sort: [{ name: 'displayName' }],
         })
         expect(items.length).toEqual(3)
-        expect(items[0]._id).toEqual(doc2._id + '.en_GB')
-        expect(items[1]._id).toEqual(doc1._id + '.en_GB')
-        expect(items[2]._id).toEqual(doc3._id + '.en_GB')
+        expect(items[0].id).toEqual(dataset2._id)
+        expect(items[1].id).toEqual(dataset1._id)
+        expect(items[2].id).toEqual(dataset3._id)
       })
       it('api returns descending sorted data if sort option with descend is passed', async () => {
         const filterProp = Faker.datatype.uuid()
-        const doc1: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'B',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc2: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'A',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc3: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'C',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const docs = [doc1, doc2, doc3]
-        await caasClient.addDocsToCollection(docs)
+        const dataset1 = createDataset()
+        dataset1.displayName = 'B'
+        dataset1.schema = filterProp
+        const dataset2 = createDataset()
+        dataset2.displayName = 'A'
+        dataset2.schema = filterProp
+        const dataset3 = createDataset()
+        dataset3.displayName = 'C'
+        dataset3.schema = filterProp
+        const docs = [dataset1, dataset2, dataset3]
+        await caasClient.addDocsToCollection(docs, locale)
         const comparisonFilter: QueryBuilderQuery = {
-          field: 'filterProp',
+          field: 'schema',
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: filterProp,
         }
         const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
           filters: [comparisonFilter],
-          locale: 'en_GB',
-          sort: [{ name: 'sortProp', order: 'desc' }],
+          locale: `${locale.language}_${locale.country}`,
+          sort: [{ name: 'displayName', order: 'desc' }],
         })
         expect(items.length).toEqual(3)
-        expect(items[0]._id).toEqual(doc3._id + '.en_GB')
-        expect(items[1]._id).toEqual(doc1._id + '.en_GB')
-        expect(items[2]._id).toEqual(doc2._id + '.en_GB')
+        expect(items[0].id).toEqual(dataset3._id)
+        expect(items[1].id).toEqual(dataset1._id)
+        expect(items[2].id).toEqual(dataset2._id)
       })
       it('api returns descending sorted data if sort option with special chars is passed', async () => {
         const filterProp = Faker.datatype.uuid()
-        const doc1: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          "sortPropWithSpecialChars *'();:@&=+$,/?%#[]": 'B',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc2: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          "sortPropWithSpecialChars *'();:@&=+$,/?%#[]": 'A',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc3: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          "sortPropWithSpecialChars *'();:@&=+$,/?%#[]": 'C',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const docs = [doc1, doc2, doc3]
-        await caasClient.addDocsToCollection(docs)
+        const dataset1: any = createDataset()
+        dataset1["sortPropWithSpecialChars *'();:@&=+$,/?%#[]"] = 'B'
+        dataset1.schema = filterProp
+        const dataset2: any = createDataset()
+        dataset2["sortPropWithSpecialChars *'();:@&=+$,/?%#[]"] = 'A'
+        dataset2.schema = filterProp
+        const dataset3: any = createDataset()
+        dataset3["sortPropWithSpecialChars *'();:@&=+$,/?%#[]"] = 'C'
+        dataset3.schema = filterProp
+        const docs = [dataset1, dataset2, dataset3]
+        await caasClient.addDocsToCollection(docs, locale)
         const comparisonFilter: QueryBuilderQuery = {
-          field: 'filterProp',
+          field: 'schema',
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: filterProp,
         }
         const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
           filters: [comparisonFilter],
-          locale: 'en_GB',
+          locale: `${locale.language}_${locale.country}`,
           sort: [{ name: "sortPropWithSpecialChars *'();:@&=+$,/?%#[]" }],
         })
         expect(items.length).toEqual(3)
-        expect(items[0]._id).toEqual(doc2._id + '.en_GB')
-        expect(items[1]._id).toEqual(doc1._id + '.en_GB')
-        expect(items[2]._id).toEqual(doc3._id + '.en_GB')
+        expect(items[0].id).toEqual(dataset2._id)
+        expect(items[1].id).toEqual(dataset1._id)
+        expect(items[2].id).toEqual(dataset3._id)
       })
       it('api returns docs from page if page param & pagesize is passed', async () => {
         const filterProp = Faker.datatype.uuid()
-        const doc1: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'A',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc2: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'B',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc3: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: filterProp,
-          sortProp: 'C',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const docs = [doc1, doc2, doc3]
-        await caasClient.addDocsToCollection(docs)
+        const dataset1 = createDataset()
+        dataset1.displayName = 'B'
+        dataset1.schema = filterProp
+        const dataset2 = createDataset()
+        dataset2.displayName = 'A'
+        dataset2.schema = filterProp
+        const dataset3 = createDataset()
+        dataset3.displayName = 'C'
+        dataset3.schema = filterProp
+        const docs = [dataset1, dataset2, dataset3]
+        await caasClient.addDocsToCollection(docs, locale)
         const comparisonFilter: QueryBuilderQuery = {
-          field: 'filterProp',
+          field: 'schema',
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: filterProp,
         }
         const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
           filters: [comparisonFilter],
-          locale: 'en_GB',
-          sort: [{ name: 'sortProp' }],
+          locale: `${locale.language}_${locale.country}`,
+          sort: [{ name: 'displayName' }],
           pagesize: 2,
           page: 2,
         })
         expect(items.length).toEqual(1)
-        expect(items[0]._id).toEqual(doc3._id + '.en_GB')
+        expect(items[0].id).toEqual(dataset3._id)
       })
     })
-
     describe('filter with REGEX operator', () => {
       it('api returns matching data if simple regex matches', async () => {
         const regex = 'gray|grey'
-        const doc1: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: 'gray',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc2: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: 'grey',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc3: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: 'green',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const docs = [doc1, doc2, doc3]
-        await caasClient.addDocsToCollection(docs)
+        const dataset1 = createDataset()
+        dataset1.displayName = 'grey'
+        const dataset2 = createDataset()
+        dataset2.displayName = 'gray'
+        const dataset3 = createDataset()
+        dataset3.displayName = 'green'
+        const docs = [dataset1, dataset2, dataset3]
+        await caasClient.addDocsToCollection(docs, locale)
         const regexFilter: QueryBuilderQuery = {
-          field: 'filterProp',
+          field: 'displayName',
           operator: EvaluationQueryOperatorEnum.REGEX,
           value: regex,
         }
         const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
           filters: [regexFilter],
-          locale: language + '_' + country,
+          locale: `${locale.language}_${locale.country}`,
+          additionalParams: {
+            keys: [{ displayName: 1 }],
+          },
         })
         expect(items.length).toEqual(2)
         for (const item of items) {
           // @ts-ignore
-          expect(item.filterProp).toMatch(new RegExp(regex))
+          expect(item.displayName).toMatch(new RegExp(regex))
         }
       })
       it('api returns matching data if complex regex with special chars matches', async () => {
         const regex = '[!@#$%^&*(),.?"+:{}|<>]'
-        const doc1: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: 'gray+',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc2: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: 'grey!',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const doc3: TestDocument = {
-          _id: Faker.datatype.uuid(),
-          filterProp: 'green',
-          locale: {
-            identifier,
-            country,
-            language,
-          },
-        }
-        const docs = [doc1, doc2, doc3]
-        await caasClient.addDocsToCollection(docs)
+        const dataset1 = createDataset()
+        dataset1.displayName = 'grey!'
+        const dataset2 = createDataset()
+        dataset2.displayName = 'gray+'
+        const dataset3 = createDataset()
+        dataset3.displayName = 'green'
+        const docs = [dataset1, dataset2, dataset3]
+        await caasClient.addDocsToCollection(docs, locale)
         const regexFilter: QueryBuilderQuery = {
-          field: 'filterProp',
+          field: 'displayName',
           operator: EvaluationQueryOperatorEnum.REGEX,
           value: regex,
         }
         const { items }: { items: Array<any> } = await proxyAPI.fetchByFilter({
           filters: [regexFilter],
-          locale: language + '_' + country,
+          locale: `${locale.language}_${locale.country}`,
+          additionalParams: {
+            keys: [{ displayName: 1 }],
+          },
         })
         expect(items.length).toEqual(2)
         for (const item of items) {
           // @ts-ignore
-          expect(item.filterProp).toMatch(new RegExp(regex))
+          expect(item.displayName).toMatch(new RegExp(regex))
         }
       })
     })

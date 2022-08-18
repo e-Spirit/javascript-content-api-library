@@ -484,7 +484,7 @@ export class FSXARemoteApi implements FSXAApi {
     nestingLevel,
     sort = [],
   }: FetchByFilterParams & {
-    cachedItems?: CaasItem[]
+    cachedItems?: CaasApi_item[]
     nestingLevel?: number
   }): Promise<FetchResponse> {
     if (pagesize < 1) {

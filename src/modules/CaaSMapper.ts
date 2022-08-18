@@ -63,7 +63,7 @@ export enum CaaSMapperErrors {
 }
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
-const DEFAULT_MAX_NESTING_LEVEL = 3
+const DEFAULT_MAX_NESTING_LEVEL = 20
 
 interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
@@ -75,7 +75,7 @@ export class CaaSMapper {
   locale: string
   xmlParser: XMLParser
   customMapper?: CustomMapper
-  cachedItems: CaasItem[]
+  cachedItems: CaasApi_item[]
   nestingLevel: number
   maxNestingLevel: number
 
@@ -84,7 +84,7 @@ export class CaaSMapper {
     locale: string,
     utils: {
       customMapper?: CustomMapper
-      cachedItems?: CaasItem[]
+      cachedItems?: CaasApi_item[]
       nestingLevel?: number
       maxNestingLevel?: number
     },
@@ -628,7 +628,7 @@ export class CaaSMapper {
         // we could not map the element --> just returning the raw values
         return element
     }
-    this.addItemsToCache([mappedElement])
+    this.addItemsToCache([element])
     return this.resolveAllReferences(mappedElement as {}, filterContext)
   }
 
@@ -657,17 +657,16 @@ export class CaaSMapper {
         })
       )
     ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
-    this.addItemsToCache(mappedItems)
+    this.addItemsToCache(items)
     return this.resolveAllReferences(mappedItems, filterContext)
   }
 
   // type is hacked, because there is "any" type in mapElementResponse
-  addItemsToCache(items: (CaasItem & { identifier?: string })[]) {
-    const cachedItemsIds = this.cachedItems.map((item) => item.id)
+  addItemsToCache(items: CaasApi_item[]) {
+    const cachedItemsIds = this.cachedItems.map((item) => item.identifier)
     items.forEach((item) => {
-      if (!cachedItemsIds.includes(item?.identifier || item?.id)) {
-        const clonedItem = cloneDeep(item) // we need to clone, otherwise a circular reference will cause an error
-        this.cachedItems.push(clonedItem)
+      if (!cachedItemsIds.includes(item?.identifier)) {
+        this.cachedItems.push(item)
       }
     })
   }
@@ -734,10 +733,23 @@ export class CaaSMapper {
     let resolvedItems: CaasItem[] = []
     const idsToFetchFromCaas: string[] = []
 
-    allReferencedItemsIds.forEach((id) => {
-      const cachedItem = this.cachedItems.find((item) => item.id === id)
-      if (cachedItem) resolvedItems.push(cachedItem)
-      else idsToFetchFromCaas.push(id)
+    // TODO: caching causes issues with resolving of references
+    allReferencedItemsIds.forEach(async (id) => {
+      const cachedItem = this.cachedItems.find((item) => item.identifier === id)
+      if (cachedItem) {
+        const mapper = new CaaSMapper(
+          this.api,
+          this.locale,
+          {
+            nestingLevel: this.nestingLevel,
+            maxNestingLevel: this.maxNestingLevel,
+            cachedItems: this.cachedItems,
+          },
+          this.logger
+        )
+        const mappedItems = await mapper.mapFilterResponse([cachedItem])
+        resolvedItems.push(mappedItems[0])
+      } else idsToFetchFromCaas.push(id)
     })
 
     const idChunks = chunk(idsToFetchFromCaas, REFERENCED_ITEMS_CHUNK_SIZE)

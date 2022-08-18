@@ -124,6 +124,8 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
+By default nested references can be resolved up to `20` levels deep. If needed this threshold can be increased or decreased by passing the `maxNestingLevel` parameter to the constructor.
+
 Here is an example of how the FSXA-API could be used with an [Express.js](https://expressjs.com/) backend.
 Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
 
@@ -329,20 +331,19 @@ In this example we search for all elements with the `fsType` equals `Example`. W
 
 ```typescript
 fsxaApi.fetchByFilter({
-    filters: [
-      {
-        field: 'fsType',
-        operator: ComparisonQueryOperatorEnum.EQUALS,
-        value: 'Example',
-      },
-    ],
-    locale: 'en',
-    page: 2,
-    pagesize: 50,
-    additionalParams: { keys: { identifier: 0 } },
-    sort: [{name:'fsType', order:'desc'}],
-  }
-)
+  filters: [
+    {
+      field: 'fsType',
+      operator: ComparisonQueryOperatorEnum.EQUALS,
+      value: 'Example',
+    },
+  ],
+  locale: 'en',
+  page: 2,
+  pagesize: 50,
+  additionalParams: { keys: { identifier: 0 } },
+  sort: [{ name: 'fsType', order: 'desc' }],
+})
 ```
 
 The default sorting is by the id descending. Multisort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
@@ -392,11 +393,12 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 | ComparisonQueryOperatorEnum.NOT_IN              | \$nin     |
 
 ### Evaluation Query Operators
+
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-evaluation/)
 
-| Enum                                         | Operation |
-| -------------------------------------------- | --------- |
-| EvaluationQueryOperatorEnum.REGEX            | \$regex   |
+| Enum                              | Operation |
+| --------------------------------- | --------- |
+| EvaluationQueryOperatorEnum.REGEX | \$regex   |
 
 ### Array Query Operators
 

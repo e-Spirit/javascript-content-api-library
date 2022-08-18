@@ -10,21 +10,7 @@ IMPORTANT: Make sure to only use an isolated testing environment as data gets wr
 
 ## Write testing data to caas
 
-Make sure to always include "\_id" and "locale" properties in your testing data, otherwise using the CaasTestingClient won't work properly! If you write data to the CaaS the "\_id" property needs to be without locale ending ".en_GB" etc.
-
-You can perform a simple typecheck with the "TestDocument" interface like this:
-
-```typescript
-const yourTestDoc:TestDocument = {
-  _id:'some id',
-  locale:{
-    country:'some contry code',
-    language:'some language',
-    identifier: 'some identifier'
-  },
-  more custom properties...
-}
-```
+You can use utility functions createDataset, createPageRef, ... from unit tests to create testing data.
 
 In your test file use the "CaasTestingClient" from "./utils" to easily read and write testing data to the CaaS. Start with intitializing the caasClient:
 
@@ -43,13 +29,23 @@ IMPORTANT: Make sure to use the same config as when you intitialize the FSXARemo
 Insert a test doc into that colleciton with:
 
 ```typescript
-await caasClient.addDocToCollection(testingDocument)
+await caasClient.addDocToCollection(testingDocument, locale)
+```
+
+Locale is typed like this:
+
+```typescript
+interface Locale {
+  identifier: string
+  country: string
+  language: string
+}
 ```
 
 You can also add multiple docs in bulk, for this you have to pass your data as an array, notice it's a different function:
 
 ```typescript
-await caasClient.addDocsToCollection(testDataArray)
+await caasClient.addDocsToCollection(testDataArray, locale)
 ```
 
 After the tests ran, you have to delete the test collection, so you don't trash the database. You will need to provide an "etag" as an argument. You can get it by querying the collection first, and deleting it afterwards:
