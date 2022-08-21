@@ -512,7 +512,6 @@ export interface Reference {
   type: 'Reference'
   referenceId: string
   referenceType: string
-  referenceRemoteProject?: string
   section?: CaaSApi_SectionBaseInfo
 }
 

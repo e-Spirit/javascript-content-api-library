@@ -263,7 +263,6 @@ export class CaaSMapper {
             type: 'Reference',
             referenceId: entry.value.identifier,
             referenceType: entry.value.fsType,
-            referenceRemoteProject: entry.value.remoteProject,
           }
           Object.keys(entry.value).includes('section') &&
             Object.assign(reference, { section: entry.value.section })
