@@ -12,10 +12,19 @@ import { CaasTestingClient } from './utils'
 import { TestDocument } from './types'
 import { Server } from 'http'
 import Faker from 'faker'
+<<<<<<< HEAD
 import { createMediaPicture } from '../src/testutils/createMediaPicture'
 import { createMediaPictureReference } from '../src/testutils/createDataEntry'
 import { createDataset, createDatasetReference } from '../src/testutils/createDataset'
 import { createPageRef } from '../src/testutils/createPageRef'
+=======
+import {
+  createFsReference,
+  createPageRef,
+  createPageRefBody,
+  createSection
+} from '../src/testutils'
+>>>>>>> feat(fsxa-api proxi api): it provides remote project id
 
 dotenv.config({ path: './integrationtests/.env' })
 
@@ -201,6 +210,24 @@ describe('FSXAProxyAPI', () => {
       })
       expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
     })
+
+    it('api return matching the reference with remote project', function () {
+      const pageRef = createPageRef()
+      const pageRefBody = createPageRefBody()
+      const section = createSection()
+      const fsReference = createFsReference()
+      // Populate Data
+      section.formData = {
+        st_ref: fsReference
+      }
+      pageRefBody.children.push(section)
+      pageRef.page.children.push(pageRefBody)
+
+      expect(pageRef.page.children.length).toBeGreaterThan(0)
+      expect(pageRefBody.children.some(pageBody => pageBody.fsType === 'Section')).toBe(true)
+      expect(Object.hasOwnProperty.call(section.formData, 'st_ref')).toBe(true)
+      expect(section.formData.st_ref).toMatchObject(fsReference)
+    });
   })
   describe('fetchByFilter', () => {
     const country = 'GB'
