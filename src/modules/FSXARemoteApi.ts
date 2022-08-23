@@ -51,6 +51,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _projectID: string = this.projectID
   private _remotes: Record<string, { id: string; locale: string }> = this.remotes
   private _contentMode: 'preview' | 'release' = this.contentMode
+  private _maxReferenceDepth?: number
   private _customMapper?: CustomMapper
   private _queryBuilder: QueryBuilder
   private _logger: Logger
@@ -70,6 +71,7 @@ export class FSXARemoteApi implements FSXAApi {
    * @param config.projectID
    * @param config.remotes optional {@link RemoteProjectConfiguration RemoteProjectConfiguration}
    * @param config.contentMode 'release' | 'preview'
+   * @param config.maxReferenceDepth optional number to define the maximum depth of resolved objects
    * @param config.customMapper optional {@link CustomMapper CustomMapper}
    * @param config.filterOptions optional {@link RemoteApiFilterOptions RemoteApiFilterOptions} (EXPERIMENTAL)
    * @param config.logLevel the used {@link LogLevel LogLevel} for the API `(default LogLevel.ERROR)` - optional
@@ -82,6 +84,7 @@ export class FSXARemoteApi implements FSXAApi {
     projectID,
     remotes,
     contentMode,
+    maxReferenceDepth,
     customMapper,
     filterOptions,
     logLevel = LogLevel.ERROR,
@@ -93,6 +96,7 @@ export class FSXARemoteApi implements FSXAApi {
     this.projectID = projectID
     this.remotes = remotes || {}
     this.contentMode = contentMode
+    this._maxReferenceDepth = maxReferenceDepth
     this._customMapper = customMapper
     this._logLevel = logLevel
     this._logger = new Logger(logLevel, 'FSXARemoteApi')
@@ -395,7 +399,10 @@ export class FSXARemoteApi implements FSXAApi {
     const mapper = new CaaSMapper(
       this as any,
       locale,
-      { customMapper: this._customMapper },
+      {
+        customMapper: this._customMapper,
+        maxReferenceDepth: this._maxReferenceDepth,
+      },
       new Logger(this._logLevel, 'CaaSMapper')
     )
     const mappedElement = await mapper.mapElementResponse(responseJSON, filterContext)
@@ -452,9 +459,35 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
     filterContext,
-    parentIdentifiers = [],
     sort = [],
   }: FetchByFilterParams): Promise<FetchResponse> {
+    return this.fetchByFilterInternal({
+      filters,
+      locale,
+      page,
+      pagesize,
+      additionalParams,
+      remoteProject,
+      fetchOptions,
+      filterContext,
+      sort,
+    })
+  }
+
+  async fetchByFilterInternal(
+    {
+      filters,
+      locale,
+      page = 1,
+      pagesize = 30,
+      additionalParams = {},
+      remoteProject,
+      fetchOptions,
+      filterContext,
+      sort = [],
+    }: FetchByFilterParams,
+    referenceDepth?: number
+  ): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
       pagesize = 30
@@ -501,7 +534,8 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       {
         customMapper: this._customMapper,
-        parentIdentifiers,
+        referenceDepth: referenceDepth,
+        maxReferenceDepth: this._maxReferenceDepth,
       },
       new Logger(this._logLevel, 'CaaSMapper')
     )

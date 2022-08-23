@@ -60,6 +60,7 @@ export enum CaaSMapperErrors {
 }
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
+export const DEFAULT_MAX_REFERENCE_DEPTH = 10
 
 interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
@@ -71,26 +72,29 @@ export class CaaSMapper {
   locale: string
   xmlParser: XMLParser
   customMapper?: CustomMapper
-  parentIdentifiers: string[]
+  referenceDepth: number
+  maxReferenceDepth: number
 
   constructor(
     api: FSXARemoteApi,
     locale: string,
     utils: {
       customMapper?: CustomMapper
-      parentIdentifiers?: string[]
+      referenceDepth?: number
+      maxReferenceDepth?: number
     },
     logger: Logger
   ) {
     this.api = api
     this.locale = locale
     this.customMapper = utils.customMapper
-    this.parentIdentifiers = utils.parentIdentifiers ?? []
     this.xmlParser = new XMLParser(logger)
     Object.keys(this.api.remotes || {}).forEach(
       (item: string) => (this._remoteReferences[item] = {})
     )
     this.logger = logger
+    this.referenceDepth = utils.referenceDepth ?? 0
+    this.maxReferenceDepth = utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
   }
 
   // stores references to items of current Project
@@ -600,7 +604,6 @@ export class CaaSMapper {
     filterContext?: unknown
   ): Promise<Dataset | Page | Image | GCAPage | null | any> {
     let response
-    this.parentIdentifiers.push(element.identifier)
     switch (element.fsType) {
       case 'Dataset':
         response = await this.mapDataset(element, [])
@@ -634,7 +637,6 @@ export class CaaSMapper {
     const mappedItems = (
       await Promise.all(
         items.map((item, index) => {
-          this.parentIdentifiers.push(item.identifier)
           switch (item.fsType) {
             case 'Dataset':
               return this.mapDataset(item, [index])
@@ -663,6 +665,11 @@ export class CaaSMapper {
    * @returns data
    */
   async resolveAllReferences<Type extends {}>(data: Type, filterContext?: unknown): Promise<Type> {
+    if (this.referenceDepth >= this.maxReferenceDepth) {
+      // hint: handle unresolved references TNG-1169
+      return data
+    }
+    this.referenceDepth++
     const remoteIds = Object.keys(this._remoteReferences)
     this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
@@ -709,27 +716,27 @@ export class CaaSMapper {
     const locale =
       remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
 
-    const allIds = Object.keys(referencedItems)
-    // hint: handle unresolved references TNG-1169
-    const ids = allIds.filter((id) => !this.parentIdentifiers.includes(id))
+    const ids = Object.keys(referencedItems)
     const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
     if (ids?.length > 0) {
       const response = await Promise.all(
         idChunks.map((ids) =>
-          this.api.fetchByFilter({
-            filters: [
-              {
-                operator: ComparisonQueryOperatorEnum.IN,
-                value: ids,
-                field: 'identifier',
-              },
-            ],
-            locale,
-            pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
-            remoteProject: remoteProjectId,
-            filterContext,
-            parentIdentifiers: this.parentIdentifiers,
-          })
+          this.api.fetchByFilterInternal(
+            {
+              filters: [
+                {
+                  operator: ComparisonQueryOperatorEnum.IN,
+                  value: ids,
+                  field: 'identifier',
+                },
+              ],
+              locale,
+              pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
+              remoteProject: remoteProjectId,
+              filterContext,
+            },
+            this.referenceDepth
+          )
         )
       )
       const fetchedItems = response.map(({ items }) => items).flat()

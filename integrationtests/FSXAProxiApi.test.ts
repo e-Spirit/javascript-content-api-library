@@ -4,6 +4,7 @@ import cors from 'cors'
 import { FSXAContentMode, FSXAProxyApi, LogLevel, QueryBuilderQuery } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
 import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
+import { DEFAULT_MAX_REFERENCE_DEPTH } from '../src/modules/CaaSMapper'
 import {
   ComparisonQueryOperatorEnum,
   EvaluationQueryOperatorEnum,
@@ -12,6 +13,12 @@ import { CaasTestingClient } from './utils'
 import { TestDocument } from './types'
 import { Server } from 'http'
 import Faker from 'faker'
+import { createMediaPicture } from '../src/testutils/createMediaPicture'
+import { createMediaPictureReference } from '../src/testutils/createDataEntry'
+import { createDataset, createDatasetReference } from '../src/testutils/createDataset'
+import { createPageRef } from '../src/testutils/createPageRef'
+import { json } from 'body-parser'
+import exp from 'constants'
 
 dotenv.config({ path: './integrationtests/.env' })
 
@@ -70,6 +77,68 @@ describe('FSXAProxyAPI', () => {
     server.close()
   })
   describe('fetchElement', () => {
+    const locale = {
+      identifier: 'de_DE',
+      country: 'DE',
+      language: 'de',
+    }
+
+    it('api returns resolved references if references are nested', async () => {
+      const mediaPicture = createMediaPicture('pic-id')
+      const dataset = createDataset('ds-id')
+      const mediaPictureReference = createMediaPictureReference('pic-id')
+      dataset.formData.image = mediaPictureReference
+      const pageRef = createPageRef()
+      const datasetReference = createDatasetReference('ds-id')
+      pageRef.page.formData.dataset = datasetReference
+      await caasClient.addItemsToCollection([pageRef, mediaPicture, dataset], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
+    })
+
+    it('references are resolved if they also occur within other references', async () => {
+      const mediaPicture = createMediaPicture('pic-id')
+      const mediaPictureReference = createMediaPictureReference('pic-id')
+      const dataset = createDataset('ds-id')
+      const datasetReference = createDatasetReference('ds-id')
+      dataset.formData.image = mediaPictureReference
+      const pageRef = createPageRef()
+      pageRef.page.formData = { dataset: datasetReference, image: mediaPictureReference }
+      await caasClient.addItemsToCollection([mediaPicture, pageRef, dataset], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
+    })
+
+    it(
+      'api gracefully handles circular references',
+      async () => {
+        const dataset = createDataset('ds-id')
+        const datasetReference = createDatasetReference('ds-id')
+        dataset.formData.dsref = datasetReference
+        await caasClient.addItemsToCollection([dataset], locale)
+        const res = await proxyAPI.fetchElement({
+          id: dataset.identifier,
+          locale: `${locale.language}_${locale.country}`,
+        })
+        let current = res.data.dsref
+        // start at depth of 1
+        let referenceDepth = 1
+        while (typeof current?.data.dsref == 'object') {
+          current = current.data.dsref
+          referenceDepth++
+        }
+        expect(referenceDepth).toBe(DEFAULT_MAX_REFERENCE_DEPTH)
+        expect(current.data.dsref).toBe(`[REFERENCED-ITEM-${dataset._id}]`)
+      },
+      DEFAULT_MAX_REFERENCE_DEPTH * 1000 // one second per reference depth
+    )
+
     it('api returns matching doc if valid id is passed', async () => {
       const doc: TestDocument = {
         _id: Faker.datatype.uuid(),
