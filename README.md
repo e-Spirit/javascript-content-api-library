@@ -41,7 +41,7 @@ Breaking changes to experimental features are not reflected in major version cha
 
 ## Legal Notices
 
-FSXA-API is a product of [e-Spirit AG](http://www.e-spirit.com), Dortmund, Germany.
+FSXA-API is a product of [Crownpeak Technology GmbH](http://www.e-spirit.com), Dortmund, Germany.
 The FSXA-API is subject to the Apache-2.0 license.
 
 ## Methods
