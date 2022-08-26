@@ -1,3 +1,10 @@
+# [10.6.0](https://github.com/e-Spirit/fsxa-api/compare/v10.5.1...v10.6.0) (2022-08-26)
+
+
+### Features
+
+* **remote-references:** provide access to remote project id when present in references ([0dc9765](https://github.com/e-Spirit/fsxa-api/commit/0dc9765c8d2059d41c47b4280a82b69165ee8b86))
+
 ## [10.5.1](https://github.com/e-Spirit/fsxa-api/compare/v10.5.0...v10.5.1) (2022-08-26)
 
 
