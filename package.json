@@ -30,7 +30,7 @@
     "build:local": "rimraf fsxa-api-*.tgz && npm version prerelease --no-git-tag-version --preid alpha && npm run build && npm pack",
     "start": "rollup -c rollup.config.ts -w",
     "test": "jest --verbose ./src",
-    "test:integration": "jest --verbose ./integrationtests",
+    "test:integration": "jest --verbose --runInBand ./integrationtests",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --coverage --watch",
     "test:prod": "npm run lint && npm run test -- --no-cache",

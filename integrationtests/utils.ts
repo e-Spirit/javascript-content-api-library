@@ -1,6 +1,7 @@
-import { TestDocument } from './types'
+import { TestDocument, Locale } from './types'
 import 'cross-fetch/polyfill'
 import { FSXAContentMode } from '../src/enums'
+import { CaasApi_Item } from '../src'
 
 export enum RequestMethodEnum {
   GET = 'GET',
@@ -112,6 +113,20 @@ export class CaasTestingClient {
     const docsWithLocale = docs.map((doc) => {
       const docWithLocale = { ...doc }
       docWithLocale._id += `.${doc.locale.language}_${doc.locale.country}`
+      return docWithLocale
+    })
+    return await fetch(this.baseUrl, {
+      method: RequestMethodEnum.POST,
+      headers: this.headers,
+      body: JSON.stringify(docsWithLocale) || null,
+    })
+  }
+
+  async addItemsToCollection(docs: CaasApi_Item[], locale: Locale) {
+    const docsWithLocale = docs.map((doc) => {
+      const docWithLocale: any = { ...doc }
+      docWithLocale.locale = locale
+      docWithLocale._id = doc.identifier + `.${locale.language}_${locale.country}`
       return docWithLocale
     })
     return await fetch(this.baseUrl, {
