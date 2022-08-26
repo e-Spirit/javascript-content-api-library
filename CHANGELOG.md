@@ -1,3 +1,10 @@
+## [10.5.1](https://github.com/e-Spirit/fsxa-api/compare/v10.5.0...v10.5.1) (2022-08-26)
+
+
+### Bug Fixes
+
+* **ReferenceResolving:** add max resolve depth ([#125](https://github.com/e-Spirit/fsxa-api/issues/125)) ([99e1405](https://github.com/e-Spirit/fsxa-api/commit/99e140597150226b6aef44e7c0ca700f85737776))
+
 # [10.5.0](https://github.com/e-Spirit/fsxa-api/compare/v10.4.0...v10.5.0) (2022-08-11)
 
 
