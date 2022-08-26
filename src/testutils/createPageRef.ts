@@ -1,7 +1,7 @@
 import { createDataEntry } from './createDataEntry'
-import { CaaSApi_PageRef } from '../types'
+import { CaaSApi_Body, CaaSApi_PageRef } from '../types'
 
-export function createPageRef(): CaaSApi_PageRef {
+export function createPageRef(pageChildren: CaaSApi_Body[] = []): CaaSApi_PageRef {
   const base = createDataEntry()
   const page = createDataEntry()
   const template = createDataEntry()
@@ -13,7 +13,7 @@ export function createPageRef(): CaaSApi_PageRef {
     page: {
       ...page,
       fsType: 'Page',
-      children: [],
+      children: pageChildren,
       formData: {},
       metaFormData: {},
       template: {
