@@ -1,7 +1,15 @@
 import dotenv from 'dotenv'
 import express, { Express } from 'express'
 import cors from 'cors'
-import { FSXAContentMode, FSXAProxyApi, LogLevel, QueryBuilderQuery } from '../src'
+import {
+  FSXAContentMode,
+  FSXAProxyApi,
+  LogLevel,
+  Page,
+  QueryBuilderQuery,
+  Reference,
+  Section,
+} from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
 import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
 import {
@@ -12,10 +20,16 @@ import { CaasTestingClient } from './utils'
 import { TestDocument } from './types'
 import { Server } from 'http'
 import Faker from 'faker'
-import { createMediaPicture } from '../src/testutils/createMediaPicture'
-import { createMediaPictureReference } from '../src/testutils/createDataEntry'
-import { createDataset, createDatasetReference } from '../src/testutils/createDataset'
-import { createPageRef } from '../src/testutils/createPageRef'
+import {
+  createRemotePageRefReference,
+  createPageRef,
+  createPageRefBody,
+  createSection,
+  createMediaPicture,
+  createMediaPictureReference,
+  createDataset,
+  createDatasetReference,
+} from '../src/testutils'
 
 dotenv.config({ path: './integrationtests/.env' })
 
@@ -43,11 +57,9 @@ describe('FSXAProxyAPI', () => {
     logLevel: LogLevel.INFO,
     enableEventStream: false,
   })
-
   let proxyAPI: FSXAProxyApi
   let server: Server
   let caasClient: CaasTestingClient
-
   beforeAll(async () => {
     // start express server
     const app = express()
@@ -66,7 +78,6 @@ describe('FSXAProxyAPI', () => {
       contentMode: FSXAContentMode.PREVIEW,
     })
   })
-
   afterAll(async () => {
     const res = await caasClient.getCollection()
     const parsedRes = await res.json()
@@ -79,7 +90,6 @@ describe('FSXAProxyAPI', () => {
       country: 'DE',
       language: 'de',
     }
-
     it('api returns resolved references if references are nested', async () => {
       const mediaPicture = createMediaPicture('pic-id')
       const dataset = createDataset('ds-id')
@@ -95,7 +105,6 @@ describe('FSXAProxyAPI', () => {
       })
       expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
     })
-
     it('references are resolved if they also occur within other references', async () => {
       const mediaPicture = createMediaPicture('pic-id')
       const mediaPictureReference = createMediaPictureReference('pic-id')
@@ -111,7 +120,6 @@ describe('FSXAProxyAPI', () => {
       })
       expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
     })
-
     it('api returns matching doc if valid id is passed', async () => {
       const doc: TestDocument = {
         _id: Faker.datatype.uuid(),
@@ -200,6 +208,34 @@ describe('FSXAProxyAPI', () => {
         locale: `${doc.locale.language}_${doc.locale.country}`,
       })
       expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+    })
+    it('api returns all required remote reference attributes', async function () {
+      const section = createSection()
+      const remotePageRefReference = createRemotePageRefReference()
+      section.formData = {
+        st_ref: remotePageRefReference,
+      }
+      const pageRef = createPageRef([createPageRefBody([section])])
+      await caasClient.addDocToCollection({
+        _id: pageRef.identifier,
+        ...pageRef,
+        locale: {
+          identifier: 'de',
+          country: 'DE',
+          language: 'de',
+        },
+      })
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res).toBeDefined
+      const mappedSection = res.children[0].children[0] as Section
+      expect(mappedSection.data.st_ref).toBeDefined
+      const mappedRef: Reference = mappedSection.data.st_ref
+      expect(mappedRef.referenceId).toEqual(remotePageRefReference.value?.identifier)
+      expect(mappedRef.referenceType).toEqual(remotePageRefReference.value?.fsType)
+      expect(mappedRef.referenceRemoteProject).toEqual(remotePageRefReference.value?.remoteProject)
     })
   })
   describe('fetchByFilter', () => {
@@ -452,7 +488,6 @@ describe('FSXAProxyAPI', () => {
         expect(items[0]._id).toEqual(doc3._id + '.en_GB')
       })
     })
-
     describe('filter with REGEX operator', () => {
       it('api returns matching data if simple regex matches', async () => {
         const regex = 'gray|grey'

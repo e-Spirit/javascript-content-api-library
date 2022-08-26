@@ -802,6 +802,7 @@ describe('CaaSMapper', () => {
 
         const expectedPageRef: Reference = {
           referenceId: entry.value!.identifier,
+          referenceRemoteProject: entry.value!.remoteProject,
           referenceType: entry.value!.fsType,
           type: 'Reference',
         }
@@ -812,6 +813,7 @@ describe('CaaSMapper', () => {
         entry.value!.url = ''
         const expectedGCARef: Reference = {
           referenceId: entry.value!.identifier,
+          referenceRemoteProject: entry.value!.remoteProject,
           referenceType: entry.value!.fsType,
           type: 'Reference',
         }
