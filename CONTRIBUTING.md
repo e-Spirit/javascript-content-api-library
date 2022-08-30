@@ -15,7 +15,7 @@ Please note we have a code of conduct, please follow it in all your interactions
    variables, exposed ports or useful file locations.
 3. There is no need to increase the projects version numbers in any of the files. We will increase the version numbers
    when your pull request gets merged into the master branch.
-4. Pull Requests are always reviewed by e-Spirit developers and will also be merged by them. We may contact you during
+4. Pull Requests are always reviewed by Crownpeak Technology developers and will also be merged by them. We may contact you during
    the process to make some changes to your pull request before we merge it into the master branch of the project.
 
 ### Code of Conduct
@@ -101,11 +101,11 @@ The FSXA-API is subject to the Apache-2.0 license.
 ## Disclaimer
 
 This document is provided for information purposes only.
-e-Spirit may change the contents hereof without notice.
+Crownpeak Technology may change the contents hereof without notice.
 This document is not warranted to be error-free, nor subject to any
 other warranties or conditions, whether expressed orally or
 implied in law, including implied warranties and conditions of
-merchantability or fitness for a particular purpose. e-Spirit
+merchantability or fitness for a particular purpose. Crownpeak Technology
 specifically disclaims any liability with respect to this document
 and no contractual obligations are formed either directly or
 indirectly by this document. The technologies, functionality, services,
