@@ -33,7 +33,7 @@ export class Logger {
 
   debug(...args: any[]) {
     if (this._logLevel <= LogLevel.DEBUG) {
-      console.debug(
+      console.info(
         chalk.gray(`${chalk.bgWhite.black(' DEBUG ')} ${this._name} | ${formatOutput(...args)}`)
       )
     }
