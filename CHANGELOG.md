@@ -1,3 +1,10 @@
+## [10.6.1](https://github.com/e-Spirit/fsxa-api/compare/v10.6.0...v10.6.1) (2022-09-22)
+
+
+### Bug Fixes
+
+* **logger:** change console.debug to console.info to ensure output ([#112](https://github.com/e-Spirit/fsxa-api/issues/112)) ([84dfbdb](https://github.com/e-Spirit/fsxa-api/commit/84dfbdb48a2404f7406a2f3218e6f0639542844a))
+
 # [10.6.0](https://github.com/e-Spirit/fsxa-api/compare/v10.5.1...v10.6.0) (2022-08-26)
 
 
