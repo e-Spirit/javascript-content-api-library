@@ -29,6 +29,15 @@ describe('XMLParser', () => {
     expect(result).toEqual(expectedValue)
   })
 
+  it('should parse &nbsp; correctly', async () => {
+    const xml = '<div>&nbsp;</div>'
+    const expectedValue = [
+      { data: {}, content: [{ type: 'text', content: '\xa0', data: {} }], type: 'block' },
+    ]
+    const result = await xmlParser.parse(xml)
+    expect(result).toEqual(expectedValue)
+  })
+
   it('should log error on sanitize wrong xml', () => {
     const xml: any = 1
     const logTest = jest.spyOn(logger, 'error').mockImplementation(() => {})
