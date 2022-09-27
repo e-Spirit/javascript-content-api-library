@@ -22,6 +22,7 @@ class XMLParser {
     try {
       return (
         xml
+          .replace(/&nbsp;/g, '&#160;')
           // replace all non closing br tags with self-closing once (legacy, fixed with CORE-13424)
           .replace(/<br>/g, '<br />')
           // restructure the link structure into one single link element  (hint: *? matches non-eager)
