@@ -1,3 +1,10 @@
+## [10.6.2](https://github.com/e-Spirit/fsxa-api/compare/v10.6.1...v10.6.2) (2022-09-27)
+
+
+### Bug Fixes
+
+* **xmlparser:** handle &nbsp; in tables ([#130](https://github.com/e-Spirit/fsxa-api/issues/130)) ([7ad02e4](https://github.com/e-Spirit/fsxa-api/commit/7ad02e49e076d5acae68788902af2b8c40538e80))
+
 ## [10.6.1](https://github.com/e-Spirit/fsxa-api/compare/v10.6.0...v10.6.1) (2022-09-22)
 
 
