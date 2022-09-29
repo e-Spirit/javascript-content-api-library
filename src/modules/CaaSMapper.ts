@@ -46,6 +46,8 @@ import {
   RichTextElement,
   Section,
   Media,
+  CaasApi_Item,
+  MappedCaasItem,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, has, set, update } from 'lodash'
@@ -66,6 +68,16 @@ interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
 }
 
+interface ResolvedReferences {
+  [id: string]: MappedCaasItem | CaasApi_Item
+}
+
+export interface MapResponse {
+  queriedItemIds: string[]
+  referencedItems: ReferencedItemsInfo
+  resolvedReferences: ResolvedReferences
+}
+
 export class CaaSMapper {
   public logger: Logger
   api: FSXARemoteApi
@@ -74,6 +86,7 @@ export class CaaSMapper {
   customMapper?: CustomMapper
   referenceDepth: number
   maxReferenceDepth: number
+  resolvedReferences: ResolvedReferences = {}
 
   constructor(
     api: FSXARemoteApi,
@@ -107,6 +120,12 @@ export class CaaSMapper {
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
   } = {}
+
+  addToResolvedReferences(item: MappedCaasItem | CaasApi_Item) {
+    // mapped items have preview id
+    // unmapped items have _id
+    this.resolvedReferences[(item as MappedCaasItem).previewId || (item as CaasApi_Item)._id] = item
+  }
 
   /**
    * registers a referenced Item to be fetched later. If a remoteProjectId is passed,
@@ -601,62 +620,82 @@ export class CaaSMapper {
   }
 
   async mapElementResponse(
-    element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any,
+    unmappedElement: CaasApi_Item | any,
     filterContext?: unknown
-  ): Promise<Dataset | Page | Image | GCAPage | null | any> {
-    let response
-    switch (element.fsType) {
+  ): Promise<MapResponse> {
+    let mappedElement: MappedCaasItem | null = null
+    switch (unmappedElement.fsType) {
       case 'Dataset':
-        response = await this.mapDataset(element, [])
+        mappedElement = await this.mapDataset(unmappedElement, [unmappedElement._id])
         break
       case 'PageRef':
-        response = await this.mapPageRef(element, [])
+        mappedElement = await this.mapPageRef(unmappedElement, [unmappedElement._id])
         break
       case 'Media':
-        response = await this.mapMedia(element, [])
+        mappedElement = await this.mapMedia(unmappedElement, [unmappedElement._id])
         break
       case 'GCAPage':
-        response = await this.mapGCAPage(element, [])
+        mappedElement = await this.mapGCAPage(unmappedElement, [unmappedElement._id])
         break
       default:
-        // we could not map the element --> just returning the raw values
-        return element
+      // we could not map the element --> just returning the raw values
     }
-    return this.resolveAllReferences(response as {}, filterContext)
+
+    // cache items to avoid fetching them multiple times
+    if (mappedElement) this.addToResolvedReferences(mappedElement)
+    else if (unmappedElement) this.addToResolvedReferences(unmappedElement)
+
+    await this.resolveAllReferences(mappedElement as {}, filterContext)
+
+    return {
+      queriedItemIds: [mappedElement?.previewId || unmappedElement?._id],
+      referencedItems: this._referencedItems,
+      resolvedReferences: this.resolvedReferences,
+    }
   }
 
   async mapFilterResponse(
-    items: (
-      | CaaSApi_Dataset
-      | CaaSApi_PageRef
-      | CaaSApi_Media
-      | CaaSApi_GCAPage
-      | CaaSApi_ProjectProperties
-    )[],
+    unmappedItems: (CaasApi_Item | any)[],
     filterContext?: unknown
-  ): Promise<(Page | GCAPage | Dataset | Image)[]> {
-    const mappedItems = (
+  ): Promise<MapResponse> {
+    const items: (MappedCaasItem | CaasApi_Item | null)[] = (
       await Promise.all(
-        items.map((item, index) => {
-          switch (item.fsType) {
+        unmappedItems.map((unmappedItem, index) => {
+          switch (unmappedItem.fsType) {
             case 'Dataset':
-              return this.mapDataset(item, [index])
+              return this.mapDataset(unmappedItem, [unmappedItem._id])
             case 'PageRef':
-              return this.mapPageRef(item, [index])
+              return this.mapPageRef(unmappedItem, [unmappedItem._id])
             case 'Media':
-              return this.mapMedia(item, [index]) as Promise<any>
+              return this.mapMedia(unmappedItem, [unmappedItem._id])
             case 'GCAPage':
-              return this.mapGCAPage(item, [index])
+              return this.mapGCAPage(unmappedItem, [unmappedItem._id])
             case 'ProjectProperties':
-              return this.mapProjectProperties(item, [index])
+              return this.mapProjectProperties(unmappedItem, [unmappedItem._id])
             default:
               this.logger.warn(`Item at index'${index}' could not be mapped!`)
-              return item
+              return unmappedItem
           }
         })
       )
-    ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
-    return this.resolveAllReferences(mappedItems, filterContext)
+    ).filter(Boolean)
+
+    // cache items to avoid fetching them multiple times
+    items.forEach((item) => {
+      if (item) {
+        this.addToResolvedReferences(item)
+      }
+    })
+
+    await this.resolveAllReferences(items, filterContext)
+
+    return {
+      queriedItemIds: items
+        .filter((item) => !!item)
+        .map((item) => (item as MappedCaasItem).previewId || (item as CaasApi_Item)._id),
+      referencedItems: this._referencedItems,
+      resolvedReferences: this.resolvedReferences,
+    }
   }
 
   /**
@@ -665,25 +704,26 @@ export class CaaSMapper {
    * @param data
    * @returns data
    */
-  async resolveAllReferences<Type extends {}>(data: Type, filterContext?: unknown): Promise<Type> {
+  async resolveAllReferences<Type extends {}>(data: Type, filterContext?: unknown): Promise<void> {
     if (this.referenceDepth >= this.maxReferenceDepth) {
       // hint: handle unresolved references TNG-1169
       this.logger.warn(`Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`)
-      return data
+      return
     }
     this.referenceDepth++
     const remoteIds = Object.keys(this._remoteReferences)
     this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
     await Promise.all([
-      this.resolveReferencesPerProject(data, undefined, filterContext),
-      ...remoteIds.map((remoteId) =>
-        this.resolveReferencesPerProject(data, remoteId, filterContext)
-      ),
+      this.resolveReferencesPerProject(undefined, filterContext),
+      ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(remoteId, filterContext)),
     ])
 
     // force a single resolution for image map media
     this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
+      // *****
+      // TODO: don't update data, but resolved refs!
+
       // the path only exist on resolved imagemaps (s. TNG-1169)
       if (has(data, [...path, 'resolutions'])) {
         update(data, [...path, 'resolutions'], (resolutions) => {
@@ -694,8 +734,6 @@ export class CaaSMapper {
         })
       }
     })
-
-    return data
   }
 
   /**
@@ -703,11 +741,7 @@ export class CaaSMapper {
    * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferencesPerProject<T extends {}>(
-    data: T,
-    remoteProjectId?: string,
-    filterContext?: unknown
-  ): Promise<T> {
+  async resolveReferencesPerProject(remoteProjectId?: string, filterContext?: unknown) {
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
@@ -718,10 +752,25 @@ export class CaaSMapper {
     const locale =
       remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
 
-    const ids = Object.keys(referencedItems)
-    const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
-    if (ids?.length > 0) {
-      const response = await Promise.all(
+    const referencedIds = Object.keys(referencedItems)
+
+    const resolvedIds = Object.keys(this.resolvedReferences)
+
+    // item id is not yet in cache
+    const idsToFetchFromCaaS = referencedIds.filter((id) => {
+      for (const resolvedId of resolvedIds) {
+        if (resolvedId.includes(id)) return false
+      }
+      return true
+    })
+
+    const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
+
+    // we need to resolve some refs
+    if (idsToFetchFromCaaS.length > 0) {
+      // we pass "this" as context to fetchByFilterInternal
+      // fetchByFilterInternal then updates resolved refs here
+      await Promise.all(
         idChunks.map((ids) =>
           this.api.fetchByFilterInternal(
             {
@@ -737,26 +786,38 @@ export class CaaSMapper {
               remoteProject: remoteProjectId,
               filterContext,
             },
-            this.referenceDepth
-          )
-        )
-      )
-      const fetchedItems = response.map(({ items }) => items).flat()
-      ids.forEach((id) =>
-        referencedItems[id].forEach((path) =>
-          set(
-            data,
-            path,
-            fetchedItems.find((data) => {
-              const hasId = typeof data === 'object' && 'id' in (data as object)
-              if (hasId) {
-                return (data as { id: string }).id === id
-              }
-            })
+            this
           )
         )
       )
     }
-    return data
+  }
+
+  // we use a query function, because ids get mixed up:
+  // referencedItems store identifier, resolvedReferences store _id or previewId
+  static findResolvedReferencesByIds(ids: string[], resolvedReferences: ResolvedReferences) {
+    const items = []
+    for (const [resolvedId, resolvedItem] of Object.entries(resolvedReferences)) {
+      if (ids.includes(resolvedId)) {
+        items.push(resolvedItem)
+      }
+    }
+    return items
+  }
+
+  static denormalizeResolvedReferences(
+    referencedItems: ReferencedItemsInfo,
+    resolvedReferences: ResolvedReferences
+  ) {
+    for (const [referencedId, occurencies] of Object.entries(referencedItems)) {
+      occurencies.forEach((path) => {
+        // no simple comparison possible because referencedItems store identifier
+        // and resolvedReferences store "previewId" or "_id"
+        const resolvedId = Object.keys(resolvedReferences).find((key) => key.includes(referencedId))
+        if (resolvedId) {
+          set(resolvedReferences, path, resolvedReferences[resolvedId])
+        }
+      })
+    }
   }
 }

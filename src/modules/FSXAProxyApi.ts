@@ -17,6 +17,7 @@ import {
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
 import { FetchResponse } from '..'
+import { CaaSMapper, MapResponse } from '.'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -119,7 +120,13 @@ export class FSXAProxyApi implements FSXAApi {
       }
     }
 
-    return response.json()
+    const jsonRes = await response.json()
+    const { referencedItems, queriedItemIds, resolvedReferences } = jsonRes as MapResponse
+    CaaSMapper.denormalizeResolvedReferences(referencedItems, resolvedReferences)
+    return CaaSMapper.findResolvedReferencesByIds(
+      queriedItemIds,
+      resolvedReferences
+    )[0] as unknown as T
   }
 
   /**
@@ -201,7 +208,11 @@ export class FSXAProxyApi implements FSXAApi {
       }
     }
 
-    return response.json()
+    const jsonRes = await response.json()
+    const { referencedItems, queriedItemIds, resolvedReferences } = jsonRes.items as MapResponse
+    CaaSMapper.denormalizeResolvedReferences(referencedItems, resolvedReferences)
+    jsonRes.items = CaaSMapper.findResolvedReferencesByIds(queriedItemIds, resolvedReferences)
+    return jsonRes
   }
 
   /**

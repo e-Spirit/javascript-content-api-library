@@ -7,8 +7,9 @@ import {
   CaaSAPI_PermissionGroup,
 } from '../types'
 
-export function createDataEntry(id = faker.datatype.uuid()) {
+export function createDataEntry(id = faker.datatype.uuid(), locale = faker.random.locale) {
   return {
+    _id: `${id}.${locale}`,
     label: `${id}-label`,
     identifier: id,
     name: `${id}-name`,

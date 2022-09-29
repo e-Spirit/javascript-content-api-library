@@ -415,6 +415,7 @@ export interface CaaSApi_Page {
 }
 
 export interface CaaSApi_PageRef {
+  _id: string
   fsType: 'PageRef'
   name: string
   identifier: string
@@ -693,7 +694,7 @@ export type CustomMapper = (
   }
 ) => Promise<any>
 
-export type CaasItem = Page | GCAPage | Dataset | Image | ProjectProperties
+export type MappedCaasItem = Page | GCAPage | Dataset | Image | File | ProjectProperties
 
 export type CaasApi_Item =
   | CaaSApi_Dataset
@@ -848,6 +849,7 @@ export type FetchByFilterParams = {
   fetchOptions?: RequestInit
   filterContext?: unknown
   sort?: SortParams[]
+  denormalized?: boolean
 }
 
 export type FetchElementParams = {
@@ -857,6 +859,7 @@ export type FetchElementParams = {
   remoteProject?: string
   fetchOptions?: RequestInit
   filterContext?: unknown
+  denormalized?: boolean
 }
 
 export type FetchProjectPropertiesParams = {
@@ -877,12 +880,12 @@ export interface AppContext<T = unknown> {
 export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
 
 export interface CaasItemFilterParams<FilterContextType> {
-  caasItems: (CaasItem | any)[]
+  caasItems: (MappedCaasItem | any)[]
   filterContext?: FilterContextType
 }
 export type CaasItemFilter<FilterContextType = unknown> = (
   params: CaasItemFilterParams<FilterContextType>
-) => Promise<(CaasItem | any)[]> | (CaasItem | any)[]
+) => Promise<(MappedCaasItem | any)[]> | (MappedCaasItem | any)[]
 
 export interface NavigationItemFilterParams<FilterContextType = unknown> {
   navigationItems: NavigationItem[]

@@ -1,5 +1,5 @@
 import { stringify } from 'qs'
-import { CaaSMapper, Logger } from '.'
+import { CaaSMapper, Logger, MapResponse } from '.'
 import { FetchResponse, ProjectProperties } from '..'
 import {
   NavigationData,
@@ -13,7 +13,7 @@ import {
   CaasItemFilter,
   NavigationItemFilter,
   RemoteApiFilterOptions,
-  CaasItem,
+  MappedCaasItem,
   RemoteProjectConfiguration,
   SortParams,
 } from '../types'
@@ -367,14 +367,16 @@ export class FSXARemoteApi implements FSXAApi {
    * @param fetchOptions optional object to pass additional request options (Check {@link RequestInit RequestInit})
    * @returns {Promise<T>} a Promise with the mapped result
    */
-  async fetchElement<T = CaasItem | any | null>({
+  async fetchElement<T = MappedCaasItem | any | null>({
     id,
     locale,
     additionalParams = {},
     remoteProject,
     fetchOptions,
     filterContext,
-  }: FetchElementParams): Promise<T> {
+    denormalized = true,
+  }: FetchElementParams): Promise<any> {
+    // todo: fix any typing
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
     const response = await fetch(url, {
@@ -394,7 +396,11 @@ export class FSXARemoteApi implements FSXAApi {
     const responseJSON = await response.json()
     if (additionalParams.keys) {
       // If additionalParams are provided we cannot map the response since we do not know which keys are provided
-      return responseJSON
+      return {
+        queriedItemIds: [id],
+        referencedItems: {},
+        resolvedReferences: { [id]: responseJSON },
+      }
     }
     const mapper = new CaaSMapper(
       this as any,
@@ -405,8 +411,19 @@ export class FSXARemoteApi implements FSXAApi {
       },
       new Logger(this._logLevel, 'CaaSMapper')
     )
-    const mappedElement = await mapper.mapElementResponse(responseJSON, filterContext)
-    if (!this._caasItemFilter) return mappedElement
+    const mapResponse = await mapper.mapElementResponse(responseJSON, filterContext)
+    const { referencedItems, resolvedReferences, queriedItemIds } = mapResponse
+
+    // TODO: fix type converting item as Dataset in multiple spots...
+    const mappedElement = CaaSMapper.findResolvedReferencesByIds(
+      queriedItemIds,
+      resolvedReferences
+    )[0]
+
+    if (!this._caasItemFilter)
+      return !denormalized
+        ? (mappedElement as any)
+        : { queriedItemIds, referencedItems, resolvedReferences }
 
     const filteredElement = (
       await this._caasItemFilter({
@@ -417,7 +434,12 @@ export class FSXARemoteApi implements FSXAApi {
     if (!filteredElement) {
       throw new Error(FSXAApiErrors.NOT_FOUND)
     }
-    return filteredElement
+
+    return {
+      queriedItemIds,
+      referencedItems,
+      resolvedReferences,
+    }
   }
 
   /**
@@ -460,18 +482,37 @@ export class FSXARemoteApi implements FSXAApi {
     fetchOptions,
     filterContext,
     sort = [],
+    denormalized = true,
   }: FetchByFilterParams): Promise<FetchResponse> {
-    return this.fetchByFilterInternal({
-      filters,
+    // todo fix fetch response type
+    const mapper = new CaaSMapper(
+      this as FSXARemoteApi,
       locale,
-      page,
-      pagesize,
-      additionalParams,
-      remoteProject,
-      fetchOptions,
-      filterContext,
-      sort,
-    })
+      {
+        customMapper: this._customMapper,
+        maxReferenceDepth: this._maxReferenceDepth,
+      },
+      new Logger(this._logLevel, 'CaaSMapper')
+    )
+
+    // TODO: denormalized = false
+
+    // we need this in order to pass CaaSMapper context
+    return this.fetchByFilterInternal(
+      {
+        filters,
+        locale,
+        page,
+        pagesize,
+        additionalParams,
+        remoteProject,
+        fetchOptions,
+        filterContext,
+        sort,
+        denormalized,
+      },
+      mapper
+    )
   }
 
   async fetchByFilterInternal(
@@ -486,18 +527,18 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext,
       sort = [],
     }: FetchByFilterParams,
-    referenceDepth?: number
+    mapper: CaaSMapper,
+    denormalized?: boolean
   ): Promise<FetchResponse> {
+    // todo fix fetch res type
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
       pagesize = 30
     }
-
     if (page < 1) {
       this._logger.warn(`[fetchByFilter] page must be greater than zero! Using fallback of 1.`)
       page = 1
     }
-
     const url = this.buildCaaSUrl({
       filters,
       additionalParams: {
@@ -529,20 +570,8 @@ export class FSXARemoteApi implements FSXAApi {
           throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
-    const mapper = new CaaSMapper(
-      this as FSXARemoteApi,
-      locale,
-      {
-        customMapper: this._customMapper,
-        referenceDepth: referenceDepth,
-        maxReferenceDepth: this._maxReferenceDepth,
-      },
-      new Logger(this._logLevel, 'CaaSMapper')
-    )
     const data = await response.json()
-
     let items = await this.getItemsData(data, additionalParams, mapper, filterContext)
-
     if (items && items.length !== 0 && this._caasItemFilter) {
       this._logger.debug(
         'fetchByFilter',
@@ -586,7 +615,8 @@ export class FSXARemoteApi implements FSXAApi {
       return []
     }
 
-    return mapper.mapFilterResponse(data._embedded['rh:doc'], filterContext)
+    // todo fix any type
+    return mapper.mapFilterResponse(data._embedded['rh:doc'], filterContext) as any
   }
 
   // TODO: Fix unecessary array wrapping with a future major jump (as it's breaking)
