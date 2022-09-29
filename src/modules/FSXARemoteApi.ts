@@ -374,7 +374,7 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
     filterContext,
-    denormalized = false, // TODO: fix default true
+    denormalized = true,
   }: FetchElementParams): Promise<any> {
     // todo: fix any typing
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
@@ -476,7 +476,7 @@ export class FSXARemoteApi implements FSXAApi {
     fetchOptions,
     filterContext,
     sort = [],
-    denormalized = false, // TODO: fix default true
+    denormalized = true,
   }: FetchByFilterParams): Promise<FetchResponse> {
     // todo fix fetch response type
     const mapper = new CaaSMapper(
