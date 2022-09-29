@@ -90,6 +90,33 @@ describe('FSXAProxyAPI', () => {
       country: 'DE',
       language: 'de',
     }
+    it('items with circular references get resolved', async () => {
+      const dataset1 = createDataset('ds1-id')
+      const datasetReference1 = createDatasetReference('ds1-id')
+      const dataset2 = createDataset('ds2-id')
+      const datasetReference2 = createDatasetReference('ds2-id')
+      const dataset3 = createDataset('ds3-id')
+      const datasetReference3 = createDatasetReference('ds3-id')
+
+      dataset1.formData.ref22 = datasetReference2
+      dataset2.formData.ref23 = datasetReference3
+      dataset3.formData.ref21 = datasetReference1
+
+      const pageRef = createPageRef()
+      pageRef.page.formData = { dataset: datasetReference1 }
+
+      await caasClient.addItemsToCollection([pageRef, dataset1, dataset2, dataset3], locale)
+
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+
+      expect(res.data.dataset.id).toBe(dataset1._id)
+      expect(res.data.dataset.data.ref22.id).toBe(dataset2._id)
+      expect(res.data.dataset.data.ref22.data.ref23.id).toBe(dataset3._id)
+      expect(res.data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(dataset1._id)
+    })
     it('api returns resolved references if references are nested', async () => {
       const mediaPicture = createMediaPicture('pic-id')
       const dataset = createDataset('ds-id')
@@ -217,8 +244,8 @@ describe('FSXAProxyAPI', () => {
       }
       const pageRef = createPageRef([createPageRefBody([section])])
       await caasClient.addDocToCollection({
-        _id: pageRef.identifier,
         ...pageRef,
+        _id: pageRef.identifier,
         locale: {
           identifier: 'de',
           country: 'DE',
@@ -243,6 +270,46 @@ describe('FSXAProxyAPI', () => {
     const language = 'en'
     const identifier = 'EN'
     describe('filter with EQUALS operator', () => {
+      it('items with circular references get resolved', async () => {
+        const locale = {
+          identifier: 'de_DE',
+          country: 'DE',
+          language: 'de',
+        }
+        const dataset1 = createDataset('ds1-id')
+        const datasetReference1 = createDatasetReference('ds1-id')
+        const dataset2 = createDataset('ds2-id')
+        const datasetReference2 = createDatasetReference('ds2-id')
+        const dataset3 = createDataset('ds3-id')
+        const datasetReference3 = createDatasetReference('ds3-id')
+
+        dataset1.formData.ref22 = datasetReference2
+        dataset2.formData.ref23 = datasetReference3
+        dataset3.formData.ref21 = datasetReference1
+
+        const pageRef = createPageRef()
+        pageRef.page.formData = { dataset: datasetReference1 }
+
+        await caasClient.addItemsToCollection([pageRef, dataset1, dataset2, dataset3], locale)
+
+        const res = await proxyAPI.fetchByFilter({
+          filters: [
+            {
+              field: 'identifier',
+              operator: ComparisonQueryOperatorEnum.EQUALS,
+              value: pageRef.identifier,
+            },
+          ],
+          locale: `${locale.language}_${locale.country}`,
+        })
+
+        expect((res.items[0] as any).data.dataset.id).toBe(dataset1._id)
+        expect((res.items[0] as any).data.dataset.data.ref22.id).toBe(dataset2._id)
+        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.id).toBe(dataset3._id)
+        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(
+          dataset1._id
+        )
+      })
       it('api returns only matching data if filter is applied', async () => {
         const a = Faker.datatype.uuid()
         const b = Faker.datatype.uuid()
