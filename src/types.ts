@@ -1,5 +1,11 @@
 import { FSXAContentMode, ImageMapAreaType } from './enums'
-import { FSXARemoteApi, FSXAProxyApi, LogLevel } from './modules'
+import {
+  FSXARemoteApi,
+  FSXAProxyApi,
+  LogLevel,
+  ResolvedReferencesInfo,
+  ReferencedItemsInfo,
+} from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
@@ -957,4 +963,6 @@ export interface FetchResponse {
   totalPages?: number
   size?: number
   items: unknown[]
+  resolvedReferences?: ResolvedReferencesInfo
+  referenceMap?: ReferencedItemsInfo
 }

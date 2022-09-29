@@ -64,18 +64,18 @@ export enum CaaSMapperErrors {
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
 export const DEFAULT_MAX_REFERENCE_DEPTH = 10
 
-interface ReferencedItemsInfo {
+export interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
 }
 
-interface ResolvedReferences {
+export interface ResolvedReferencesInfo {
   [id: string]: MappedCaasItem | CaasApi_Item
 }
 
 export interface MapResponse {
-  queriedItemIds: string[]
-  referencedItems: ReferencedItemsInfo
-  resolvedReferences: ResolvedReferences
+  resolvedReferences: ResolvedReferencesInfo
+  mappedItems: (MappedCaasItem | CaasApi_Item)[]
+  referenceMap: ReferencedItemsInfo
 }
 
 export class CaaSMapper {
@@ -86,7 +86,7 @@ export class CaaSMapper {
   customMapper?: CustomMapper
   referenceDepth: number
   maxReferenceDepth: number
-  resolvedReferences: ResolvedReferences = {}
+  resolvedReferences: ResolvedReferencesInfo = {}
 
   constructor(
     api: FSXARemoteApi,
@@ -621,64 +621,79 @@ export class CaaSMapper {
 
   async mapElementResponse(
     unmappedElement: CaasApi_Item | any,
+    additionalParams: Record<string, any>,
     filterContext?: unknown
   ): Promise<MapResponse> {
     let mappedElement: MappedCaasItem | null = null
-    switch (unmappedElement.fsType) {
-      case 'Dataset':
-        mappedElement = await this.mapDataset(unmappedElement, [unmappedElement._id])
-        break
-      case 'PageRef':
-        mappedElement = await this.mapPageRef(unmappedElement, [unmappedElement._id])
-        break
-      case 'Media':
-        mappedElement = await this.mapMedia(unmappedElement, [unmappedElement._id])
-        break
-      case 'GCAPage':
-        mappedElement = await this.mapGCAPage(unmappedElement, [unmappedElement._id])
-        break
-      default:
-      // we could not map the element --> just returning the raw values
+
+    if (!additionalParams.keys) {
+      // If additionalParams are provided we cannot map the response since we do not know which keys are provided
+      switch (unmappedElement.fsType) {
+        case 'Dataset':
+          mappedElement = await this.mapDataset(unmappedElement, [unmappedElement._id])
+          break
+        case 'PageRef':
+          mappedElement = await this.mapPageRef(unmappedElement, [unmappedElement._id])
+          break
+        case 'Media':
+          mappedElement = await this.mapMedia(unmappedElement, [unmappedElement._id])
+          break
+        case 'GCAPage':
+          mappedElement = await this.mapGCAPage(unmappedElement, [unmappedElement._id])
+          break
+        default:
+        // we could not map the element --> just returning the raw values
+      }
     }
 
     // cache items to avoid fetching them multiple times
     if (mappedElement) this.addToResolvedReferences(mappedElement)
     else if (unmappedElement) this.addToResolvedReferences(unmappedElement)
 
+    // resolve refs
     await this.resolveAllReferences(mappedElement as {}, filterContext)
 
+    // find resolved refs and puzzle them back together
+    const mappedItems = CaaSMapper.findResolvedReferencesByIds(
+      [mappedElement?.previewId || unmappedElement?._id],
+      this.resolvedReferences
+    )
+
     return {
-      queriedItemIds: [mappedElement?.previewId || unmappedElement?._id],
-      referencedItems: this._referencedItems,
+      mappedItems,
+      referenceMap: this._referencedItems,
       resolvedReferences: this.resolvedReferences,
     }
   }
 
   async mapFilterResponse(
     unmappedItems: (CaasApi_Item | any)[],
+    additionalParams: Record<string, any>,
     filterContext?: unknown
   ): Promise<MapResponse> {
-    const items: (MappedCaasItem | CaasApi_Item | null)[] = (
-      await Promise.all(
-        unmappedItems.map((unmappedItem, index) => {
-          switch (unmappedItem.fsType) {
-            case 'Dataset':
-              return this.mapDataset(unmappedItem, [unmappedItem._id])
-            case 'PageRef':
-              return this.mapPageRef(unmappedItem, [unmappedItem._id])
-            case 'Media':
-              return this.mapMedia(unmappedItem, [unmappedItem._id])
-            case 'GCAPage':
-              return this.mapGCAPage(unmappedItem, [unmappedItem._id])
-            case 'ProjectProperties':
-              return this.mapProjectProperties(unmappedItem, [unmappedItem._id])
-            default:
-              this.logger.warn(`Item at index'${index}' could not be mapped!`)
-              return unmappedItem
-          }
-        })
-      )
-    ).filter(Boolean)
+    let items: (MappedCaasItem | CaasApi_Item | null)[] = additionalParams.keys
+      ? unmappedItems // don't map data, if additional params have been set
+      : (
+          await Promise.all(
+            unmappedItems.map((unmappedItem, index) => {
+              switch (unmappedItem.fsType) {
+                case 'Dataset':
+                  return this.mapDataset(unmappedItem, [unmappedItem._id])
+                case 'PageRef':
+                  return this.mapPageRef(unmappedItem, [unmappedItem._id])
+                case 'Media':
+                  return this.mapMedia(unmappedItem, [unmappedItem._id])
+                case 'GCAPage':
+                  return this.mapGCAPage(unmappedItem, [unmappedItem._id])
+                case 'ProjectProperties':
+                  return this.mapProjectProperties(unmappedItem, [unmappedItem._id])
+                default:
+                  this.logger.warn(`Item at index'${index}' could not be mapped!`)
+                  return unmappedItem
+              }
+            })
+          )
+        ).filter(Boolean)
 
     // cache items to avoid fetching them multiple times
     items.forEach((item) => {
@@ -687,13 +702,21 @@ export class CaaSMapper {
       }
     })
 
+    // resolve refs
     await this.resolveAllReferences(items, filterContext)
 
-    return {
-      queriedItemIds: items
+    // find resolved refs and puzzle them back together
+    const mappedItems = CaaSMapper.findResolvedReferencesByIds(
+      items
         .filter((item) => !!item)
         .map((item) => (item as MappedCaasItem).previewId || (item as CaasApi_Item)._id),
-      referencedItems: this._referencedItems,
+      this.resolvedReferences
+    )
+
+    // return
+    return {
+      mappedItems,
+      referenceMap: this._referencedItems,
       resolvedReferences: this.resolvedReferences,
     }
   }
@@ -795,7 +818,7 @@ export class CaaSMapper {
 
   // we use a query function, because ids get mixed up:
   // referencedItems store identifier, resolvedReferences store _id or previewId
-  static findResolvedReferencesByIds(ids: string[], resolvedReferences: ResolvedReferences) {
+  static findResolvedReferencesByIds(ids: string[], resolvedReferences: ResolvedReferencesInfo) {
     const items = []
     for (const [resolvedId, resolvedItem] of Object.entries(resolvedReferences)) {
       if (ids.includes(resolvedId)) {
@@ -806,9 +829,11 @@ export class CaaSMapper {
   }
 
   static denormalizeResolvedReferences(
+    mappedItems: (CaasApi_Item | MappedCaasItem)[],
     referencedItems: ReferencedItemsInfo,
-    resolvedReferences: ResolvedReferences
+    resolvedReferences: ResolvedReferencesInfo
   ) {
+    // denormalize
     for (const [referencedId, occurencies] of Object.entries(referencedItems)) {
       occurencies.forEach((path) => {
         // no simple comparison possible because referencedItems store identifier
@@ -819,5 +844,12 @@ export class CaaSMapper {
         }
       })
     }
+
+    // update mappedItems
+    const queriedIds = mappedItems
+      .filter((item) => !!item)
+      .map((item) => (item as MappedCaasItem).previewId || (item as CaasApi_Item)._id)
+
+    return CaaSMapper.findResolvedReferencesByIds(queriedIds, resolvedReferences)
   }
 }
