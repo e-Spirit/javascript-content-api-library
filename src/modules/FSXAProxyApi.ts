@@ -215,7 +215,7 @@ export class FSXAProxyApi implements FSXAApi {
     }
 
     const jsonRes = (await response.json()) as FetchResponse
-    let { referenceMap, items, resolvedReferences } = jsonRes
+    let { referenceMap, items, resolvedReferences, totalPages, size } = jsonRes
 
     items = CaaSMapper.denormalizeResolvedReferences(
       items as (CaasApi_Item | MappedCaasItem)[],
@@ -223,7 +223,7 @@ export class FSXAProxyApi implements FSXAApi {
       resolvedReferences!
     )
 
-    return { page, pagesize, items }
+    return { page, pagesize, totalPages, size, items }
   }
 
   /**

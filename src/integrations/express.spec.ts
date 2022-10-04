@@ -15,7 +15,7 @@ import {
   HEALTH_ROUTE,
 } from '../routes'
 import 'cross-fetch/polyfill'
-import { Page, QueryBuilderQuery, NavigationData } from '../types'
+import { Page, QueryBuilderQuery, NavigationData, FetchResponse } from '../types'
 import { FSXAContentMode } from '../enums'
 import Faker from 'faker'
 
@@ -37,9 +37,14 @@ describe('Express-Integration', () => {
     fetchByFilterSpy: jest.SpyInstance
 
   beforeEach(() => {
-    fetchElementSpy = jest
-      .spyOn(remoteApi, 'fetchElement')
-      .mockImplementation(async () => ({ foo: 'bar' } as any as Page))
+    fetchElementSpy = jest.spyOn(remoteApi, 'fetchElement').mockImplementation(
+      async () =>
+        ({
+          mappedItems: [{ _id: 'testid', foo: 'bar' }],
+          referenceMap: {},
+          resolvedReferences: { testid: { _id: 'testid', foo: 'bar' } },
+        } as any as FetchResponse)
+    )
     fetchNavigationSpy = jest
       .spyOn(remoteApi, 'fetchNavigation')
       .mockImplementation(async () => ({ foo: 'bar' } as any as NavigationData))
@@ -84,6 +89,8 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
+        denormalized: false,
+        filterContext: undefined,
       })
       await proxyApi.fetchElement({
         id: 'FOOBAR',
@@ -95,18 +102,24 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
+        denormalized: false,
+        filterContext: undefined,
       })
       await proxyApi.fetchElement({
         id: 'FOOBAR',
         locale: 'de_DE',
         additionalParams: { test: '1' },
         remoteProject: 'media',
+        denormalized: false,
+        filterContext: undefined,
       })
       expect(fetchElementSpy).toHaveBeenCalledWith({
         additionalParams: { test: '1' },
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: 'media',
+        denormalized: false,
+        filterContext: undefined,
       })
     })
 
@@ -125,12 +138,14 @@ describe('Express-Integration', () => {
           locale: 'de_DE',
           additionalParams: { test: '1' },
         })
-      ).toEqual({ foo: 'bar' })
+      ).toEqual({ _id: 'testid', foo: 'bar' })
       expect(fetchElementSpy).toHaveBeenCalledWith({
         additionalParams: { test: '1' },
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
+        denormalized: false,
+        filterContext: undefined,
       })
     })
   })
@@ -193,6 +208,8 @@ describe('Express-Integration', () => {
         pagesize: 30,
         sort: [],
         remoteProject: undefined,
+        denormalized: false,
+        filterContext: undefined,
       })
       const filters_2: QueryBuilderQuery[] = [
         {
