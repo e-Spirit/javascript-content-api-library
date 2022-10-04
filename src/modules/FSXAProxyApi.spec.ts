@@ -1,5 +1,5 @@
 import { ComparisonQueryOperatorEnum } from './QueryBuilder'
-import { QueryBuilderQuery, SortParams } from './../types'
+import { FetchResponse, QueryBuilderQuery, SortParams } from './../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { FSXAProxyApi } from './FSXAProxyApi'
 import Faker from 'faker'
@@ -82,11 +82,15 @@ describe('FSXAProxyAPI', () => {
       expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
-      const expectedResponse = Faker.datatype.json()
-      fetchMock.mockResponseOnce(JSON.stringify(expectedResponse))
-
+      const item = Faker.datatype.json()
+      const remoteApiResponse = {
+        mappedItems: [item],
+        referenceMap: {},
+        resolvedReferences: {},
+      }
+      fetchMock.mockResponseOnce(JSON.stringify(remoteApiResponse))
       const actualResponse = await proxyApi.fetchElement({ id, locale })
-      expect(expectedResponse).toEqual(actualResponse)
+      expect(actualResponse).toEqual(item)
     })
   })
   describe('fetchByFilter', () => {
@@ -193,17 +197,14 @@ describe('FSXAProxyAPI', () => {
 
     it('should return the response', async () => {
       const items = Faker.datatype.array()
-
-      const expectedResponse = {
+      const expectedResponse: FetchResponse = {
         page: 1,
         pagesize: 30,
-        pages: 0,
-        total: 0,
+        size: 0,
+        totalPages: 0,
         items,
       }
-
       fetchMock.mockResponseOnce(JSON.stringify(expectedResponse))
-
       const actualResponse = await proxyApi.fetchByFilter({
         filters: defaultFilters,
         locale,

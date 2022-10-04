@@ -111,9 +111,7 @@ export class CaaSMapper {
   }
 
   // stores references to items of current Project
-  _referencedItems: {
-    [identifier: string]: NestedPath[]
-  } = {}
+  _referencedItems: ReferencedItemsInfo = {}
   // stores the forced resolution for image map media, which could applied after reference resolving
   _imageMapForcedResolutions: { path: NestedPath; resolution: string }[] = []
   // stores References to remote Items
@@ -146,6 +144,7 @@ export class CaaSMapper {
         `Item with identifier '${identifier}' was tried to register from remoteProject '${remoteProjectId}' but no remote key was found in the config.`
       )
     }
+
     if (remoteProjectKey) {
       this._remoteReferences[remoteProjectKey][identifier] = [
         ...(this._remoteReferences[remoteProjectKey][identifier] || []),
@@ -621,12 +620,12 @@ export class CaaSMapper {
 
   async mapElementResponse(
     unmappedElement: CaasApi_Item | any,
-    additionalParams: Record<string, any>,
+    additionalParams?: Record<string, any>,
     filterContext?: unknown
   ): Promise<MapResponse> {
     let mappedElement: MappedCaasItem | null = null
 
-    if (!additionalParams.keys) {
+    if (!additionalParams || !additionalParams.keys) {
       // If additionalParams are provided we cannot map the response since we do not know which keys are provided
       switch (unmappedElement.fsType) {
         case 'Dataset':
@@ -659,19 +658,26 @@ export class CaaSMapper {
       this.resolvedReferences
     )
 
+    // merge all remote references into one object
+    const remoteReferencesValues = Object.values(this._remoteReferences)
+    const remoteReferencesMerged =
+      remoteReferencesValues.length > 0
+        ? remoteReferencesValues.reduce((result, current) => Object.assign(result, current))
+        : {}
+
     return {
       mappedItems,
-      referenceMap: this._referencedItems,
+      referenceMap: { ...this._referencedItems, ...remoteReferencesMerged },
       resolvedReferences: this.resolvedReferences,
     }
   }
 
   async mapFilterResponse(
     unmappedItems: (CaasApi_Item | any)[],
-    additionalParams: Record<string, any>,
+    additionalParams?: Record<string, any>,
     filterContext?: unknown
   ): Promise<MapResponse> {
-    let items: (MappedCaasItem | CaasApi_Item | null)[] = additionalParams.keys
+    let items: (MappedCaasItem | CaasApi_Item | null)[] = additionalParams?.keys
       ? unmappedItems // don't map data, if additional params have been set
       : (
           await Promise.all(
@@ -713,10 +719,17 @@ export class CaaSMapper {
       this.resolvedReferences
     )
 
+    // merge all remote references into one object
+    const remoteReferencesValues = Object.values(this._remoteReferences)
+    const remoteReferencesMerged =
+      remoteReferencesValues.length > 0
+        ? remoteReferencesValues.reduce((result, current) => Object.assign(result, current))
+        : {}
+
     // return
     return {
       mappedItems,
-      referenceMap: this._referencedItems,
+      referenceMap: { ...this._referencedItems, ...remoteReferencesMerged },
       resolvedReferences: this.resolvedReferences,
     }
   }
@@ -830,11 +843,12 @@ export class CaaSMapper {
 
   static denormalizeResolvedReferences(
     mappedItems: (CaasApi_Item | MappedCaasItem)[],
-    referencedItems: ReferencedItemsInfo,
+    referenceMap: ReferencedItemsInfo,
     resolvedReferences: ResolvedReferencesInfo
   ) {
+    if (!referenceMap || Object.keys(referenceMap).length === 0) return mappedItems
     // denormalize
-    for (const [referencedId, occurencies] of Object.entries(referencedItems)) {
+    for (const [referencedId, occurencies] of Object.entries(referenceMap)) {
       occurencies.forEach((path) => {
         // no simple comparison possible because referencedItems store identifier
         // and resolvedReferences store "previewId" or "_id"

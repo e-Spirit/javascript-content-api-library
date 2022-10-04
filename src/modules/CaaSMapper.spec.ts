@@ -1258,7 +1258,7 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapDataset')
       await mapper.mapElementResponse(element)
-      expect(mapper.mapDataset).toHaveBeenCalledWith(element, [])
+      expect(mapper.mapDataset).toHaveBeenCalledWith(element, [element._id])
       expect(mapper.resolveAllReferences).toHaveBeenCalled()
     })
     it('should call mapPageRef on pageRef elements', async () => {
@@ -1267,7 +1267,7 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapPageRef')
       await mapper.mapElementResponse(element)
-      expect(mapper.mapPageRef).toHaveBeenCalledWith(element, [])
+      expect(mapper.mapPageRef).toHaveBeenCalledWith(element, [element._id])
       expect(mapper.resolveAllReferences).toHaveBeenCalled()
     })
     it('should call mapMedia on media elements', async () => {
@@ -1276,7 +1276,7 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapMedia')
       await mapper.mapElementResponse(element)
-      expect(mapper.mapMedia).toHaveBeenCalledWith(element, [])
+      expect(mapper.mapMedia).toHaveBeenCalledWith(element, [element._id])
       expect(mapper.resolveAllReferences).toHaveBeenCalled()
     })
     it('should call mapGCAPage on dataset elements', async () => {
@@ -1285,7 +1285,7 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'resolveAllReferences')
       jest.spyOn(mapper, 'mapGCAPage')
       await mapper.mapElementResponse(element)
-      expect(mapper.mapGCAPage).toHaveBeenCalledWith(element, [])
+      expect(mapper.mapGCAPage).toHaveBeenCalledWith(element, [element._id])
       expect(mapper.resolveAllReferences).toHaveBeenCalled()
     })
     it('should return unknown elements as-is', async () => {
@@ -1293,8 +1293,11 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'resolveAllReferences')
       const element = createDataset()
       ;(element.fsType as string) = 'unknown-element'
-      await expect(mapper.mapElementResponse(element)).resolves.toBe(element)
-      expect(mapper.resolveAllReferences).not.toHaveBeenCalled()
+      await expect(mapper.mapElementResponse(element)).resolves.toEqual({
+        mappedItems: [element],
+        referenceMap: {},
+        resolvedReferences: { [element._id]: element },
+      })
     })
   })
 
@@ -1304,7 +1307,7 @@ describe('CaaSMapper', () => {
       mapper.resolveReferencesPerProject = jest.fn()
       const data = {}
       await mapper.resolveAllReferences(data)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, undefined, undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(undefined, undefined)
     })
     it('should call resolveReferencesPerProject for all remote projects', async () => {
       const api = createApi()
@@ -1320,15 +1323,9 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem('id3', [], 'remote-id3')
       const data = {}
       await mapper.resolveAllReferences(data)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id1', undefined)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id2', undefined)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id3', undefined)
-    })
-    it('should return the given data', async () => {
-      const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
-      const data = {}
-      await expect(mapper.resolveAllReferences(data)).resolves.toBe(data)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id1', undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id2', undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id3', undefined)
     })
   })
 
@@ -1339,8 +1336,7 @@ describe('CaaSMapper', () => {
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       mapper.registerReferencedItem('id1', ['root', 'id1'])
       mapper.registerReferencedItem('id2', ['root', 'id2'])
-      const data = {}
-      await mapper.resolveReferencesPerProject(data)
+      await mapper.resolveReferencesPerProject()
       expect(api.fetchByFilterInternal).toHaveBeenCalled()
     })
     it('should resolve remote media references', async () => {
@@ -1386,19 +1382,21 @@ describe('CaaSMapper', () => {
         ...pageRef.metaFormData,
         media5: createMediaPictureReference('id5', 'remote-id1'),
       }
+
       // Mapping also implicitly registers referenced items in mapper instance
-      const page = await mapper.mapPageRef(pageRef)
+      await mapper.mapPageRef(pageRef)
 
-      const result = await mapper.resolveReferencesPerProject(page, 'remote-id1')
+      await mapper.resolveReferencesPerProject('remote-id1')
 
-      expect(result.data).toBeDefined()
-      expect(result.data).toStrictEqual({
-        media1: mediaPictures[0],
-        media2: mediaPictures[1],
-        media3: mediaPictures[2],
-      })
-      expect(result.meta).toStrictEqual({ media4: mediaPictures[3] })
-      expect(result.metaPageRef).toStrictEqual({ media5: mediaPictures[4] })
+      const funArguments = api.fetchByFilterInternal.mock.calls[0][0]
+
+      expect(funArguments).toEqual(
+        expect.objectContaining({
+          filters: [
+            { field: 'identifier', operator: '$in', value: ['id1', 'id2', 'id3', 'id4', 'id5'] },
+          ],
+        })
+      )
     })
   })
 })

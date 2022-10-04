@@ -37,13 +37,37 @@ describe('FSXARemoteApi', () => {
     await caasClient.removeCollection(parsedRes._etag.$oid)
   })
 
-  it('should use an updated maxReferencedepth when the dafault is overwritten', async () => {
-    const dataset = createDataset('ds-id')
-    const datasetReference = createDatasetReference('ds-id')
-    dataset.formData.dsref = datasetReference
-    await caasClient.addItemsToCollection([dataset], locale)
+  it('return normalized data if fetch element is called with normalized switched on', async () => {
+    expect(true).toBe(false)
+  })
 
-    const maxReferenceDepth = 5
+  it('return denormalized data if fetch element is called', async () => {
+    expect(true).toBe(false)
+  })
+
+  it('return normalized data if etch by filter is called with normalized switched on', async () => {
+    expect(true).toBe(false)
+  })
+
+  it('return denormalized data if fetch by filter is called', async () => {
+    expect(true).toBe(false)
+  })
+
+  it.only('should use an updated maxReferencedepth when the default is overwritten', async () => {
+    const dataset1 = createDataset('ds1-id')
+    const dataset2 = createDataset('ds2-id')
+    const dataset3 = createDataset('ds3-id')
+    const dataset4 = createDataset('ds4-id')
+
+    const ds2Ref = createDatasetReference('ds2-id')
+    const ds3Ref = createDatasetReference('ds3-id')
+    const ds4Ref = createDatasetReference('ds4-id')
+    dataset1.formData.dsref = ds2Ref
+    dataset2.formData.dsref = ds3Ref
+    dataset3.formData.dsref = ds4Ref
+    await caasClient.addItemsToCollection([dataset1, dataset2, dataset3, dataset4], locale)
+
+    const maxReferenceDepth = 2
     const remoteApi = new FSXARemoteApi({
       apikey: INTEGRATION_TEST_API_KEY!,
       caasURL: INTEGRATION_TEST_CAAS!,
@@ -57,53 +81,18 @@ describe('FSXARemoteApi', () => {
       maxReferenceDepth,
     })
     const res = await remoteApi.fetchElement({
-      id: dataset.identifier,
+      id: dataset1.identifier,
       locale: `${locale.language}_${locale.country}`,
     })
-    let current = res.data.dsref
 
+    let current = res.data.dsref
     // start at depth of 1
     let referenceDepth = 1
-    while (typeof current?.data.dsref == 'object') {
+    while (referenceDepth < maxReferenceDepth) {
       current = current.data.dsref
       referenceDepth++
     }
-    expect(referenceDepth).toBe(maxReferenceDepth)
+
+    expect(res.data.dsref.data.dsref.data.dsref).toBe('[REFERENCED-ITEM-ds4-id]')
   })
-
-  it(
-    'api gracefully handles circular references',
-    async () => {
-      const dataset = createDataset('ds-id')
-      const datasetReference = createDatasetReference('ds-id')
-      dataset.formData.dsref = datasetReference
-      await caasClient.addItemsToCollection([dataset], locale)
-
-      const remoteApi = new FSXARemoteApi({
-        apikey: INTEGRATION_TEST_API_KEY!,
-        caasURL: INTEGRATION_TEST_CAAS!,
-        contentMode: FSXAContentMode.PREVIEW,
-        navigationServiceURL: 'https://your-navigationservice.e-spirit.cloud/navigation'!,
-        projectID: randomProjectID,
-        tenantID: tenantID,
-        remotes: {},
-        logLevel: LogLevel.INFO,
-        enableEventStream: false,
-      })
-      const res = await remoteApi.fetchElement({
-        id: dataset.identifier,
-        locale: `${locale.language}_${locale.country}`,
-      })
-      let current = res.data.dsref
-      // start at depth of 1
-      let referenceDepth = 1
-      while (typeof current?.data.dsref == 'object') {
-        current = current.data.dsref
-        referenceDepth++
-      }
-      expect(referenceDepth).toBe(DEFAULT_MAX_REFERENCE_DEPTH)
-      expect(current.data.dsref).toBe(`[REFERENCED-ITEM-${dataset._id}]`)
-    },
-    DEFAULT_MAX_REFERENCE_DEPTH * 1000 // one second per reference depth
-  )
 })

@@ -439,22 +439,22 @@ describe('FSXARemoteAPI', () => {
       expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
-      const json = Faker.datatype.json()
-      fetchMock.mockResponse(json)
+      const caasApiItem = { _id: 'testid' } // testdata needs _id
+      fetchMock.mockResponse(JSON.stringify(caasApiItem))
       const actualRequest = await remoteApi.fetchElement({ id: uuid, locale })
       expect(actualRequest).toBeDefined()
-      expect(actualRequest).toStrictEqual(JSON.parse(json))
+      expect(actualRequest).toStrictEqual(caasApiItem)
     })
     it('should return a mapped response when additionalParams are set', async () => {
-      const json = Faker.datatype.json()
-      fetchMock.mockResponse(json)
+      const item = { _id: 'testid' } // testdata needs _id
+      fetchMock.mockResponse(JSON.stringify(item))
       const actualRequest = await remoteApi.fetchElement({
         id: uuid,
         locale,
         additionalParams: { depth: 99 },
       })
       expect(actualRequest).toBeDefined()
-      expect(actualRequest).toStrictEqual(JSON.parse(json))
+      expect(actualRequest).toStrictEqual(item)
     })
   })
   describe('fetchByFilter', () => {
@@ -535,7 +535,9 @@ describe('FSXARemoteAPI', () => {
       expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(json))
+      const items = [{ _id: 'testid' }]
+      const caasApiItems = { _embedded: { 'rh:doc': items } }
+      fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
       const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
       expect(actualRequest).toBeDefined()
       expect(actualRequest).toStrictEqual({
@@ -543,7 +545,9 @@ describe('FSXARemoteAPI', () => {
         pagesize: 30,
         size: undefined,
         totalPages: undefined,
-        items: json._embedded['rh:doc'],
+        items,
+        referenceMap: {},
+        resolvedReferences: { testid: items[0] },
       })
     })
     it('should return empty array on empty response', async () => {
@@ -559,6 +563,8 @@ describe('FSXARemoteAPI', () => {
         size: undefined,
         totalPages: undefined,
         items: [],
+        resolvedReferences: {},
+        referenceMap: {},
       })
     })
     it('should return empty array on broken response', async () => {
@@ -572,6 +578,8 @@ describe('FSXARemoteAPI', () => {
         size: undefined,
         totalPages: undefined,
         items: [],
+        resolvedReferences: {},
+        referenceMap: {},
       })
     })
     it('boolean values pass the typecheck', () => {
