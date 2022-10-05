@@ -517,11 +517,10 @@ export class FSXARemoteApi implements FSXAApi {
       fetchOptions,
       filterContext,
       sort = [],
+      denormalized,
     }: FetchByFilterParams,
-    mapper: CaaSMapper,
-    denormalized?: boolean
+    mapper: CaaSMapper
   ): Promise<FetchResponse> {
-    // todo fix fetch res type
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
       pagesize = 30
@@ -596,15 +595,14 @@ export class FSXARemoteApi implements FSXAApi {
         filterContext,
       })
     }
-
     return {
       page,
       pagesize,
       totalPages: data['_total_pages'],
       size: data['_size'],
       items: mappedItems,
-      referenceMap,
-      resolvedReferences,
+      ...(!denormalized && { referenceMap }),
+      ...(!denormalized && { resolvedReferences }),
     }
   }
 
