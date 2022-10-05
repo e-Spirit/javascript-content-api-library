@@ -29,6 +29,8 @@ import {
   createMediaPictureReference,
   createDataset,
   createDatasetReference,
+  createImageMap,
+  createMediaPictureReferenceValue,
 } from '../src/testutils'
 
 dotenv.config({ path: './integrationtests/.env' })
@@ -90,6 +92,109 @@ describe('FSXAProxyAPI', () => {
       country: 'DE',
       language: 'de',
     }
+
+    // test nested map media refs
+    it('image map media gets resolved to resolution specified in image map', async () => {
+      const pageRef = createPageRef()
+      const imageMap1 = createImageMap()
+      const imageMap2 = createImageMap()
+      const mediaPicture1 = createMediaPicture()
+      const mediaPicture2 = createMediaPicture()
+      imageMap1.value.resolution.uid = 'res1'
+      imageMap2.value.resolution.uid = 'res2'
+      mediaPicture1.resolutionsMetaData = {
+        res1: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 100,
+          height: 300,
+          url: 'testurl1',
+        },
+        res2: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 200,
+          height: 600,
+          url: 'testurl2',
+        },
+      }
+      mediaPicture2.resolutionsMetaData = {
+        res1: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 100,
+          height: 300,
+          url: 'testurl1',
+        },
+        res2: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 200,
+          height: 600,
+          url: 'testurl2',
+        },
+      }
+      const mediaRef1 = createMediaPictureReferenceValue(mediaPicture1.identifier)
+      const mediaRef2 = createMediaPictureReferenceValue(mediaPicture2.identifier)
+      imageMap1.value.media = mediaRef1
+      imageMap2.value.media = mediaRef2
+
+      imageMap1.value.areas[0].link!.formData = { imageMap2: imageMap2 }
+
+      pageRef.page.formData = { imageMap: imageMap1 }
+      await caasClient.addItemsToCollection([pageRef, mediaPicture1, mediaPicture2], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+      expect(res.data.imageMap.media.id).toEqual(mediaPicture1.identifier)
+      expect(Object.keys(res.data.imageMap.media.resolutions)).toEqual([
+        imageMap1.value.resolution.uid,
+      ])
+      expect(Object.keys(res.data.imageMap.areas[0].link.data.imageMap2.media.resolutions)).toEqual(
+        [imageMap2.value.resolution.uid]
+      )
+    })
+    it('image map media gets resolved to resolution specified in image map', async () => {
+      const pageRef = createPageRef()
+      const imageMap = createImageMap()
+      const mediaPicture = createMediaPicture()
+      imageMap.value.resolution.uid = 'res2'
+      mediaPicture.resolutionsMetaData = {
+        res1: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 100,
+          height: 300,
+          url: 'testurl1',
+        },
+        res2: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 200,
+          height: 600,
+          url: 'testurl2',
+        },
+      }
+      const mediaRef = createMediaPictureReferenceValue(mediaPicture.identifier)
+      imageMap.value.media = mediaRef
+      pageRef.page.formData = { imageMap }
+      await caasClient.addItemsToCollection([pageRef, mediaPicture], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+      expect(res.data.imageMap.media.id).toEqual(mediaPicture.identifier)
+      expect(Object.keys(res.data.imageMap.media.resolutions)).toEqual([
+        imageMap.value.resolution.uid,
+      ])
+    })
     it('items with circular references get resolved', async () => {
       const dataset1 = createDataset('ds1-id')
       const datasetReference1 = createDatasetReference('ds1-id')
