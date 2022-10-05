@@ -4,13 +4,6 @@ import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
 import { CaasTestingClient } from './utils'
 import Faker from 'faker'
 import { createDataset, createDatasetReference } from '../src/testutils/createDataset'
-import {
-  CaaSMapper,
-  DEFAULT_MAX_REFERENCE_DEPTH,
-  MapResponse,
-  ResolvedReferencesInfo,
-} from '../src/modules/CaaSMapper'
-import { Logger } from '../src/modules'
 
 dotenv.config({ path: './integrationtests/.env' })
 
@@ -36,7 +29,6 @@ describe('FSXARemoteApi', () => {
     logLevel: LogLevel.INFO,
     enableEventStream: false,
   })
-  const logger = new Logger(LogLevel.NONE, 'testlogger')
 
   beforeAll(async () => {
     // create instance of caas client to easily read and write testing data to caas

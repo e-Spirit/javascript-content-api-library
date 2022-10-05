@@ -525,6 +525,7 @@ export class CaaSMapper {
     let image = null
     if (media) {
       image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
+      path[0] = media.identifier
       this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
     }
 
@@ -650,7 +651,7 @@ export class CaaSMapper {
     else if (unmappedElement) this.addToResolvedReferences(unmappedElement)
 
     // resolve refs
-    if (unmappedElement) await this.resolveAllReferences(mappedElement as {}, filterContext)
+    if (unmappedElement) await this.resolveAllReferences(filterContext)
 
     // find resolved refs and puzzle them back together
     const mappedItems = CaaSMapper.findResolvedReferencesByIds(
@@ -709,7 +710,7 @@ export class CaaSMapper {
     })
 
     // resolve refs
-    if (items.length > 0) await this.resolveAllReferences(items, filterContext)
+    if (items.length > 0) await this.resolveAllReferences(filterContext)
 
     // find resolved refs and puzzle them back together
     const mappedItems = CaaSMapper.findResolvedReferencesByIds(
@@ -740,7 +741,7 @@ export class CaaSMapper {
    * @param data
    * @returns data
    */
-  async resolveAllReferences<Type extends {}>(data: Type, filterContext?: unknown): Promise<void> {
+  async resolveAllReferences(filterContext?: unknown): Promise<void> {
     if (this.referenceDepth >= this.maxReferenceDepth) {
       // hint: handle unresolved references TNG-1169
       this.logger.warn(`Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`)
@@ -756,15 +757,22 @@ export class CaaSMapper {
     ])
 
     // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
-      // the path only exist on resolved imagemaps (s. TNG-1169)
-      if (has(data, [...path, 'resolutions'])) {
-        update(this.resolvedReferences, [...path, 'resolutions'], (resolutions) => {
-          if (resolution in resolutions) {
-            return { [resolution]: resolutions[resolution] }
+    this._imageMapForcedResolutions.forEach(({ path, resolution }, index) => {
+      const mediaId = path[0].toString() // we save the media id in this.mapImageMap() function
+
+      // find media in resolved references
+      for (const [resolvedMediaId, resolvedMediaItem] of Object.entries(this.resolvedReferences)) {
+        if (mediaId.includes(resolvedMediaId) || resolvedMediaId.includes(mediaId)) {
+          // the path only exist on resolved imagemaps (s. TNG-1169)
+          if ((resolvedMediaItem as Image).resolutions) {
+            update(resolvedMediaItem, 'resolutions', (resolutions) => {
+              if (resolution in resolutions) {
+                return { [resolution]: resolutions[resolution] }
+              }
+              return resolutions
+            })
           }
-          return resolutions
-        })
+        }
       }
     })
   }
@@ -831,8 +839,10 @@ export class CaaSMapper {
   static findResolvedReferencesByIds(ids: string[], resolvedReferences: ResolvedReferencesInfo) {
     const items = []
     for (const [resolvedId, resolvedItem] of Object.entries(resolvedReferences)) {
-      if (ids.includes(resolvedId)) {
-        items.push(resolvedItem)
+      for (const id of ids) {
+        if (id.includes(resolvedId) || resolvedId.includes(id)) {
+          items.push(resolvedItem)
+        }
       }
     }
     return items

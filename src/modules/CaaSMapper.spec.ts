@@ -484,6 +484,7 @@ describe('CaaSMapper', () => {
         const path = createPath()
         jest.spyOn(mapper, 'mapDataEntries')
         const entry = createImageMap()
+        path[0] = entry.value.media.identifier
         await mapper.mapDataEntry(entry, path)
         entry.value.areas.forEach((area, index) => {
           if (area.link) {
@@ -500,19 +501,17 @@ describe('CaaSMapper', () => {
       it('should work with nested formData image maps', async () => {
         const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
         const path = createPath()
-        jest.spyOn(mapper, 'mapDataEntry')
+        const mock = jest.spyOn(mapper, 'mapDataEntry')
         const entry = createImageMap()
         const childEntry = createImageMap()
+        const childEntryMediaId = childEntry.value.media.identifier
         entry.value.areas[0].link!.formData = { childEntry }
         await mapper.mapDataEntry(entry, path)
-        expect(mapper.mapDataEntry).toHaveBeenCalledWith(childEntry, [
-          ...path,
-          'areas',
-          0,
-          'link',
-          'data',
-          'childEntry',
-        ])
+        expect(mock.mock.calls[0][0]).toEqual(entry)
+        expect(mock.mock.calls[0][1]).toEqual(path)
+        expect(mock.mock.calls[1][0]).toEqual(childEntry)
+        path[0] = childEntryMediaId
+        expect(mock.mock.calls[1][1]).toEqual([...path, 'areas', 0, 'link', 'data', 'childEntry'])
       })
     })
 
@@ -1305,8 +1304,7 @@ describe('CaaSMapper', () => {
     it('should call resolveReferencesPerProject for the current project', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       mapper.resolveReferencesPerProject = jest.fn()
-      const data = {}
-      await mapper.resolveAllReferences(data)
+      await mapper.resolveAllReferences()
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(undefined, undefined)
     })
     it('should call resolveReferencesPerProject for all remote projects', async () => {
@@ -1321,8 +1319,7 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem('id1', [], 'remote-id1')
       mapper.registerReferencedItem('id2', [], 'remote-id2')
       mapper.registerReferencedItem('id3', [], 'remote-id3')
-      const data = {}
-      await mapper.resolveAllReferences(data)
+      await mapper.resolveAllReferences()
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id1', undefined)
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id2', undefined)
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id3', undefined)
