@@ -546,6 +546,20 @@ describe('FSXARemoteAPI', () => {
         size: undefined,
         totalPages: undefined,
         items,
+      })
+    })
+    it('should return normalized response if denormalized is switched off', async () => {
+      const items = [{ _id: 'testid' }]
+      const caasApiItems = { _embedded: { 'rh:doc': items } }
+      fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
+      const actualRequest = await remoteApi.fetchByFilter({ filters, locale, denormalized: false })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items,
         referenceMap: {},
         resolvedReferences: { testid: items[0] },
       })
@@ -563,8 +577,6 @@ describe('FSXARemoteAPI', () => {
         size: undefined,
         totalPages: undefined,
         items: [],
-        resolvedReferences: {},
-        referenceMap: {},
       })
     })
     it('should return empty array on broken response', async () => {
@@ -578,8 +590,6 @@ describe('FSXARemoteAPI', () => {
         size: undefined,
         totalPages: undefined,
         items: [],
-        resolvedReferences: {},
-        referenceMap: {},
       })
     })
     it('boolean values pass the typecheck', () => {
