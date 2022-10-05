@@ -650,7 +650,7 @@ export class CaaSMapper {
     else if (unmappedElement) this.addToResolvedReferences(unmappedElement)
 
     // resolve refs
-    await this.resolveAllReferences(mappedElement as {}, filterContext)
+    if (unmappedElement) await this.resolveAllReferences(mappedElement as {}, filterContext)
 
     // find resolved refs and puzzle them back together
     const mappedItems = CaaSMapper.findResolvedReferencesByIds(
@@ -709,7 +709,7 @@ export class CaaSMapper {
     })
 
     // resolve refs
-    await this.resolveAllReferences(items, filterContext)
+    if (items.length > 0) await this.resolveAllReferences(items, filterContext)
 
     // find resolved refs and puzzle them back together
     const mappedItems = CaaSMapper.findResolvedReferencesByIds(
@@ -757,12 +757,9 @@ export class CaaSMapper {
 
     // force a single resolution for image map media
     this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
-      // *****
-      // TODO: don't update data, but resolved refs!
-
       // the path only exist on resolved imagemaps (s. TNG-1169)
       if (has(data, [...path, 'resolutions'])) {
-        update(data, [...path, 'resolutions'], (resolutions) => {
+        update(this.resolvedReferences, [...path, 'resolutions'], (resolutions) => {
           if (resolution in resolutions) {
             return { [resolution]: resolutions[resolution] }
           }

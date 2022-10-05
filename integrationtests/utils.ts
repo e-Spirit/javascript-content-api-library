@@ -88,6 +88,7 @@ export class CaasTestingClient {
   }
 
   /**
+   * DEPRECATED! Use add items to collection instead
    * Add doc to collection in integration test database in CaaS
    * @param docs doc to add
    * @returns Http Response
@@ -105,6 +106,7 @@ export class CaasTestingClient {
   }
 
   /**
+   * DEPRECATED! Use add items to collection instead
    * Bulk post docs to collection in integration test database in CaaS
    * @param docs docs to add
    * @returns Http Response
@@ -122,6 +124,12 @@ export class CaasTestingClient {
     })
   }
 
+  /*
+   * Bulk post docs to collection in integration test database in CaaS
+   * @param docs docs to add
+   * @param locale locale object with identifier, country and language
+   * @returns Http Response
+   */
   async addItemsToCollection(docs: CaasApi_Item[], locale: Locale) {
     const docsWithLocale = docs.map((doc) => {
       const docWithLocale: any = { ...doc }
