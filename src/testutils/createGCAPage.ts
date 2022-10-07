@@ -9,7 +9,6 @@ export const createGCAPage = (): CaaSApi_GCAPage => {
 
   return {
     ...base,
-    _id: `${base.uid}`,
     fsType: 'GCAPage',
     name,
     formData: {},

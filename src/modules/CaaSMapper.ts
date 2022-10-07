@@ -45,12 +45,11 @@ import {
   Reference,
   RichTextElement,
   Section,
-  Media,
   CaasApi_Item,
   MappedCaasItem,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, has, set, update } from 'lodash'
+import { chunk, set, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -120,9 +119,34 @@ export class CaaSMapper {
   } = {}
 
   addToResolvedReferences(item: MappedCaasItem | CaasApi_Item) {
-    // mapped items have preview id
-    // unmapped items have _id
-    this.resolvedReferences[(item as MappedCaasItem).previewId || (item as CaasApi_Item)._id] = item
+    // Page has pageId as id instead of PageRef Id. --> use refId instead for mapped Pages
+    const id = CaaSMapper.getItemId(item)
+
+    if (id) {
+      this.resolvedReferences[id] = item
+    }
+  }
+
+  static getItemId(item: MappedCaasItem | CaasApi_Item): string {
+    return (item as MappedCaasItem).previewId || (item as CaasApi_Item)?._id
+  }
+
+  /**
+   * unifies the two different id formats {id}.{locale} and {id} to {id}.{locale}
+   *
+   * @param id uuid, may be of form {id}.{locale} or {id}
+   * @param overrideLocale force specific locale
+   * @returns uuid of form {id}.{locale}
+   */
+  unifyId(id: string, overrideLocale?: string) {
+    const indexOfSeparator = id.indexOf('.')
+
+    if (indexOfSeparator > 0) {
+      // id has form {id}.{locale}. Override Locale if set
+      return overrideLocale ? `${id.substring(0, indexOfSeparator)}.${overrideLocale}` : id
+    }
+    // id has form {id}. transform to {id}.{locale}
+    return `${id}.${overrideLocale || this.locale}`
   }
 
   /**
@@ -135,9 +159,9 @@ export class CaaSMapper {
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
-      return this.api.remotes[key].id === remoteProjectId
-    })
+    const remoteData = remoteProjectId ? this.api.remotes?.[remoteProjectId] : null
+    const remoteProjectKey = remoteData?.id
+    const remoteProjectLocale = remoteData?.locale
 
     if (remoteProjectId && !remoteProjectKey) {
       this.logger.warn(
@@ -145,16 +169,18 @@ export class CaaSMapper {
       )
     }
 
+    const unifiedId = this.unifyId(identifier, remoteProjectLocale)
+
     if (remoteProjectKey) {
-      this._remoteReferences[remoteProjectKey][identifier] = [
-        ...(this._remoteReferences[remoteProjectKey][identifier] || []),
+      this._remoteReferences[remoteProjectKey][unifiedId] = [
+        ...(this._remoteReferences[remoteProjectKey][unifiedId] || []),
         path,
       ]
-      return `[REFERENCED-REMOTE-ITEM-${identifier}]`
+      return `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
     }
 
-    this._referencedItems[identifier] = [...(this._referencedItems[identifier] || []), path]
-    return `[REFERENCED-ITEM-${identifier}]`
+    this._referencedItems[unifiedId] = [...(this._referencedItems[unifiedId] || []), path]
+    return `[REFERENCED-ITEM-${unifiedId}]`
   }
 
   buildPreviewId(identifier: string) {
@@ -655,10 +681,9 @@ export class CaaSMapper {
 
     // find resolved refs and puzzle them back together
     const mappedItems = CaaSMapper.findResolvedReferencesByIds(
-      [mappedElement?.previewId || unmappedElement?._id],
+      [unmappedElement._id],
       this.resolvedReferences
     )
-
     // merge all remote references into one object
     const remoteReferencesValues = Object.values(this._remoteReferences)
     const remoteReferencesMerged =
@@ -678,7 +703,7 @@ export class CaaSMapper {
     additionalParams?: Record<string, any>,
     filterContext?: unknown
   ): Promise<MapResponse> {
-    let items: (MappedCaasItem | CaasApi_Item | null)[] = additionalParams?.keys
+    let items: (MappedCaasItem | CaasApi_Item)[] = additionalParams?.keys
       ? unmappedItems // don't map data, if additional params have been set
       : (
           await Promise.all(
@@ -714,9 +739,7 @@ export class CaaSMapper {
 
     // find resolved refs and puzzle them back together
     const mappedItems = CaaSMapper.findResolvedReferencesByIds(
-      items
-        .filter((item) => !!item)
-        .map((item) => (item as MappedCaasItem).previewId || (item as CaasApi_Item)._id),
+      items.map((item) => CaaSMapper.getItemId(item)),
       this.resolvedReferences
     )
 
@@ -761,18 +784,15 @@ export class CaaSMapper {
       const mediaId = path[0].toString() // we save the media id in this.mapImageMap() function
 
       // find media in resolved references
-      for (const [resolvedMediaId, resolvedMediaItem] of Object.entries(this.resolvedReferences)) {
-        if (mediaId.includes(resolvedMediaId) || resolvedMediaId.includes(mediaId)) {
-          // the path only exist on resolved imagemaps (s. TNG-1169)
-          if ((resolvedMediaItem as Image).resolutions) {
-            update(resolvedMediaItem, 'resolutions', (resolutions) => {
-              if (resolution in resolutions) {
-                return { [resolution]: resolutions[resolution] }
-              }
-              return resolutions
-            })
+
+      const resolvedMediaItem = this.resolvedReferences[mediaId]
+      if ((resolvedMediaItem as Image).resolutions) {
+        update(resolvedMediaItem, 'resolutions', (resolutions) => {
+          if (resolution in resolutions) {
+            return { [resolution]: resolutions[resolution] }
           }
-        }
+          return resolutions
+        })
       }
     })
   }
@@ -795,15 +815,11 @@ export class CaaSMapper {
 
     const referencedIds = Object.keys(referencedItems)
 
-    const resolvedIds = Object.keys(this.resolvedReferences)
+    const resolvedIds = new Set(Object.keys(this.resolvedReferences))
 
-    // item id is not yet in cache
-    const idsToFetchFromCaaS = referencedIds.filter((id) => {
-      for (const resolvedId of resolvedIds) {
-        if (resolvedId.includes(id)) return false
-      }
-      return true
-    })
+    const idsToFetchFromCaaS = referencedIds
+      .filter((id) => !resolvedIds.has(id))
+      .map((id) => id.substring(0, id.indexOf('.')))
 
     const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
 
@@ -837,15 +853,7 @@ export class CaaSMapper {
   // we use a query function, because ids get mixed up:
   // referencedItems store identifier, resolvedReferences store _id or previewId
   static findResolvedReferencesByIds(ids: string[], resolvedReferences: ResolvedReferencesInfo) {
-    const items = []
-    for (const [resolvedId, resolvedItem] of Object.entries(resolvedReferences)) {
-      for (const id of ids) {
-        if (id.includes(resolvedId) || resolvedId.includes(id)) {
-          items.push(resolvedItem)
-        }
-      }
-    }
-    return items
+    return ids.map((id) => resolvedReferences[id]).filter((item) => item)
   }
 
   static denormalizeResolvedReferences(
@@ -869,7 +877,7 @@ export class CaaSMapper {
     // update mappedItems
     const queriedIds = mappedItems
       .filter((item) => !!item)
-      .map((item) => (item as MappedCaasItem).previewId || (item as CaasApi_Item)._id)
+      .map((item) => CaaSMapper.getItemId(item))
 
     return CaaSMapper.findResolvedReferencesByIds(queriedIds, resolvedReferences)
   }

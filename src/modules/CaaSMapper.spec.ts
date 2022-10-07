@@ -61,18 +61,20 @@ describe('CaaSMapper', () => {
   describe('registerReferencedItem', () => {
     it('should register a reference and return the reference key', () => {
       const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const locale = 'de_DE'
+      const mapper = new CaaSMapper(api, locale, {}, createLogger())
       const refId = faker.random.word()
       const path = createPath()
       const item = mapper.registerReferencedItem(refId, path)
 
-      expect(mapper._referencedItems).toEqual({ [refId]: [path] })
+      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path] })
       expect(mapper._remoteReferences).toEqual({})
-      expect(item).toEqual(`[REFERENCED-ITEM-${refId}]`)
+      expect(item).toEqual(`[REFERENCED-ITEM-${`${refId}.${locale}`}]`)
     })
     it('should accept multiple paths for the same reference id', () => {
       const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const locale = 'de_DE'
+      const mapper = new CaaSMapper(api, locale, {}, createLogger())
       const refId = faker.random.word()
       const path = createPath()
       const path2 = createPath()
@@ -80,7 +82,7 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem(refId, path)
       mapper.registerReferencedItem(refId, path2)
 
-      expect(mapper._referencedItems).toEqual({ [refId]: [path, path2] })
+      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path, path2] })
     })
     it('should register a remote reference and return its remote reference key', () => {
       const remotes = { remoteId: { id: 'remoteId', locale: 'de' } }
@@ -91,20 +93,23 @@ describe('CaaSMapper', () => {
       const path = createPath()
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
-      expect(mapper._remoteReferences).toEqual({ remoteId: { [refId]: [path] } })
+      expect(mapper._remoteReferences).toEqual({
+        remoteId: { [`${refId}.${remotes.remoteId.locale}`]: [path] },
+      })
       expect(mapper._referencedItems).toEqual({})
-      expect(item).toEqual(`[REFERENCED-REMOTE-ITEM-${refId}]`)
+      expect(item).toEqual(`[REFERENCED-REMOTE-ITEM-${refId}.${remotes.remoteId.locale}]`)
     })
     it('should register a non-remote item if the remote project was not found', () => {
       const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const locale = 'de_DE'
+      const mapper = new CaaSMapper(api, locale, {}, createLogger())
       const refId = faker.random.word()
       const path = createPath()
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
       expect(mapper._remoteReferences).toEqual({})
-      expect(mapper._referencedItems).toEqual({ [refId]: [path] })
-      expect(item).toEqual(`[REFERENCED-ITEM-${refId}]`)
+      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path] })
+      expect(item).toEqual(`[REFERENCED-ITEM-${refId}.${locale}]`)
     })
   })
 
