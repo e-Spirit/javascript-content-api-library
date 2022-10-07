@@ -7,6 +7,7 @@ import { FSXARemoteApi } from './FSXARemoteApi'
 import { ArrayQueryOperatorEnum, ComparisonQueryOperatorEnum } from './QueryBuilder'
 
 import 'jest-fetch-mock'
+import { createDataEntry } from '../testutils'
 require('jest-fetch-mock').enableFetchMocks()
 
 const generateRandomConfig = () => {
@@ -439,14 +440,14 @@ describe('FSXARemoteAPI', () => {
       expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
-      const caasApiItem = { _id: 'testid' } // testdata needs _id
+      const caasApiItem = createDataEntry() // testdata needs _id
       fetchMock.mockResponse(JSON.stringify(caasApiItem))
       const actualRequest = await remoteApi.fetchElement({ id: uuid, locale })
       expect(actualRequest).toBeDefined()
       expect(actualRequest).toStrictEqual(caasApiItem)
     })
     it('should return a mapped response when additionalParams are set', async () => {
-      const item = { _id: 'testid' } // testdata needs _id
+      const item = createDataEntry() // testdata needs _id
       fetchMock.mockResponse(JSON.stringify(item))
       const actualRequest = await remoteApi.fetchElement({
         id: uuid,
@@ -535,7 +536,7 @@ describe('FSXARemoteAPI', () => {
       expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
-      const items = [{ _id: 'testid' }]
+      const items = [createDataEntry()]
       const caasApiItems = { _embedded: { 'rh:doc': items } }
       fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
       const actualRequest = await remoteApi.fetchByFilter({ filters, locale })
@@ -549,11 +550,13 @@ describe('FSXARemoteAPI', () => {
       })
     })
     it('should return normalized response if denormalized is switched off', async () => {
-      const items = [{ _id: 'testid' }]
+      const items = [createDataEntry()]
       const caasApiItems = { _embedded: { 'rh:doc': items } }
       fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
       const actualRequest = await remoteApi.fetchByFilter({ filters, locale, denormalized: false })
       expect(actualRequest).toBeDefined()
+      console.log(actualRequest)
+      console.log(items)
       expect(actualRequest).toStrictEqual({
         page: 1,
         pagesize: 30,
@@ -561,7 +564,7 @@ describe('FSXARemoteAPI', () => {
         totalPages: undefined,
         items,
         referenceMap: {},
-        resolvedReferences: { testid: items[0] },
+        resolvedReferences: { [items[0]._id]: items[0] },
       })
     })
     it('should return empty array on empty response', async () => {
