@@ -149,7 +149,6 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           additionalParams: req.body.additionalParams,
           resolve: req.body.resolver,
           filterContext: req.body.filterContext,
-          denormalized: req.body?.denormalized,
         })
         return res.json(response)
       } catch (err: any) {

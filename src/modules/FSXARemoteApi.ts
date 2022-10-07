@@ -60,6 +60,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _caasItemFilter?: CaasItemFilter
   private _logLevel: LogLevel
   private _enableEventStream: boolean = false
+  private _useNormalizedData: boolean = false
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -76,6 +77,7 @@ export class FSXARemoteApi implements FSXAApi {
    * @param config.customMapper optional {@link CustomMapper CustomMapper}
    * @param config.filterOptions optional {@link RemoteApiFilterOptions RemoteApiFilterOptions} (EXPERIMENTAL)
    * @param config.logLevel the used {@link LogLevel LogLevel} for the API `(default LogLevel.ERROR)` - optional
+   * @param config.useNormalizedData if false, denormalized Data is returned from this api, normalized data otherwise. Must be true if used with Proxy Api!
    */
   constructor({
     apikey,
@@ -89,6 +91,7 @@ export class FSXARemoteApi implements FSXAApi {
     customMapper,
     filterOptions,
     logLevel = LogLevel.ERROR,
+    useNormalizedData = false,
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
     this.caasURL = caasURL
@@ -104,6 +107,7 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationItemFilter = filterOptions?.navigationItemFilter
     this._caasItemFilter = filterOptions?.caasItemFilter
+    this._useNormalizedData = useNormalizedData
 
     this._logger.debug('FSXARemoteApi created', {
       apikey,
@@ -116,6 +120,7 @@ export class FSXARemoteApi implements FSXAApi {
       customMapper: this._customMapper,
       navigationItemFilter: this._navigationItemFilter,
       caasItemFilter: this._caasItemFilter,
+      useNormalizedData: this._useNormalizedData,
     })
   }
 
@@ -375,7 +380,6 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
     filterContext,
-    denormalized = true,
   }: FetchElementParams): Promise<any> {
     // todo: fix any typing
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
@@ -411,14 +415,16 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
-    if (denormalized)
+    if (!this._useNormalizedData)
       mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
 
     // TODO: fix type converting item as Dataset in multiple spots...
     const mappedElement = mappedItems[0]
 
     if (!this._caasItemFilter)
-      return denormalized ? mappedElement : { mappedItems, referenceMap, resolvedReferences }
+      return this._useNormalizedData
+        ? { mappedItems, referenceMap, resolvedReferences }
+        : mappedElement
 
     const filteredElement = (
       await this._caasItemFilter({
@@ -430,7 +436,9 @@ export class FSXARemoteApi implements FSXAApi {
       throw new Error(FSXAApiErrors.NOT_FOUND)
     }
 
-    return denormalized ? filteredElement : { mappedItems, referenceMap, resolvedReferences }
+    return this._useNormalizedData
+      ? { mappedItems, referenceMap, resolvedReferences }
+      : filteredElement
   }
 
   /**
@@ -473,7 +481,6 @@ export class FSXARemoteApi implements FSXAApi {
     fetchOptions,
     filterContext,
     sort = [],
-    denormalized = true,
   }: FetchByFilterParams): Promise<FetchResponse> {
     // todo fix fetch response type
     const mapper = new CaaSMapper(
@@ -497,7 +504,6 @@ export class FSXARemoteApi implements FSXAApi {
         fetchOptions,
         filterContext,
         sort,
-        denormalized,
       },
       mapper
     )
@@ -514,7 +520,6 @@ export class FSXARemoteApi implements FSXAApi {
       fetchOptions,
       filterContext,
       sort = [],
-      denormalized,
     }: FetchByFilterParams,
     mapper: CaaSMapper
   ): Promise<FetchResponse> {
@@ -569,7 +574,7 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
-    if (denormalized)
+    if (!this._useNormalizedData)
       mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
 
     if (this._caasItemFilter) {
@@ -594,8 +599,8 @@ export class FSXARemoteApi implements FSXAApi {
       totalPages: data['_total_pages'],
       size: data['_size'],
       items: mappedItems,
-      ...(!denormalized && { referenceMap }),
-      ...(!denormalized && { resolvedReferences }),
+      ...(this._useNormalizedData && { referenceMap }),
+      ...(this._useNormalizedData && { resolvedReferences }),
     }
   }
 
@@ -613,13 +618,11 @@ export class FSXARemoteApi implements FSXAApi {
     additionalParams = {},
     resolve = ['GCAPage'],
     filterContext,
-    denormalized = true,
   }: {
     locale: string
     additionalParams?: Record<string, any>
     resolve?: string[]
     filterContext?: unknown
-    denormalized?: boolean
   }): Promise<ProjectProperties | null> {
     const fetchResponse = await this.fetchByFilter({
       filters: [
@@ -632,7 +635,6 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       additionalParams,
       filterContext,
-      denormalized,
     })
     if (!fetchResponse.items[0]) return null
 

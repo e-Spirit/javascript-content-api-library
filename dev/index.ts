@@ -29,6 +29,7 @@ const remoteApi = new FSXARemoteApi({
   remotes: JSON.parse(API_REMOTES || '{}'),
   logLevel: LogLevel.INFO,
   enableEventStream: !!API_ENABLE_EVENT_STREAM,
+  useNormalizedData: true,
 })
 
 app.use(cors())
@@ -50,7 +51,9 @@ app.listen(3002, async () => {
 
     if (navigationResponse) {
       const pageInNavigationId = navigationResponse.seoRouteMap[navigationResponse.pages.index]
-      const { caasDocumentId } = navigationResponse.idMap[pageInNavigationId]
+      let { caasDocumentId } = navigationResponse.idMap[pageInNavigationId]
+
+      caasDocumentId = "028b9161-5e19-40a6-99a4-db4205263f82"
       const homepageResponse = await proxyAPI.fetchElement({ id: caasDocumentId, locale })
 
       createFile({
@@ -60,6 +63,6 @@ app.listen(3002, async () => {
       })
     }
   } catch (e) {
-    console.log(e)
+    console.log(e) 
   }
 })

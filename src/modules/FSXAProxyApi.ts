@@ -185,7 +185,6 @@ export class FSXAProxyApi implements FSXAApi {
       },
       remote: remoteProject,
       filterContext,
-      denormalized: false,
     }
     this._logger.debug('fetchByFilter', 'trying to fetch with body', body)
     const response = await this.fetch({

@@ -924,6 +924,7 @@ export type FSXARemoteApiConfig = {
   customMapper?: CustomMapper
   filterOptions?: RemoteApiFilterOptions
   enableEventStream?: boolean
+  useNormalizedData?: boolean
 }
 
 export type FilterContextProvider = () => unknown | null
