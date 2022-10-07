@@ -20,6 +20,7 @@ import {
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
 import { LogLevel } from './Logger'
+import { denormalizeResolvedReferences } from './MappingUtils'
 import { ComparisonQueryOperatorEnum, QueryBuilder } from './QueryBuilder'
 
 type buildNavigationServiceURLParams = {
@@ -411,11 +412,7 @@ export class FSXARemoteApi implements FSXAApi {
     )
 
     if (denormalized)
-      mappedItems = CaaSMapper.denormalizeResolvedReferences(
-        mappedItems,
-        referenceMap,
-        resolvedReferences
-      )
+      mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
 
     // TODO: fix type converting item as Dataset in multiple spots...
     const mappedElement = mappedItems[0]
@@ -573,11 +570,7 @@ export class FSXARemoteApi implements FSXAApi {
     )
 
     if (denormalized)
-      mappedItems = CaaSMapper.denormalizeResolvedReferences(
-        mappedItems,
-        referenceMap,
-        resolvedReferences
-      )
+      mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
 
     if (this._caasItemFilter) {
       this._logger.debug(

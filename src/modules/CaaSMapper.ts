@@ -49,11 +49,12 @@ import {
   MappedCaasItem,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, set, update } from 'lodash'
+import { chunk, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { FSXAContentMode, ImageMapAreaType } from '../enums'
+import { findResolvedReferencesByIds, getItemId } from './MappingUtils'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -120,15 +121,11 @@ export class CaaSMapper {
 
   addToResolvedReferences(item: MappedCaasItem | CaasApi_Item) {
     // Page has pageId as id instead of PageRef Id. --> use refId instead for mapped Pages
-    const id = CaaSMapper.getItemId(item)
+    const id = getItemId(item)
 
     if (id) {
       this.resolvedReferences[id] = item
     }
-  }
-
-  static getItemId(item: MappedCaasItem | CaasApi_Item): string {
-    return (item as MappedCaasItem).previewId || (item as CaasApi_Item)?._id
   }
 
   /**
@@ -680,10 +677,7 @@ export class CaaSMapper {
     if (unmappedElement) await this.resolveAllReferences(filterContext)
 
     // find resolved refs and puzzle them back together
-    const mappedItems = CaaSMapper.findResolvedReferencesByIds(
-      [unmappedElement._id],
-      this.resolvedReferences
-    )
+    const mappedItems = findResolvedReferencesByIds([unmappedElement._id], this.resolvedReferences)
     // merge all remote references into one object
     const remoteReferencesValues = Object.values(this._remoteReferences)
     const remoteReferencesMerged =
@@ -738,8 +732,8 @@ export class CaaSMapper {
     if (items.length > 0) await this.resolveAllReferences(filterContext)
 
     // find resolved refs and puzzle them back together
-    const mappedItems = CaaSMapper.findResolvedReferencesByIds(
-      items.map((item) => CaaSMapper.getItemId(item)),
+    const mappedItems = findResolvedReferencesByIds(
+      items.map((item) => getItemId(item)),
       this.resolvedReferences
     )
 
@@ -848,37 +842,5 @@ export class CaaSMapper {
         )
       )
     }
-  }
-
-  // we use a query function, because ids get mixed up:
-  // referencedItems store identifier, resolvedReferences store _id or previewId
-  static findResolvedReferencesByIds(ids: string[], resolvedReferences: ResolvedReferencesInfo) {
-    return ids.map((id) => resolvedReferences[id]).filter((item) => item)
-  }
-
-  static denormalizeResolvedReferences(
-    mappedItems: (CaasApi_Item | MappedCaasItem)[],
-    referenceMap: ReferencedItemsInfo,
-    resolvedReferences: ResolvedReferencesInfo
-  ) {
-    if (!referenceMap || Object.keys(referenceMap).length === 0) return mappedItems
-    // denormalize
-    for (const [referencedId, occurencies] of Object.entries(referenceMap)) {
-      occurencies.forEach((path) => {
-        // no simple comparison possible because referencedItems store identifier
-        // and resolvedReferences store "previewId" or "_id"
-        const resolvedId = Object.keys(resolvedReferences).find((key) => key.includes(referencedId))
-        if (resolvedId) {
-          set(resolvedReferences, path, resolvedReferences[resolvedId])
-        }
-      })
-    }
-
-    // update mappedItems
-    const queriedIds = mappedItems
-      .filter((item) => !!item)
-      .map((item) => CaaSMapper.getItemId(item))
-
-    return CaaSMapper.findResolvedReferencesByIds(queriedIds, resolvedReferences)
   }
 }

@@ -20,6 +20,7 @@ import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
 import { FetchResponse } from '..'
 import { CaaSMapper, MapResponse } from '.'
+import { denormalizeResolvedReferences } from './MappingUtils'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -125,11 +126,7 @@ export class FSXAProxyApi implements FSXAApi {
     const jsonRes = await response.json()
     let { mappedItems, referenceMap, resolvedReferences } = jsonRes as MapResponse
 
-    mappedItems = CaaSMapper.denormalizeResolvedReferences(
-      mappedItems,
-      referenceMap,
-      resolvedReferences
-    )
+    mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
 
     return mappedItems[0] as unknown as T
   }
@@ -217,7 +214,7 @@ export class FSXAProxyApi implements FSXAApi {
     const jsonRes = (await response.json()) as FetchResponse
     let { referenceMap, items, resolvedReferences, totalPages, size } = jsonRes
 
-    items = CaaSMapper.denormalizeResolvedReferences(
+    items = denormalizeResolvedReferences(
       items as (CaasApi_Item | MappedCaasItem)[],
       referenceMap!,
       resolvedReferences!
