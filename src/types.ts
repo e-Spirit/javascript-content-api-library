@@ -855,7 +855,6 @@ export type FetchByFilterParams = {
   fetchOptions?: RequestInit
   filterContext?: unknown
   sort?: SortParams[]
-  denormalized?: boolean
 }
 
 export type FetchElementParams = {
@@ -865,7 +864,6 @@ export type FetchElementParams = {
   remoteProject?: string
   fetchOptions?: RequestInit
   filterContext?: unknown
-  denormalized?: boolean
 }
 
 export type FetchProjectPropertiesParams = {

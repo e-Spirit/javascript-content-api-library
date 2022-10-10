@@ -460,6 +460,7 @@ describe('FSXARemoteAPI', () => {
   })
   describe('fetchByFilter', () => {
     let remoteApi: FSXARemoteApi
+    let remoteApiNormalized: FSXARemoteApi
     let config: any
     let filters: QueryBuilderQuery[]
     let filterValue: string
@@ -483,6 +484,7 @@ describe('FSXARemoteAPI', () => {
       locale = localeLanguage + '_' + localeCountry
       config = generateRandomConfig()
       remoteApi = new FSXARemoteApi(config)
+      remoteApiNormalized = new FSXARemoteApi({ ...config, useNormalizedData: true })
       json = {
         _embedded: {
           'rh:doc': Faker.datatype.array(),
@@ -553,7 +555,7 @@ describe('FSXARemoteAPI', () => {
       const items = [createDataEntry()]
       const caasApiItems = { _embedded: { 'rh:doc': items } }
       fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
-      const actualRequest = await remoteApi.fetchByFilter({ filters, locale, denormalized: false })
+      const actualRequest = await remoteApiNormalized.fetchByFilter({ filters, locale })
       expect(actualRequest).toBeDefined()
       expect(actualRequest).toStrictEqual({
         page: 1,

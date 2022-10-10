@@ -28,6 +28,7 @@ describe('FSXARemoteApi', () => {
     remotes: {},
     logLevel: LogLevel.INFO,
     enableEventStream: false,
+    useNormalizedData: false,
   })
 
   beforeAll(async () => {
@@ -47,7 +48,7 @@ describe('FSXARemoteApi', () => {
     await caasClient.removeCollection(parsedRes._etag.$oid)
   })
 
-  it('return normalized data if fetch element is called with denormalized switched off', async () => {
+  it('return normalized data if fetch element is called with useNormalizedData switched off', async () => {
     const dataset = createDataset('ds1-id')
     const referencedDataset = createDataset('ds2-id')
     const datasetReference = createDatasetReference('ds2-id')
@@ -56,7 +57,6 @@ describe('FSXARemoteApi', () => {
     const res = await remoteApi.fetchElement({
       id: dataset.identifier,
       locale: locale.identifier,
-      denormalized: false,
     })
     expect(res.mappedItems[0].id).toEqual(dataset.identifier)
     expect(res.mappedItems.length).toEqual(1)
@@ -100,7 +100,6 @@ describe('FSXARemoteApi', () => {
         },
       ],
       locale: locale.identifier,
-      denormalized: false,
     })
 
     expect(res.items[0].id).toEqual(dataset.identifier)

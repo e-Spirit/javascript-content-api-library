@@ -99,7 +99,6 @@ export class FSXAProxyApi implements FSXAApi {
       additionalParams,
       remote: remoteProject,
       filterContext,
-      denormalized: false,
     }
     this._logger.debug('fetchElement', 'trying to fetch body', body)
 
@@ -128,6 +127,7 @@ export class FSXAProxyApi implements FSXAApi {
 
     mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
 
+    if (mappedItems.length === 0) throw new Error(FSXAApiErrors.NOT_FOUND)
     return mappedItems[0] as unknown as T
   }
 

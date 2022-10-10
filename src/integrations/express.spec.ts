@@ -89,7 +89,6 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
-        denormalized: false,
         filterContext: undefined,
       })
       await proxyApi.fetchElement({
@@ -102,7 +101,6 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
-        denormalized: false,
         filterContext: undefined,
       })
       await proxyApi.fetchElement({
@@ -110,7 +108,6 @@ describe('Express-Integration', () => {
         locale: 'de_DE',
         additionalParams: { test: '1' },
         remoteProject: 'media',
-        denormalized: false,
         filterContext: undefined,
       })
       expect(fetchElementSpy).toHaveBeenCalledWith({
@@ -118,7 +115,6 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: 'media',
-        denormalized: false,
         filterContext: undefined,
       })
     })
@@ -144,7 +140,6 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
-        denormalized: false,
         filterContext: undefined,
       })
     })
@@ -208,7 +203,6 @@ describe('Express-Integration', () => {
         pagesize: 30,
         sort: [],
         remoteProject: undefined,
-        denormalized: false,
         filterContext: undefined,
       })
       const filters_2: QueryBuilderQuery[] = [
