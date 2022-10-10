@@ -555,8 +555,7 @@ describe('FSXARemoteAPI', () => {
       fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
       const actualRequest = await remoteApi.fetchByFilter({ filters, locale, denormalized: false })
       expect(actualRequest).toBeDefined()
-      console.log(actualRequest)
-      console.log(items)
+
       expect(actualRequest).toStrictEqual({
         page: 1,
         pagesize: 30,

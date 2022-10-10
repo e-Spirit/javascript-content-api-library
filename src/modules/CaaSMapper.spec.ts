@@ -489,7 +489,7 @@ describe('CaaSMapper', () => {
         const path = createPath()
         jest.spyOn(mapper, 'mapDataEntries')
         const entry = createImageMap()
-        path[0] = entry.value.media.identifier
+        path[0] = `${entry.value.media.identifier}.de`
         await mapper.mapDataEntry(entry, path)
         entry.value.areas.forEach((area, index) => {
           if (area.link) {
@@ -509,7 +509,7 @@ describe('CaaSMapper', () => {
         const mock = jest.spyOn(mapper, 'mapDataEntry')
         const entry = createImageMap()
         const childEntry = createImageMap()
-        const childEntryMediaId = childEntry.value.media.identifier
+        const childEntryMediaId = `${childEntry.value.media.identifier}.de`
         entry.value.areas[0].link!.formData = { childEntry }
         await mapper.mapDataEntry(entry, path)
         expect(mock.mock.calls[0][0]).toEqual(entry)
