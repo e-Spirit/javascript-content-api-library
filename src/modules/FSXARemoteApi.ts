@@ -1,4 +1,3 @@
-import { resolve } from 'path'
 import { stringify } from 'qs'
 import { CaaSMapper, Logger, MapResponse } from '.'
 import { FetchResponse, ProjectProperties } from '..'
@@ -584,6 +583,8 @@ export class FSXARemoteApi implements FSXAApi {
       additionalParams,
       filterContext
     )
+
+    console.log(mappedItems, referenceMap, resolvedReferences)
 
     if (this._caasItemFilter) {
       this._logger.debug(

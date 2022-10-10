@@ -3,6 +3,11 @@ import { CaasApi_Item, MappedCaasItem } from '../types'
 import { ResolvedReferencesInfo, ReferencedItemsInfo, CaaSMapper } from './CaaSMapper'
 
 const getItemId = (item: MappedCaasItem | CaasApi_Item): string => {
+  if ((item as CaasApi_Item).fsType === 'ProjectProperties') {
+    const caasApiItem = item as CaasApi_Item
+    const locale = caasApiItem._id.split('.')[1]
+    return `${(item as CaasApi_Item).identifier}.${locale}`
+  }
   return (item as MappedCaasItem).previewId || (item as CaasApi_Item)?._id
 }
 
