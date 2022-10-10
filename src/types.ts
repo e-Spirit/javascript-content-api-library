@@ -5,6 +5,7 @@ import {
   LogLevel,
   ResolvedReferencesInfo,
   ReferencedItemsInfo,
+  MapResponse,
 } from './modules'
 import {
   ArrayQueryOperatorEnum,
@@ -885,13 +886,12 @@ export interface AppContext<T = unknown> {
 
 export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
 
-export interface CaasItemFilterParams<FilterContextType> {
-  caasItems: (MappedCaasItem | any)[]
+export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType
 }
 export type CaasItemFilter<FilterContextType = unknown> = (
   params: CaasItemFilterParams<FilterContextType>
-) => Promise<(MappedCaasItem | any)[]> | (MappedCaasItem | any)[]
+) => Promise<MapResponse> | MapResponse
 
 export interface NavigationItemFilterParams<FilterContextType = unknown> {
   navigationItems: NavigationItem[]
