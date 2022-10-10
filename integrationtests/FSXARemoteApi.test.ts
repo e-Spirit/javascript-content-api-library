@@ -61,7 +61,7 @@ describe('FSXARemoteApi', () => {
     expect(res.mappedItems[0].id).toEqual(dataset.identifier)
     expect(res.mappedItems.length).toEqual(1)
     expect(res.referenceMap).toEqual({
-      [referencedDataset.identifier]: [
+      [`${referencedDataset.identifier}.${locale.identifier}`]: [
         [`${dataset.identifier}.${locale.identifier}`, 'data', 'dsref'],
       ],
     })
@@ -106,7 +106,7 @@ describe('FSXARemoteApi', () => {
     expect(res.items[0].id).toEqual(dataset.identifier)
     expect(res.items.length).toEqual(1)
     expect(res.referenceMap).toEqual({
-      [referencedDataset.identifier]: [
+      [`${referencedDataset.identifier}.${locale.identifier}`]: [
         [`${dataset.identifier}.${locale.identifier}`, 'data', 'dsref'],
       ],
     })
@@ -178,6 +178,8 @@ describe('FSXARemoteApi', () => {
       referenceDepth++
     }
 
-    expect(res.data.dsref.data.dsref.data.dsref).toBe('[REFERENCED-ITEM-ds4-id]')
+    expect(res.data.dsref.data.dsref.data.dsref).toBe(
+      `[REFERENCED-ITEM-ds4-id.${locale.identifier}]`
+    )
   })
 })
