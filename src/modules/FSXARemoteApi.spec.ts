@@ -417,9 +417,9 @@ describe('FSXARemoteAPI', () => {
       config = generateRandomConfig()
       remoteApi = new FSXARemoteApi(config)
     })
-    it('should trigger the fetch method with the correct params', () => {
+    it('should trigger the fetch method with the correct params', async () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
-      remoteApi.fetchElement({ id: uuid, locale })
+      await remoteApi.fetchElement({ id: uuid, locale })
       const actualURL = fetchMock.mock.calls[0][0]
       const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${uuid}.${locale}`
       expect(actualURL).toBe(expectedURL)
@@ -427,17 +427,17 @@ describe('FSXARemoteAPI', () => {
     it('should throw an not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
       const actualRequest = remoteApi.fetchElement({ id: uuid, locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
     })
     it('should throw an unauthorized error when the response is 401', () => {
       fetchMock.mockResponseOnce('', { status: 401 })
       const actualRequest = remoteApi.fetchElement({ id: uuid, locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_AUTHORIZED)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_AUTHORIZED)
     })
     it('should throw an unknown error when the response is not ok', () => {
       fetchMock.mockResponseOnce('', { status: 400 })
       const actualRequest = remoteApi.fetchElement({ id: uuid, locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
       const caasApiItem = createDataEntry() // testdata needs _id
@@ -489,9 +489,9 @@ describe('FSXARemoteAPI', () => {
         },
       }
     })
-    it('should trigger the fetch method with the correct params', () => {
+    it('should trigger the fetch method with the correct params', async () => {
       fetchMock.mockResponseOnce(JSON.stringify(json))
-      remoteApi.fetchByFilter({ filters, locale })
+      await remoteApi.fetchByFilter({ filters, locale })
       const actualURL = fetchMock.mock.calls[0][0]
       const firstEncodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"$eq":"${filterValue}"}}`
@@ -505,13 +505,13 @@ describe('FSXARemoteAPI', () => {
       const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?rep=hal&filter=${firstEncodedFilterValue}&filter=${secondEncodedFilterValue}&filter=${thirdEncodedFilterValue}&page=1&pagesize=30`
       expect(actualURL).toBe(expectedURL)
     })
-    it('should trigger the fetch method with the sort param', () => {
+    it('should trigger the fetch method with the sort param', async () => {
       fetchMock.mockResponseOnce(JSON.stringify(json))
       const sort = [
         { name: 'displayName', order: 'asc' },
         { name: 'template.name', order: 'desc' },
       ] as SortParams[]
-      remoteApi.fetchByFilter({ filters, locale, sort })
+      await remoteApi.fetchByFilter({ filters, locale, sort })
       const actualURL = fetchMock.mock.calls[0][0]
       const firstEncodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"$eq":"${filterValue}"}}`
@@ -528,12 +528,12 @@ describe('FSXARemoteAPI', () => {
     it('should throw an unauthorized error when the response is 401', () => {
       fetchMock.mockResponseOnce('', { status: 401 })
       const actualRequest = remoteApi.fetchByFilter({ filters, locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_AUTHORIZED)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_AUTHORIZED)
     })
     it('should throw an unknown error when the response is not ok', () => {
       fetchMock.mockResponseOnce('', { status: 400 })
       const actualRequest = remoteApi.fetchByFilter({ filters, locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
       const items = [createDataEntry()]
@@ -553,7 +553,11 @@ describe('FSXARemoteAPI', () => {
       const items = [createDataEntry()]
       const caasApiItems = { _embedded: { 'rh:doc': items } }
       fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
-      const actualRequest = await remoteApi.fetchByFilter({ filters, locale, denormalized: false })
+      const actualRequest = await remoteApi.fetchByFilter({
+        filters,
+        locale,
+        denormalized: false,
+      })
       expect(actualRequest).toBeDefined()
 
       expect(actualRequest).toStrictEqual({
@@ -594,7 +598,7 @@ describe('FSXARemoteAPI', () => {
         items: [],
       })
     })
-    it('boolean values pass the typecheck', () => {
+    it('boolean values pass the typecheck', async () => {
       const comparisonFilter: QueryBuilderQuery[] = [
         {
           value: true,
@@ -610,8 +614,9 @@ describe('FSXARemoteAPI', () => {
         },
       ]
       fetchMock.mockResponseOnce(JSON.stringify(json))
-      remoteApi.fetchByFilter({ filters: comparisonFilter, locale })
-      remoteApi.fetchByFilter({ filters: arrayFilter, locale })
+      await remoteApi.fetchByFilter({ filters: comparisonFilter, locale })
+      fetchMock.mockResponseOnce(JSON.stringify(json))
+      await remoteApi.fetchByFilter({ filters: arrayFilter, locale })
       expect(fetchMock).toBeCalledTimes(2)
     })
   })
@@ -659,13 +664,13 @@ describe('FSXARemoteAPI', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
       const locale = Faker.locale
       const actualRequest = remoteApi.fetchNavigation({ locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
     })
     it('should throw an unknown error when the response is not ok', () => {
       fetchMock.mockResponseOnce('', { status: 400 })
       const locale = Faker.locale
       const actualRequest = remoteApi.fetchNavigation({ locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
       const expectedResponse = Faker.datatype.json()
@@ -679,14 +684,14 @@ describe('FSXARemoteAPI', () => {
       const locale = Faker.locale
       const initialPath = Faker.lorem.words(3).split(' ').join('/') + '?'
       const actualRequest = remoteApi.fetchNavigation({ initialPath, locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should throw an unknown error when # is used in initial path', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
       const locale = Faker.locale
       const initialPath = Faker.lorem.words(3).split(' ').join('/') + '#'
       const actualRequest = remoteApi.fetchNavigation({ initialPath, locale })
-      expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should trigger the fetch method with encoded params when special chars are used in locale or initial path', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
