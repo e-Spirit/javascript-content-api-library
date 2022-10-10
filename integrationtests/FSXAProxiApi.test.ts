@@ -108,8 +108,7 @@ describe('FSXAProxyAPI', () => {
       })
       expect(res.data.st_table[0].content[0].content[0].content[0].content).toEqual('\xa0') // \xa0 is non-breaking
     })
-    // test nested map media refs
-    it('image map media gets resolved to resolution specified in image map', async () => {
+    it('nested image map media gets resolved to resolution specified in image map', async () => {
       const pageRef = createPageRef()
       const imageMap1 = createImageMap()
       const imageMap2 = createImageMap()
@@ -232,10 +231,10 @@ describe('FSXAProxyAPI', () => {
         locale: `${locale.language}_${locale.country}`,
       })
 
-      expect(res.data.dataset.id).toBe(dataset1._id)
-      expect(res.data.dataset.data.ref22.id).toBe(dataset2._id)
-      expect(res.data.dataset.data.ref22.data.ref23.id).toBe(dataset3._id)
-      expect(res.data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(dataset1._id)
+      expect(res.data.dataset.id).toBe(dataset1.identifier)
+      expect(res.data.dataset.data.ref22.id).toBe(dataset2.identifier)
+      expect(res.data.dataset.data.ref22.data.ref23.id).toBe(dataset3.identifier)
+      expect(res.data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(dataset1.identifier)
     })
     it('api returns resolved references if references are nested', async () => {
       const mediaPicture = createMediaPicture('pic-id')
@@ -250,7 +249,7 @@ describe('FSXAProxyAPI', () => {
         id: pageRef.identifier,
         locale: `${locale.language}_${locale.country}`,
       })
-      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture.identifier)
     })
     it('references are resolved if they also occur within other references', async () => {
       const mediaPicture = createMediaPicture('pic-id')
@@ -265,7 +264,7 @@ describe('FSXAProxyAPI', () => {
         id: pageRef.identifier,
         locale: `${locale.language}_${locale.country}`,
       })
-      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture.identifier)
     })
     it('api returns matching doc if valid id is passed', async () => {
       const doc: TestDocument = {
@@ -420,14 +419,15 @@ describe('FSXAProxyAPI', () => {
               value: pageRef.identifier,
             },
           ],
-          locale: `${locale.language}_${locale.country}`,
+          locale: locale.identifier,
         })
-
-        expect((res.items[0] as any).data.dataset.id).toBe(dataset1._id)
-        expect((res.items[0] as any).data.dataset.data.ref22.id).toBe(dataset2._id)
-        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.id).toBe(dataset3._id)
+        expect((res.items[0] as any).data.dataset.id).toBe(dataset1.identifier)
+        expect((res.items[0] as any).data.dataset.data.ref22.id).toBe(dataset2.identifier)
+        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.id).toBe(
+          dataset3.identifier
+        )
         expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(
-          dataset1._id
+          dataset1.identifier
         )
       })
       it('api returns only matching data if filter is applied', async () => {

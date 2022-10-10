@@ -548,7 +548,7 @@ export class CaaSMapper {
     let image = null
     if (media) {
       image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
-      path[0] = media.identifier
+      path[0] = `${media.identifier}.${this.locale}`
       this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
     }
 
@@ -776,8 +776,6 @@ export class CaaSMapper {
     // force a single resolution for image map media
     this._imageMapForcedResolutions.forEach(({ path, resolution }, index) => {
       const mediaId = path[0].toString() // we save the media id in this.mapImageMap() function
-
-      // find media in resolved references
 
       const resolvedMediaItem = this.resolvedReferences[mediaId]
       if ((resolvedMediaItem as Image).resolutions) {
