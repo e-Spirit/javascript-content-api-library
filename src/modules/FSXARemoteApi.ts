@@ -669,6 +669,7 @@ export class FSXARemoteApi implements FSXAApi {
       ],
       pagesize: 100,
       filterContext,
+      denormalized,
     })
 
     //Insert fetched Data into projectProperties
