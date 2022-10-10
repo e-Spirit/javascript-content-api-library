@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { stringify } from 'qs'
 import { CaaSMapper, Logger, MapResponse } from '.'
 import { FetchResponse, ProjectProperties } from '..'
@@ -411,26 +412,41 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
-    if (denormalized)
-      mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
-
-    // TODO: fix type converting item as Dataset in multiple spots...
-    const mappedElement = mappedItems[0]
-
-    if (!this._caasItemFilter)
-      return denormalized ? mappedElement : { mappedItems, referenceMap, resolvedReferences }
-
-    const filteredElement = (
-      await this._caasItemFilter({
-        caasItems: [mappedElement],
+    if (this._caasItemFilter) {
+      this._logger.debug(
+        'fetchElement',
+        'caasItemFilter is defined, filtering items',
+        mappedItems.map((caasItem) => {
+          return {
+            type: (caasItem as any).type,
+            id: (caasItem as any).id,
+          }
+        })
+      )
+      // _caasItemFilter needs to work with normalized Data
+      const {
+        mappedItems: filteredmappedItems,
+        referenceMap: filteredReferenceMap,
+        resolvedReferences: filteredResolvedReferences,
+      } = await this._caasItemFilter({
+        mappedItems,
+        referenceMap,
+        resolvedReferences,
         filterContext,
       })
-    )[0]
-    if (!filteredElement) {
+
+      mappedItems = filteredmappedItems
+      referenceMap = filteredReferenceMap
+      resolvedReferences = filteredResolvedReferences
+    }
+
+    if (mappedItems.length === 0) {
       throw new Error(FSXAApiErrors.NOT_FOUND)
     }
 
-    return denormalized ? filteredElement : { mappedItems, referenceMap, resolvedReferences }
+    return denormalized
+      ? denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)[0]
+      : { mappedItems, referenceMap, resolvedReferences }
   }
 
   /**
@@ -569,9 +585,6 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
-    if (denormalized)
-      mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
-
     if (this._caasItemFilter) {
       this._logger.debug(
         'fetchByFilter',
@@ -583,17 +596,31 @@ export class FSXARemoteApi implements FSXAApi {
           }
         })
       )
-      mappedItems = await this._caasItemFilter({
-        caasItems: mappedItems,
+      // _caasItemFilter needs to work with normalized Data
+      const {
+        mappedItems: filteredmappedItems,
+        referenceMap: filteredReferenceMap,
+        resolvedReferences: filteredResolvedReferences,
+      } = await this._caasItemFilter({
+        mappedItems,
+        referenceMap,
+        resolvedReferences,
         filterContext,
       })
+
+      mappedItems = filteredmappedItems
+      referenceMap = filteredReferenceMap
+      resolvedReferences = filteredResolvedReferences
     }
+
     return {
       page,
       pagesize,
       totalPages: data['_total_pages'],
       size: data['_size'],
-      items: mappedItems,
+      items: denormalized
+        ? denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
+        : mappedItems,
       ...(!denormalized && { referenceMap }),
       ...(!denormalized && { resolvedReferences }),
     }
@@ -677,19 +704,7 @@ export class FSXARemoteApi implements FSXAApi {
       projectPropertiesData[idToKeyMap[(element as any).id]] = (element as any).data
     })
 
-    if (!this._caasItemFilter) return projectProperties
-    this._logger.debug(
-      'fetchProjectProperties',
-      'itemFilter',
-      'Filter is defined, using additional context',
-      filterContext
-    )
-    const filteredResult = await this._caasItemFilter({
-      caasItems: [projectProperties],
-      filterContext,
-    })
-    if (Array.isArray(filteredResult) && filteredResult.length > 0) return filteredResult[0]
-    return null
+    return projectProperties
   }
 
   /**
