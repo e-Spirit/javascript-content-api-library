@@ -653,16 +653,16 @@ export class CaaSMapper {
       // If additionalParams are provided we cannot map the response since we do not know which keys are provided
       switch (unmappedElement.fsType) {
         case 'Dataset':
-          mappedElement = await this.mapDataset(unmappedElement, [unmappedElement._id])
+          mappedElement = await this.mapDataset(unmappedElement, [getItemId(unmappedElement)])
           break
         case 'PageRef':
-          mappedElement = await this.mapPageRef(unmappedElement, [unmappedElement._id])
+          mappedElement = await this.mapPageRef(unmappedElement, [getItemId(unmappedElement)])
           break
         case 'Media':
-          mappedElement = await this.mapMedia(unmappedElement, [unmappedElement._id])
+          mappedElement = await this.mapMedia(unmappedElement, [getItemId(unmappedElement)])
           break
         case 'GCAPage':
-          mappedElement = await this.mapGCAPage(unmappedElement, [unmappedElement._id])
+          mappedElement = await this.mapGCAPage(unmappedElement, [getItemId(unmappedElement)])
           break
         default:
         // we could not map the element --> just returning the raw values
@@ -704,15 +704,15 @@ export class CaaSMapper {
             unmappedItems.map((unmappedItem, index) => {
               switch (unmappedItem.fsType) {
                 case 'Dataset':
-                  return this.mapDataset(unmappedItem, [unmappedItem._id])
+                  return this.mapDataset(unmappedItem, [getItemId(unmappedItem)])
                 case 'PageRef':
-                  return this.mapPageRef(unmappedItem, [unmappedItem._id])
+                  return this.mapPageRef(unmappedItem, [getItemId(unmappedItem)])
                 case 'Media':
-                  return this.mapMedia(unmappedItem, [unmappedItem._id])
+                  return this.mapMedia(unmappedItem, [getItemId(unmappedItem)])
                 case 'GCAPage':
-                  return this.mapGCAPage(unmappedItem, [unmappedItem._id])
+                  return this.mapGCAPage(unmappedItem, [getItemId(unmappedItem)])
                 case 'ProjectProperties':
-                  return this.mapProjectProperties(unmappedItem, [unmappedItem._id])
+                  return this.mapProjectProperties(unmappedItem, [getItemId(unmappedItem)])
                 default:
                   this.logger.warn(`Item at index'${index}' could not be mapped!`)
                   return unmappedItem
