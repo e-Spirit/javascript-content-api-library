@@ -380,6 +380,7 @@ export class FSXARemoteApi implements FSXAApi {
     // todo: fix any typing
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
+
     const caasApiResponse = await fetch(url, {
       headers: this.authorizationHeader,
       ...fetchOptions,
@@ -583,8 +584,6 @@ export class FSXARemoteApi implements FSXAApi {
       additionalParams,
       filterContext
     )
-
-    console.log(mappedItems, referenceMap, resolvedReferences)
 
     if (this._caasItemFilter) {
       this._logger.debug(

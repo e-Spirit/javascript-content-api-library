@@ -417,17 +417,12 @@ describe('FSXARemoteAPI', () => {
       config = generateRandomConfig()
       remoteApi = new FSXARemoteApi(config)
     })
-    it.skip('should trigger the fetch method with the correct params', async () => {
+    it('should trigger the fetch method with the correct params', async () => {
       const data = createDataEntry()
-      const caasResponseJson = {
-        _embedded: {
-          'rh:doc': [data],
-        },
-      }
-      fetchMock.mockResponseOnce(JSON.stringify(caasResponseJson))
+      fetchMock.mockResponseOnce(JSON.stringify(data))
       await remoteApi.fetchElement({ id: data.identifier, locale })
       const actualURL = fetchMock.mock.calls[0][0]
-      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${uuid}.${locale}`
+      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${data.identifier}.${locale}`
       expect(actualURL).toBe(expectedURL)
     })
     it('should throw an not found error when the response is 404', () => {

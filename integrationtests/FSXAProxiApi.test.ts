@@ -31,6 +31,7 @@ import {
   createDatasetReference,
   createImageMap,
   createMediaPictureReferenceValue,
+  createProjectProperties,
 } from '../src/testutils'
 
 dotenv.config({ path: './integrationtests/.env' })
@@ -85,6 +86,35 @@ describe('FSXAProxyAPI', () => {
     const parsedRes = await res.json()
     await caasClient.removeCollection(parsedRes._etag.$oid)
     server.close()
+  })
+  describe('fetchProjectProps', () => {
+    const locale = {
+      identifier: 'de_DE',
+      country: 'DE',
+      language: 'de',
+    }
+    it('fetch project props returns project pros', async () => {
+      const projectProperties = createProjectProperties()
+      projectProperties._id = 'projectSettings' // this was found in real data
+      await caasClient.addItemsToCollection([projectProperties], locale)
+      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      expect(res!.id).toEqual(projectProperties.identifier)
+    })
+    it('nested refs in project props get resolved', async () => {
+      const projectProperties = createProjectProperties()
+      projectProperties._id = 'projectSettings' // this was found in real data
+      const dataset1 = createDataset('ds1-id')
+      const datasetReference1 = createDatasetReference('ds1-id')
+      const dataset2 = createDataset('ds2-id')
+      const datasetReference2 = createDatasetReference('ds2-id')
+      projectProperties.formData = { datasetReference1 }
+      projectProperties.metaFormData = { datasetReference2 }
+      await caasClient.addItemsToCollection([projectProperties, dataset1, dataset2], locale)
+      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      expect(res!.id).toEqual(projectProperties.identifier)
+      expect(res!.data.datasetReference1.id).toEqual(dataset1.identifier)
+      expect(res!.meta.datasetReference2.id).toEqual(dataset2.identifier)
+    })
   })
   describe('fetchElement', () => {
     const locale = {
