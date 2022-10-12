@@ -99,12 +99,6 @@ export interface CaaSApi_CMSInputCombobox {
   value: CaaSApi_Option | null
 }
 
-export interface CaaSApi_CMSInputRadioButton {
-  fsType: 'CMS_INPUT_RADIOBUTTON'
-  name: string
-  value: CaaSApi_Option | null
-}
-
 export interface CaaSApi_CMSInputDate {
   fsType: 'CMS_INPUT_DATE'
   name: string

@@ -19,6 +19,7 @@ import {
   CaaSApi_ProjectProperties,
   CaaSApi_Section,
   CaaSApi_SectionReference,
+  CaaSApi_CMSInputRadioButton,
   CaaSApiMediaPictureResolutions,
   CustomMapper,
   DataEntries,
@@ -181,7 +182,9 @@ export class CaaSMapper {
         return simpleValue
       case 'CMS_INPUT_RADIOBUTTON':
         // TODO: This should be mapped to interface Option
-        const radiobuttonOption = entry.value
+        const radiobuttonOption: Option | null = entry.value
+          ? { type: 'Option', key: entry.value.identifier, value: entry.value.label }
+          : null
         return radiobuttonOption
       case 'CMS_INPUT_DATE':
         const dateValue: Date | null = entry.value ? parseISO(entry.value) : null
