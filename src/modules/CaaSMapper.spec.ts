@@ -1334,12 +1334,12 @@ describe('CaaSMapper', () => {
   describe('resolveReferencesPerProject', () => {
     it('should fetch references from the api', async () => {
       const api = createApi()
-      api.fetchByFilterInternal = jest.fn().mockImplementation(async () => [])
+      api.fetchByFilter = jest.fn().mockImplementation(async () => [])
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       mapper.registerReferencedItem('id1', ['root', 'id1'])
       mapper.registerReferencedItem('id2', ['root', 'id2'])
       await mapper.resolveReferencesPerProject()
-      expect(api.fetchByFilterInternal).toHaveBeenCalled()
+      expect(api.fetchByFilter).toHaveBeenCalled()
     })
     it('should resolve remote media references', async () => {
       const api = createApi()
@@ -1352,7 +1352,7 @@ describe('CaaSMapper', () => {
         mapper.mapMediaPicture(createMediaPicture('id4')),
         mapper.mapMediaPicture(createMediaPicture('id5')),
       ])
-      api.fetchByFilterInternal = jest
+      api.fetchByFilter = jest
         .fn()
         .mockImplementation(
           async ({
@@ -1390,7 +1390,7 @@ describe('CaaSMapper', () => {
 
       await mapper.resolveReferencesPerProject('remote-id1')
 
-      const funArguments = api.fetchByFilterInternal.mock.calls[0][0]
+      const funArguments = api.fetchByFilter.mock.calls[0][0]
 
       expect(funArguments).toEqual(
         expect.objectContaining({

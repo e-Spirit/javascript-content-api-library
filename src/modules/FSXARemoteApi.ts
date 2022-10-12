@@ -479,47 +479,7 @@ export class FSXARemoteApi implements FSXAApi {
    *    if `additionalParams.keys` are set, the result will be unmapped,
    *    if `data._embedded['rh:doc']` is undefined, the returning result will be the unmapped `data` object
    */
-  async fetchByFilter({
-    filters,
-    locale,
-    page = 1,
-    pagesize = 30,
-    additionalParams = {},
-    remoteProject,
-    fetchOptions,
-    filterContext,
-    sort = [],
-    denormalized = true,
-  }: FetchByFilterParams): Promise<FetchResponse> {
-    // todo fix fetch response type
-    const mapper = new CaaSMapper(
-      this as FSXARemoteApi,
-      locale,
-      {
-        customMapper: this._customMapper,
-        maxReferenceDepth: this._maxReferenceDepth,
-      },
-      new Logger(this._logLevel, 'CaaSMapper')
-    )
-    // we need this in order to pass CaaSMapper context
-    return this.fetchByFilterInternal(
-      {
-        filters,
-        locale,
-        page,
-        pagesize,
-        additionalParams,
-        remoteProject,
-        fetchOptions,
-        filterContext,
-        sort,
-        denormalized,
-      },
-      mapper
-    )
-  }
-
-  async fetchByFilterInternal(
+  async fetchByFilter(
     {
       filters,
       locale,
@@ -530,10 +490,23 @@ export class FSXARemoteApi implements FSXAApi {
       fetchOptions,
       filterContext,
       sort = [],
-      denormalized,
+      denormalized = true,
     }: FetchByFilterParams,
-    mapper: CaaSMapper
+    mapper?: CaaSMapper
   ): Promise<FetchResponse> {
+    // todo fix fetch response type
+    mapper =
+      mapper ||
+      new CaaSMapper(
+        this as FSXARemoteApi,
+        locale,
+        {
+          customMapper: this._customMapper,
+          maxReferenceDepth: this._maxReferenceDepth,
+        },
+        new Logger(this._logLevel, 'CaaSMapper')
+      )
+    // we need this in order to pass CaaSMapper context
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
       pagesize = 30
@@ -585,6 +558,10 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
+    //Denorm
+
+    // input -----------> return output
+
     if (this._caasItemFilter) {
       this._logger.debug(
         'fetchByFilter',
@@ -598,7 +575,7 @@ export class FSXARemoteApi implements FSXAApi {
       )
       // _caasItemFilter needs to work with normalized Data
       const {
-        mappedItems: filteredmappedItems,
+        mappedItems: filteredMappedItems,
         referenceMap: filteredReferenceMap,
         resolvedReferences: filteredResolvedReferences,
       } = await this._caasItemFilter({
@@ -608,7 +585,7 @@ export class FSXARemoteApi implements FSXAApi {
         filterContext,
       })
 
-      mappedItems = filteredmappedItems
+      mappedItems = filteredMappedItems
       referenceMap = filteredReferenceMap
       resolvedReferences = filteredResolvedReferences
     }
@@ -618,11 +595,11 @@ export class FSXARemoteApi implements FSXAApi {
       pagesize,
       totalPages: data['_total_pages'],
       size: data['_size'],
-      items: denormalized
+      items: useNormalizedData
         ? denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
         : mappedItems,
-      ...(!denormalized && { referenceMap }),
-      ...(!denormalized && { resolvedReferences }),
+      ...(!useNormalizedData && { referenceMap }),
+      ...(!useNormalizedData && { resolvedReferences }),
     }
   }
 
