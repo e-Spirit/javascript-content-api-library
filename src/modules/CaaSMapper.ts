@@ -108,6 +108,8 @@ export class CaaSMapper {
     this.logger = logger
     this.referenceDepth = utils.referenceDepth ?? 0
     this.maxReferenceDepth = utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
+
+    this.logger.debug('Created new CaaSMapper')
   }
 
   // stores references to items of current Project
@@ -795,6 +797,7 @@ export class CaaSMapper {
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
   async resolveReferencesPerProject(remoteProjectId?: string, filterContext?: unknown) {
+    this.logger.debug('CaaSMapper.resolveReferencesPerProject', { remoteProjectId })
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
@@ -815,6 +818,12 @@ export class CaaSMapper {
 
     const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
 
+    this.logger.debug('CaaSMapper.resolveReferencesPerProject: Id data', {
+      resolvedIds,
+      referencedIds,
+      idsToFetchFromCaaS,
+    })
+
     // we need to resolve some refs
     if (idsToFetchFromCaaS.length > 0) {
       // we pass "this" as context to fetchByFilter
@@ -833,6 +842,7 @@ export class CaaSMapper {
               pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
               remoteProject: remoteProjectId,
               filterContext,
+              denormalized: false,
             },
             this
           )
