@@ -183,7 +183,7 @@ export class CaaSMapper {
       case 'CMS_INPUT_RADIOBUTTON':
         // TODO: This should be mapped to interface Option
         const radiobuttonOption: Option | null = entry.value
-          ? { type: 'Option', key: entry.value.identifier, value: entry.value.label }
+          ? { type: 'Option', key: entry.value.key, value: entry.value.value }
           : null
         return radiobuttonOption
       case 'CMS_INPUT_DATE':

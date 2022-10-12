@@ -32,7 +32,7 @@ export interface CaaSApi_CMSInputCheckbox {
 export interface CaaSApi_CMSInputRadioButton {
   fsType: 'CMS_INPUT_RADIOBUTTON'
   name: string
-  value: CaaSApi_Option | null
+  value: Option | null
 }
 
 export interface CaaSApi_CMSInputText {
