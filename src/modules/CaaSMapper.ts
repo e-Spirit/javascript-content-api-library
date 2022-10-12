@@ -817,11 +817,10 @@ export class CaaSMapper {
 
     // we need to resolve some refs
     if (idsToFetchFromCaaS.length > 0) {
-      // we pass "this" as context to fetchByFilterInternal
-      // fetchByFilterInternal then updates resolved refs here
+      // we pass "this" as context to fetchByFilter
       await Promise.all(
         idChunks.map((ids) =>
-          this.api.fetchByFilterInternal(
+          this.api.fetchByFilter(
             {
               filters: [
                 {
