@@ -558,10 +558,6 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
-    //Denorm
-
-    // input -----------> return output
-
     if (this._caasItemFilter) {
       this._logger.debug(
         'fetchByFilter',
