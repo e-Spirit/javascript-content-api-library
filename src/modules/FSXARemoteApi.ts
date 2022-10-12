@@ -595,11 +595,11 @@ export class FSXARemoteApi implements FSXAApi {
       pagesize,
       totalPages: data['_total_pages'],
       size: data['_size'],
-      items: useNormalizedData
+      items: denormalized
         ? denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
         : mappedItems,
-      ...(!useNormalizedData && { referenceMap }),
-      ...(!useNormalizedData && { resolvedReferences }),
+      ...(!denormalized && { referenceMap }),
+      ...(!denormalized && { resolvedReferences }),
     }
   }
 
