@@ -296,9 +296,9 @@ describe('CaaSMapper', () => {
         const entry: CaaSApi_CMSInputRadioButton = {
           name: faker.random.word(),
           value: {
-            fsType: 'Option',
-            label: faker.random.word(),
-            identifier: faker.random.word(),
+            type: 'Option',
+            key: faker.random.word(),
+            value: faker.random.word(),
           },
           fsType: 'CMS_INPUT_RADIOBUTTON',
         }
