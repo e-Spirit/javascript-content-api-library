@@ -150,8 +150,7 @@ export class CaaSMapper {
 
   /**
    * registers a referenced Item to be fetched later. If a remoteProjectId is passed,
-   * the item will be fetched from the remote Project. Multiple Calls for the same item
-   * with different paths are intended
+   * the item will be fetched from the remote Project.
    * @param identifier item identifier
    * @param path after fetch, items are inserted at all registered paths
    * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
@@ -646,56 +645,6 @@ export class CaaSMapper {
     }
   }
 
-  async mapElementResponse(
-    unmappedElement: CaasApi_Item | any,
-    additionalParams?: Record<string, any>,
-    filterContext?: unknown
-  ): Promise<MapResponse> {
-    let mappedElement: MappedCaasItem | null = null
-
-    if (!additionalParams || !additionalParams.keys) {
-      // If additionalParams are provided we cannot map the response since we do not know which keys are provided
-      switch (unmappedElement.fsType) {
-        case 'Dataset':
-          mappedElement = await this.mapDataset(unmappedElement, [getItemId(unmappedElement)])
-          break
-        case 'PageRef':
-          mappedElement = await this.mapPageRef(unmappedElement, [getItemId(unmappedElement)])
-          break
-        case 'Media':
-          mappedElement = await this.mapMedia(unmappedElement, [getItemId(unmappedElement)])
-          break
-        case 'GCAPage':
-          mappedElement = await this.mapGCAPage(unmappedElement, [getItemId(unmappedElement)])
-          break
-        default:
-        // we could not map the element --> just returning the raw values
-      }
-    }
-
-    // cache items to avoid fetching them multiple times
-    if (mappedElement) this.addToResolvedReferences(mappedElement)
-    else if (unmappedElement) this.addToResolvedReferences(unmappedElement)
-
-    // resolve refs
-    if (unmappedElement) await this.resolveAllReferences(filterContext)
-
-    // find resolved refs and puzzle them back together
-    const mappedItems = findResolvedReferencesByIds([unmappedElement._id], this.resolvedReferences)
-    // merge all remote references into one object
-    const remoteReferencesValues = Object.values(this._remoteReferences)
-    const remoteReferencesMerged = remoteReferencesValues.reduce(
-      (result, current) => Object.assign(result, current),
-      {}
-    )
-
-    return {
-      mappedItems,
-      referenceMap: { ...this._referencedItems, ...remoteReferencesMerged },
-      resolvedReferences: this.resolvedReferences,
-    }
-  }
-
   async mapFilterResponse(
     unmappedItems: (CaasApi_Item | any)[],
     additionalParams?: Record<string, any>,
@@ -842,7 +791,7 @@ export class CaaSMapper {
               pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
               remoteProject: remoteProjectId,
               filterContext,
-              denormalized: false,
+              normalized: true,
             },
             this
           )

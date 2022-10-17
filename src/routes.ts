@@ -20,7 +20,7 @@ export interface FetchElementRouteBody {
   additionalParams?: Record<string, unknown>
   remote?: string
   filterContext?: unknown
-  denormalized?: boolean
+  normalized?: boolean
 }
 
 export interface FetchByFilterBody {
@@ -32,7 +32,7 @@ export interface FetchByFilterBody {
   additionalParams: Record<string, unknown>
   remote: string
   filterContext?: unknown
-  denormalized?: boolean
+  normalized?: boolean
 }
 
 export interface FetchProjectPropertiesBody {
@@ -40,5 +40,5 @@ export interface FetchProjectPropertiesBody {
   additionalParams: Record<string, unknown>
   resolver?: string[]
   filterContext?: unknown
-  denormalized?: boolean
+  normalized?: boolean
 }

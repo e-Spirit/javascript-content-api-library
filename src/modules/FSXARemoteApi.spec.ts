@@ -2,7 +2,7 @@ import Faker from 'faker'
 import { LogLevel } from '.'
 import { FSXAContentMode } from '..'
 import { FSXAApiErrors } from '../enums'
-import { QueryBuilderQuery, SortParams } from '../types'
+import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { ArrayQueryOperatorEnum, ComparisonQueryOperatorEnum } from './QueryBuilder'
 
@@ -131,7 +131,7 @@ describe('FSXARemoteAPI', () => {
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url with a locale but no id', () => {
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const actualCaaSUrl = remoteApi.buildCaaSUrl({ locale })
@@ -158,7 +158,7 @@ describe('FSXARemoteAPI', () => {
     })
     it('should return the correct caas url when id, locale and additionalParameter are set', () => {
       const id = Faker.datatype.uuid()
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const keysValue = { firstValue: 1, secondValue: 1 }
       const sortValue = { firstName: 1 }
       const additionalParams = { keys: keysValue, sort: sortValue }
@@ -387,7 +387,7 @@ describe('FSXARemoteAPI', () => {
       expect(correctURL.test(navigationServiceApi)).toBe(true)
     })
     it('should return a correct url when passing the locale', () => {
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const actualNavigationSericeUrl = remoteApi.buildNavigationServiceUrl({ locale })
       const expectedEndOfNavigationServiceUrl = `?depth=99&format=caas&language=${locale}`
       expect(actualNavigationSericeUrl.endsWith(expectedEndOfNavigationServiceUrl)).toBe(true)
@@ -413,20 +413,44 @@ describe('FSXARemoteAPI', () => {
     let locale: string
     beforeEach(() => {
       uuid = Faker.datatype.uuid()
-      locale = Faker.locale
+      locale = `${Faker.locale}_${Faker.locale}`
       config = generateRandomConfig()
       remoteApi = new FSXARemoteApi(config)
     })
-    it('should trigger the fetch method with the correct params', async () => {
+    it('should call fetchByFilter internally', async () => {
       const data = createDataEntry()
       fetchMock.mockResponseOnce(JSON.stringify(data))
-      await remoteApi.fetchElement({ id: data.identifier, locale })
-      const actualURL = fetchMock.mock.calls[0][0]
-      const expectedURL = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${data.identifier}.${locale}`
-      expect(actualURL).toBe(expectedURL)
+      remoteApi.fetchByFilter = jest
+        .fn()
+        .mockResolvedValue({ page: 1, pagesize: 1, items: ['myItem'] } as FetchResponse)
+      await remoteApi.fetchElement({
+        id: data.identifier,
+        locale,
+        fetchOptions: {},
+        additionalParams: {},
+        filterContext: {},
+      })
+      expect(remoteApi.fetchByFilter).toHaveBeenCalledTimes(1)
+      expect(remoteApi.fetchByFilter).toHaveBeenCalledWith({
+        filters: [
+          {
+            operator: ComparisonQueryOperatorEnum.EQUALS,
+            field: 'identifier',
+            value: data.identifier,
+          },
+        ],
+        additionalParams: {},
+        fetchOptions: {},
+        filterContext: {},
+        normalized: true,
+        remoteProject: undefined,
+        locale,
+      })
     })
     it('should throw an not found error when the response is 404', () => {
-      fetchMock.mockResponseOnce('', { status: 404 })
+      remoteApi.fetchByFilter = jest
+        .fn()
+        .mockResolvedValue({ page: 1, pagesize: 1, items: [] } as FetchResponse)
       const actualRequest = remoteApi.fetchElement({ id: uuid, locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
     })
@@ -442,14 +466,24 @@ describe('FSXARemoteAPI', () => {
     })
     it('should return the response', async () => {
       const caasApiItem = createDataEntry()
-      fetchMock.mockResponse(JSON.stringify(caasApiItem))
+      const mockRes = {
+        _embedded: {
+          'rh:doc': [caasApiItem],
+        },
+      }
+      fetchMock.mockResponse(JSON.stringify(mockRes))
       const actualRequest = await remoteApi.fetchElement({ id: uuid, locale })
       expect(actualRequest).toBeDefined()
       expect(actualRequest).toStrictEqual(caasApiItem)
     })
     it('should return a mapped response when additionalParams are set', async () => {
       const item = createDataEntry()
-      fetchMock.mockResponse(JSON.stringify(item))
+      const mockRes = {
+        _embedded: {
+          'rh:doc': [item],
+        },
+      }
+      fetchMock.mockResponse(JSON.stringify(mockRes))
       const actualRequest = await remoteApi.fetchElement({
         id: uuid,
         locale,
@@ -550,14 +584,14 @@ describe('FSXARemoteAPI', () => {
         items,
       })
     })
-    it('should return normalized response if denormalized is switched off', async () => {
+    it('should return normalized response if normalized is switched on', async () => {
       const items = [createDataEntry()]
       const caasApiItems = { _embedded: { 'rh:doc': items } }
       fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
       const actualRequest = await remoteApi.fetchByFilter({
         filters,
         locale,
-        denormalized: false,
+        normalized: true,
       })
       expect(actualRequest).toBeDefined()
 
@@ -630,7 +664,7 @@ describe('FSXARemoteAPI', () => {
     })
     it('should trigger the fetch method with locale', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const initialPath = '/'
       remoteApi.fetchNavigation({ initialPath, locale })
 
@@ -641,7 +675,7 @@ describe('FSXARemoteAPI', () => {
     })
     it('should trigger the fetch method with initialPath = /', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       remoteApi.fetchNavigation({ locale })
 
       const actualURL = fetchMock.mock.calls[0][0]
@@ -651,7 +685,7 @@ describe('FSXARemoteAPI', () => {
     })
     it('should trigger the fetch method with initialPath', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const initialPath = Faker.lorem.words(3).split(' ').join('/')
 
       remoteApi.fetchNavigation({ initialPath, locale })
@@ -663,33 +697,33 @@ describe('FSXARemoteAPI', () => {
     })
     it('should throw an not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const actualRequest = remoteApi.fetchNavigation({ locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
     })
     it('should throw an unknown error when the response is not ok', () => {
       fetchMock.mockResponseOnce('', { status: 400 })
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const actualRequest = remoteApi.fetchNavigation({ locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
       const expectedResponse = Faker.datatype.json()
       fetchMock.mockResponseOnce(JSON.stringify(expectedResponse))
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const actualResponse = await remoteApi.fetchNavigation({ locale })
       expect(actualResponse).toEqual(expectedResponse)
     })
     it('should throw an unknown error when ? is used in initial path', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const initialPath = Faker.lorem.words(3).split(' ').join('/') + '?'
       const actualRequest = remoteApi.fetchNavigation({ initialPath, locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should throw an unknown error when # is used in initial path', () => {
       fetchMock.mockResponseOnce(Faker.datatype.json())
-      const locale = Faker.locale
+      const locale = `${Faker.locale}_${Faker.locale}`
       const initialPath = Faker.lorem.words(3).split(' ').join('/') + '#'
       const actualRequest = remoteApi.fetchNavigation({ initialPath, locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
