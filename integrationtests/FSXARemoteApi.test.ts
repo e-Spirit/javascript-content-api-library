@@ -169,15 +169,6 @@ describe('FSXARemoteApi', () => {
       id: dataset1.identifier,
       locale: locale.identifier,
     })
-
-    let current = res.data.dsref
-    // start at depth of 1
-    let referenceDepth = 1
-    while (referenceDepth < maxReferenceDepth) {
-      current = current.data.dsref
-      referenceDepth++
-    }
-
     expect(res.data.dsref.data.dsref.data.dsref).toBe(
       `[REFERENCED-ITEM-ds4-id.${locale.identifier}]`
     )

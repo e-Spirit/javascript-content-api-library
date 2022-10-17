@@ -24,8 +24,8 @@ const denormalizeResolvedReferences = (
 ) => {
   if (!referenceMap || Object.keys(referenceMap).length === 0) return mappedItems
   // denormalize
-  for (const [referencedId, occurencies] of Object.entries(referenceMap)) {
-    occurencies.forEach((path) => {
+  for (const [referencedId, occurences] of Object.entries(referenceMap)) {
+    occurences.forEach((path) => {
       // no simple comparison possible because referencedItems store identifier
       // and resolvedReferences store "previewId" or "_id"
       const resolvedId = Object.keys(resolvedReferences).find((key) => key.includes(referencedId))

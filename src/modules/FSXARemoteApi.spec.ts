@@ -441,14 +441,14 @@ describe('FSXARemoteAPI', () => {
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
     })
     it('should return the response', async () => {
-      const caasApiItem = createDataEntry() // testdata needs _id
+      const caasApiItem = createDataEntry()
       fetchMock.mockResponse(JSON.stringify(caasApiItem))
       const actualRequest = await remoteApi.fetchElement({ id: uuid, locale })
       expect(actualRequest).toBeDefined()
       expect(actualRequest).toStrictEqual(caasApiItem)
     })
     it('should return a mapped response when additionalParams are set', async () => {
-      const item = createDataEntry() // testdata needs _id
+      const item = createDataEntry()
       fetchMock.mockResponse(JSON.stringify(item))
       const actualRequest = await remoteApi.fetchElement({
         id: uuid,

@@ -515,7 +515,6 @@ describe('CaaSMapper', () => {
         expect(mock.mock.calls[0][0]).toEqual(entry)
         expect(mock.mock.calls[0][1]).toEqual(path)
         expect(mock.mock.calls[1][0]).toEqual(childEntry)
-        path[0] = childEntryMediaId
         expect(mock.mock.calls[1][1]).toEqual([...path, 'areas', 0, 'link', 'data', 'childEntry'])
       })
     })
