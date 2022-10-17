@@ -1254,56 +1254,6 @@ describe('CaaSMapper', () => {
     })
   })
 
-  describe('mapElementResponse', () => {
-    it('should call mapDataset on dataset elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createDataset()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapDataset')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapDataset).toHaveBeenCalledWith(element, [element._id])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should call mapPageRef on pageRef elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createPageRef()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapPageRef')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapPageRef).toHaveBeenCalledWith(element, [element._id])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should call mapMedia on media elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createMediaFile()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapMedia')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapMedia).toHaveBeenCalledWith(element, [element._id])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should call mapGCAPage on dataset elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createGCAPage()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapGCAPage')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapGCAPage).toHaveBeenCalledWith(element, [element._id])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should return unknown elements as-is', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      jest.spyOn(mapper, 'resolveAllReferences')
-      const element = createDataset()
-      ;(element.fsType as string) = 'unknown-element'
-      await expect(mapper.mapElementResponse(element)).resolves.toEqual({
-        mappedItems: [element],
-        referenceMap: {},
-        resolvedReferences: { [element._id]: element },
-      })
-    })
-  })
-
   describe('resolveAllReferences', () => {
     it('should call resolveReferencesPerProject for the current project', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())

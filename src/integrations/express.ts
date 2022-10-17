@@ -44,7 +44,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           additionalParams: req.body?.additionalParams,
           remoteProject: req.body?.remote,
           filterContext: req.body?.filterContext,
-          denormalized: req.body?.denormalized,
+          normalized: req.body?.normalized,
         })
         return res.json(response)
       } catch (err: any) {
@@ -116,7 +116,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           additionalParams: req.body.additionalParams || {},
           remoteProject: req.body.remote ? req.body.remote : undefined,
           filterContext: req.body.filterContext,
-          denormalized: req.body?.denormalized,
+          normalized: req.body?.normalized,
         })
         return res.json(response)
       } catch (err: any) {
@@ -149,7 +149,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
           additionalParams: req.body.additionalParams,
           resolve: req.body.resolver,
           filterContext: req.body.filterContext,
-          denormalized: req.body?.denormalized,
+          normalized: req.body?.normalized,
         })
         return res.json(response)
       } catch (err: any) {

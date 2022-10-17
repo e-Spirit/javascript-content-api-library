@@ -297,93 +297,71 @@ describe('FSXAProxyAPI', () => {
       expect(res.data.dataset.data.image.id).toBe(mediaPicture.identifier)
     })
     it('api returns matching doc if valid id is passed', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
         additionalParams: {},
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset.identifier)
     })
     it('api returns projection of doc if additional params are set', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        displayName: Faker.commerce.productName(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
         additionalParams: {
-          keys: [{ displayName: 1 }],
+          keys: [{ schema: 1 }],
         },
       })
-      expect(res.displayName).toEqual(doc.displayName)
+      expect(res).toEqual({
+        _id: `${dataset.identifier}.${locale.identifier}`,
+        schema: dataset.schema, // the additional param we requested
+      })
     })
     it('api returns projection of doc if additional params with special chars are set', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        "specialChars *'();:@&=+$,/?%#[]": Faker.commerce.productName(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset: any = createDataset()
+      dataset["specialChars *'();:@&=+$,/?%#[]"] = 'foo'
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
         additionalParams: {
           keys: [{ "specialChars *'();:@&=+$,/?%#[]": 1 }],
         },
       })
-      expect(res["specialChars *'();:@&=+$,/?%#[]"]).toEqual(doc["specialChars *'();:@&=+$,/?%#[]"])
+      expect(res).toEqual({
+        _id: `${dataset.identifier}.${locale.identifier}`,
+        ["specialChars *'();:@&=+$,/?%#[]"]: 'foo', // the additional param we requested
+      })
     })
     it('api returns doc if special chars are used in locale', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: "specialChars *'();:@&=+$,?%#[]", // forward slash / does not work
-        },
+      const dataset = createDataset()
+      const country = Faker.random.locale()
+      const language = "specialChars *'();:@&=+$,?%#[]" // forward slash / does not work
+      const specialLocale = {
+        identifier: `${language}_${country}`,
+        country,
+        language,
       }
-      await caasClient.addDocToCollection(doc)
+      await caasClient.addItemsToCollection([dataset], specialLocale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: specialLocale.identifier,
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset.identifier)
     })
     it('api returns doc if special chars are used in id', async () => {
-      const doc: TestDocument = {
-        _id: "*'();:@&=+$,?%#[]", // forward slash / does not work
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      dataset.identifier = "*'();:@&=+$,?%#[]"
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset.identifier)
     })
     it('api returns all required remote reference attributes', async function () {
       const section = createSection()

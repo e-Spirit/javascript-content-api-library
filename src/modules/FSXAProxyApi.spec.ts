@@ -60,7 +60,7 @@ describe('FSXAProxyAPI', () => {
       expect(locale).toEqual(actualRequestLocale)
     })
 
-    it('should throw an not found error when the response is 404', () => {
+    it('should throw a not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
       const actualRequest = proxyApi.fetchElement({ id, locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
@@ -224,7 +224,7 @@ describe('FSXAProxyAPI', () => {
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.initialPath).toEqual(initialPath)
     })
-    it('should throw an not found error when the response is 404', () => {
+    it('should throw a not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
       const actualRequest = proxyApi.fetchNavigation({ initialPath, locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
@@ -273,7 +273,7 @@ describe('FSXAProxyAPI', () => {
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.resolver).toStrictEqual(resolver)
     })
-    it('should throw an not found error when the response is 404', () => {
+    it('should throw a not found error when the response is 404', () => {
       fetchMock.mockResponseOnce('', { status: 404 })
       const actualRequest = proxyApi.fetchProjectProperties({ locale })
       return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)

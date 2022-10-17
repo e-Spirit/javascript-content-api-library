@@ -99,7 +99,7 @@ export class FSXAProxyApi implements FSXAApi {
       additionalParams,
       remote: remoteProject,
       filterContext,
-      denormalized: false,
+      normalized: true,
     }
     this._logger.debug('fetchElement', 'trying to fetch body', body)
 
@@ -185,7 +185,7 @@ export class FSXAProxyApi implements FSXAApi {
       },
       remote: remoteProject,
       filterContext,
-      denormalized: false,
+      normalized: true,
     }
     this._logger.debug('fetchByFilter', 'trying to fetch with body', body)
     const response = await this.fetch({

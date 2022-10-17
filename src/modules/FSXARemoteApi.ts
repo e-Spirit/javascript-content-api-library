@@ -1,3 +1,4 @@
+import { filter } from 'lodash'
 import { stringify } from 'qs'
 import { CaaSMapper, Logger, MapResponse } from '.'
 import { FetchResponse, ProjectProperties } from '..'
@@ -16,6 +17,7 @@ import {
   MappedCaasItem,
   RemoteProjectConfiguration,
   SortParams,
+  CaasApi_Item,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
@@ -375,77 +377,35 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
     filterContext,
-    denormalized = true,
+    normalized = false,
   }: FetchElementParams): Promise<any> {
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
-    const url = this.buildCaaSUrl({ id, locale, additionalParams })
 
-    const caasApiResponse = await fetch(url, {
-      headers: this.authorizationHeader,
-      ...fetchOptions,
-    })
-    if (!caasApiResponse.ok) {
-      switch (caasApiResponse.status) {
-        case 404:
-          throw new Error(FSXAApiErrors.NOT_FOUND)
-        case 401:
-          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
-        default:
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
-      }
-    }
-    const unmappedElement = await caasApiResponse.json()
-
-    const mapper = new CaaSMapper(
-      this as any,
-      locale,
-      {
-        customMapper: this._customMapper,
-        maxReferenceDepth: this._maxReferenceDepth,
-      },
-      new Logger(this._logLevel, 'CaaSMapper')
-    )
-    let { mappedItems, referenceMap, resolvedReferences } = await mapper.mapElementResponse(
-      unmappedElement,
+    const {
+      items,
+      referenceMap = {},
+      resolvedReferences = {},
+    } = await this.fetchByFilter({
+      filters: [{ field: 'identifier', operator: ComparisonQueryOperatorEnum.EQUALS, value: id }],
       additionalParams,
-      filterContext
-    )
+      remoteProject,
+      fetchOptions,
+      filterContext,
+      normalized: true,
+      locale,
+    })
 
-    if (this._caasItemFilter) {
-      this._logger.debug(
-        'fetchElement',
-        'caasItemFilter is defined, filtering items',
-        mappedItems.map((caasItem) => {
-          return {
-            type: (caasItem as any).type,
-            id: (caasItem as any).id,
-          }
-        })
-      )
-      // _caasItemFilter needs to work with normalized Data
-      const {
-        mappedItems: filteredmappedItems,
-        referenceMap: filteredReferenceMap,
-        resolvedReferences: filteredResolvedReferences,
-      } = await this._caasItemFilter({
-        mappedItems,
-        referenceMap,
-        resolvedReferences,
-        filterContext,
-      })
-
-      mappedItems = filteredmappedItems
-      referenceMap = filteredReferenceMap
-      resolvedReferences = filteredResolvedReferences
-    }
-
-    if (mappedItems.length === 0) {
+    if (items.length === 0) {
       throw new Error(FSXAApiErrors.NOT_FOUND)
     }
 
-    return denormalized
-      ? denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)[0]
-      : { mappedItems, referenceMap, resolvedReferences }
+    return normalized
+      ? { mappedItems: items, referenceMap, resolvedReferences }
+      : denormalizeResolvedReferences(
+          items as (MappedCaasItem | CaasApi_Item)[],
+          referenceMap,
+          resolvedReferences
+        )[0]
   }
 
   /**
@@ -489,7 +449,7 @@ export class FSXARemoteApi implements FSXAApi {
       fetchOptions,
       filterContext,
       sort = [],
-      denormalized = true,
+      normalized = false,
     }: FetchByFilterParams,
     mapper?: CaaSMapper
   ): Promise<FetchResponse> {
@@ -525,6 +485,7 @@ export class FSXARemoteApi implements FSXAApi {
       pagesize,
       sort,
     })
+
     const caasApiResponse = await fetch(url, {
       headers: this.authorizationHeader,
       ...fetchOptions,
@@ -556,6 +517,25 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
+    await this.applyCaasItemFilter({ mappedItems, referenceMap, resolvedReferences }, filterContext)
+
+    return {
+      page,
+      pagesize,
+      totalPages: data['_total_pages'],
+      size: data['_size'],
+      items: normalized
+        ? mappedItems
+        : denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences),
+      ...(normalized && { referenceMap }),
+      ...(normalized && { resolvedReferences }),
+    }
+  }
+
+  private async applyCaasItemFilter(
+    { mappedItems, referenceMap, resolvedReferences }: MapResponse,
+    filterContext: unknown
+  ) {
     if (this._caasItemFilter) {
       this._logger.debug(
         'fetchByFilter',
@@ -568,32 +548,12 @@ export class FSXARemoteApi implements FSXAApi {
         })
       )
       // _caasItemFilter needs to work with normalized Data
-      const {
-        mappedItems: filteredMappedItems,
-        referenceMap: filteredReferenceMap,
-        resolvedReferences: filteredResolvedReferences,
-      } = await this._caasItemFilter({
+      ;({ mappedItems, referenceMap, resolvedReferences } = await this._caasItemFilter({
         mappedItems,
         referenceMap,
         resolvedReferences,
         filterContext,
-      })
-
-      mappedItems = filteredMappedItems
-      referenceMap = filteredReferenceMap
-      resolvedReferences = filteredResolvedReferences
-    }
-
-    return {
-      page,
-      pagesize,
-      totalPages: data['_total_pages'],
-      size: data['_size'],
-      items: denormalized
-        ? denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
-        : mappedItems,
-      ...(!denormalized && { referenceMap }),
-      ...(!denormalized && { resolvedReferences }),
+      }))
     }
   }
 
@@ -611,13 +571,13 @@ export class FSXARemoteApi implements FSXAApi {
     additionalParams = {},
     resolve = ['GCAPage'],
     filterContext,
-    denormalized = true,
+    normalized = false,
   }: {
     locale: string
     additionalParams?: Record<string, any>
     resolve?: string[]
     filterContext?: unknown
-    denormalized?: boolean
+    normalized?: boolean
   }): Promise<ProjectProperties | null> {
     const fetchResponse = await this.fetchByFilter({
       filters: [
@@ -630,7 +590,7 @@ export class FSXARemoteApi implements FSXAApi {
       locale,
       additionalParams,
       filterContext,
-      denormalized,
+      normalized,
     })
     if (!fetchResponse.items[0]) return null
 
@@ -667,7 +627,7 @@ export class FSXARemoteApi implements FSXAApi {
       ],
       pagesize: 100,
       filterContext,
-      denormalized,
+      normalized,
     })
 
     //Insert fetched Data into projectProperties
