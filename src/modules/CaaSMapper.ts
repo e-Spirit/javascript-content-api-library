@@ -115,7 +115,7 @@ export class CaaSMapper {
   // stores references to items of current Project
   _referencedItems: ReferencedItemsInfo = {}
   // stores the forced resolution for image map media, which could applied after reference resolving
-  _imageMapForcedResolutions: { path: NestedPath; resolution: string }[] = []
+  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
   // stores References to remote Items
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
@@ -550,8 +550,10 @@ export class CaaSMapper {
     let image = null
     if (media) {
       image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
-      path[0] = `${media.identifier}.${this.locale}`
-      this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
+      this._imageMapForcedResolutions.push({
+        imageId: `${media.identifier}.${this.locale}`,
+        resolution: resolution.uid,
+      })
     }
 
     return {
@@ -682,10 +684,10 @@ export class CaaSMapper {
     const mappedItems = findResolvedReferencesByIds([unmappedElement._id], this.resolvedReferences)
     // merge all remote references into one object
     const remoteReferencesValues = Object.values(this._remoteReferences)
-    const remoteReferencesMerged =
-      remoteReferencesValues.length > 0
-        ? remoteReferencesValues.reduce((result, current) => Object.assign(result, current))
-        : {}
+    const remoteReferencesMerged = remoteReferencesValues.reduce(
+      (result, current) => Object.assign(result, current),
+      {}
+    )
 
     return {
       mappedItems,
@@ -776,12 +778,10 @@ export class CaaSMapper {
     ])
 
     // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(({ path, resolution }, index) => {
-      const mediaId = path[0].toString() // we save the media id in this.mapImageMap() function
-
-      const resolvedMediaItem = this.resolvedReferences[mediaId]
-      if ((resolvedMediaItem as Image).resolutions) {
-        update(resolvedMediaItem, 'resolutions', (resolutions) => {
+    this._imageMapForcedResolutions.forEach(({ imageId, resolution }, index) => {
+      const resolvedImage = this.resolvedReferences[imageId]
+      if ((resolvedImage as Image).resolutions) {
+        update(resolvedImage, 'resolutions', (resolutions) => {
           if (resolution in resolutions) {
             return { [resolution]: resolutions[resolution] }
           }

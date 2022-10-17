@@ -377,7 +377,6 @@ export class FSXARemoteApi implements FSXAApi {
     filterContext,
     denormalized = true,
   }: FetchElementParams): Promise<any> {
-    // todo: fix any typing
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
     const url = this.buildCaaSUrl({ id, locale, additionalParams })
 
@@ -494,7 +493,6 @@ export class FSXARemoteApi implements FSXAApi {
     }: FetchByFilterParams,
     mapper?: CaaSMapper
   ): Promise<FetchResponse> {
-    // todo fix fetch response type
     mapper =
       mapper ||
       new CaaSMapper(
