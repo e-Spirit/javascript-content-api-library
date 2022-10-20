@@ -1,6 +1,6 @@
 import { filter } from 'lodash'
 import { stringify } from 'qs'
-import { CaaSMapper, Logger, MapResponse } from '.'
+import { CaaSMapper, Logger, MapResponse, ReferencedItemsInfo, ResolvedReferencesInfo } from '.'
 import { FetchResponse, ProjectProperties } from '..'
 import {
   NavigationData,
@@ -516,7 +516,14 @@ export class FSXARemoteApi implements FSXAApi {
       filterContext
     )
 
-    await this.applyCaasItemFilter({ mappedItems, referenceMap, resolvedReferences }, filterContext)
+    if (this._caasItemFilter) {
+      ;({ mappedItems, referenceMap, resolvedReferences } = await this.filterMapResponse(
+        mappedItems,
+        referenceMap,
+        resolvedReferences,
+        filterContext
+      ))
+    }
 
     return {
       page,
@@ -531,29 +538,29 @@ export class FSXARemoteApi implements FSXAApi {
     }
   }
 
-  private async applyCaasItemFilter(
-    { mappedItems, referenceMap, resolvedReferences }: MapResponse,
+  private async filterMapResponse(
+    mappedItems: (CaasApi_Item | MappedCaasItem)[],
+    referenceMap: ReferencedItemsInfo,
+    resolvedReferences: ResolvedReferencesInfo,
     filterContext: unknown
   ) {
-    if (this._caasItemFilter) {
-      this._logger.debug(
-        'fetchByFilter',
-        'caasItemFilter is defined, filtering items',
-        mappedItems.map((caasItem) => {
-          return {
-            type: (caasItem as any).type,
-            id: (caasItem as any).id,
-          }
-        })
-      )
-      // _caasItemFilter needs to work with normalized Data
-      ;({ mappedItems, referenceMap, resolvedReferences } = await this._caasItemFilter({
-        mappedItems,
-        referenceMap,
-        resolvedReferences,
-        filterContext,
-      }))
-    }
+    this._logger.debug(
+      'fetchByFilter',
+      'caasItemFilter is defined, filtering items',
+      mappedItems.map((caasItem) => {
+        return {
+          type: (caasItem as any).type,
+          id: (caasItem as any).id,
+        }
+      })
+    )
+    // _caasItemFilter needs to work with normalized Data
+    return await this._caasItemFilter!({
+      mappedItems,
+      referenceMap,
+      resolvedReferences,
+      filterContext,
+    })
   }
 
   // TODO: Fix unecessary array wrapping with a future major jump (as it's breaking)
