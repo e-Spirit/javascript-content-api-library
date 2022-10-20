@@ -6,6 +6,7 @@ import {
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
   LogLevel,
+  MapResponse,
 } from '../modules'
 import getExpressRouter, { ExpressRouterIntegrationErrors, getMappedFilters } from './express'
 import {
@@ -15,9 +16,11 @@ import {
   HEALTH_ROUTE,
 } from '../routes'
 import 'cross-fetch/polyfill'
-import { Page, QueryBuilderQuery, NavigationData } from '../types'
+import { Page, QueryBuilderQuery, NavigationData, FetchResponse } from '../types'
 import { FSXAContentMode } from '../enums'
 import Faker from 'faker'
+import faker from 'faker'
+import { createDataset } from '../testutils'
 
 const PORT = 3125
 
@@ -36,20 +39,43 @@ describe('Express-Integration', () => {
     fetchNavigationSpy: jest.SpyInstance,
     fetchByFilterSpy: jest.SpyInstance
 
+  const dataset = createDataset()
+  const navigationData = {
+    idMap: {},
+    seoRouteMap: {},
+    structure: [],
+    pages: { index: faker.random.word() },
+    meta: {
+      identifier: {
+        tenantId: faker.random.word(),
+        languageId: faker.random.word(),
+        navigationId: faker.random.word(),
+      },
+    },
+  }
+
   beforeEach(() => {
-    fetchElementSpy = jest
-      .spyOn(remoteApi, 'fetchElement')
-      .mockImplementation(async () => ({ foo: 'bar' } as any as Page))
+    fetchElementSpy = jest.spyOn(remoteApi, 'fetchElement').mockImplementation(
+      async () =>
+        ({
+          mappedItems: [dataset],
+          referenceMap: {},
+          resolvedReferences: { [dataset._id]: dataset },
+        } as MapResponse)
+    )
     fetchNavigationSpy = jest
       .spyOn(remoteApi, 'fetchNavigation')
-      .mockImplementation(async () => ({ foo: 'bar' } as any as NavigationData))
-    fetchByFilterSpy = jest.spyOn(remoteApi, 'fetchByFilter').mockImplementation(async () => ({
-      page: 1,
-      pagesize: 30,
-      pages: 0,
-      total: 0,
-      items: [],
-    }))
+      .mockImplementation(async () => navigationData as NavigationData)
+    fetchByFilterSpy = jest.spyOn(remoteApi, 'fetchByFilter').mockImplementation(
+      async () =>
+        ({
+          page: 1,
+          pagesize: 30,
+          pages: 0,
+          total: 0,
+          items: [],
+        } as FetchResponse)
+    )
   })
 
   afterEach(() => {
@@ -84,6 +110,8 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
+        normalized: true,
+        filterContext: undefined,
       })
       await proxyApi.fetchElement({
         id: 'FOOBAR',
@@ -95,18 +123,24 @@ describe('Express-Integration', () => {
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
+        normalized: true,
+        filterContext: undefined,
       })
       await proxyApi.fetchElement({
         id: 'FOOBAR',
         locale: 'de_DE',
         additionalParams: { test: '1' },
         remoteProject: 'media',
+        normalized: true,
+        filterContext: undefined,
       })
       expect(fetchElementSpy).toHaveBeenCalledWith({
         additionalParams: { test: '1' },
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: 'media',
+        normalized: true,
+        filterContext: undefined,
       })
     })
 
@@ -125,12 +159,14 @@ describe('Express-Integration', () => {
           locale: 'de_DE',
           additionalParams: { test: '1' },
         })
-      ).toEqual({ foo: 'bar' })
+      ).toEqual(dataset)
       expect(fetchElementSpy).toHaveBeenCalledWith({
         additionalParams: { test: '1' },
         id: 'FOOBAR',
         locale: 'de_DE',
         remoteProject: undefined,
+        normalized: true,
+        filterContext: undefined,
       })
     })
   })
@@ -173,9 +209,9 @@ describe('Express-Integration', () => {
     })
 
     it('should pass through response data', async () => {
-      expect(await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE' })).toEqual({
-        foo: 'bar',
-      })
+      expect(await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE' })).toEqual(
+        navigationData
+      )
     })
   })
 
@@ -193,6 +229,8 @@ describe('Express-Integration', () => {
         pagesize: 30,
         sort: [],
         remoteProject: undefined,
+        normalized: true,
+        filterContext: undefined,
       })
       const filters_2: QueryBuilderQuery[] = [
         {

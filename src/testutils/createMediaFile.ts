@@ -7,7 +7,6 @@ export const createMediaFile = (): CaaSApi_Media_File => {
   const name = faker.random.word()
   return {
     ...base,
-    _id: `${base.uid}`,
     fsType: 'Media',
     name,
     metaFormData: {},

@@ -61,18 +61,20 @@ describe('CaaSMapper', () => {
   describe('registerReferencedItem', () => {
     it('should register a reference and return the reference key', () => {
       const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const locale = 'de_DE'
+      const mapper = new CaaSMapper(api, locale, {}, createLogger())
       const refId = faker.random.word()
       const path = createPath()
       const item = mapper.registerReferencedItem(refId, path)
 
-      expect(mapper._referencedItems).toEqual({ [refId]: [path] })
+      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path] })
       expect(mapper._remoteReferences).toEqual({})
-      expect(item).toEqual(`[REFERENCED-ITEM-${refId}]`)
+      expect(item).toEqual(`[REFERENCED-ITEM-${`${refId}.${locale}`}]`)
     })
     it('should accept multiple paths for the same reference id', () => {
       const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const locale = 'de_DE'
+      const mapper = new CaaSMapper(api, locale, {}, createLogger())
       const refId = faker.random.word()
       const path = createPath()
       const path2 = createPath()
@@ -80,7 +82,7 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem(refId, path)
       mapper.registerReferencedItem(refId, path2)
 
-      expect(mapper._referencedItems).toEqual({ [refId]: [path, path2] })
+      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path, path2] })
     })
     it('should register a remote reference and return its remote reference key', () => {
       const remotes = { remoteId: { id: 'remoteId', locale: 'de' } }
@@ -91,20 +93,23 @@ describe('CaaSMapper', () => {
       const path = createPath()
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
-      expect(mapper._remoteReferences).toEqual({ remoteId: { [refId]: [path] } })
+      expect(mapper._remoteReferences).toEqual({
+        remoteId: { [`${refId}.${remotes.remoteId.locale}`]: [path] },
+      })
       expect(mapper._referencedItems).toEqual({})
-      expect(item).toEqual(`[REFERENCED-REMOTE-ITEM-${refId}]`)
+      expect(item).toEqual(`[REFERENCED-REMOTE-ITEM-${refId}.${remotes.remoteId.locale}]`)
     })
     it('should register a non-remote item if the remote project was not found', () => {
       const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+      const locale = 'de_DE'
+      const mapper = new CaaSMapper(api, locale, {}, createLogger())
       const refId = faker.random.word()
       const path = createPath()
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
       expect(mapper._remoteReferences).toEqual({})
-      expect(mapper._referencedItems).toEqual({ [refId]: [path] })
-      expect(item).toEqual(`[REFERENCED-ITEM-${refId}]`)
+      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path] })
+      expect(item).toEqual(`[REFERENCED-ITEM-${refId}.${locale}]`)
     })
   })
 
@@ -484,6 +489,7 @@ describe('CaaSMapper', () => {
         const path = createPath()
         jest.spyOn(mapper, 'mapDataEntries')
         const entry = createImageMap()
+        path[0] = `${entry.value.media.identifier}.de`
         await mapper.mapDataEntry(entry, path)
         entry.value.areas.forEach((area, index) => {
           if (area.link) {
@@ -500,19 +506,16 @@ describe('CaaSMapper', () => {
       it('should work with nested formData image maps', async () => {
         const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
         const path = createPath()
-        jest.spyOn(mapper, 'mapDataEntry')
+        const mock = jest.spyOn(mapper, 'mapDataEntry')
         const entry = createImageMap()
         const childEntry = createImageMap()
+        const childEntryMediaId = `${childEntry.value.media.identifier}.de`
         entry.value.areas[0].link!.formData = { childEntry }
         await mapper.mapDataEntry(entry, path)
-        expect(mapper.mapDataEntry).toHaveBeenCalledWith(childEntry, [
-          ...path,
-          'areas',
-          0,
-          'link',
-          'data',
-          'childEntry',
-        ])
+        expect(mock.mock.calls[0][0]).toEqual(entry)
+        expect(mock.mock.calls[0][1]).toEqual(path)
+        expect(mock.mock.calls[1][0]).toEqual(childEntry)
+        expect(mock.mock.calls[1][1]).toEqual([...path, 'areas', 0, 'link', 'data', 'childEntry'])
       })
     })
 
@@ -1251,60 +1254,12 @@ describe('CaaSMapper', () => {
     })
   })
 
-  describe('mapElementResponse', () => {
-    it('should call mapDataset on dataset elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createDataset()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapDataset')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapDataset).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should call mapPageRef on pageRef elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createPageRef()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapPageRef')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapPageRef).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should call mapMedia on media elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createMediaFile()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapMedia')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapMedia).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should call mapGCAPage on dataset elements', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const element = createGCAPage()
-      jest.spyOn(mapper, 'resolveAllReferences')
-      jest.spyOn(mapper, 'mapGCAPage')
-      await mapper.mapElementResponse(element)
-      expect(mapper.mapGCAPage).toHaveBeenCalledWith(element, [])
-      expect(mapper.resolveAllReferences).toHaveBeenCalled()
-    })
-    it('should return unknown elements as-is', async () => {
-      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      jest.spyOn(mapper, 'resolveAllReferences')
-      const element = createDataset()
-      ;(element.fsType as string) = 'unknown-element'
-      await expect(mapper.mapElementResponse(element)).resolves.toBe(element)
-      expect(mapper.resolveAllReferences).not.toHaveBeenCalled()
-    })
-  })
-
   describe('resolveAllReferences', () => {
     it('should call resolveReferencesPerProject for the current project', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       mapper.resolveReferencesPerProject = jest.fn()
-      const data = {}
-      await mapper.resolveAllReferences(data)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, undefined, undefined)
+      await mapper.resolveAllReferences()
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(undefined, undefined)
     })
     it('should call resolveReferencesPerProject for all remote projects', async () => {
       const api = createApi()
@@ -1318,30 +1273,22 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem('id1', [], 'remote-id1')
       mapper.registerReferencedItem('id2', [], 'remote-id2')
       mapper.registerReferencedItem('id3', [], 'remote-id3')
-      const data = {}
-      await mapper.resolveAllReferences(data)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id1', undefined)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id2', undefined)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(data, 'remote-id3', undefined)
-    })
-    it('should return the given data', async () => {
-      const api = createApi()
-      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
-      const data = {}
-      await expect(mapper.resolveAllReferences(data)).resolves.toBe(data)
+      await mapper.resolveAllReferences()
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id1', undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id2', undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id3', undefined)
     })
   })
 
   describe('resolveReferencesPerProject', () => {
     it('should fetch references from the api', async () => {
       const api = createApi()
-      api.fetchByFilterInternal = jest.fn().mockImplementation(async () => [])
+      api.fetchByFilter = jest.fn().mockImplementation(async () => [])
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       mapper.registerReferencedItem('id1', ['root', 'id1'])
       mapper.registerReferencedItem('id2', ['root', 'id2'])
-      const data = {}
-      await mapper.resolveReferencesPerProject(data)
-      expect(api.fetchByFilterInternal).toHaveBeenCalled()
+      await mapper.resolveReferencesPerProject()
+      expect(api.fetchByFilter).toHaveBeenCalled()
     })
     it('should resolve remote media references', async () => {
       const api = createApi()
@@ -1354,7 +1301,7 @@ describe('CaaSMapper', () => {
         mapper.mapMediaPicture(createMediaPicture('id4')),
         mapper.mapMediaPicture(createMediaPicture('id5')),
       ])
-      api.fetchByFilterInternal = jest
+      api.fetchByFilter = jest
         .fn()
         .mockImplementation(
           async ({
@@ -1386,19 +1333,21 @@ describe('CaaSMapper', () => {
         ...pageRef.metaFormData,
         media5: createMediaPictureReference('id5', 'remote-id1'),
       }
+
       // Mapping also implicitly registers referenced items in mapper instance
-      const page = await mapper.mapPageRef(pageRef)
+      await mapper.mapPageRef(pageRef)
 
-      const result = await mapper.resolveReferencesPerProject(page, 'remote-id1')
+      await mapper.resolveReferencesPerProject('remote-id1')
 
-      expect(result.data).toBeDefined()
-      expect(result.data).toStrictEqual({
-        media1: mediaPictures[0],
-        media2: mediaPictures[1],
-        media3: mediaPictures[2],
-      })
-      expect(result.meta).toStrictEqual({ media4: mediaPictures[3] })
-      expect(result.metaPageRef).toStrictEqual({ media5: mediaPictures[4] })
+      const funArguments = api.fetchByFilter.mock.calls[0][0]
+
+      expect(funArguments).toEqual(
+        expect.objectContaining({
+          filters: [
+            { field: 'identifier', operator: '$in', value: ['id1', 'id2', 'id3', 'id4', 'id5'] },
+          ],
+        })
+      )
     })
   })
 })

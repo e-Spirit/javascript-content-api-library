@@ -8,7 +8,6 @@ export const createDataset = (id?: string): CaaSApi_Dataset => {
 
   return {
     ...base,
-    _id: `${base.uid}`,
     fsType: 'Dataset',
     formData: {},
     schema: `${base.uid}-schema`,

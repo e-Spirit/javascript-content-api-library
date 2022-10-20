@@ -10,22 +10,6 @@ IMPORTANT: Make sure to only use an isolated testing environment as data gets wr
 
 ## Write testing data to caas
 
-Make sure to always include "\_id" and "locale" properties in your testing data, otherwise using the CaasTestingClient won't work properly!
-
-You can perform a simple typecheck with the "TestDocument" interface like this:
-
-```typescript
-const yourTestDoc:TestDocument = {
-  _id:'some id',
-  locale:{
-    country:'some contry code',
-    language:'some language',
-    identifier: 'some identifier'
-  },
-  more custom properties...
-}
-```
-
 In your test file use the "CaasTestingClient" from "./utils" to easily read and write testing data to the CaaS. Start with intitializing the caasClient:
 
 ```typescript

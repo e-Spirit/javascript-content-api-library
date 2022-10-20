@@ -51,11 +51,23 @@ export class CaasTestingClient {
 
   /**
    * Get collection from integration test database in CaaS
-   * @param collectionName Name of collection to get
    * @returns Http Response
    */
   async getCollection() {
     return await fetch(this.baseUrl, {
+      method: RequestMethodEnum.GET,
+      headers: this.headers,
+    })
+  }
+
+  /**
+   * Get item from integration test database in CaaS
+   * @param identifier Name of item to get
+   * @param locale locale of item to get
+   * @returns Http Response
+   */
+  async getItem(identifier: string, locale: string) {
+    return await fetch(`${this.baseUrl}/${identifier}.${locale}`, {
       method: RequestMethodEnum.GET,
       headers: this.headers,
     })
@@ -88,6 +100,24 @@ export class CaasTestingClient {
   }
 
   /**
+   * Delete item from integration test collection in CaaS
+   * @param identifier identifier (without locale) of item to delete
+   * @param locale locale of item to delete
+   * @param etag Etag of item to delete
+   * @returns Http Response
+   */
+  async removeItem(identifier: string, locale: string, etag: string) {
+    return await fetch(`${this.baseUrl}/${identifier}.${locale}`, {
+      method: RequestMethodEnum.DELETE,
+      headers: {
+        ...this.headers,
+        'If-Match': etag,
+      },
+    })
+  }
+
+  /**
+   * DEPRECATED! Use add items to collection instead
    * Add doc to collection in integration test database in CaaS
    * @param docs doc to add
    * @returns Http Response
@@ -105,6 +135,7 @@ export class CaasTestingClient {
   }
 
   /**
+   * DEPRECATED! Use add items to collection instead
    * Bulk post docs to collection in integration test database in CaaS
    * @param docs docs to add
    * @returns Http Response
@@ -122,6 +153,12 @@ export class CaasTestingClient {
     })
   }
 
+  /*
+   * Bulk post docs to collection in integration test database in CaaS
+   * @param docs docs to add
+   * @param locale locale object with identifier, country and language
+   * @returns Http Response
+   */
   async addItemsToCollection(docs: CaasApi_Item[], locale: Locale) {
     const docsWithLocale = docs.map((doc) => {
       const docWithLocale: any = { ...doc }

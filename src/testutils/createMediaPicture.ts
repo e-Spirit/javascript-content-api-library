@@ -7,7 +7,6 @@ export const createMediaPicture = (id = faker.datatype.uuid()): CaaSApi_Media_Pi
   const name = faker.random.word()
   return {
     ...base,
-    _id: `${base.uid}`,
     fsType: 'Media',
     name,
     metaFormData: {},

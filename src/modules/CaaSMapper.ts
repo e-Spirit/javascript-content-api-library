@@ -45,14 +45,16 @@ import {
   Reference,
   RichTextElement,
   Section,
-  Media,
+  CaasApi_Item,
+  MappedCaasItem,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, has, set, update } from 'lodash'
+import { chunk, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { FSXAContentMode, ImageMapAreaType } from '../enums'
+import { findResolvedReferencesByIds, getItemId } from './MappingUtils'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',
@@ -62,8 +64,18 @@ export enum CaaSMapperErrors {
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
 export const DEFAULT_MAX_REFERENCE_DEPTH = 10
 
-interface ReferencedItemsInfo {
+export interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
+}
+
+export interface ResolvedReferencesInfo {
+  [id: string]: MappedCaasItem | CaasApi_Item
+}
+
+export interface MapResponse {
+  resolvedReferences: ResolvedReferencesInfo
+  mappedItems: (MappedCaasItem | CaasApi_Item)[]
+  referenceMap: ReferencedItemsInfo
 }
 
 export class CaaSMapper {
@@ -74,6 +86,7 @@ export class CaaSMapper {
   customMapper?: CustomMapper
   referenceDepth: number
   maxReferenceDepth: number
+  resolvedReferences: ResolvedReferencesInfo = {}
 
   constructor(
     api: FSXARemoteApi,
@@ -95,48 +108,77 @@ export class CaaSMapper {
     this.logger = logger
     this.referenceDepth = utils.referenceDepth ?? 0
     this.maxReferenceDepth = utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
+
+    this.logger.debug('Created new CaaSMapper')
   }
 
   // stores references to items of current Project
-  _referencedItems: {
-    [identifier: string]: NestedPath[]
-  } = {}
+  _referencedItems: ReferencedItemsInfo = {}
   // stores the forced resolution for image map media, which could applied after reference resolving
-  _imageMapForcedResolutions: { path: NestedPath; resolution: string }[] = []
+  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
   // stores References to remote Items
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
   } = {}
 
+  addToResolvedReferences(item: MappedCaasItem | CaasApi_Item) {
+    // Page has pageId as id instead of PageRef Id. --> use refId instead for mapped Pages
+    const id = getItemId(item)
+
+    if (id) {
+      this.resolvedReferences[id] = item
+    }
+  }
+
+  /**
+   * unifies the two different id formats {id}.{locale} and {id} to {id}.{locale}
+   *
+   * @param id uuid, may be of form {id}.{locale} or {id}
+   * @param overrideLocale force specific locale
+   * @returns uuid of form {id}.{locale}
+   */
+  unifyId(id: string, overrideLocale?: string) {
+    const indexOfSeparator = id.indexOf('.')
+
+    if (indexOfSeparator > 0) {
+      // id has form {id}.{locale}. Override Locale if set
+      return overrideLocale ? `${id.substring(0, indexOfSeparator)}.${overrideLocale}` : id
+    }
+    // id has form {id}. transform to {id}.{locale}
+    return `${id}.${overrideLocale || this.locale}`
+  }
+
   /**
    * registers a referenced Item to be fetched later. If a remoteProjectId is passed,
-   * the item will be fetched from the remote Project. Multiple Calls for the same item
-   * with different paths are intended
+   * the item will be fetched from the remote Project.
    * @param identifier item identifier
    * @param path after fetch, items are inserted at all registered paths
    * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
-      return this.api.remotes[key].id === remoteProjectId
-    })
+    const remoteData = remoteProjectId ? this.api.remotes?.[remoteProjectId] : null
+    const remoteProjectKey = remoteData?.id
+    const remoteProjectLocale = remoteData?.locale
 
     if (remoteProjectId && !remoteProjectKey) {
       this.logger.warn(
         `Item with identifier '${identifier}' was tried to register from remoteProject '${remoteProjectId}' but no remote key was found in the config.`
       )
     }
+
+    const unifiedId = this.unifyId(identifier, remoteProjectLocale)
+
     if (remoteProjectKey) {
-      this._remoteReferences[remoteProjectKey][identifier] = [
-        ...(this._remoteReferences[remoteProjectKey][identifier] || []),
+      this._remoteReferences[remoteProjectKey][unifiedId] = [
+        ...(this._remoteReferences[remoteProjectKey][unifiedId] || []),
         path,
       ]
-      return `[REFERENCED-REMOTE-ITEM-${identifier}]`
+      return `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
     }
 
-    this._referencedItems[identifier] = [...(this._referencedItems[identifier] || []), path]
-    return `[REFERENCED-ITEM-${identifier}]`
+    this._referencedItems[unifiedId] = [...(this._referencedItems[unifiedId] || []), path]
+    return `[REFERENCED-ITEM-${unifiedId}]`
   }
 
   buildPreviewId(identifier: string) {
@@ -507,7 +549,10 @@ export class CaaSMapper {
     let image = null
     if (media) {
       image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
-      this._imageMapForcedResolutions.push({ path: [...path, 'media'], resolution: resolution.uid })
+      this._imageMapForcedResolutions.push({
+        imageId: `${media.identifier}.${this.locale}`,
+        resolution: resolution.uid,
+      })
     }
 
     return {
@@ -600,63 +645,64 @@ export class CaaSMapper {
     }
   }
 
-  async mapElementResponse(
-    element: CaaSApi_Dataset | CaaSApi_PageRef | CaaSApi_Media | CaaSApi_GCAPage | any,
-    filterContext?: unknown
-  ): Promise<Dataset | Page | Image | GCAPage | null | any> {
-    let response
-    switch (element.fsType) {
-      case 'Dataset':
-        response = await this.mapDataset(element, [])
-        break
-      case 'PageRef':
-        response = await this.mapPageRef(element, [])
-        break
-      case 'Media':
-        response = await this.mapMedia(element, [])
-        break
-      case 'GCAPage':
-        response = await this.mapGCAPage(element, [])
-        break
-      default:
-        // we could not map the element --> just returning the raw values
-        return element
-    }
-    return this.resolveAllReferences(response as {}, filterContext)
-  }
-
   async mapFilterResponse(
-    items: (
-      | CaaSApi_Dataset
-      | CaaSApi_PageRef
-      | CaaSApi_Media
-      | CaaSApi_GCAPage
-      | CaaSApi_ProjectProperties
-    )[],
+    unmappedItems: (CaasApi_Item | any)[],
+    additionalParams?: Record<string, any>,
     filterContext?: unknown
-  ): Promise<(Page | GCAPage | Dataset | Image)[]> {
-    const mappedItems = (
-      await Promise.all(
-        items.map((item, index) => {
-          switch (item.fsType) {
-            case 'Dataset':
-              return this.mapDataset(item, [index])
-            case 'PageRef':
-              return this.mapPageRef(item, [index])
-            case 'Media':
-              return this.mapMedia(item, [index]) as Promise<any>
-            case 'GCAPage':
-              return this.mapGCAPage(item, [index])
-            case 'ProjectProperties':
-              return this.mapProjectProperties(item, [index])
-            default:
-              this.logger.warn(`Item at index'${index}' could not be mapped!`)
-              return item
-          }
-        })
-      )
-    ).filter(Boolean) as (Page | GCAPage | Dataset | Image)[]
-    return this.resolveAllReferences(mappedItems, filterContext)
+  ): Promise<MapResponse> {
+    let items: (MappedCaasItem | CaasApi_Item)[] = additionalParams?.keys
+      ? unmappedItems // don't map data, if additional params have been set
+      : (
+          await Promise.all(
+            unmappedItems.map((unmappedItem, index) => {
+              switch (unmappedItem.fsType) {
+                case 'Dataset':
+                  return this.mapDataset(unmappedItem, [getItemId(unmappedItem)])
+                case 'PageRef':
+                  return this.mapPageRef(unmappedItem, [getItemId(unmappedItem)])
+                case 'Media':
+                  return this.mapMedia(unmappedItem, [getItemId(unmappedItem)])
+                case 'GCAPage':
+                  return this.mapGCAPage(unmappedItem, [getItemId(unmappedItem)])
+                case 'ProjectProperties':
+                  return this.mapProjectProperties(unmappedItem, [getItemId(unmappedItem)])
+                default:
+                  this.logger.warn(`Item at index'${index}' could not be mapped!`)
+                  return unmappedItem
+              }
+            })
+          )
+        ).filter(Boolean)
+
+    // cache items to avoid fetching them multiple times
+    items.forEach((item) => {
+      if (item) {
+        this.addToResolvedReferences(item)
+      }
+    })
+
+    // resolve refs
+    if (items.length > 0) await this.resolveAllReferences(filterContext)
+
+    // find resolved refs and puzzle them back together
+    const mappedItems = findResolvedReferencesByIds(
+      items.map((item) => getItemId(item)),
+      this.resolvedReferences
+    )
+
+    // merge all remote references into one object
+    const remoteReferencesValues = Object.values(this._remoteReferences)
+    const remoteReferencesMerged =
+      remoteReferencesValues.length > 0
+        ? remoteReferencesValues.reduce((result, current) => Object.assign(result, current))
+        : {}
+
+    // return
+    return {
+      mappedItems,
+      referenceMap: { ...this._referencedItems, ...remoteReferencesMerged },
+      resolvedReferences: this.resolvedReferences,
+    }
   }
 
   /**
@@ -665,28 +711,26 @@ export class CaaSMapper {
    * @param data
    * @returns data
    */
-  async resolveAllReferences<Type extends {}>(data: Type, filterContext?: unknown): Promise<Type> {
+  async resolveAllReferences(filterContext?: unknown): Promise<void> {
     if (this.referenceDepth >= this.maxReferenceDepth) {
       // hint: handle unresolved references TNG-1169
       this.logger.warn(`Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`)
-      return data
+      return
     }
     this.referenceDepth++
     const remoteIds = Object.keys(this._remoteReferences)
     this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
 
     await Promise.all([
-      this.resolveReferencesPerProject(data, undefined, filterContext),
-      ...remoteIds.map((remoteId) =>
-        this.resolveReferencesPerProject(data, remoteId, filterContext)
-      ),
+      this.resolveReferencesPerProject(undefined, filterContext),
+      ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(remoteId, filterContext)),
     ])
 
     // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(({ path, resolution }) => {
-      // the path only exist on resolved imagemaps (s. TNG-1169)
-      if (has(data, [...path, 'resolutions'])) {
-        update(data, [...path, 'resolutions'], (resolutions) => {
+    this._imageMapForcedResolutions.forEach(({ imageId, resolution }, index) => {
+      const resolvedImage = this.resolvedReferences[imageId]
+      if ((resolvedImage as Image).resolutions) {
+        update(resolvedImage, 'resolutions', (resolutions) => {
           if (resolution in resolutions) {
             return { [resolution]: resolutions[resolution] }
           }
@@ -694,8 +738,6 @@ export class CaaSMapper {
         })
       }
     })
-
-    return data
   }
 
   /**
@@ -703,11 +745,8 @@ export class CaaSMapper {
    * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferencesPerProject<T extends {}>(
-    data: T,
-    remoteProjectId?: string,
-    filterContext?: unknown
-  ): Promise<T> {
+  async resolveReferencesPerProject(remoteProjectId?: string, filterContext?: unknown) {
+    this.logger.debug('CaaSMapper.resolveReferencesPerProject', { remoteProjectId })
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
@@ -718,12 +757,28 @@ export class CaaSMapper {
     const locale =
       remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
 
-    const ids = Object.keys(referencedItems)
-    const idChunks = chunk(ids, REFERENCED_ITEMS_CHUNK_SIZE)
-    if (ids?.length > 0) {
-      const response = await Promise.all(
+    const referencedIds = Object.keys(referencedItems)
+
+    const resolvedIds = new Set(Object.keys(this.resolvedReferences))
+
+    const idsToFetchFromCaaS = referencedIds
+      .filter((id) => !resolvedIds.has(id))
+      .map((id) => id.substring(0, id.indexOf('.')))
+
+    const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
+
+    this.logger.debug('CaaSMapper.resolveReferencesPerProject: Id data', {
+      resolvedIds,
+      referencedIds,
+      idsToFetchFromCaaS,
+    })
+
+    // we need to resolve some refs
+    if (idsToFetchFromCaaS.length > 0) {
+      // we pass "this" as context to fetchByFilter
+      await Promise.all(
         idChunks.map((ids) =>
-          this.api.fetchByFilterInternal(
+          this.api.fetchByFilter(
             {
               filters: [
                 {
@@ -736,27 +791,12 @@ export class CaaSMapper {
               pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
               remoteProject: remoteProjectId,
               filterContext,
+              normalized: true,
             },
-            this.referenceDepth
-          )
-        )
-      )
-      const fetchedItems = response.map(({ items }) => items).flat()
-      ids.forEach((id) =>
-        referencedItems[id].forEach((path) =>
-          set(
-            data,
-            path,
-            fetchedItems.find((data) => {
-              const hasId = typeof data === 'object' && 'id' in (data as object)
-              if (hasId) {
-                return (data as { id: string }).id === id
-              }
-            })
+            this
           )
         )
       )
     }
-    return data
   }
 }

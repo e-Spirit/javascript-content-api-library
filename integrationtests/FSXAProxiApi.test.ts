@@ -29,6 +29,9 @@ import {
   createMediaPictureReference,
   createDataset,
   createDatasetReference,
+  createImageMap,
+  createMediaPictureReferenceValue,
+  createProjectProperties,
 } from '../src/testutils'
 
 dotenv.config({ path: './integrationtests/.env' })
@@ -84,6 +87,41 @@ describe('FSXAProxyAPI', () => {
     await caasClient.removeCollection(parsedRes._etag.$oid)
     server.close()
   })
+  describe('fetchProjectProps', () => {
+    const locale = {
+      identifier: 'de_DE',
+      country: 'DE',
+      language: 'de',
+    }
+    const projectPropsId = Faker.datatype.uuid()
+    afterEach(async () => {
+      const res = await caasClient.getItem(projectPropsId, locale.identifier)
+      const parsedRes = await res.json()
+      await caasClient.removeItem(projectPropsId, locale.identifier, parsedRes._etag.$oid)
+    })
+    it('fetch project props returns project pros', async () => {
+      const projectProperties = createProjectProperties(projectPropsId)
+      projectProperties._id = 'projectSettings' // this was found in real data
+      await caasClient.addItemsToCollection([projectProperties], locale)
+      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      expect(res!.id).toEqual(projectProperties.identifier)
+    })
+    it('nested refs in project props get resolved', async () => {
+      const projectProperties = createProjectProperties(projectPropsId)
+      projectProperties._id = 'projectSettings' // this id was found in real data
+      const dataset1 = createDataset('ds1-id')
+      const datasetReference1 = createDatasetReference('ds1-id')
+      const dataset2 = createDataset('ds2-id')
+      const datasetReference2 = createDatasetReference('ds2-id')
+      projectProperties.formData = { datasetReference1 }
+      projectProperties.metaFormData = { datasetReference2 }
+      await caasClient.addItemsToCollection([projectProperties, dataset1, dataset2], locale)
+      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      expect(res!.id).toEqual(projectProperties.identifier)
+      expect(res!.data.datasetReference1.id).toEqual(dataset1.identifier)
+      expect(res!.meta.datasetReference2.id).toEqual(dataset2.identifier)
+    })
+  })
   describe('fetchElement', () => {
     const locale = {
       identifier: 'de_DE',
@@ -104,7 +142,135 @@ describe('FSXAProxyAPI', () => {
         id: dataset.identifier,
         locale: `${locale.language}_${locale.country}`,
       })
-      expect(res.data.st_table[0].content[0].content[0].content[0].content).toEqual('\xa0') // \xa0 is non-breaking space
+      expect(res.data.st_table[0].content[0].content[0].content[0].content).toEqual('\xa0') // \xa0 is non-breaking
+    })
+    it('nested image map media gets resolved to resolution specified in image map', async () => {
+      const pageRef = createPageRef()
+      const imageMap1 = createImageMap()
+      const imageMap2 = createImageMap()
+      const mediaPicture1 = createMediaPicture()
+      const mediaPicture2 = createMediaPicture()
+      imageMap1.value.resolution.uid = 'res1'
+      imageMap2.value.resolution.uid = 'res2'
+      mediaPicture1.resolutionsMetaData = {
+        res1: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 100,
+          height: 300,
+          url: 'testurl1',
+        },
+        res2: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 200,
+          height: 600,
+          url: 'testurl2',
+        },
+      }
+      mediaPicture2.resolutionsMetaData = {
+        res1: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 100,
+          height: 300,
+          url: 'testurl1',
+        },
+        res2: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 200,
+          height: 600,
+          url: 'testurl2',
+        },
+      }
+      const mediaRef1 = createMediaPictureReferenceValue(mediaPicture1.identifier)
+      const mediaRef2 = createMediaPictureReferenceValue(mediaPicture2.identifier)
+      imageMap1.value.media = mediaRef1
+      imageMap2.value.media = mediaRef2
+
+      imageMap1.value.areas[0].link!.formData = { imageMap2: imageMap2 }
+
+      pageRef.page.formData = { imageMap: imageMap1 }
+      await caasClient.addItemsToCollection([pageRef, mediaPicture1, mediaPicture2], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+      expect(res.data.imageMap.media.id).toEqual(mediaPicture1.identifier)
+      expect(Object.keys(res.data.imageMap.media.resolutions)).toEqual([
+        imageMap1.value.resolution.uid,
+      ])
+      expect(Object.keys(res.data.imageMap.areas[0].link.data.imageMap2.media.resolutions)).toEqual(
+        [imageMap2.value.resolution.uid]
+      )
+    })
+    it('image map media gets resolved to resolution specified in image map', async () => {
+      const pageRef = createPageRef()
+      const imageMap = createImageMap()
+      const mediaPicture = createMediaPicture()
+      imageMap.value.resolution.uid = 'res2'
+      mediaPicture.resolutionsMetaData = {
+        res1: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 100,
+          height: 300,
+          url: 'testurl1',
+        },
+        res2: {
+          fileSize: 100,
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          width: 200,
+          height: 600,
+          url: 'testurl2',
+        },
+      }
+      const mediaRef = createMediaPictureReferenceValue(mediaPicture.identifier)
+      imageMap.value.media = mediaRef
+      pageRef.page.formData = { imageMap }
+      await caasClient.addItemsToCollection([pageRef, mediaPicture], locale)
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+      expect(res.data.imageMap.media.id).toEqual(mediaPicture.identifier)
+      expect(Object.keys(res.data.imageMap.media.resolutions)).toEqual([
+        imageMap.value.resolution.uid,
+      ])
+    })
+    it('items with circular references get resolved', async () => {
+      const dataset1 = createDataset('ds1-id')
+      const datasetReference1 = createDatasetReference('ds1-id')
+      const dataset2 = createDataset('ds2-id')
+      const datasetReference2 = createDatasetReference('ds2-id')
+      const dataset3 = createDataset('ds3-id')
+      const datasetReference3 = createDatasetReference('ds3-id')
+
+      dataset1.formData.ref22 = datasetReference2
+      dataset2.formData.ref23 = datasetReference3
+      dataset3.formData.ref21 = datasetReference1
+
+      const pageRef = createPageRef()
+      pageRef.page.formData = { dataset: datasetReference1 }
+
+      await caasClient.addItemsToCollection([pageRef, dataset1, dataset2, dataset3], locale)
+
+      const res = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+
+      expect(res.data.dataset.id).toBe(dataset1.identifier)
+      expect(res.data.dataset.data.ref22.id).toBe(dataset2.identifier)
+      expect(res.data.dataset.data.ref22.data.ref23.id).toBe(dataset3.identifier)
+      expect(res.data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(dataset1.identifier)
     })
     it('api returns resolved references if references are nested', async () => {
       const mediaPicture = createMediaPicture('pic-id')
@@ -119,7 +285,7 @@ describe('FSXAProxyAPI', () => {
         id: pageRef.identifier,
         locale: `${locale.language}_${locale.country}`,
       })
-      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture.identifier)
     })
     it('references are resolved if they also occur within other references', async () => {
       const mediaPicture = createMediaPicture('pic-id')
@@ -134,96 +300,74 @@ describe('FSXAProxyAPI', () => {
         id: pageRef.identifier,
         locale: `${locale.language}_${locale.country}`,
       })
-      expect(res.data.dataset.data.image.id).toBe(mediaPicture._id)
+      expect(res.data.dataset.data.image.id).toBe(mediaPicture.identifier)
     })
     it('api returns matching doc if valid id is passed', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
         additionalParams: {},
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset.identifier)
     })
     it('api returns projection of doc if additional params are set', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        displayName: Faker.commerce.productName(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
         additionalParams: {
-          keys: [{ displayName: 1 }],
+          keys: [{ schema: 1 }],
         },
       })
-      expect(res.displayName).toEqual(doc.displayName)
+      expect(res).toEqual({
+        _id: `${dataset.identifier}.${locale.identifier}`,
+        schema: dataset.schema, // the additional param we requested
+      })
     })
     it('api returns projection of doc if additional params with special chars are set', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        "specialChars *'();:@&=+$,/?%#[]": Faker.commerce.productName(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset: any = createDataset()
+      dataset["specialChars *'();:@&=+$,/?%#[]"] = 'foo'
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
         additionalParams: {
           keys: [{ "specialChars *'();:@&=+$,/?%#[]": 1 }],
         },
       })
-      expect(res["specialChars *'();:@&=+$,/?%#[]"]).toEqual(doc["specialChars *'();:@&=+$,/?%#[]"])
+      expect(res).toEqual({
+        _id: `${dataset.identifier}.${locale.identifier}`,
+        ["specialChars *'();:@&=+$,/?%#[]"]: 'foo', // the additional param we requested
+      })
     })
     it('api returns doc if special chars are used in locale', async () => {
-      const doc: TestDocument = {
-        _id: Faker.datatype.uuid(),
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: "specialChars *'();:@&=+$,?%#[]", // forward slash / does not work
-        },
+      const dataset = createDataset()
+      const country = 'DE'
+      const language = "specialChars *'();:@&=+$,?%#[]" // forward slash / does not work
+      const specialLocale = {
+        identifier: `${language}_${country}`,
+        country,
+        language,
       }
-      await caasClient.addDocToCollection(doc)
+      await caasClient.addItemsToCollection([dataset], specialLocale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: specialLocale.identifier,
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset.identifier)
     })
     it('api returns doc if special chars are used in id', async () => {
-      const doc: TestDocument = {
-        _id: "*'();:@&=+$,?%#[]", // forward slash / does not work
-        locale: {
-          identifier: Faker.random.locale(),
-          country: Faker.random.locale(),
-          language: Faker.random.locale(),
-        },
-      }
-      await caasClient.addDocToCollection(doc)
+      const dataset = createDataset()
+      dataset.identifier = "*'();:@&=+$,?%#[]"
+      await caasClient.addItemsToCollection([dataset], locale)
       const res = await proxyAPI.fetchElement({
-        id: doc._id,
-        locale: `${doc.locale.language}_${doc.locale.country}`,
+        id: dataset.identifier,
+        locale: locale.identifier,
       })
-      expect(res._id).toEqual(doc._id + `.${doc.locale.language}_${doc.locale.country}`)
+      expect(res.id).toEqual(dataset.identifier)
     })
     it('api returns all required remote reference attributes', async function () {
       const section = createSection()
@@ -233,8 +377,8 @@ describe('FSXAProxyAPI', () => {
       }
       const pageRef = createPageRef([createPageRefBody([section])])
       await caasClient.addDocToCollection({
-        _id: pageRef.identifier,
         ...pageRef,
+        _id: pageRef.identifier,
         locale: {
           identifier: 'de',
           country: 'DE',
@@ -259,6 +403,47 @@ describe('FSXAProxyAPI', () => {
     const language = 'en'
     const identifier = 'EN'
     describe('filter with EQUALS operator', () => {
+      it('items with circular references get resolved', async () => {
+        const locale = {
+          identifier: 'de_DE',
+          country: 'DE',
+          language: 'de',
+        }
+        const dataset1 = createDataset('ds1-id')
+        const datasetReference1 = createDatasetReference('ds1-id')
+        const dataset2 = createDataset('ds2-id')
+        const datasetReference2 = createDatasetReference('ds2-id')
+        const dataset3 = createDataset('ds3-id')
+        const datasetReference3 = createDatasetReference('ds3-id')
+
+        dataset1.formData.ref22 = datasetReference2
+        dataset2.formData.ref23 = datasetReference3
+        dataset3.formData.ref21 = datasetReference1
+
+        const pageRef = createPageRef()
+        pageRef.page.formData = { dataset: datasetReference1 }
+
+        await caasClient.addItemsToCollection([pageRef, dataset1, dataset2, dataset3], locale)
+
+        const res = await proxyAPI.fetchByFilter({
+          filters: [
+            {
+              field: 'identifier',
+              operator: ComparisonQueryOperatorEnum.EQUALS,
+              value: pageRef.identifier,
+            },
+          ],
+          locale: locale.identifier,
+        })
+        expect((res.items[0] as any).data.dataset.id).toBe(dataset1.identifier)
+        expect((res.items[0] as any).data.dataset.data.ref22.id).toBe(dataset2.identifier)
+        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.id).toBe(
+          dataset3.identifier
+        )
+        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(
+          dataset1.identifier
+        )
+      })
       it('api returns only matching data if filter is applied', async () => {
         const a = Faker.datatype.uuid()
         const b = Faker.datatype.uuid()

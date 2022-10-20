@@ -13,10 +13,14 @@ import {
   ProxyApiFilterOptions,
   FilterContextProvider,
   ProjectProperties,
+  CaasApi_Item,
+  MappedCaasItem,
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
 import { FetchResponse } from '..'
+import { CaaSMapper, MapResponse } from '.'
+import { denormalizeResolvedReferences } from './MappingUtils'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -95,6 +99,7 @@ export class FSXAProxyApi implements FSXAApi {
       additionalParams,
       remote: remoteProject,
       filterContext,
+      normalized: true,
     }
     this._logger.debug('fetchElement', 'trying to fetch body', body)
 
@@ -118,8 +123,12 @@ export class FSXAProxyApi implements FSXAApi {
           throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
+    const jsonRes = await response.json()
+    let { mappedItems, referenceMap, resolvedReferences } = jsonRes as MapResponse
 
-    return response.json()
+    mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
+
+    return mappedItems[0] as unknown as T
   }
 
   /**
@@ -176,6 +185,7 @@ export class FSXAProxyApi implements FSXAApi {
       },
       remote: remoteProject,
       filterContext,
+      normalized: true,
     }
     this._logger.debug('fetchByFilter', 'trying to fetch with body', body)
     const response = await this.fetch({
@@ -201,7 +211,16 @@ export class FSXAProxyApi implements FSXAApi {
       }
     }
 
-    return response.json()
+    const jsonRes = (await response.json()) as FetchResponse
+    let { referenceMap, items, resolvedReferences, totalPages, size } = jsonRes
+
+    items = denormalizeResolvedReferences(
+      items as (CaasApi_Item | MappedCaasItem)[],
+      referenceMap!,
+      resolvedReferences!
+    )
+
+    return { page, pagesize, totalPages, size, items }
   }
 
   /**
