@@ -93,16 +93,22 @@ describe('FSXAProxyAPI', () => {
       country: 'DE',
       language: 'de',
     }
+    const projectPropsId = Faker.datatype.uuid()
+    afterEach(async () => {
+      const res = await caasClient.getItem(projectPropsId, locale.identifier)
+      const parsedRes = await res.json()
+      await caasClient.removeItem(projectPropsId, locale.identifier, parsedRes._etag.$oid)
+    })
     it('fetch project props returns project pros', async () => {
-      const projectProperties = createProjectProperties()
+      const projectProperties = createProjectProperties(projectPropsId)
       projectProperties._id = 'projectSettings' // this was found in real data
       await caasClient.addItemsToCollection([projectProperties], locale)
       const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
       expect(res!.id).toEqual(projectProperties.identifier)
     })
     it('nested refs in project props get resolved', async () => {
-      const projectProperties = createProjectProperties()
-      projectProperties._id = 'projectSettings' // this was found in real data
+      const projectProperties = createProjectProperties(projectPropsId)
+      projectProperties._id = 'projectSettings' // this id was found in real data
       const dataset1 = createDataset('ds1-id')
       const datasetReference1 = createDatasetReference('ds1-id')
       const dataset2 = createDataset('ds2-id')
@@ -339,7 +345,7 @@ describe('FSXAProxyAPI', () => {
     })
     it('api returns doc if special chars are used in locale', async () => {
       const dataset = createDataset()
-      const country = Faker.random.locale()
+      const country = 'DE'
       const language = "specialChars *'();:@&=+$,?%#[]" // forward slash / does not work
       const specialLocale = {
         identifier: `${language}_${country}`,

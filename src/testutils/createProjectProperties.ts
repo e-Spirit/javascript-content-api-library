@@ -2,8 +2,8 @@ import faker from 'faker'
 import { CaaSApi_ProjectProperties } from '../types'
 import { createDataEntry } from './createDataEntry'
 
-export const createProjectProperties = (): CaaSApi_ProjectProperties => {
-  const base = createDataEntry()
+export const createProjectProperties = (id?: string): CaaSApi_ProjectProperties => {
+  const base = createDataEntry(id)
   const name = faker.random.word()
   const template = createDataEntry()
 

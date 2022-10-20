@@ -380,7 +380,6 @@ export class FSXARemoteApi implements FSXAApi {
     normalized = false,
   }: FetchElementParams): Promise<any> {
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
-
     const {
       items,
       referenceMap = {},
