@@ -122,6 +122,22 @@ describe('FSXAProxyAPI', () => {
       country: 'DE',
       language: 'de',
     }
+    it('api returns mapped tables if they contain non-breaking spaces &nbsp;', async () => {
+      const dataset = createDataset('ds-id')
+      dataset.formData = {
+        st_table: {
+          fsType: 'CMS_INPUT_DOMTABLE',
+          name: 'st_table',
+          value: '<table data-fs-style=""><tr><td>&nbsp;</td><td>&nbsp;</td></tr></table>',
+        },
+      }
+      await caasClient.addItemsToCollection([dataset], locale)
+      const res = await proxyAPI.fetchElement({
+        id: dataset.identifier,
+        locale: `${locale.language}_${locale.country}`,
+      })
+      expect(res.data.st_table[0].content[0].content[0].content[0].content).toEqual('\xa0') // \xa0 is non-breaking
+    })
     it('nested image map media gets resolved to resolution specified in image map', async () => {
       const pageRef = createPageRef()
       const imageMap1 = createImageMap()
