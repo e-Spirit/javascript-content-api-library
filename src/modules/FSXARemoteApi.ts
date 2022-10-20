@@ -1,6 +1,5 @@
-import { filter } from 'lodash'
 import { stringify } from 'qs'
-import { CaaSMapper, Logger, MapResponse, ReferencedItemsInfo, ResolvedReferencesInfo } from '.'
+import { CaaSMapper, Logger, ReferencedItemsInfo, ResolvedReferencesInfo } from '.'
 import { FetchResponse, ProjectProperties } from '..'
 import {
   NavigationData,
