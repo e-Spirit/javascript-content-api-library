@@ -1,3 +1,10 @@
+## [10.6.3](https://github.com/e-Spirit/fsxa-api/compare/v10.6.2...v10.6.3) (2022-10-20)
+
+
+### Bug Fixes
+
+* **caasmapper:** improve reference resolving ([#131](https://github.com/e-Spirit/fsxa-api/issues/131)) ([856d1d2](https://github.com/e-Spirit/fsxa-api/commit/856d1d21dc2fdbe84585f01058099d4d6bac765f))
+
 ## [10.6.2](https://github.com/e-Spirit/fsxa-api/compare/v10.6.1...v10.6.2) (2022-09-27)
 
 
