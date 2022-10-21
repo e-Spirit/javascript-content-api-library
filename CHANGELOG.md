@@ -1,3 +1,10 @@
+## [10.6.4](https://github.com/e-Spirit/fsxa-api/compare/v10.6.3...v10.6.4) (2022-10-21)
+
+
+### Bug Fixes
+
+* **fsxaremoteapi:** fix caasitemsfilter method ([0f2fd26](https://github.com/e-Spirit/fsxa-api/commit/0f2fd2603bd510af9e47255cb7ee0ac7f49138eb))
+
 ## [10.6.3](https://github.com/e-Spirit/fsxa-api/compare/v10.6.2...v10.6.3) (2022-10-20)
 
 
