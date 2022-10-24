@@ -70,7 +70,7 @@ There is an enum to use these modes.
 
 The configuration depends on which in which mode you want to run the FSXA-API.
 
-If you want to use the `remote` mode, you have to specify all authorization keys:
+If you want to use the `FSXARemoteApi`, you have to specify all authorization keys:
 
 ```typescript
 {
@@ -114,7 +114,7 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
-Here is an example of how the FSXA-API `remote` and `proxy` could be used with an [Express.js](https://expressjs.com/) backend.
+Here is an example of how the `FSXARemoteApi` and `FSXAProxyApi` could be used with an [Express.js](https://expressjs.com/) backend.
 Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
 
 ```typescript
@@ -134,7 +134,7 @@ app.use('/api', expressIntegration({ api: remoteApi }))
 app.listen(3002, async() => {
   console.log('Listening at http://localhost:3002')
   try {
-    const locale = 'en_GB'
+    const locale = 'de_DE'
 
     const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
     // you can also fetch navigation from proxyAPI
@@ -167,8 +167,6 @@ Returns the build authorization header in the following format when using `FSXAR
 }
 ```
 
-Returns an empty object when using `FSXAProxyApi`.
-
 Example:
 
 ```typescript
@@ -177,24 +175,17 @@ const authorizationHeader = remoteApi.authorizationHeader
 // console.log { authorization: `apikey="${config.apikey}"` }
 ```
 
-### buildCaaSURL
+### fetchNavigation
 
-This methods builds an URL for the CaaS. Based upon the optional `buildCaaSUrlParams` object the returning url can link to any desired document.
-
-Example:
-
-```typescript
-remoteApi.buildCaaSUrl({ id, locale, remoteProject, additionalParams, filters, page, pagesize, sort, }?: buildCaaSUrlParams): string;
-```
-
-### buildNavigationServiceUrl
-
-This function builds the URL for the NavigationService. Based upon the optional `buildNavigationServiceURLParams` object the returning url can link to a seo route or a locale specific subtree of the navigation. For more details how the Navigation Service works, read the Navigation
+This method fetches the navigation from the configured navigation service. You need to pass a `FetchNavigationParams` object.
 
 Example:
 
 ```typescript
-remoteApi.buildNavigationServiceUrl({ locale, initialPath, all }?: buildNavigationServiceURLParams): string;
+fsxaApi.fetchNavigation({
+  locale: 'en_EN',
+  initialPath: '/'
+});
 ```
 
 ### fetchElement
@@ -202,7 +193,10 @@ remoteApi.buildNavigationServiceUrl({ locale, initialPath, all }?: buildNavigati
 This method fetches an element from the configured CaaS. The `FetchElementParams` object defines options to specify your request. Check `buildCaaSUrl` to know which URL will be used.
 
 ```typescript
-remoteApi.fetchNavigation({ locale, initialPath, fetchOptions, filterContext, }: FetchNavigationParams): Promise<NavigationData | null>;
+fsxaApi.fetchNavigation({
+  id: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  locale: 'de_DE'
+});
 ```
 
 ### fetchByFilter
@@ -229,7 +223,7 @@ One filter object must have a:
 In this example we search for all elements with the `fsType` equals `Example`. We want the `2nd` page with a maximum of `50` entries. The results should be sorted by fsType descending. However, we do not want the `identifier` to appear:
 
 ```typescript
-remoteApi.fetchByFilter({
+fsxaApi.fetchByFilter({
     filters: [
       {
         field: 'fsType',
@@ -259,8 +253,8 @@ ATTENTION: Works only with CaaSConnect module version 3 onwards.
 Example:
 
 ```typescript
-remoteApi.fetchProjectProperties({
-  locale: 'en_EN',
+fsxaApi.fetchProjectProperties({
+  locale: 'de_DE',
 })
 ```
 
