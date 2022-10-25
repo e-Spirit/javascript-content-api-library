@@ -121,6 +121,21 @@ describe('FSXAProxyAPI', () => {
       expect(res!.data.datasetReference1.id).toEqual(dataset1.identifier)
       expect(res!.meta.datasetReference2.id).toEqual(dataset2.identifier)
     })
+    it('fetch project props, if they contain circular references', async () => {
+      const projectProperties = createProjectProperties(projectPropsId)
+      const dataset1 = createDataset('ds1-id')
+      const datasetReference1 = createDatasetReference('ds1-id')
+      const dataset2 = createDataset('ds2-id')
+      const datasetReference2 = createDatasetReference('ds2-id')
+      dataset1.formData.ref22 = datasetReference2
+      dataset2.formData.ref21 = datasetReference1
+      projectProperties.formData.dataset = datasetReference1
+      await caasClient.addItemsToCollection([projectProperties, dataset1, dataset2], locale)
+      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      expect(res!.id).toEqual(projectProperties.identifier)
+      expect(res!.data.dataset.id).toEqual(dataset1.identifier)
+      expect(res!.data.dataset.data.ref22.id).toEqual(dataset2.identifier)
+    })
   })
   describe('fetchElement', () => {
     const locale = {
