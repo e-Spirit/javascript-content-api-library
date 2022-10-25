@@ -717,7 +717,7 @@ export interface FSXAConfiguration {
   tenantId: string
   contentMode?: 'preview' | 'release'
   customMapper?: CustomMapper
-  remotes?: Record<string, { id: string; locale: string }>
+  remotes?: RemoteProjectConfiguration
   enableEventStream?: boolean
 }
 
@@ -884,7 +884,15 @@ export interface AppContext<T = unknown> {
   fsxaApi?: FSXAApi
 }
 
-export type RemoteProjectConfiguration = Record<string, { id: string; locale: string }>
+export type RemoteProjectConfiguration = {
+  [name: string]: {
+    id: string
+    locale: string
+  }
+}
+
+export type RemoteProjectConfigurationEntry =
+  RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
 
 export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType

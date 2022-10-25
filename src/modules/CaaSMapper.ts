@@ -47,6 +47,7 @@ import {
   Section,
   CaasApi_Item,
   MappedCaasItem,
+  RemoteProjectConfigurationEntry,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, update } from 'lodash'
@@ -102,8 +103,8 @@ export class CaaSMapper {
     this.locale = locale
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
-    Object.keys(this.api.remotes || {}).forEach(
-      (item: string) => (this._remoteReferences[item] = {})
+    Object.values(this.api.remotes || {}).forEach(
+      (entry) => (this._remoteReferences[entry.id] = {})
     )
     this.logger = logger
     this.referenceDepth = utils.referenceDepth ?? 0
@@ -120,6 +121,14 @@ export class CaaSMapper {
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
   } = {}
+
+  private getRemoteConfigForProject(
+    projectId?: string
+  ): RemoteProjectConfigurationEntry | undefined {
+    return projectId
+      ? Object.values(this.api.remotes || {}).find((entry) => entry.id === projectId)
+      : undefined
+  }
 
   addToResolvedReferences(item: MappedCaasItem | CaasApi_Item) {
     // Page has pageId as id instead of PageRef Id. --> use refId instead for mapped Pages
@@ -157,7 +166,7 @@ export class CaaSMapper {
    * @returns placeholder string
    */
   registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
-    const remoteData = remoteProjectId ? this.api.remotes?.[remoteProjectId] : null
+    const remoteData = this.getRemoteConfigForProject(remoteProjectId)
     const remoteProjectKey = remoteData?.id
     const remoteProjectLocale = remoteData?.locale
 
@@ -751,11 +760,10 @@ export class CaaSMapper {
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
 
-    const remoteProjectKey = Object.keys(this.api.remotes || {}).find((key) => {
-      return key === remoteProjectId
-    })
-    const locale =
-      remoteProjectKey && this.api.remotes ? this.api.remotes[remoteProjectKey].locale : this.locale
+    // use remoteProjectLocale if provided. normal locale as standard
+    const remoteProjectData = this.getRemoteConfigForProject(remoteProjectId)
+    const remoteProjectLocale = remoteProjectData?.locale
+    const locale = remoteProjectLocale || this.locale
 
     const referencedIds = Object.keys(referencedItems)
 
