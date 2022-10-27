@@ -295,7 +295,7 @@ describe('CaaSMapper', () => {
     })
 
     describe('CMS_INPUT_RADIOBUTTON', () => {
-      it('should return the value as-is', async () => {
+      it('should return the value as-is in addition to the correct Option keys', async () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         const entry: CaaSApi_CMSInputRadioButton = {
@@ -307,7 +307,12 @@ describe('CaaSMapper', () => {
           },
           fsType: 'CMS_INPUT_RADIOBUTTON',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(entry.value)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual({
+          type: 'Option',
+          key: entry.value!.identifier,
+          value: entry.value!.label,
+          ...entry.value,
+        })
       })
     })
 

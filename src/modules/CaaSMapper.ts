@@ -222,8 +222,15 @@ export class CaaSMapper {
         const simpleValue: string | number = entry.value
         return simpleValue
       case 'CMS_INPUT_RADIOBUTTON':
-        // TODO: This should be mapped to interface Option
-        const radiobuttonOption = entry.value
+        const radiobuttonOption: Option | null = entry.value
+          ? {
+              type: 'Option',
+              key: entry.value.identifier,
+              value: entry.value.label,
+              // TODO: Remove this spread with next major release (Breaking Change!)
+              ...entry.value,
+            }
+          : null
         return radiobuttonOption
       case 'CMS_INPUT_DATE':
         const dateValue: Date | null = entry.value ? parseISO(entry.value) : null
