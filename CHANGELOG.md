@@ -1,3 +1,10 @@
+## [10.6.5](https://github.com/e-Spirit/fsxa-api/compare/v10.6.4...v10.6.5) (2022-10-27)
+
+
+### Bug Fixes
+
+* **radiobutton mapping:** extend mapped value for radiobutton to include correct Option keys ([#100](https://github.com/e-Spirit/fsxa-api/issues/100)) ([d50039a](https://github.com/e-Spirit/fsxa-api/commit/d50039a02d03b382675e9c838ebd4704a1b5cd50))
+
 ## [10.6.4](https://github.com/e-Spirit/fsxa-api/compare/v10.6.3...v10.6.4) (2022-10-21)
 
 
