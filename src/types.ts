@@ -944,6 +944,16 @@ export interface FSXAProxyApiConfig {
   enableEventStream?: boolean
 }
 
+export type NormalizedProjectPropertyResponse = {
+  projectProperties: ProjectProperties
+  projectPropertiesResolvedReferences: NormalizedFetchResponse['resolvedReferences']
+  projectPropertiesReferenceMap: NormalizedFetchResponse['referenceMap']
+  resolveItems: NormalizedFetchResponse['items']
+  resolveResolvedReferences: NormalizedFetchResponse['resolvedReferences']
+  resolveReferenceMap: NormalizedFetchResponse['referenceMap']
+  idToKeyMap: Record<string, string>
+}
+
 export interface FSXAApi {
   mode: 'proxy' | 'remote'
   fetchElement: <T = Page | GCAPage | Dataset | Image | any | null>(
@@ -953,16 +963,32 @@ export interface FSXAApi {
   fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
-  ) => Promise<ProjectProperties | null>
+  ) => Promise<ProjectProperties | NormalizedProjectPropertyResponse | null>
   enableEventStream: (enable?: boolean) => boolean
 }
 
-export interface FetchResponse {
+// Return value of RemoteAPI FetchByFilter normalized = false
+export type FetchResponse = DenormalizedFetchRespone | NormalizedFetchResponse
+
+interface FetchResponseBase {
   page: number
   pagesize: number
   totalPages?: number
   size?: number
-  items: unknown[]
-  resolvedReferences?: ResolvedReferencesInfo
-  referenceMap?: ReferencedItemsInfo
 }
+
+export interface DenormalizedFetchRespone extends FetchResponseBase {
+  items: (MappedCaasItem | CaasApi_Item)[]
+  resolvedReferences: undefined
+  referenceMap: undefined
+}
+
+// Return value of RemoteAPI FetchByFilter normalized = true
+export interface NormalizedFetchResponse extends FetchResponseBase {
+  items: (MappedCaasItem | CaasApi_Item)[] // Mapped Items without resolved refs --> has no circles
+  resolvedReferences?: ResolvedReferencesInfo // Data about references/circles is stored here separately
+  referenceMap?: ReferencedItemsInfo // Data about references/circles is stored here separately
+}
+
+// Util Function denormalizeResolvedReferences() maps  NormalizedFetchResponse -> FetchResponse
+// this must be called on the client --> PROXY Api (NOT REMOTE API)

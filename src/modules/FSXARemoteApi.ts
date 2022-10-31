@@ -17,6 +17,8 @@ import {
   RemoteProjectConfiguration,
   SortParams,
   CaasApi_Item,
+  NormalizedFetchResponse,
+  NormalizedProjectPropertyResponse,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
@@ -583,8 +585,8 @@ export class FSXARemoteApi implements FSXAApi {
     resolve?: string[]
     filterContext?: unknown
     normalized?: boolean
-  }): Promise<ProjectProperties | null> {
-    const fetchResponse = await this.fetchByFilter({
+  }): Promise<ProjectProperties | NormalizedProjectPropertyResponse | null> {
+    const fetchResponse: NormalizedFetchResponse = (await this.fetchByFilter({
       filters: [
         {
           field: 'fsType',
@@ -596,12 +598,28 @@ export class FSXARemoteApi implements FSXAApi {
       additionalParams,
       filterContext,
       normalized,
-    })
+    })) as NormalizedFetchResponse
+
+    // If normalized True then we
+
+    // still fine
     if (!fetchResponse.items[0]) return null
 
+    // From here on, we have UNRESOLVED REFS in ProjectProperties.
+    // also have fetchResponse {
+    // resolvedReferences: ResolvedReferencesInfo
+    // referenceMap: ReferencedItemsInfo
+    // }
+
+    // We cannot normalize here because the result needs to be sent over networl --> needs to be stringified --> must NOT contain strings
     const projectProperties = fetchResponse.items[0] as ProjectProperties
-    const projectPropertiesData = projectProperties?.data
-    if (!projectPropertiesData) {
+
+    const {
+      resolvedReferences: projectPropertiesResolvedReferences,
+      referenceMap: projectPropertiesReferenceMap,
+    } = fetchResponse
+
+    if (!projectProperties.data) {
       this._logger.debug(
         `[fetchProjectProperties] Could not find response data. Project properties might not be defined.`
       )
@@ -611,13 +629,13 @@ export class FSXARemoteApi implements FSXAApi {
     // We need to match keys from projectSettings to ElementIds later to insert them directly
     const idToKeyMap: Record<string, string> = {}
 
-    const objectKeysToResolve = Object.keys(projectPropertiesData).filter((key) =>
-      resolve.includes(projectPropertiesData[key]?.referenceType)
+    const objectKeysToResolve = Object.keys(projectProperties.data).filter((key) =>
+      resolve.includes(projectProperties.data[key]?.referenceType)
     )
 
     const idsToFetch = objectKeysToResolve.map((key) => {
-      idToKeyMap[projectPropertiesData[key].referenceId] = key
-      return projectPropertiesData[key].referenceId
+      idToKeyMap[projectProperties.data[key].referenceId] = key
+      return projectProperties.data[key].referenceId
     })
 
     if (idsToFetch.length > 100) {
@@ -625,7 +643,11 @@ export class FSXARemoteApi implements FSXAApi {
         '[fetchProjectProperties] ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
       )
     }
-    const { items: fetchedElements } = await this.fetchByFilter({
+    const {
+      items: resolveItems,
+      referenceMap: resolveReferenceMap,
+      resolvedReferences: resolveResolvedReferences,
+    } = (await this.fetchByFilter({
       locale: locale,
       filters: [
         { field: 'identifier', operator: ComparisonQueryOperatorEnum.IN, value: idsToFetch },
@@ -633,15 +655,38 @@ export class FSXARemoteApi implements FSXAApi {
       pagesize: 100,
       filterContext,
       normalized,
-    })
+    })) as NormalizedFetchResponse
 
-    //Insert fetched Data into projectProperties
-    fetchedElements.forEach((element) => {
-      projectPropertiesData[idToKeyMap[(element as any).id]] = (element as any).data
-    })
+    // we need to merge referenceMap, resolvedReferences from those 2 calls
 
-    return projectProperties
+    // projectProperties <-- fetchedElements // needs to be done on client?
+
+    return {
+      projectProperties,
+      projectPropertiesResolvedReferences,
+      projectPropertiesReferenceMap,
+      resolveItems,
+      resolveReferenceMap,
+      resolveResolvedReferences,
+      idToKeyMap,
+    } as NormalizedProjectPropertyResponse
   }
+
+  /**
+   * 
+   * @param locale 
+   * @param additionalParams 
+   * @param resolve 
+   * @param filterContext 
+   * private async fetchProjectPropertiesNormalized(
+    locale,
+    additionalParams = {},
+    resolve = ['GCAPage'],
+    filterContext
+  ) {
+    // new behaviour here
+  }
+   */
 
   /**
    * This method fetches a one-time secure token from the configured CaaS.

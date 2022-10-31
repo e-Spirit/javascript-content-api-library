@@ -15,6 +15,7 @@ import {
   ProjectProperties,
   CaasApi_Item,
   MappedCaasItem,
+  NormalizedProjectPropertyResponse,
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
@@ -293,9 +294,11 @@ export class FSXAProxyApi implements FSXAApi {
       locale,
       resolver,
       filterContext,
+      normalized: true,
     }
     this._logger.debug('fetchProjectProperties', 'trying to fetch body', body)
 
+    // This needs to return normalized Data
     const response = await this.fetch({
       url: FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
       options: {
@@ -318,8 +321,38 @@ export class FSXAProxyApi implements FSXAApi {
           throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
+    // We need to denormalize here
 
-    return response.json()
+    const data: NormalizedProjectPropertyResponse =
+      (await response.json()) as NormalizedProjectPropertyResponse
+
+    const denormalizedProjectPropertiesArray = denormalizeResolvedReferences(
+      [data.projectProperties],
+      data.projectPropertiesReferenceMap || {},
+      data.projectPropertiesResolvedReferences || {}
+    )
+
+    const resolveElements = denormalizeResolvedReferences(
+      data.resolveItems,
+      data.resolveReferenceMap || {},
+      data.resolveResolvedReferences || {}
+    )
+
+    const denormalizedProjectProperties =
+      denormalizedProjectPropertiesArray.length > 0
+        ? (denormalizedProjectPropertiesArray[0] as ProjectProperties)
+        : null
+
+    if (!denormalizedProjectProperties) return null
+
+    //Insert fetched Data into projectProperties
+    resolveElements.forEach((element) => {
+      denormalizedProjectProperties.data[data.idToKeyMap[(element as any).id]] = (
+        element as any
+      ).data
+    })
+
+    return denormalizedProjectProperties
   }
 
   /**
