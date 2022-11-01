@@ -376,7 +376,7 @@ export class FSXAProxyApi implements FSXAApi {
       url.searchParams.set('remoteProject', remoteProject)
     }
     this._logger.info('connectEventStream', 'start', `${url}`)
-    return new EventSource(url)
+    return new EventSource(url.toString())
   }
 
   private fetch({ url, options }: { url: string; options: RequestOptions }) {

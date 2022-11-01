@@ -179,7 +179,7 @@ export class FSXARemoteApi implements FSXAApi {
 
     const params: string[] = []
     const additionalParamsDefined = additionalParams && Object.keys(additionalParams).length > 0
-    if (additionalParamsDefined) {
+    if (additionalParamsDefined && additionalParams) {
       params.push(this.buildStringifiedQueryParams(additionalParams))
     }
 
@@ -556,7 +556,7 @@ export class FSXARemoteApi implements FSXAApi {
       })
     )
     // _caasItemFilter needs to work with normalized Data
-    return await this._caasItemFilter!({
+    return this._caasItemFilter!({
       mappedItems,
       referenceMap,
       resolvedReferences,
@@ -571,6 +571,8 @@ export class FSXARemoteApi implements FSXAApi {
    * @param locale value must be ISO conform, both 'en' and 'en_US' are valid
    * @param additionalParams optional additional URL parameters
    * @param resolve optional array of fsTypes that will be resolved `(default = 'GCAPage')`
+   * @param filterContext
+   * @param normalized
    * @returns the resolved project properties
    */
   async fetchProjectProperties({
@@ -600,24 +602,12 @@ export class FSXARemoteApi implements FSXAApi {
       normalized,
     })) as NormalizedFetchResponse
 
-    // If normalized True then we
-
-    // still fine
     if (!fetchResponse.items[0]) return null
 
-    // From here on, we have UNRESOLVED REFS in ProjectProperties.
-    // also have fetchResponse {
-    // resolvedReferences: ResolvedReferencesInfo
-    // referenceMap: ReferencedItemsInfo
-    // }
-
-    // We cannot normalize here because the result needs to be sent over networl --> needs to be stringified --> must NOT contain strings
+    // We cannot normalize here because the result needs to be sent over network
+    // --> needs to be stringifies
+    // --> must NOT contain strings
     const projectProperties = fetchResponse.items[0] as ProjectProperties
-
-    const {
-      resolvedReferences: projectPropertiesResolvedReferences,
-      referenceMap: projectPropertiesReferenceMap,
-    } = fetchResponse
 
     if (!projectProperties.data) {
       this._logger.debug(
@@ -643,6 +633,7 @@ export class FSXARemoteApi implements FSXAApi {
         '[fetchProjectProperties] ProjectProperties contain more than 100 Elements to resolve. Only resolving the first 100!'
       )
     }
+
     const {
       items: resolveItems,
       referenceMap: resolveReferenceMap,
@@ -658,8 +649,45 @@ export class FSXARemoteApi implements FSXAApi {
     })) as NormalizedFetchResponse
 
     // we need to merge referenceMap, resolvedReferences from those 2 calls
-
     // projectProperties <-- fetchedElements // needs to be done on client?
+    if (normalized) {
+      return this.fetchProjectPropertiesNormalized({
+        fetchResponse,
+        projectProperties,
+        resolveItems,
+        resolveReferenceMap,
+        resolveResolvedReferences,
+        idToKeyMap,
+      })
+    }
+
+    //Insert fetched Data into projectProperties
+    resolveItems.forEach((element) => {
+      projectProperties.data[idToKeyMap[(element as any).id]] = (element as any).data
+    })
+
+    return projectProperties
+  }
+
+  private fetchProjectPropertiesNormalized({
+    fetchResponse,
+    projectProperties,
+    resolveItems,
+    resolveReferenceMap,
+    resolveResolvedReferences,
+    idToKeyMap,
+  }: {
+    fetchResponse: NormalizedFetchResponse
+    projectProperties: ProjectProperties
+    resolveItems: (MappedCaasItem | CaasApi_Item)[]
+    resolveReferenceMap: ReferencedItemsInfo | undefined
+    resolveResolvedReferences: ResolvedReferencesInfo | undefined
+    idToKeyMap: Record<string, string>
+  }) {
+    const {
+      resolvedReferences: projectPropertiesResolvedReferences,
+      referenceMap: projectPropertiesReferenceMap,
+    } = fetchResponse
 
     return {
       projectProperties,
@@ -671,22 +699,6 @@ export class FSXARemoteApi implements FSXAApi {
       idToKeyMap,
     } as NormalizedProjectPropertyResponse
   }
-
-  /**
-   * 
-   * @param locale 
-   * @param additionalParams 
-   * @param resolve 
-   * @param filterContext 
-   * private async fetchProjectPropertiesNormalized(
-    locale,
-    additionalParams = {},
-    resolve = ['GCAPage'],
-    filterContext
-  ) {
-    // new behaviour here
-  }
-   */
 
   /**
    * This method fetches a one-time secure token from the configured CaaS.
