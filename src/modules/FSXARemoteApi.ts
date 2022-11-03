@@ -131,11 +131,13 @@ export class FSXARemoteApi implements FSXAApi {
   }
 
   private getRemoteProject(remoteProject: string) {
-    const projectId = this.remotes[remoteProject]?.id
-    if (!projectId) {
+    const remoteProjectConfig = Object.values(this._remotes)
+    const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProject)
+    if (!foundRemoteProject) {
       throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
     }
-    return projectId
+
+    return remoteProject
   }
 
   /**
