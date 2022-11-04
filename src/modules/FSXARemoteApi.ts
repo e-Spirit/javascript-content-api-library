@@ -14,9 +14,9 @@ import {
   NavigationItemFilter,
   RemoteApiFilterOptions,
   MappedCaasItem,
-  RemoteProjectConfiguration,
   SortParams,
   CaasApi_Item,
+  RemoteProjectConfiguration,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
@@ -51,7 +51,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _navigationServiceURL: string = this.navigationServiceURL
   private _tenantID: string = this.tenantID
   private _projectID: string = this.projectID
-  private _remotes: Record<string, { id: string; locale: string }> = this.remotes
+  private _remotes: RemoteProjectConfiguration = this.remotes
   private _contentMode: 'preview' | 'release' = this.contentMode
   private _maxReferenceDepth?: number
   private _customMapper?: CustomMapper
@@ -107,7 +107,6 @@ export class FSXARemoteApi implements FSXAApi {
     this._caasItemFilter = filterOptions?.caasItemFilter
 
     this._logger.debug('FSXARemoteApi created', {
-      apikey,
       caasURL,
       navigationServiceURL,
       tenantID,
@@ -131,11 +130,13 @@ export class FSXARemoteApi implements FSXAApi {
   }
 
   private getRemoteProject(remoteProject: string) {
-    const projectId = this.remotes[remoteProject]?.id
-    if (!projectId) {
+    const remoteProjectConfig = Object.values(this._remotes)
+    const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProject)
+    if (!foundRemoteProject) {
       throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
     }
-    return projectId
+
+    return remoteProject
   }
 
   /**
@@ -786,7 +787,7 @@ export class FSXARemoteApi implements FSXAApi {
   /**
    * @returns the configured remote project configuration
    */
-  public get remotes(): Record<string, { id: string; locale: string }> {
+  public get remotes(): RemoteProjectConfiguration {
     return this._remotes
   }
 
@@ -803,7 +804,7 @@ export class FSXARemoteApi implements FSXAApi {
     }
    ```
    */
-  public set remotes(value: Record<string, { id: string; locale: string }>) {
+  public set remotes(value: RemoteProjectConfiguration) {
     const keys = Object.keys(value)
     keys.forEach((key) => {
       const { id, locale } = value[key]

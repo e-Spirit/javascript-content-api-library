@@ -126,7 +126,7 @@ describe('FSXARemoteAPI', () => {
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const remoteProjectId = config.remotes.remote.id
-      const actualCaaSUrl = remoteApi.buildCaaSUrl({ remoteProject: 'remote' })
+      const actualCaaSUrl = remoteApi.buildCaaSUrl({ remoteProject: remoteProjectId })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${remoteProjectId}.${config.contentMode}.content`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
