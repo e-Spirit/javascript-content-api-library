@@ -107,7 +107,6 @@ export class FSXARemoteApi implements FSXAApi {
     this._caasItemFilter = filterOptions?.caasItemFilter
 
     this._logger.debug('FSXARemoteApi created', {
-      apikey,
       caasURL,
       navigationServiceURL,
       tenantID,
