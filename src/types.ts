@@ -986,9 +986,6 @@ export interface DenormalizedFetchRespone extends FetchResponseBase {
 // Return value of RemoteAPI FetchByFilter normalized = true
 export interface NormalizedFetchResponse extends FetchResponseBase {
   items: (MappedCaasItem | CaasApi_Item)[] // Mapped Items without resolved refs --> has no circles
-  resolvedReferences?: ResolvedReferencesInfo // Data about references/circles is stored here separately
-  referenceMap?: ReferencedItemsInfo // Data about references/circles is stored here separately
+  resolvedReferences?: ResolvedReferencesInfo
+  referenceMap?: ReferencedItemsInfo
 }
-
-// Util Function denormalizeResolvedReferences() maps  NormalizedFetchResponse -> FetchResponse
-// this must be called on the client --> PROXY Api (NOT REMOTE API)

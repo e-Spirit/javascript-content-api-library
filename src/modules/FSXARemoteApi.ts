@@ -604,9 +604,6 @@ export class FSXARemoteApi implements FSXAApi {
 
     if (!fetchResponse.items[0]) return null
 
-    // We cannot normalize here because the result needs to be sent over network
-    // --> needs to be stringifies
-    // --> must NOT contain strings
     const projectProperties = fetchResponse.items[0] as ProjectProperties
 
     if (!projectProperties.data) {
@@ -648,8 +645,9 @@ export class FSXARemoteApi implements FSXAApi {
       normalized,
     })) as NormalizedFetchResponse
 
+    // We need to normalize the data to be able to send it to the proxy api
     // we need to merge referenceMap, resolvedReferences from those 2 calls
-    // projectProperties <-- fetchedElements // needs to be done on client?
+    // from fetchedElements --> projectProperties
     if (normalized) {
       return this.fetchProjectPropertiesNormalized({
         fetchResponse,
