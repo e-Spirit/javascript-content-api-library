@@ -85,7 +85,7 @@ describe('CaaSMapper', () => {
       expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path, path2] })
     })
     it('should register a remote reference and return its remote reference key', () => {
-      const remotes = { remoteId: { id: 'remoteId', locale: 'de' } }
+      const remotes = { someName: { id: 'remoteId', locale: 'de' } }
       const api = createApi()
       api.remotes = remotes
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
@@ -94,10 +94,10 @@ describe('CaaSMapper', () => {
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
       expect(mapper._remoteReferences).toEqual({
-        remoteId: { [`${refId}.${remotes.remoteId.locale}`]: [path] },
+        remoteId: { [`${refId}.${remotes.someName.locale}`]: [path] },
       })
       expect(mapper._referencedItems).toEqual({})
-      expect(item).toEqual(`[REFERENCED-REMOTE-ITEM-${refId}.${remotes.remoteId.locale}]`)
+      expect(item).toEqual(`[REFERENCED-REMOTE-ITEM-${refId}.${remotes.someName.locale}]`)
     })
     it('should register a non-remote item if the remote project was not found', () => {
       const api = createApi()
@@ -295,7 +295,7 @@ describe('CaaSMapper', () => {
     })
 
     describe('CMS_INPUT_RADIOBUTTON', () => {
-      it('should return the value as-is', async () => {
+      it('should return the value as-is in addition to the correct Option keys', async () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         const entry: CaaSApi_CMSInputRadioButton = {
@@ -307,7 +307,12 @@ describe('CaaSMapper', () => {
           },
           fsType: 'CMS_INPUT_RADIOBUTTON',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(entry.value)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual({
+          type: 'Option',
+          key: entry.value!.identifier,
+          value: entry.value!.label,
+          ...entry.value,
+        })
       })
     })
 

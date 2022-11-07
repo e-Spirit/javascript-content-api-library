@@ -172,8 +172,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     )
   }
 
-  router.all('*', (_, res) => {
+  router.all('*', (req, res) => {
     logger.info('trying to resolve all routes')
+    logger.debug('Requested route:', req.route)
     return res.json({
       error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE,
     })
