@@ -15,7 +15,7 @@ import {
   ProjectProperties,
   CaasApi_Item,
   MappedCaasItem,
-  NormalizedProjectPropertyResponse,
+  NormalizedProjectPropertyResponse
 } from '../types'
 import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
 import { Logger, LogLevel } from './Logger'
@@ -38,7 +38,7 @@ export class FSXAProxyApi implements FSXAApi {
   private _baseUrl: string = this.baseUrl
   private _method = 'POST'
   private _headers = {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json'
   }
   private _logger: Logger
   private _enableEventStream: boolean = false
@@ -90,7 +90,7 @@ export class FSXAProxyApi implements FSXAApi {
     locale,
     additionalParams = {},
     remoteProject,
-    fetchOptions,
+    fetchOptions
   }: FetchElementParams): Promise<T> {
     const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
 
@@ -100,7 +100,7 @@ export class FSXAProxyApi implements FSXAApi {
       additionalParams,
       remote: remoteProject,
       filterContext,
-      normalized: true,
+      normalized: true
     }
     this._logger.debug('fetchElement', 'trying to fetch body', body)
 
@@ -110,8 +110,8 @@ export class FSXAProxyApi implements FSXAApi {
         method: this._method,
         headers: this._headers,
         body,
-        ...fetchOptions,
-      },
+        ...fetchOptions
+      }
     })
 
     if (!response.ok) {
@@ -129,7 +129,7 @@ export class FSXAProxyApi implements FSXAApi {
 
     mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
 
-    return mappedItems[0] as unknown as T
+    return (mappedItems[0] as unknown) as T
   }
 
   /**
@@ -157,7 +157,7 @@ export class FSXAProxyApi implements FSXAApi {
     additionalParams = {},
     remoteProject,
     fetchOptions,
-    sort = [],
+    sort = []
   }: FetchByFilterParams): Promise<FetchResponse> {
     if (pagesize < 1) {
       this._logger.warn(
@@ -182,11 +182,11 @@ export class FSXAProxyApi implements FSXAApi {
       sort,
       additionalParams: {
         ...additionalParams,
-        rep: 'hal',
+        rep: 'hal'
       },
       remote: remoteProject,
       filterContext,
-      normalized: true,
+      normalized: true
     }
     this._logger.debug('fetchByFilter', 'trying to fetch with body', body)
     const response = await this.fetch({
@@ -195,12 +195,12 @@ export class FSXAProxyApi implements FSXAApi {
         method: this._method,
         headers: this._headers,
         body,
-        ...fetchOptions,
-      },
+        ...fetchOptions
+      }
     })
     this._logger.info('fetchByFilter', 'response', {
       url: response.url,
-      status: response.status,
+      status: response.status
     })
 
     if (!response.ok) {
@@ -221,7 +221,7 @@ export class FSXAProxyApi implements FSXAApi {
       resolvedReferences!
     )
 
-    return { page, pagesize, totalPages, size, items }
+    return { page, pagesize, totalPages, size, items } as FetchResponse
   }
 
   /**
@@ -234,19 +234,19 @@ export class FSXAProxyApi implements FSXAApi {
   async fetchNavigation({
     initialPath,
     locale,
-    fetchOptions,
+    fetchOptions
   }: FetchNavigationParams): Promise<NavigationData | null> {
     this._logger.debug('fetchNavigation', 'start', {
       locale,
       initialPath,
-      filterContextProvider: this._filterContextProvider,
+      filterContextProvider: this._filterContextProvider
     })
 
     const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
     const body = {
       initialPath,
       locale,
-      filterContext,
+      filterContext
     }
     this._logger.debug('fetchNavigation', 'body', { body })
 
@@ -256,12 +256,12 @@ export class FSXAProxyApi implements FSXAApi {
         method: this._method,
         headers: this._headers,
         body,
-        ...fetchOptions,
-      },
+        ...fetchOptions
+      }
     })
     this._logger.debug('fetchNavigation', 'response', {
       url: response.url,
-      status: response.status,
+      status: response.status
     })
 
     if (!response.ok) {
@@ -285,7 +285,7 @@ export class FSXAProxyApi implements FSXAApi {
   async fetchProjectProperties({
     locale,
     resolver = ['GCAPage'],
-    fetchOptions,
+    fetchOptions
   }: FetchProjectPropertiesParams): Promise<ProjectProperties | null> {
     this._logger.debug('fetchProjectProperties', 'start', { locale })
 
@@ -294,7 +294,7 @@ export class FSXAProxyApi implements FSXAApi {
       locale,
       resolver,
       filterContext,
-      normalized: true,
+      normalized: true
     }
     this._logger.debug('fetchProjectProperties', 'trying to fetch body', body)
 
@@ -305,12 +305,12 @@ export class FSXAProxyApi implements FSXAApi {
         method: this._method,
         headers: this._headers,
         body,
-        ...fetchOptions,
-      },
+        ...fetchOptions
+      }
     })
     this._logger.debug('fetchProjectProperties', 'response', {
       url: response.url,
-      status: response.status,
+      status: response.status
     })
 
     if (!response.ok) {
@@ -323,8 +323,7 @@ export class FSXAProxyApi implements FSXAApi {
     }
     // We need to denormalize here
 
-    const data: NormalizedProjectPropertyResponse =
-      (await response.json()) as NormalizedProjectPropertyResponse
+    const data: NormalizedProjectPropertyResponse = (await response.json()) as NormalizedProjectPropertyResponse
 
     const denormalizedProjectPropertiesArray = denormalizeResolvedReferences(
       [data.projectProperties],
@@ -346,10 +345,10 @@ export class FSXAProxyApi implements FSXAApi {
     if (!denormalizedProjectProperties) return null
 
     //Insert fetched Data into projectProperties
-    resolveElements.forEach((element) => {
-      denormalizedProjectProperties.data[data.idToKeyMap[(element as any).id]] = (
-        element as any
-      ).data
+    resolveElements.forEach(element => {
+      denormalizedProjectProperties.data[
+        data.idToKeyMap[(element as any).id]
+      ] = (element as any).data
     })
 
     return denormalizedProjectProperties
@@ -389,7 +388,7 @@ export class FSXAProxyApi implements FSXAApi {
       options,
       isServer: typeof process === 'undefined' ? undefined : (process as any)?.server,
       isClient: typeof process === 'undefined' ? undefined : (process as any)?.client,
-      window: typeof window,
+      window: typeof window
     })
     return fetch(this.baseUrl + url, options as RequestInit)
   }
