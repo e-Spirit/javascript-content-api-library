@@ -5,13 +5,13 @@ import {
   LogLevel,
   ResolvedReferencesInfo,
   ReferencedItemsInfo,
-  MapResponse,
+  MapResponse
 } from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
-  EvaluationQueryOperatorEnum,
+  EvaluationQueryOperatorEnum
 } from './modules/QueryBuilder'
 import XMLParser from './modules/XMLParser'
 
@@ -891,8 +891,7 @@ export type RemoteProjectConfiguration = {
   }
 }
 
-export type RemoteProjectConfigurationEntry =
-  RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
+export type RemoteProjectConfigurationEntry = RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
 
 export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType
@@ -986,7 +985,7 @@ interface FetchResponseBase {
 }
 
 export interface DenormalizedFetchRespone extends FetchResponseBase {
-  items: (MappedCaasItem | CaasApi_Item)[]
+  items: (MappedCaasItem | CaasApi_Item)[] | unknown[]
   resolvedReferences: undefined
   referenceMap: undefined
 }
