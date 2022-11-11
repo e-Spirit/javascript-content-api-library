@@ -327,7 +327,7 @@ export class FSXAProxyApi implements FSXAApi {
       (await response.json()) as NormalizedProjectPropertyResponse
 
     if (!data) {
-      console.log('I HAVE FALSY DATA')
+      this._logger.debug('fetchProjectProperties', 'no data found')
       return null
     }
     const denormalizedProjectPropertiesArray = denormalizeResolvedReferences(
