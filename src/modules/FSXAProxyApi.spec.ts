@@ -295,5 +295,10 @@ describe('FSXAProxyAPI', () => {
       const actualResponse = await proxyApi.fetchProjectProperties({ locale })
       expect(actualResponse).toEqual(expectedResponse)
     })
+    it('should return null when the backend response is null', async () => {
+      fetchMock.mockResponseOnce('null', { status: 200 })
+      const actualRequest = await proxyApi.fetchProjectProperties({ locale })
+      return expect(actualRequest).toBe(null)
+    })
   })
 })
