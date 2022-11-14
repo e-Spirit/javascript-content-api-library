@@ -1,3 +1,10 @@
+## [10.6.7](https://github.com/e-Spirit/fsxa-api/compare/v10.6.6...v10.6.7) (2022-11-14)
+
+
+### Bug Fixes
+
+* **projectproperties:** handle circular references in project properties ([#136](https://github.com/e-Spirit/fsxa-api/issues/136)) ([d034563](https://github.com/e-Spirit/fsxa-api/commit/d03456304b4f1f68d179aed6c89b497654834181))
+
 ## [10.6.6](https://github.com/e-Spirit/fsxa-api/compare/v10.6.5...v10.6.6) (2022-11-04)
 
 
