@@ -422,7 +422,7 @@ describe('FSXARemoteAPI', () => {
       fetchMock.mockResponseOnce(JSON.stringify(data))
       remoteApi.fetchByFilter = jest
         .fn()
-        .mockResolvedValue({ page: 1, pagesize: 1, items: ['myItem'] } as FetchResponse)
+        .mockResolvedValue({ page: 1, pagesize: 1, items: ['myItem'] as any } as FetchResponse)
       await remoteApi.fetchElement({
         id: data.identifier,
         locale,

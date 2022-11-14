@@ -5,13 +5,13 @@ import {
   LogLevel,
   ResolvedReferencesInfo,
   ReferencedItemsInfo,
-  MapResponse,
+  MapResponse
 } from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
-  EvaluationQueryOperatorEnum,
+  EvaluationQueryOperatorEnum
 } from './modules/QueryBuilder'
 import XMLParser from './modules/XMLParser'
 
@@ -891,8 +891,7 @@ export type RemoteProjectConfiguration = {
   }
 }
 
-export type RemoteProjectConfigurationEntry =
-  RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
+export type RemoteProjectConfigurationEntry = RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
 
 export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType
@@ -952,6 +951,16 @@ export interface FSXAProxyApiConfig {
   enableEventStream?: boolean
 }
 
+export type NormalizedProjectPropertyResponse = {
+  projectProperties: ProjectProperties
+  projectPropertiesResolvedReferences: NormalizedFetchResponse['resolvedReferences']
+  projectPropertiesReferenceMap: NormalizedFetchResponse['referenceMap']
+  resolveItems: NormalizedFetchResponse['items']
+  resolveResolvedReferences: NormalizedFetchResponse['resolvedReferences']
+  resolveReferenceMap: NormalizedFetchResponse['referenceMap']
+  idToKeyMap: Record<string, string>
+}
+
 export interface FSXAApi {
   mode: 'proxy' | 'remote'
   fetchElement: <T = Page | GCAPage | Dataset | Image | any | null>(
@@ -961,16 +970,29 @@ export interface FSXAApi {
   fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
-  ) => Promise<ProjectProperties | null>
+  ) => Promise<ProjectProperties | NormalizedProjectPropertyResponse | null>
   enableEventStream: (enable?: boolean) => boolean
 }
 
-export interface FetchResponse {
+// Return value of RemoteAPI FetchByFilter normalized = false
+export type FetchResponse = DenormalizedFetchRespone | NormalizedFetchResponse
+
+interface FetchResponseBase {
   page: number
   pagesize: number
   totalPages?: number
   size?: number
-  items: unknown[]
+}
+
+export interface DenormalizedFetchRespone extends FetchResponseBase {
+  items: (MappedCaasItem | CaasApi_Item)[] | unknown[]
+  resolvedReferences: undefined
+  referenceMap: undefined
+}
+
+// Return value of RemoteAPI FetchByFilter normalized = true
+export interface NormalizedFetchResponse extends FetchResponseBase {
+  items: (MappedCaasItem | CaasApi_Item)[] // Mapped Items without resolved refs --> has no circles
   resolvedReferences?: ResolvedReferencesInfo
   referenceMap?: ReferencedItemsInfo
 }
