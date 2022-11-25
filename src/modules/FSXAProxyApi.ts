@@ -212,16 +212,24 @@ export class FSXAProxyApi implements FSXAApi {
       }
     }
 
-    const jsonRes = (await response.json()) as FetchResponse
-    let { referenceMap, items, resolvedReferences, totalPages, size } = jsonRes
+    const contentType = response.headers.get('content-type')
 
-    items = denormalizeResolvedReferences(
-      items as (CaasApi_Item | MappedCaasItem)[],
-      referenceMap!,
-      resolvedReferences!
-    )
+    console.log('contentType', contentType)
 
-    return { page, pagesize, totalPages, size, items } as FetchResponse
+    if (contentType && contentType.includes('application/json')) {
+      const jsonRes = (await response.json()) as FetchResponse
+      let { referenceMap, items, resolvedReferences, totalPages, size } = jsonRes
+
+      items = denormalizeResolvedReferences(
+        items as (CaasApi_Item | MappedCaasItem)[],
+        referenceMap!,
+        resolvedReferences!
+      )
+
+      return { page, pagesize, totalPages, size, items } as FetchResponse
+    }
+
+    return { page, pagesize, totalPages: 0, size: 0, items: [] } as FetchResponse
   }
 
   /**
