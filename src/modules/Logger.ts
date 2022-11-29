@@ -31,6 +31,10 @@ export class Logger {
     this._name = name
   }
 
+  get logLevel() {
+    return this._logLevel
+  }
+
   debug(...args: any[]) {
     if (this._logLevel <= LogLevel.DEBUG) {
       console.info(
