@@ -518,6 +518,7 @@ export interface Page {
   data: DataEntries
   meta: DataEntries
   metaPageRef?: DataEntries
+  remoteProjectId?: string
 }
 
 export interface Reference {
@@ -594,6 +595,7 @@ export interface GCAPage {
   children: PageBody[]
   data: DataEntries
   meta: DataEntries
+  remoteProjectId?: string
 }
 
 export interface ProjectProperties {
@@ -604,6 +606,7 @@ export interface ProjectProperties {
   layout: string
   data: DataEntries
   meta: DataEntries
+  remoteProjectId?: string
 }
 
 export interface Content2Section {
@@ -644,6 +647,7 @@ export interface Dataset {
   data: DataEntries
   route: string
   routes: DatasetRoute[]
+  remoteProjectId?: string
   locale: string
 }
 
@@ -663,6 +667,7 @@ export interface Image {
       url: string
     }
   }
+  remoteProjectId?: string
 }
 
 export interface File {
@@ -678,6 +683,7 @@ export interface File {
     mimeType: string
     encoding: string | null
   }
+  remoteProjectId?: string
 }
 
 export interface RegisteredDatasetQuery {
@@ -699,10 +705,19 @@ export type CustomMapper = (
   utils: {
     api: FSXARemoteApi
     xmlParser: XMLParser
-    registerReferencedItem: (identifier: string, path: NestedPath) => string
-    buildPreviewId: (identifier: string) => string
+    registerReferencedItem: (
+      identifier: string,
+      path: NestedPath,
+      remoteProjectId?: string
+    ) => string
+    buildPreviewId: (identifier: string, remoteProjectLocale?: string) => string
     buildMediaUrl: (url: string, rev?: number) => string
-    mapDataEntries: (entries: CaaSApi_DataEntries, path: NestedPath) => Promise<DataEntries>
+    mapDataEntries: (
+      entries: CaaSApi_DataEntries,
+      path: NestedPath,
+      remoteProjectLocale?: string,
+      remoteProjectId?: string
+    ) => Promise<DataEntries>
   }
 ) => Promise<any>
 

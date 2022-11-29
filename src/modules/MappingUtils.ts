@@ -1,14 +1,15 @@
 import { set } from 'lodash'
 import { CaasApi_Item, MappedCaasItem } from '../types'
-import { ResolvedReferencesInfo, ReferencedItemsInfo, CaaSMapper } from './CaaSMapper'
+import { ResolvedReferencesInfo, ReferencedItemsInfo } from './CaaSMapper'
 
-const getItemId = (item: MappedCaasItem | CaasApi_Item): string => {
+const getItemId = (item: MappedCaasItem | CaasApi_Item, remoteProjectId?: string): string => {
+  const projectPrefix = remoteProjectId ? `${remoteProjectId}#` : ''
   if ((item as CaasApi_Item).fsType === 'ProjectProperties') {
     const caasApiItem = item as CaasApi_Item
     const locale = caasApiItem._id.split('.')[1]
-    return `${(item as CaasApi_Item).identifier}.${locale}`
+    return `${projectPrefix}${(item as CaasApi_Item).identifier}.${locale}`
   }
-  return (item as MappedCaasItem).previewId || (item as CaasApi_Item)?._id
+  return `${projectPrefix}${(item as MappedCaasItem).previewId || (item as CaasApi_Item)?._id}`
 }
 
 // we use a query function, because ids get mixed up:

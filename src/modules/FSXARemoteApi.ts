@@ -131,14 +131,23 @@ export class FSXARemoteApi implements FSXAApi {
     }
   }
 
-  private getRemoteProject(remoteProject: string) {
+  private getRemoteProjectById(remoteProjectId: string) {
     const remoteProjectConfig = Object.values(this._remotes)
-    const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProject)
+    const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProjectId)
     if (!foundRemoteProject) {
       throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
     }
 
-    return remoteProject
+    return remoteProjectId
+  }
+
+  private getRemoteConfigById(remoteProjectId: string) {
+    const remoteProjectConfig = Object.values(this._remotes)
+    const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProjectId)
+    if (!foundRemoteProject) {
+      throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
+    }
+    return foundRemoteProject
   }
 
   /**
@@ -156,7 +165,7 @@ export class FSXARemoteApi implements FSXAApi {
   buildCaaSUrl({
     id,
     locale,
-    remoteProject,
+    remoteProject: remoteProjectId,
     additionalParams,
     filters,
     page,
@@ -164,8 +173,8 @@ export class FSXARemoteApi implements FSXAApi {
     sort,
   }: buildCaaSUrlParams = {}) {
     let project = this.projectID
-    if (remoteProject) {
-      project = this.getRemoteProject(remoteProject)
+    if (remoteProjectId) {
+      project = this.getRemoteProjectById(remoteProjectId)
     }
 
     let baseURL = `${this.caasURL}/${this.tenantID}/${project}.${this.contentMode}.content`
@@ -451,7 +460,7 @@ export class FSXARemoteApi implements FSXAApi {
       page = 1,
       pagesize = 30,
       additionalParams = {},
-      remoteProject,
+      remoteProject: remoteProjectId,
       fetchOptions,
       filterContext,
       sort = [],
@@ -474,7 +483,7 @@ export class FSXARemoteApi implements FSXAApi {
         ...additionalParams,
         rep: 'hal',
       },
-      remoteProject,
+      remoteProject: remoteProjectId,
       locale,
       page,
       pagesize,
@@ -505,15 +514,10 @@ export class FSXARemoteApi implements FSXAApi {
 
     const unmappedItems =
       !data._embedded || !data._embedded['rh:doc'] ? [] : data._embedded['rh:doc']
-    if (unmappedItems.length === 0) {
-      return {
-        page,
-        pagesize,
-        totalPages: data['_total_pages'],
-        size: data['_size'],
-        items: [],
-      }
-    }
+
+    const remoteProjectLocale = remoteProjectId
+      ? this.getRemoteConfigById(remoteProjectId).locale
+      : undefined
 
     let mapperLocale = locale
     if (!mapperLocale) {
@@ -534,7 +538,9 @@ export class FSXARemoteApi implements FSXAApi {
     let { mappedItems, referenceMap, resolvedReferences } = await mapper.mapFilterResponse(
       unmappedItems,
       additionalParams,
-      filterContext
+      filterContext,
+      remoteProjectLocale,
+      remoteProjectId
     )
 
     if (this._caasItemFilter) {
