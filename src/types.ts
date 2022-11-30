@@ -5,13 +5,13 @@ import {
   LogLevel,
   ResolvedReferencesInfo,
   ReferencedItemsInfo,
-  MapResponse
+  MapResponse,
 } from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
-  EvaluationQueryOperatorEnum
+  EvaluationQueryOperatorEnum,
 } from './modules/QueryBuilder'
 import XMLParser from './modules/XMLParser'
 
@@ -357,6 +357,10 @@ export interface CaaSApi_Dataset {
   formData: CaaSApi_DataEntries
   route: string
   routes: DatasetRoute[]
+  locale: {
+    language: string
+    country: string
+  }
 }
 
 export interface CaaSApi_Section {
@@ -640,6 +644,7 @@ export interface Dataset {
   data: DataEntries
   route: string
   routes: DatasetRoute[]
+  locale: string
 }
 
 export interface Image {
@@ -848,7 +853,7 @@ export type SortParams = {
 
 export type FetchByFilterParams = {
   filters: QueryBuilderQuery[]
-  locale: string
+  locale?: string
   page?: number
   pagesize?: number
   additionalParams?: Record<'keys' | string, any>
@@ -891,7 +896,8 @@ export type RemoteProjectConfiguration = {
   }
 }
 
-export type RemoteProjectConfigurationEntry = RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
+export type RemoteProjectConfigurationEntry =
+  RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
 
 export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType

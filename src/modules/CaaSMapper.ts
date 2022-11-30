@@ -608,6 +608,7 @@ export class CaaSMapper {
       routes: dataset.routes,
       template: dataset.template?.uid,
       children: [],
+      locale: dataset.locale.language + '_' + dataset.locale.country,
     }
   }
 

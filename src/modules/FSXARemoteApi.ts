@@ -18,7 +18,7 @@ import {
   CaasApi_Item,
   RemoteProjectConfiguration,
   NormalizedFetchResponse,
-  NormalizedProjectPropertyResponse
+  NormalizedProjectPropertyResponse,
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
 import { FSXAApiErrors } from './../enums'
@@ -91,7 +91,7 @@ export class FSXARemoteApi implements FSXAApi {
     maxReferenceDepth,
     customMapper,
     filterOptions,
-    logLevel = LogLevel.ERROR
+    logLevel = LogLevel.ERROR,
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
     this.caasURL = caasURL
@@ -117,7 +117,7 @@ export class FSXARemoteApi implements FSXAApi {
       contentMode,
       customMapper: this._customMapper,
       navigationItemFilter: this._navigationItemFilter,
-      caasItemFilter: this._caasItemFilter
+      caasItemFilter: this._caasItemFilter,
     })
   }
 
@@ -127,13 +127,13 @@ export class FSXARemoteApi implements FSXAApi {
    */
   get authorizationHeader() {
     return {
-      authorization: `apikey="${this.apikey}"`
+      authorization: `apikey="${this.apikey}"`,
     }
   }
 
   private getRemoteProject(remoteProject: string) {
     const remoteProjectConfig = Object.values(this._remotes)
-    const foundRemoteProject = remoteProjectConfig.find(config => config.id === remoteProject)
+    const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProject)
     if (!foundRemoteProject) {
       throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
     }
@@ -161,7 +161,7 @@ export class FSXARemoteApi implements FSXAApi {
     filters,
     page,
     pagesize,
-    sort
+    sort,
   }: buildCaaSUrlParams = {}) {
     let project = this.projectID
     if (remoteProject) {
@@ -191,13 +191,13 @@ export class FSXARemoteApi implements FSXAApi {
           {
             operator: ComparisonQueryOperatorEnum.EQUALS,
             value: locale.split('_')[0],
-            field: 'locale.language'
+            field: 'locale.language',
           },
           {
             operator: ComparisonQueryOperatorEnum.EQUALS,
             value: locale.split('_')[1],
-            field: 'locale.country'
-          }
+            field: 'locale.country',
+          },
         ]
       }
       const allFilters = [...filters, ...localeFilter]
@@ -205,7 +205,7 @@ export class FSXARemoteApi implements FSXAApi {
 
       const query = this._queryBuilder
         .buildAll(allFilters)
-        .map(v => encodeURIComponent(JSON.stringify(v)))
+        .map((v) => encodeURIComponent(JSON.stringify(v)))
 
       if (query) {
         params.push('filter=' + query.join('&filter='))
@@ -284,17 +284,17 @@ export class FSXARemoteApi implements FSXAApi {
     locale,
     initialPath,
     fetchOptions,
-    filterContext
+    filterContext,
   }: FetchNavigationParams): Promise<NavigationData | null> {
     this._logger.debug('fetchNavigation', 'start', {
       locale,
       initialPath,
-      filterContext
+      filterContext,
     })
     let encodedInitialPath = undefined
     if (initialPath) {
       const forbiddenChars = ['?', '#']
-      if (forbiddenChars.some(char => initialPath.includes(char))) {
+      if (forbiddenChars.some((char) => initialPath.includes(char))) {
         // error is unknown so that we don't give away how our encoding works
         this._logger.error('[fetchNavigation] Forbidden char in initial path')
         throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
@@ -304,18 +304,23 @@ export class FSXARemoteApi implements FSXAApi {
     const url = this.buildNavigationServiceUrl({
       initialPath: encodedInitialPath,
       locale,
-      all: true
+      all: true,
     })
     const headers = {
-      'Accept-Language': '*'
+      'Accept-Language': '*',
     }
     this._logger.debug('fetchNavigation', 'url', url)
     const response = await fetch(url, {
       headers,
-      ...fetchOptions
+      ...fetchOptions,
     })
     this._logger.debug('fetchNavigation', 'response', response.status)
     if (!response.ok) {
+      this._logger.error('Error while fetching navigation', {
+        url,
+        status: response.status,
+        body: await response.text(),
+      })
       switch (response.status) {
         case 404:
           throw new Error(FSXAApiErrors.NOT_FOUND)
@@ -333,7 +338,7 @@ export class FSXARemoteApi implements FSXAApi {
     }
     const navigation = await response.json()
     const idMap = navigation.idMap
-    const routes = Object.keys(idMap).map(route => idMap[route])
+    const routes = Object.keys(idMap).map((route) => idMap[route])
     this._logger.debug(
       'fetchNavigation',
       'getFilteredNavigation',
@@ -343,7 +348,7 @@ export class FSXARemoteApi implements FSXAApi {
 
     const filteredRoutes = await this._navigationItemFilter!({
       navigationItems: routes,
-      filterContext
+      filterContext,
     })
     this._logger.debug(
       'fetchNavigation',
@@ -352,7 +357,7 @@ export class FSXARemoteApi implements FSXAApi {
       filteredRoutes.length
     )
 
-    const allowedRouteIds = filteredRoutes.map(item => item.id)
+    const allowedRouteIds = filteredRoutes.map((item) => item.id)
     const seo = removeFromSeoRouteMap(navigation.seoRouteMap, allowedRouteIds)
     const structure = removeFromStructure(navigation.structure, allowedRouteIds)
     const filteredIdMap = removeFromIdMap(navigation.idMap, allowedRouteIds)
@@ -379,17 +384,21 @@ export class FSXARemoteApi implements FSXAApi {
     remoteProject,
     fetchOptions,
     filterContext,
-    normalized = false
+    normalized = false,
   }: FetchElementParams): Promise<any> {
     locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
-    const { items, referenceMap = {}, resolvedReferences = {} } = await this.fetchByFilter({
+    const {
+      items,
+      referenceMap = {},
+      resolvedReferences = {},
+    } = await this.fetchByFilter({
       filters: [{ field: 'identifier', operator: ComparisonQueryOperatorEnum.EQUALS, value: id }],
       additionalParams,
       remoteProject,
       fetchOptions,
       filterContext,
       normalized: true,
-      locale
+      locale,
     })
 
     if (items.length === 0) {
@@ -446,21 +455,10 @@ export class FSXARemoteApi implements FSXAApi {
       fetchOptions,
       filterContext,
       sort = [],
-      normalized = false
+      normalized = false,
     }: FetchByFilterParams,
     mapper?: CaaSMapper
   ): Promise<FetchResponse> {
-    mapper =
-      mapper ||
-      new CaaSMapper(
-        this as FSXARemoteApi,
-        locale,
-        {
-          customMapper: this._customMapper,
-          maxReferenceDepth: this._maxReferenceDepth
-        },
-        new Logger(this._logLevel, 'CaaSMapper')
-      )
     // we need this in order to pass CaaSMapper context
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
@@ -474,18 +472,18 @@ export class FSXARemoteApi implements FSXAApi {
       filters,
       additionalParams: {
         ...additionalParams,
-        rep: 'hal'
+        rep: 'hal',
       },
       remoteProject,
       locale,
       page,
       pagesize,
-      sort
+      sort,
     })
 
     const caasApiResponse = await fetch(url, {
       headers: this.authorizationHeader,
-      ...fetchOptions
+      ...fetchOptions,
     })
 
     if (!caasApiResponse.ok) {
@@ -507,7 +505,32 @@ export class FSXARemoteApi implements FSXAApi {
 
     const unmappedItems =
       !data._embedded || !data._embedded['rh:doc'] ? [] : data._embedded['rh:doc']
+    if (unmappedItems.length === 0) {
+      return {
+        page,
+        pagesize,
+        totalPages: data['_total_pages'],
+        size: data['_size'],
+        items: [],
+      }
+    }
 
+    let mapperLocale = locale
+    if (!mapperLocale) {
+      mapperLocale = unmappedItems[0].locale.language + '_' + unmappedItems[0].locale.country
+    }
+
+    mapper =
+      mapper ||
+      new CaaSMapper(
+        this as FSXARemoteApi,
+        mapperLocale,
+        {
+          customMapper: this._customMapper,
+          maxReferenceDepth: this._maxReferenceDepth,
+        },
+        new Logger(this._logLevel, 'CaaSMapper')
+      )
     let { mappedItems, referenceMap, resolvedReferences } = await mapper.mapFilterResponse(
       unmappedItems,
       additionalParams,
@@ -532,7 +555,7 @@ export class FSXARemoteApi implements FSXAApi {
         ? mappedItems
         : denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences),
       ...(normalized && { referenceMap }),
-      ...(normalized && { resolvedReferences })
+      ...(normalized && { resolvedReferences }),
     }
   }
 
@@ -545,10 +568,10 @@ export class FSXARemoteApi implements FSXAApi {
     this._logger.debug(
       'fetchByFilter',
       'caasItemFilter is defined, filtering items',
-      mappedItems.map(caasItem => {
+      mappedItems.map((caasItem) => {
         return {
           type: (caasItem as any).type,
-          id: (caasItem as any).id
+          id: (caasItem as any).id,
         }
       })
     )
@@ -557,7 +580,7 @@ export class FSXARemoteApi implements FSXAApi {
       mappedItems,
       referenceMap,
       resolvedReferences,
-      filterContext
+      filterContext,
     })
   }
 
@@ -577,7 +600,7 @@ export class FSXARemoteApi implements FSXAApi {
     additionalParams = {},
     resolve = ['GCAPage'],
     filterContext,
-    normalized = false
+    normalized = false,
   }: {
     locale: string
     additionalParams?: Record<string, any>
@@ -590,13 +613,13 @@ export class FSXARemoteApi implements FSXAApi {
         {
           field: 'fsType',
           value: 'ProjectProperties',
-          operator: ComparisonQueryOperatorEnum.EQUALS
-        }
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+        },
       ],
       locale,
       additionalParams,
       filterContext,
-      normalized
+      normalized,
     })) as NormalizedFetchResponse
 
     if (!fetchResponse.items[0]) return null
@@ -613,11 +636,11 @@ export class FSXARemoteApi implements FSXAApi {
     // We need to match keys from projectSettings to ElementIds later to insert them directly
     const idToKeyMap: Record<string, string> = {}
 
-    const objectKeysToResolve = Object.keys(projectProperties.data).filter(key =>
+    const objectKeysToResolve = Object.keys(projectProperties.data).filter((key) =>
       resolve.includes(projectProperties.data[key]?.referenceType)
     )
 
-    const idsToFetch = objectKeysToResolve.map(key => {
+    const idsToFetch = objectKeysToResolve.map((key) => {
       idToKeyMap[projectProperties.data[key].referenceId] = key
       return projectProperties.data[key].referenceId
     })
@@ -631,15 +654,15 @@ export class FSXARemoteApi implements FSXAApi {
     const {
       items: resolveItems,
       referenceMap: resolveReferenceMap,
-      resolvedReferences: resolveResolvedReferences
+      resolvedReferences: resolveResolvedReferences,
     } = (await this.fetchByFilter({
       locale: locale,
       filters: [
-        { field: 'identifier', operator: ComparisonQueryOperatorEnum.IN, value: idsToFetch }
+        { field: 'identifier', operator: ComparisonQueryOperatorEnum.IN, value: idsToFetch },
       ],
       pagesize: 100,
       filterContext,
-      normalized
+      normalized,
     })) as NormalizedFetchResponse
 
     // We need to normalize the data to be able to send it to the proxy api
@@ -652,12 +675,12 @@ export class FSXARemoteApi implements FSXAApi {
         resolveItems,
         resolveReferenceMap,
         resolveResolvedReferences,
-        idToKeyMap
+        idToKeyMap,
       })
     }
 
     //Insert fetched Data into projectProperties
-    resolveItems.forEach(element => {
+    resolveItems.forEach((element) => {
       projectProperties.data[idToKeyMap[(element as any).id]] = (element as any).data
     })
 
@@ -670,7 +693,7 @@ export class FSXARemoteApi implements FSXAApi {
     resolveItems,
     resolveReferenceMap,
     resolveResolvedReferences,
-    idToKeyMap
+    idToKeyMap,
   }: {
     fetchResponse: NormalizedFetchResponse
     projectProperties: ProjectProperties
@@ -681,7 +704,7 @@ export class FSXARemoteApi implements FSXAApi {
   }) {
     const {
       resolvedReferences: projectPropertiesResolvedReferences,
-      referenceMap: projectPropertiesReferenceMap
+      referenceMap: projectPropertiesReferenceMap,
     } = fetchResponse
 
     return {
@@ -691,7 +714,7 @@ export class FSXARemoteApi implements FSXAApi {
       resolveItems,
       resolveReferenceMap,
       resolveResolvedReferences,
-      idToKeyMap
+      idToKeyMap,
     } as NormalizedProjectPropertyResponse
   }
 
@@ -704,7 +727,7 @@ export class FSXARemoteApi implements FSXAApi {
     const url = `${this.caasURL}/_logic/securetoken?tenant=${this.tenantID}`
     this._logger.info('fetchSecureToken', url)
     const response = await fetch(url, {
-      headers: this.authorizationHeader
+      headers: this.authorizationHeader,
     })
     if (!response.ok) {
       if (response.status === 404) {
@@ -729,7 +752,7 @@ export class FSXARemoteApi implements FSXAApi {
 
   private buildStringifiedQueryParams(params: Record<'keys' | string, any>) {
     const result: Record<string, any> = {}
-    Object.keys(params).forEach(key => {
+    Object.keys(params).forEach((key) => {
       if (Array.isArray(params[key])) {
         result[key] = params[key].map(JSON.stringify)
       } else if (typeof params[key] === 'object') {
@@ -741,7 +764,7 @@ export class FSXARemoteApi implements FSXAApi {
     return stringify(result, {
       indices: false,
       encode: true,
-      encoder: encodeURIComponent
+      encoder: encodeURIComponent,
     })
   }
 
@@ -857,7 +880,7 @@ export class FSXARemoteApi implements FSXAApi {
    */
   public set remotes(value: RemoteProjectConfiguration) {
     const keys = Object.keys(value)
-    keys.forEach(key => {
+    keys.forEach((key) => {
       const { id, locale } = value[key]
       if (!id) {
         throw new Error(FSXAApiErrors.MISSING_REMOTE_ID)

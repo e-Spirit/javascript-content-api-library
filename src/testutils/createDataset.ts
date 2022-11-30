@@ -23,6 +23,10 @@ export const createDataset = (id?: string): CaaSApi_Dataset => {
       ...template,
       fsType: 'PageTemplate',
     },
+    locale: {
+      language: 'de',
+      country: 'DE',
+    },
   }
 }
 
