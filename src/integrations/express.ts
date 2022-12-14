@@ -33,7 +33,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 
       if (!req.body || req.body.locale == null) {
         logger.error(FETCH_ELEMENT_ROUTE, 'missing locale', req.body)
-        return res.json({
+        return res.status(400).json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
       }
@@ -70,7 +70,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 
       if (req.body.locale == null) {
         logger.error(FETCH_NAVIGATION_ROUTE, 'missing locale', req.body)
-        return res.json({
+        return res.status(400).json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
       }
@@ -99,12 +99,6 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     async (req: express.Request<any, any, FetchByFilterBody>, res) => {
       logger.info('Received POST on route', FETCH_BY_FILTER_ROUTE)
       logger.debug('POST request body', req.body)
-      if (!req.body || req.body.locale == null) {
-        logger.error(FETCH_BY_FILTER_ROUTE, 'missing locale', req.body)
-        return res.json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
-        })
-      }
 
       try {
         const response = await api.fetchByFilter({
@@ -138,7 +132,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       logger.debug('POST request body', req.body)
       if (!req.body || req.body.locale == null) {
         logger.error(FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE, 'missing locale', req.body)
-        return res.json({
+        return res.status(400).json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
       }
@@ -173,8 +167,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   }
 
   router.all('*', (req, res) => {
-    logger.info('trying to resolve all routes')
-    logger.debug('Requested route:', req.route)
+    logger.info('Requested unknown route', req.route)
     return res.json({
       error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE,
     })

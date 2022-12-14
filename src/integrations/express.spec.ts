@@ -144,14 +144,6 @@ describe('Express-Integration', () => {
       })
     })
 
-    it('should return an error, when locale is not specified', async () => {
-      expect(
-        await (await fetch(`http://localhost:${PORT}/elements/foobar`, { method: 'POST' })).json()
-      ).toEqual({
-        error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
-      })
-    })
-
     it('should pass through response data', async () => {
       expect(
         await proxyApi.fetchElement({
@@ -278,14 +270,6 @@ describe('Express-Integration', () => {
       })
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(5)
       expect(fetchByFilterSpy.mock.calls[4][0].additionalParams).toEqual(additionalParams)
-    })
-
-    it('should return an error, when locale is not specified', async () => {
-      expect(
-        await (await fetch(`http://localhost:${PORT}/filter`, { method: 'POST' })).json()
-      ).toEqual({
-        error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
-      })
     })
   })
 
