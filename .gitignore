@@ -14,3 +14,4 @@ docs
 validate.js
 examples/index.ts
 *.tgz
+.editorconfig
