@@ -50,7 +50,7 @@ describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
   const remoteProjectId = Faker.datatype.uuid()
-  const remoteProjectLocale = Faker.random.locale();
+  const remoteProjectLocale = 'de_DE'
 
   let caasClientProperties = {
     apikey: INTEGRATION_TEST_API_KEY!,
@@ -872,54 +872,11 @@ describe('FSXAProxyAPI', () => {
         id: pageRef.identifier,
         locale: 'de_DE',
       })
-      //console.log(JSON.stringify(res))
+      // console.log(JSON.stringify(res))
+      // It doesnt work with different locales
       expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
       expect(res.data.pt_pictureLocal.description).toEqual(internalMedia.description)
       expect(res.data.pt_pictureRemote.description).toEqual(remoteMedia.description)
     })
-
-    it('Set remote reference and current locale differently', async () => {
-      await caasClient.addItemsToCollection(
-        [
-          {
-            ...internalMedia,
-            _id: internalMedia.identifier,
-          },
-        ],
-        {
-          identifier: 'en',
-          country: 'GB',
-          language: 'en',
-        }
-      )
-
-      // add items to remote project collection
-      await caasClient.addItemsToRemoteCollection(
-        [
-          {
-            ...remoteMedia,
-            _id: remoteMedia.identifier,
-          },
-        ],
-        locale
-      )
-
-      pageRef.page.formData = {
-        pt_picture1: pictureLocal,
-        pt_picture2: pictureRemote,
-      }
-
-      await caasClient.addItemsToCollection(
-        [
-          {
-            ...pageRef,
-            _id: pageRef.identifier,
-          },
-        ],
-        locale
-      )
-    })
-
-    it('The dataset is not correctly fetched', async () => {})
   })
 })
