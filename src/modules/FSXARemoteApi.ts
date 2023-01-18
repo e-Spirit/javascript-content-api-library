@@ -325,6 +325,11 @@ export class FSXARemoteApi implements FSXAApi {
     })
     this._logger.debug('fetchNavigation', 'response', response.status)
     if (!response.ok) {
+      this._logger.error('Error while fetching navigation', {
+        url,
+        status: response.status,
+        body: await response.text(),
+      })
       switch (response.status) {
         case 404:
           throw new Error(FSXAApiErrors.NOT_FOUND)
@@ -463,17 +468,6 @@ export class FSXARemoteApi implements FSXAApi {
     }: FetchByFilterParams,
     mapper?: CaaSMapper
   ): Promise<FetchResponse> {
-    mapper =
-      mapper ||
-      new CaaSMapper(
-        this as FSXARemoteApi,
-        locale,
-        {
-          customMapper: this._customMapper,
-          maxReferenceDepth: this._maxReferenceDepth,
-        },
-        new Logger(this._logLevel, 'CaaSMapper')
-      )
     // we need this in order to pass CaaSMapper context
     if (pagesize < 1) {
       this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
@@ -525,6 +519,22 @@ export class FSXARemoteApi implements FSXAApi {
       ? this.getRemoteConfigById(remoteProjectId).locale
       : undefined
 
+    let mapperLocale = locale
+    if (!mapperLocale) {
+      mapperLocale = unmappedItems[0].locale.language + '_' + unmappedItems[0].locale.country
+    }
+
+    mapper =
+      mapper ||
+      new CaaSMapper(
+        this as FSXARemoteApi,
+        mapperLocale,
+        {
+          customMapper: this._customMapper,
+          maxReferenceDepth: this._maxReferenceDepth,
+        },
+        new Logger(this._logLevel, 'CaaSMapper')
+      )
     let { mappedItems, referenceMap, resolvedReferences } = await mapper.mapFilterResponse(
       unmappedItems,
       additionalParams,

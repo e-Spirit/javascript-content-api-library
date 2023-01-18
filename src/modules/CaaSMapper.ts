@@ -779,6 +779,7 @@ export class CaaSMapper {
       template: dataset.template?.uid,
       children: [],
       remoteProjectId,
+      locale: dataset.locale.language + '_' + dataset.locale.country,
     }
   }
 

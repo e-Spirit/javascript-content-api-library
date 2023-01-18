@@ -1,3 +1,10 @@
+# [10.7.0](https://github.com/e-Spirit/fsxa-api/compare/v10.6.7...v10.7.0) (2022-12-14)
+
+
+### Features
+
+* **fetchbyfilter:** make locale parameter of fetchByFilter function optional ([#140](https://github.com/e-Spirit/fsxa-api/issues/140)) ([f658c9d](https://github.com/e-Spirit/fsxa-api/commit/f658c9d32f11cb8676a1938d37377ff19bfe5dcd))
+
 ## [10.6.7](https://github.com/e-Spirit/fsxa-api/compare/v10.6.6...v10.6.7) (2022-11-14)
 
 

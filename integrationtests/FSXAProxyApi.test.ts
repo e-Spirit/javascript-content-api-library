@@ -49,6 +49,14 @@ const startSever = (app: Express) =>
 describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
+  let caasClientProperties = {
+    apikey: INTEGRATION_TEST_API_KEY!,
+    caasURL: INTEGRATION_TEST_CAAS!,
+    projectID: randomProjectID,
+    tenantID: tenantID,
+    contentMode: FSXAContentMode.PREVIEW,
+    remoteProjectId: Faker.datatype.uuid(),
+  }
   const remoteApi = new FSXARemoteApi({
     apikey: INTEGRATION_TEST_API_KEY!,
     caasURL: INTEGRATION_TEST_CAAS!,
@@ -73,13 +81,7 @@ describe('FSXAProxyAPI', () => {
     proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
 
     // create instance of caas client to easily read and write testing data to caas
-    caasClient = await CaasTestingClient.init({
-      apikey: INTEGRATION_TEST_API_KEY!,
-      caasURL: INTEGRATION_TEST_CAAS!,
-      projectID: randomProjectID,
-      tenantID: tenantID,
-      contentMode: FSXAContentMode.PREVIEW,
-    })
+    caasClient = await CaasTestingClient.init(caasClientProperties)
   })
   afterAll(async () => {
     const res = await caasClient.getCollection()
@@ -798,5 +800,123 @@ describe('FSXAProxyAPI', () => {
         }
       })
     })
+  })
+  describe('RemoteProjects', () => {
+    const locale = {
+      identifier: 'de_DE',
+      country: 'DE',
+      language: 'de',
+    }
+    const mediaId = Faker.datatype.uuid()
+    const remoteProjectId = Faker.datatype.uuid()
+    const internalMedia = createMediaPicture(mediaId)
+    const remoteMedia = createMediaPicture(mediaId)
+    const pageRef = createPageRef([createPageRefBody()])
+    const picture1 = createMediaPictureReference(mediaId)
+    const picture2 = createMediaPictureReference(mediaId, remoteProjectId)
+
+    internalMedia.description = 'internal media'
+    remoteMedia.description = 'remote media'
+
+    it('should have same uid for both media', async () => {
+      await caasClient.addItemsToCollection(
+        [
+          {
+            ...internalMedia,
+            _id: internalMedia.identifier,
+          },
+        ],
+        locale
+      )
+
+      // add items to remote project collection
+      await caasClient.addItemsToRemoteCollection(
+        [
+          {
+            ...remoteMedia,
+            _id: remoteMedia.identifier,
+          },
+        ],
+        locale,
+        remoteProjectId
+      )
+
+      pageRef.page.formData = {
+        pt_picture1: picture1,
+        pt_picture2: picture2,
+      }
+
+      // console.log(JSON.stringify(pageRef))
+
+      await caasClient.addItemsToCollection(
+        [
+          {
+            ...pageRef,
+            _id: pageRef.identifier,
+          },
+        ],
+        {
+          identifier: 'de',
+          country: 'DE',
+          language: 'de',
+        }
+      )
+
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+
+      //@TODO: fix expectation, the response is not correct
+
+      // expect(res.data.picture1.uid).toEqual(res.data.formData.picture2.uid)
+
+      console.log(JSON.stringify(res))
+    })
+
+    it('Set remote reference and current locale differently', async () => {
+      await caasClient.addItemsToCollection(
+        [
+          {
+            ...internalMedia,
+            _id: internalMedia.identifier,
+          },
+        ],
+        {
+          identifier: 'en',
+          country: 'GB',
+          language: 'en',
+        }
+      )
+
+      // add items to remote project collection
+      await caasClient.addItemsToRemoteCollection(
+        [
+          {
+            ...remoteMedia,
+            _id: remoteMedia.identifier,
+          },
+        ],
+        locale,
+        remoteProjectId
+      )
+
+      pageRef.page.formData = {
+        pt_picture1: picture1,
+        pt_picture2: picture2,
+      }
+
+      await caasClient.addItemsToCollection(
+        [
+          {
+            ...pageRef,
+            _id: pageRef.identifier,
+          },
+        ],
+        locale
+      )
+    })
+
+    it('The dataset is not correctly fetched', async () => {})
   })
 })

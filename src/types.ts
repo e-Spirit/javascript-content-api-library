@@ -357,6 +357,10 @@ export interface CaaSApi_Dataset {
   formData: CaaSApi_DataEntries
   route: string
   routes: DatasetRoute[]
+  locale: {
+    language: string
+    country: string
+  }
 }
 
 export interface CaaSApi_Section {
@@ -644,6 +648,7 @@ export interface Dataset {
   route: string
   routes: DatasetRoute[]
   remoteProjectId?: string
+  locale: string
 }
 
 export interface Image {
@@ -863,7 +868,7 @@ export type SortParams = {
 
 export type FetchByFilterParams = {
   filters: QueryBuilderQuery[]
-  locale: string
+  locale?: string
   page?: number
   pagesize?: number
   additionalParams?: Record<'keys' | string, any>

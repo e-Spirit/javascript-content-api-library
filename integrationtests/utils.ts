@@ -17,6 +17,7 @@ interface CaaSTestingClientData {
   apikey: string
   projectID: string
   contentMode: FSXAContentMode
+  remoteProjectId?: string
 }
 
 /**
@@ -24,15 +25,18 @@ interface CaaSTestingClientData {
  */
 export class CaasTestingClient {
   baseUrl: string
+  remoteBaseUrl: string | undefined
   headers: HeadersInit
   projectId: string
   contentMode: FSXAContentMode
+  caasTestingClientData: CaaSTestingClientData
 
   private constructor(CaaSTestingClientData: CaaSTestingClientData) {
     this.headers = {
       Authorization: `apikey="${CaaSTestingClientData.apikey}"`,
       'Content-Type': 'application/json',
     }
+    this.caasTestingClientData = CaaSTestingClientData
     this.projectId = CaaSTestingClientData.projectID
     this.contentMode = CaaSTestingClientData.contentMode
     this.baseUrl = `${CaaSTestingClientData.caasURL}/${CaaSTestingClientData.tenantID}/${CaaSTestingClientData.projectID}.${CaaSTestingClientData.contentMode}.content`
@@ -47,6 +51,10 @@ export class CaasTestingClient {
     const caasClient = new CaasTestingClient(CaaSTestingClientData)
     await caasClient.createCollection()
     return caasClient
+  }
+
+  setProjectRemoteId(remoteProjectId: string) {
+    this.baseUrl = `${this.caasTestingClientData.caasURL}/${this.caasTestingClientData.tenantID}/${remoteProjectId}.${this.caasTestingClientData.contentMode}.content`
   }
 
   /**
@@ -160,16 +168,41 @@ export class CaasTestingClient {
    * @returns Http Response
    */
   async addItemsToCollection(docs: CaasApi_Item[], locale: Locale) {
+    return this.addItemsToCollectionWithBaseUrl(docs, locale, this.baseUrl)
+  }
+
+  /*
+   * Bulk post docs to collection in integration test database in CaaS
+   * @param docs docs to add
+   * @param locale locale object with identifier, country and language
+   * @returns Http Response
+   */
+  private async addItemsToCollectionWithBaseUrl(
+    docs: CaasApi_Item[],
+    locale: Locale,
+    baseUrl: string
+  ) {
     const docsWithLocale = docs.map((doc) => {
       const docWithLocale: any = { ...doc }
       docWithLocale.locale = locale
       docWithLocale._id = doc.identifier + `.${locale.language}_${locale.country}`
       return docWithLocale
     })
-    return await fetch(this.baseUrl, {
+    return await fetch(baseUrl, {
       method: RequestMethodEnum.POST,
       headers: this.headers,
       body: JSON.stringify(docsWithLocale) || null,
     })
+  }
+
+  /*
+   * Bulk post docs to collection in integration test database in CaaS Remote Project
+   * @param docs docs to add
+   * @param locale locale object with identifier, country and language
+   * @returns Http Response
+   */
+  async addItemsToRemoteCollection(docs: CaasApi_Item[], locale: Locale, remoteProjectId: string) {
+    const baseUrl = `${this.caasTestingClientData.caasURL}/${this.caasTestingClientData.tenantID}/${remoteProjectId}.${this.caasTestingClientData.contentMode}.content`
+    return this.addItemsToCollectionWithBaseUrl(docs, locale, baseUrl)
   }
 }
