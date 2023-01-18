@@ -237,6 +237,7 @@ export class FSXARemoteApi implements FSXAApi {
     if (params.length) {
       encodedBaseURL += `?${params.join('&')}`
     }
+    this._logger.debug(`[buildCaaSUrl] built URL:`, encodedBaseURL)
 
     return encodedBaseURL
   }

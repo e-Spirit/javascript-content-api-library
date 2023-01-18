@@ -49,14 +49,18 @@ const startSever = (app: Express) =>
 describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
+  const remoteProjectId = Faker.datatype.uuid()
+  const remoteProjectLocale = Faker.random.locale();
+
   let caasClientProperties = {
     apikey: INTEGRATION_TEST_API_KEY!,
     caasURL: INTEGRATION_TEST_CAAS!,
     projectID: randomProjectID,
     tenantID: tenantID,
     contentMode: FSXAContentMode.PREVIEW,
-    remoteProjectId: Faker.datatype.uuid(),
+    remoteProjectId,
   }
+
   const remoteApi = new FSXARemoteApi({
     apikey: INTEGRATION_TEST_API_KEY!,
     caasURL: INTEGRATION_TEST_CAAS!,
@@ -64,7 +68,9 @@ describe('FSXAProxyAPI', () => {
     navigationServiceURL: 'https://your-navigationservice.e-spirit.cloud/navigation'!,
     projectID: randomProjectID,
     tenantID: tenantID,
-    remotes: {},
+    remotes: {
+      media: { id: remoteProjectId, locale: remoteProjectLocale },
+    },
     logLevel: LogLevel.INFO,
     enableEventStream: false,
   })
@@ -808,17 +814,17 @@ describe('FSXAProxyAPI', () => {
       language: 'de',
     }
     const mediaId = Faker.datatype.uuid()
-    const remoteProjectId = Faker.datatype.uuid()
+
     const internalMedia = createMediaPicture(mediaId)
-    const remoteMedia = createMediaPicture(mediaId)
+    const remoteMedia = createMediaPicture(mediaId, remoteProjectLocale)
     const pageRef = createPageRef([createPageRefBody()])
-    const picture1 = createMediaPictureReference(mediaId)
-    const picture2 = createMediaPictureReference(mediaId, remoteProjectId)
+    const pictureLocal = createMediaPictureReference(mediaId)
+    const pictureRemote = createMediaPictureReference(mediaId, remoteProjectId)
 
     internalMedia.description = 'internal media'
     remoteMedia.description = 'remote media'
 
-    it('should have same uid for both media', async () => {
+    it('should have same id for both media, but different description', async () => {
       await caasClient.addItemsToCollection(
         [
           {
@@ -829,6 +835,8 @@ describe('FSXAProxyAPI', () => {
         locale
       )
 
+      const [language, country] = remoteProjectLocale.split('_')
+
       // add items to remote project collection
       await caasClient.addItemsToRemoteCollection(
         [
@@ -837,15 +845,13 @@ describe('FSXAProxyAPI', () => {
             _id: remoteMedia.identifier,
           },
         ],
-        locale,
-        remoteProjectId
+        { language, country, identifier: remoteProjectLocale }
       )
 
       pageRef.page.formData = {
-        pt_picture1: picture1,
-        pt_picture2: picture2,
+        pt_pictureLocal: pictureLocal,
+        pt_pictureRemote: pictureRemote,
       }
-
       // console.log(JSON.stringify(pageRef))
 
       await caasClient.addItemsToCollection(
@@ -866,12 +872,10 @@ describe('FSXAProxyAPI', () => {
         id: pageRef.identifier,
         locale: 'de_DE',
       })
-
-      //@TODO: fix expectation, the response is not correct
-
-      // expect(res.data.picture1.uid).toEqual(res.data.formData.picture2.uid)
-
-      console.log(JSON.stringify(res))
+      //console.log(JSON.stringify(res))
+      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
+      expect(res.data.pt_pictureLocal.description).toEqual(internalMedia.description)
+      expect(res.data.pt_pictureRemote.description).toEqual(remoteMedia.description)
     })
 
     it('Set remote reference and current locale differently', async () => {
@@ -897,13 +901,12 @@ describe('FSXAProxyAPI', () => {
             _id: remoteMedia.identifier,
           },
         ],
-        locale,
-        remoteProjectId
+        locale
       )
 
       pageRef.page.formData = {
-        pt_picture1: picture1,
-        pt_picture2: picture2,
+        pt_picture1: pictureLocal,
+        pt_picture2: pictureRemote,
       }
 
       await caasClient.addItemsToCollection(

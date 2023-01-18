@@ -25,11 +25,13 @@ interface CaaSTestingClientData {
  */
 export class CaasTestingClient {
   baseUrl: string
-  remoteBaseUrl: string | undefined
   headers: HeadersInit
   projectId: string
   contentMode: FSXAContentMode
   caasTestingClientData: CaaSTestingClientData
+
+  remoteProjectId: string | undefined
+  remoteBaseUrl: string | undefined
 
   private constructor(CaaSTestingClientData: CaaSTestingClientData) {
     this.headers = {
@@ -40,6 +42,11 @@ export class CaasTestingClient {
     this.projectId = CaaSTestingClientData.projectID
     this.contentMode = CaaSTestingClientData.contentMode
     this.baseUrl = `${CaaSTestingClientData.caasURL}/${CaaSTestingClientData.tenantID}/${CaaSTestingClientData.projectID}.${CaaSTestingClientData.contentMode}.content`
+
+    if (CaaSTestingClientData.remoteProjectId) {
+      this.remoteProjectId = CaaSTestingClientData.remoteProjectId
+      this.remoteBaseUrl = `${CaaSTestingClientData.caasURL}/${CaaSTestingClientData.tenantID}/${CaaSTestingClientData.remoteProjectId}.${CaaSTestingClientData.contentMode}.content`
+    }
   }
 
   /**
@@ -50,11 +57,9 @@ export class CaasTestingClient {
   static async init(CaaSTestingClientData: CaaSTestingClientData) {
     const caasClient = new CaasTestingClient(CaaSTestingClientData)
     await caasClient.createCollection()
+    CaaSTestingClientData.remoteProjectId &&
+      (await caasClient.createCollection(CaaSTestingClientData.remoteProjectId))
     return caasClient
-  }
-
-  setProjectRemoteId(remoteProjectId: string) {
-    this.baseUrl = `${this.caasTestingClientData.caasURL}/${this.caasTestingClientData.tenantID}/${remoteProjectId}.${this.caasTestingClientData.contentMode}.content`
   }
 
   /**
@@ -67,7 +72,18 @@ export class CaasTestingClient {
       headers: this.headers,
     })
   }
-
+  /**
+   * Get remote collection from integration test database in CaaS
+   * @returns Http Response | undefined
+   */
+  async getRemoteCollection() {
+    return this.remoteBaseUrl
+      ? await fetch(this.remoteBaseUrl, {
+          method: RequestMethodEnum.GET,
+          headers: this.headers,
+        })
+      : undefined
+  }
   /**
    * Get item from integration test database in CaaS
    * @param identifier Name of item to get
@@ -85,8 +101,10 @@ export class CaasTestingClient {
    * Create collection in integration test database in CaaS
    * @returns Http Response
    */
-  async createCollection() {
-    return await fetch(this.baseUrl, {
+  async createCollection(projectId?: string) {
+    const adjustedUrl = projectId ? this.baseUrl.replace(this.projectId, projectId) : this.baseUrl
+
+    return await fetch(adjustedUrl, {
       method: RequestMethodEnum.PUT,
       headers: this.headers,
     })
@@ -105,6 +123,23 @@ export class CaasTestingClient {
         'If-Match': etag,
       },
     })
+  }
+
+  /**
+   * Delete collection from integration test database in CaaS
+   * @param etag Etag of colleciton to delete
+   * @returns Http Response | undefined
+   */
+  async removeRemoteCollection(etag: string) {
+    return this.remoteBaseUrl
+      ? await fetch(this.remoteBaseUrl, {
+          method: RequestMethodEnum.DELETE,
+          headers: {
+            ...this.headers,
+            'If-Match': etag,
+          },
+        })
+      : undefined
   }
 
   /**
@@ -199,10 +234,11 @@ export class CaasTestingClient {
    * Bulk post docs to collection in integration test database in CaaS Remote Project
    * @param docs docs to add
    * @param locale locale object with identifier, country and language
-   * @returns Http Response
+   * @returns Http Response | undefined
    */
-  async addItemsToRemoteCollection(docs: CaasApi_Item[], locale: Locale, remoteProjectId: string) {
-    const baseUrl = `${this.caasTestingClientData.caasURL}/${this.caasTestingClientData.tenantID}/${remoteProjectId}.${this.caasTestingClientData.contentMode}.content`
-    return this.addItemsToCollectionWithBaseUrl(docs, locale, baseUrl)
+  async addItemsToRemoteCollection(docs: CaasApi_Item[], locale: Locale) {
+    return this.remoteBaseUrl
+      ? this.addItemsToCollectionWithBaseUrl(docs, locale, this.remoteBaseUrl)
+      : undefined
   }
 }
