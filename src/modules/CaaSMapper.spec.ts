@@ -1149,7 +1149,7 @@ describe('CaaSMapper', () => {
       ])
     })
 
-    it.only('should show or not displayed property in section', async () => {
+    it('should show or not displayed property in section', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const section1: CaaSApi_Section = createSection()
       const section2: CaaSApi_Section = createSection()
