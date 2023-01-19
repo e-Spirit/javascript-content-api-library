@@ -50,7 +50,7 @@ describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
   const remoteProjectId = Faker.datatype.uuid()
-  const remoteProjectLocale = 'de_DE'
+  const remoteProjectLocale = 'en_EN'
 
   let caasClientProperties = {
     apikey: INTEGRATION_TEST_API_KEY!,
@@ -818,13 +818,22 @@ describe('FSXAProxyAPI', () => {
     const internalMedia = createMediaPicture(mediaId)
     const remoteMedia = createMediaPicture(mediaId, remoteProjectLocale)
     const pageRef = createPageRef([createPageRefBody()])
-    const pictureLocal = createMediaPictureReference(mediaId)
+    const pictureInternal = createMediaPictureReference(mediaId)
     const pictureRemote = createMediaPictureReference(mediaId, remoteProjectId)
 
-    internalMedia.description = 'internal media'
-    remoteMedia.description = 'remote media'
+    // create dataset
+    const dataset = createDataset('ds-id')
+    const datasetReference = createDatasetReference('ds-id')
 
-    it('should have same id for both media, but different description', async () => {
+    beforeAll(async () => {
+      // add different descriptions to differentiate between internal and remote media
+      internalMedia.description = 'internal media'
+      remoteMedia.description = 'remote media'
+
+      remoteMedia.metaFormData = {
+        md_dataset: datasetReference,
+      }
+
       await caasClient.addItemsToCollection(
         [
           {
@@ -844,15 +853,15 @@ describe('FSXAProxyAPI', () => {
             ...remoteMedia,
             _id: remoteMedia.identifier,
           },
+          dataset,
         ],
         { language, country, identifier: remoteProjectLocale }
       )
 
       pageRef.page.formData = {
-        pt_pictureLocal: pictureLocal,
+        pt_pictureInternal: pictureInternal,
         pt_pictureRemote: pictureRemote,
       }
-      // console.log(JSON.stringify(pageRef))
 
       await caasClient.addItemsToCollection(
         [
@@ -867,16 +876,22 @@ describe('FSXAProxyAPI', () => {
           language: 'de',
         }
       )
+    })
 
+    it('remote media with same UUID as local media should be resolvable, internal project and remote project locale can be different', async () => {
       const res: Page = await proxyAPI.fetchElement({
         id: pageRef.identifier,
         locale: 'de_DE',
       })
-      // console.log(JSON.stringify(res))
-      // It doesnt work with different locales
-      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
-      expect(res.data.pt_pictureLocal.description).toEqual(internalMedia.description)
-      expect(res.data.pt_pictureRemote.description).toEqual(remoteMedia.description)
+
+      expect(res.data.pt_pictureInternal.id).toEqual(res.data.pt_pictureRemote.id)
+    })
+    it('Dataset references on metadata of remote media should be fetchable', async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(dataset.identifier)
     })
   })
 })
