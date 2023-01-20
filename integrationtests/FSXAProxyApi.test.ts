@@ -50,7 +50,7 @@ describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
   const remoteProjectId = Faker.datatype.uuid()
-  const remoteProjectLocale = 'en_EN'
+  const remoteProjectLocale = Faker.random.locale()
 
   let caasClientProperties = {
     apikey: INTEGRATION_TEST_API_KEY!,
@@ -815,10 +815,10 @@ describe('FSXAProxyAPI', () => {
     }
     const mediaId = Faker.datatype.uuid()
 
-    const internalMedia = createMediaPicture(mediaId)
+    const localMedia = createMediaPicture(mediaId, locale.identifier)
     const remoteMedia = createMediaPicture(mediaId, remoteProjectLocale)
     const pageRef = createPageRef([createPageRefBody()])
-    const pictureInternal = createMediaPictureReference(mediaId)
+    const pictureLocal = createMediaPictureReference(mediaId)
     const pictureRemote = createMediaPictureReference(mediaId, remoteProjectId)
 
     // create dataset
@@ -826,8 +826,8 @@ describe('FSXAProxyAPI', () => {
     const datasetReference = createDatasetReference('ds-id')
 
     beforeAll(async () => {
-      // add different descriptions to differentiate between internal and remote media
-      internalMedia.description = 'internal media'
+      // add different descriptions to differentiate between local and remote media
+      localMedia.description = 'local media'
       remoteMedia.description = 'remote media'
 
       remoteMedia.metaFormData = {
@@ -837,8 +837,8 @@ describe('FSXAProxyAPI', () => {
       await caasClient.addItemsToCollection(
         [
           {
-            ...internalMedia,
-            _id: internalMedia.identifier,
+            ...localMedia,
+            _id: localMedia.identifier,
           },
         ],
         locale
@@ -859,7 +859,7 @@ describe('FSXAProxyAPI', () => {
       )
 
       pageRef.page.formData = {
-        pt_pictureInternal: pictureInternal,
+        pt_pictureLocal: pictureLocal,
         pt_pictureRemote: pictureRemote,
       }
 
@@ -878,13 +878,16 @@ describe('FSXAProxyAPI', () => {
       )
     })
 
-    it('remote media with same UUID as local media should be resolvable, internal project and remote project locale can be different', async () => {
+    it('remote media with same UUID as local media should be resolvable, local project and remote project locale can be different', async () => {
       const res: Page = await proxyAPI.fetchElement({
         id: pageRef.identifier,
         locale: 'de_DE',
       })
+      console.log(JSON.stringify(res))
+      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
+      expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
+      expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
 
-      expect(res.data.pt_pictureInternal.id).toEqual(res.data.pt_pictureRemote.id)
     })
     it('Dataset references on metadata of remote media should be fetchable', async () => {
       const res: Page = await proxyAPI.fetchElement({
