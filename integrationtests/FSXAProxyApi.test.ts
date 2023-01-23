@@ -883,11 +883,9 @@ describe('FSXAProxyAPI', () => {
         id: pageRef.identifier,
         locale: 'de_DE',
       })
-      console.log(JSON.stringify(res))
       expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
       expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
       expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
-
     })
     it('Dataset references on metadata of remote media should be fetchable', async () => {
       const res: Page = await proxyAPI.fetchElement({
