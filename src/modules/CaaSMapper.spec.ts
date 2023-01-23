@@ -1149,34 +1149,37 @@ describe('CaaSMapper', () => {
       ])
     })
 
-    it('should show or not displayed property in section', async () => {
+    it('given missing displayed property in source should not contain displayed property in result', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
-      const section1: CaaSApi_Section = createSection()
-      const section2: CaaSApi_Section = createSection()
-      section1.displayed = true
-      await expect(mapper.mapSection(section1, createPath())).resolves.toEqual({
-        id: section1.identifier,
+      const section: CaaSApi_Section = createSection()
+      await expect(mapper.mapSection(section, createPath())).resolves.toEqual({
+        id: section.identifier,
         type: 'Section',
-        sectionType: section1.template.uid,
+        sectionType: section.template.uid,
         previewId: expect.any(String),
         data: {
-          v1: (section1.formData.v1 as CaaSApi_CMSInputNumber).value,
-          v2: (section1.formData.v2 as CaaSApi_CMSInputNumber).value,
+          v1: (section.formData.v1 as CaaSApi_CMSInputNumber).value,
+          v2: (section.formData.v2 as CaaSApi_CMSInputNumber).value,
+        },
+        children: [],
+      })
+    })
+
+    it('given displayed property in source should contain displayed property in mapping result', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const section: CaaSApi_Section = createSection()
+      section.displayed = true
+      await expect(mapper.mapSection(section, createPath())).resolves.toEqual({
+        id: section.identifier,
+        type: 'Section',
+        sectionType: section.template.uid,
+        previewId: expect.any(String),
+        data: {
+          v1: (section.formData.v1 as CaaSApi_CMSInputNumber).value,
+          v2: (section.formData.v2 as CaaSApi_CMSInputNumber).value,
         },
         children: [],
         displayed: true,
-      })
-
-      await expect(mapper.mapSection(section2, createPath())).resolves.toEqual({
-        id: section2.identifier,
-        type: 'Section',
-        sectionType: section2.template.uid,
-        previewId: expect.any(String),
-        data: {
-          v1: (section2.formData.v1 as CaaSApi_CMSInputNumber).value,
-          v2: (section2.formData.v2 as CaaSApi_CMSInputNumber).value,
-        },
-        children: [],
       })
     })
   })
