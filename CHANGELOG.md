@@ -1,3 +1,10 @@
+# [10.8.0](https://github.com/e-Spirit/fsxa-api/compare/v10.7.0...v10.8.0) (2023-01-24)
+
+
+### Features
+
+* **caasmapper:** map the 'displayed' property of sections ([#138](https://github.com/e-Spirit/fsxa-api/issues/138)) ([6c5a9f4](https://github.com/e-Spirit/fsxa-api/commit/6c5a9f4dc487c2ae08d79c003e255198f3ca2319))
+
 # [10.7.0](https://github.com/e-Spirit/fsxa-api/compare/v10.6.7...v10.7.0) (2022-12-14)
 
 
