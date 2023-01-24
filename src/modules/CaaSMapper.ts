@@ -11,9 +11,10 @@ import {
   CaaSApi_ImageMapAreaCircle,
   CaaSApi_ImageMapAreaPoly,
   CaaSApi_ImageMapAreaRect,
+  CaasApi_Item,
+  CaaSApi_Media,
   CaaSApi_Media_File,
   CaaSApi_Media_Picture,
-  CaaSApi_Media,
   CaaSApi_PageRef,
   CaaSAPI_PermissionGroup,
   CaaSApi_ProjectProperties,
@@ -33,6 +34,7 @@ import {
   ImageMapAreaPoly,
   ImageMapAreaRect,
   Link,
+  MappedCaasItem,
   NestedPath,
   Option,
   Page,
@@ -43,11 +45,9 @@ import {
   PermissionGroup,
   ProjectProperties,
   Reference,
+  RemoteProjectConfigurationEntry,
   RichTextElement,
   Section,
-  CaasApi_Item,
-  MappedCaasItem,
-  RemoteProjectConfigurationEntry,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, update } from 'lodash'
@@ -88,6 +88,14 @@ export class CaaSMapper {
   referenceDepth: number
   maxReferenceDepth: number
   resolvedReferences: ResolvedReferencesInfo = {}
+  // stores references to items of current Project
+  _referencedItems: ReferencedItemsInfo = {}
+  // stores the forced resolution for image map media, which could applied after reference resolving
+  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
+  // stores References to remote Items
+  _remoteReferences: {
+    [projectId: string]: ReferencedItemsInfo
+  } = {}
 
   constructor(
     api: FSXARemoteApi,
@@ -111,23 +119,6 @@ export class CaaSMapper {
     this.maxReferenceDepth = utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
 
     this.logger.debug('Created new CaaSMapper')
-  }
-
-  // stores references to items of current Project
-  _referencedItems: ReferencedItemsInfo = {}
-  // stores the forced resolution for image map media, which could applied after reference resolving
-  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
-  // stores References to remote Items
-  _remoteReferences: {
-    [projectId: string]: ReferencedItemsInfo
-  } = {}
-
-  private getRemoteConfigForProject(
-    projectId?: string
-  ): RemoteProjectConfigurationEntry | undefined {
-    return projectId
-      ? Object.values(this.api.remotes || {}).find((entry) => entry.id === projectId)
-      : undefined
   }
 
   addToResolvedReferences(item: MappedCaasItem | CaasApi_Item) {
@@ -425,6 +416,7 @@ export class CaaSMapper {
       sectionType: section.template.uid,
       previewId: this.buildPreviewId(section.identifier),
       data: await this.mapDataEntries(section.formData, [...path, 'data']),
+      displayed: section.displayed,
       children: [],
     }
   }
@@ -814,5 +806,13 @@ export class CaaSMapper {
         )
       )
     }
+  }
+
+  private getRemoteConfigForProject(
+    projectId?: string
+  ): RemoteProjectConfigurationEntry | undefined {
+    return projectId
+      ? Object.values(this.api.remotes || {}).find((entry) => entry.id === projectId)
+      : undefined
   }
 }

@@ -1,17 +1,17 @@
 import { FSXAContentMode, ImageMapAreaType } from './enums'
 import {
-  FSXARemoteApi,
   FSXAProxyApi,
+  FSXARemoteApi,
   LogLevel,
-  ResolvedReferencesInfo,
-  ReferencedItemsInfo,
   MapResponse,
+  ReferencedItemsInfo,
+  ResolvedReferencesInfo,
 } from './modules'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
-  LogicalQueryOperatorEnum,
   EvaluationQueryOperatorEnum,
+  LogicalQueryOperatorEnum,
 } from './modules/QueryBuilder'
 import XMLParser from './modules/XMLParser'
 
@@ -370,6 +370,7 @@ export interface CaaSApi_Section {
   identifier: string
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
+  displayed?: boolean
 }
 
 export interface CaaSApi_SectionReference {
@@ -379,6 +380,7 @@ export interface CaaSApi_SectionReference {
   identifier: string
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
+  displayed?: boolean
 }
 
 export interface CaaSApi_Body {
@@ -401,6 +403,7 @@ export interface CaaSApi_GCAPage {
   metaFormData: CaaSApi_DataEntries
   children: CaaSApi_Body[]
 }
+
 export interface CaaSApi_ProjectProperties {
   _id: string
   fsType: 'ProjectProperties'
@@ -630,6 +633,7 @@ export interface Section {
   previewId: string
   sectionType: string
   data: DataEntries
+  displayed?: boolean
   children: Section[]
 }
 
