@@ -11,9 +11,10 @@ import {
   CaaSApi_ImageMapAreaCircle,
   CaaSApi_ImageMapAreaPoly,
   CaaSApi_ImageMapAreaRect,
+  CaasApi_Item,
+  CaaSApi_Media,
   CaaSApi_Media_File,
   CaaSApi_Media_Picture,
-  CaaSApi_Media,
   CaaSApi_PageRef,
   CaaSAPI_PermissionGroup,
   CaaSApi_ProjectProperties,
@@ -33,6 +34,7 @@ import {
   ImageMapAreaPoly,
   ImageMapAreaRect,
   Link,
+  MappedCaasItem,
   NestedPath,
   Option,
   Page,
@@ -43,11 +45,9 @@ import {
   PermissionGroup,
   ProjectProperties,
   Reference,
+  RemoteProjectConfigurationEntry,
   RichTextElement,
   Section,
-  CaasApi_Item,
-  MappedCaasItem,
-  RemoteProjectConfigurationEntry,
 } from '../types'
 import { parseISO } from 'date-fns'
 import { chunk, update } from 'lodash'
@@ -88,6 +88,14 @@ export class CaaSMapper {
   referenceDepth: number
   maxReferenceDepth: number
   resolvedReferences: ResolvedReferencesInfo = {}
+  // stores references to items of current Project
+  _referencedItems: ReferencedItemsInfo = {}
+  // stores the forced resolution for image map media, which could applied after reference resolving
+  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
+  // stores References to remote Items
+  _remoteReferences: {
+    [projectId: string]: ReferencedItemsInfo
+  } = {}
 
   constructor(
     api: FSXARemoteApi,
@@ -108,29 +116,16 @@ export class CaaSMapper {
     )
     this.logger = logger
     this.referenceDepth = utils.referenceDepth ?? 0
-    this.maxReferenceDepth = utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
+    this.maxReferenceDepth =
+      utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
 
     this.logger.debug('Created new CaaSMapper')
   }
 
-  // stores references to items of current Project
-  _referencedItems: ReferencedItemsInfo = {}
-  // stores the forced resolution for image map media, which could applied after reference resolving
-  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
-  // stores References to remote Items
-  _remoteReferences: {
-    [projectId: string]: ReferencedItemsInfo
-  } = {}
-
-  private getRemoteConfigForProject(
-    projectId?: string
-  ): RemoteProjectConfigurationEntry | undefined {
-    return projectId
-      ? Object.values(this.api.remotes || {}).find((entry) => entry.id === projectId)
-      : undefined
-  }
-
-  addToResolvedReferences(item: MappedCaasItem | CaasApi_Item, remoteProjectId?: string) {
+  addToResolvedReferences(
+    item: MappedCaasItem | CaasApi_Item,
+    remoteProjectId?: string
+  ) {
     // Page has pageId as id instead of PageRef Id. --> use refId instead for mapped Pages
     const id = getItemId(item, remoteProjectId)
     if (id) {
@@ -147,13 +142,18 @@ export class CaaSMapper {
    * @param remoteProjectConfiguration remoteProjectConfig
    * @returns uuid of form {id}.{locale} or {remoteProjectId}#{id}.{locale}
    */
-  unifyId(id: string, remoteProjectConfiguration?: RemoteProjectConfigurationEntry) {
+  unifyId(
+    id: string,
+    remoteProjectConfiguration?: RemoteProjectConfigurationEntry
+  ) {
     const indexOfSeparator = id.indexOf('.')
     const remoteLocale = remoteProjectConfiguration?.locale
     let idWithLocale
     if (indexOfSeparator > 0) {
       // id has form {id}.{locale}. Override Locale if set
-      idWithLocale = remoteLocale ? `${id.substring(0, indexOfSeparator)}.${remoteLocale}` : id
+      idWithLocale = remoteLocale
+        ? `${id.substring(0, indexOfSeparator)}.${remoteLocale}`
+        : id
     } else {
       // id has form {id}. transform to {id}.{locale}
       idWithLocale = `${id}.${remoteLocale || this.locale}`
@@ -171,7 +171,11 @@ export class CaaSMapper {
    * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
    * @returns placeholder string
    */
-  registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
+  registerReferencedItem(
+    identifier: string,
+    path: NestedPath,
+    remoteProjectId?: string
+  ): string {
     const remoteData = this.getRemoteConfigForProject(remoteProjectId)
     const remoteProjectKey = remoteData?.id
 
@@ -199,7 +203,10 @@ export class CaaSMapper {
       return `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
     }
 
-    this._referencedItems[unifiedId] = [...(this._referencedItems[unifiedId] || []), path]
+    this._referencedItems[unifiedId] = [
+      ...(this._referencedItems[unifiedId] || []),
+      path,
+    ]
     return `[REFERENCED-ITEM-${unifiedId}]`
   }
 
@@ -234,7 +241,11 @@ export class CaaSMapper {
     switch (entry.fsType) {
       case 'CMS_INPUT_COMBOBOX':
         const comboboxOption: Option | null = entry.value
-          ? { type: 'Option', key: entry.value.identifier, value: entry.value.label }
+          ? {
+              type: 'Option',
+              key: entry.value.identifier,
+              value: entry.value.label,
+            }
           : null
         return comboboxOption
       case 'CMS_INPUT_DOM':
@@ -265,7 +276,9 @@ export class CaaSMapper {
           : null
         return radiobuttonOption
       case 'CMS_INPUT_DATE':
-        const dateValue: Date | null = entry.value ? parseISO(entry.value) : null
+        const dateValue: Date | null = entry.value
+          ? parseISO(entry.value)
+          : null
         return dateValue
       case 'CMS_INPUT_LINK':
         const link: Link | null = entry.value
@@ -291,14 +304,24 @@ export class CaaSMapper {
         if (!entry.value) return []
         return Promise.all(
           entry.value.map((childEntry, index) =>
-            this.mapDataEntry(childEntry, [...path, index], remoteProjectLocale, remoteProjectId)
+            this.mapDataEntry(
+              childEntry,
+              [...path, index],
+              remoteProjectLocale,
+              remoteProjectId
+            )
           )
         )
       case 'CMS_INPUT_CHECKBOX':
         if (!entry.value) return []
         return Promise.all(
           entry.value.map((childEntry, index) =>
-            this.mapDataEntry(childEntry, [...path, index], remoteProjectLocale, remoteProjectId)
+            this.mapDataEntry(
+              childEntry,
+              [...path, index],
+              remoteProjectLocale,
+              remoteProjectId
+            )
           )
         )
       case 'CMS_INPUT_IMAGEMAP':
@@ -316,11 +339,20 @@ export class CaaSMapper {
         if (Array.isArray(entry.value)) {
           return Promise.all(
             entry.value.map((childEntry, index) =>
-              this.mapDataEntry(childEntry, [...path, index], remoteProjectLocale, remoteProjectId)
+              this.mapDataEntry(
+                childEntry,
+                [...path, index],
+                remoteProjectLocale,
+                remoteProjectId
+              )
             )
           )
         } else if (entry.value.fsType === 'DatasetReference') {
-          return this.registerReferencedItem(entry.value.target.identifier, path, remoteProjectId)
+          return this.registerReferencedItem(
+            entry.value.target.identifier,
+            path,
+            remoteProjectId
+          )
         }
         return null
       case 'CMS_INPUT_TOGGLE':
@@ -345,7 +377,10 @@ export class CaaSMapper {
               case 'PageTemplate':
                 return {
                   id: card.identifier,
-                  previewId: this.buildPreviewId(card.identifier, remoteProjectLocale),
+                  previewId: this.buildPreviewId(
+                    card.identifier,
+                    remoteProjectLocale
+                  ),
                   template: card.template.uid,
                   data: await this.mapDataEntries(
                     card.formData,
@@ -383,9 +418,14 @@ export class CaaSMapper {
         if (entry.dapType === 'DatasetDataAccessPlugin') {
           return entry.value
             .map((record, index) => {
-              const identifier: string | undefined = record?.value?.target?.identifier
+              const identifier: string | undefined =
+                record?.value?.target?.identifier
               if (!identifier) return null
-              return this.registerReferencedItem(identifier, [...path, index], remoteProjectId)
+              return this.registerReferencedItem(
+                identifier,
+                [...path, index],
+                remoteProjectId
+              )
             })
             .filter(Boolean)
         }
@@ -404,8 +444,12 @@ export class CaaSMapper {
           name: entry.name,
           value: entry.value.map((activity) => {
             return {
-              allowed: activity.allowed.map((group) => this._mapPermissionGroup(group)),
-              forbidden: activity.forbidden.map((group) => this._mapPermissionGroup(group)),
+              allowed: activity.allowed.map((group) =>
+                this._mapPermissionGroup(group)
+              ),
+              forbidden: activity.forbidden.map((group) =>
+                this._mapPermissionGroup(group)
+              ),
             } as PermissionActivity
           }),
         }
@@ -467,7 +511,12 @@ export class CaaSMapper {
     const keys = Object.keys(entries || {})
     const mappedEntries: any[] = await Promise.all(
       Object.keys(entries || {}).map((key) =>
-        this.mapDataEntry(entries[key], [...path, key], remoteProjectLocale, remoteProjectId)
+        this.mapDataEntry(
+          entries[key],
+          [...path, key],
+          remoteProjectLocale,
+          remoteProjectId
+        )
       )
     )
     return keys.reduce(
@@ -496,6 +545,7 @@ export class CaaSMapper {
         remoteProjectLocale,
         remoteProjectId
       ),
+      displayed: section.displayed,
       children: [],
     }
   }
@@ -506,7 +556,10 @@ export class CaaSMapper {
   ): Promise<Section> {
     return {
       id: content2Section.identifier,
-      previewId: this.buildPreviewId(content2Section.identifier, remoteProjectLocale),
+      previewId: this.buildPreviewId(
+        content2Section.identifier,
+        remoteProjectLocale
+      ),
       type: 'Section',
       data: {
         entityType: content2Section.entityType,
@@ -523,7 +576,10 @@ export class CaaSMapper {
   }
 
   async mapBodyContent(
-    content: CaaSApi_Content2Section | CaaSApi_Section | CaaSApi_SectionReference,
+    content:
+      | CaaSApi_Content2Section
+      | CaaSApi_Section
+      | CaaSApi_SectionReference,
     path: NestedPath,
     remoteProjectLocale?: string,
     remoteProjectId?: string
@@ -534,10 +590,16 @@ export class CaaSMapper {
       case 'Section':
       case 'SectionReference':
       case 'GCASection':
-        return this.mapSection(content, path, remoteProjectLocale, remoteProjectId)
+        return this.mapSection(
+          content,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       default:
         throw new Error(
-          CaaSMapperErrors.UNKNOWN_BODY_CONTENT + ` fsType=[${(content as any)?.fsType}]`
+          CaaSMapperErrors.UNKNOWN_BODY_CONTENT +
+            ` fsType=[${(content as any)?.fsType}]`
         )
     }
   }
@@ -634,7 +696,10 @@ export class CaaSMapper {
         remoteProjectId
       ),
       name: properties.name,
-      previewId: this.buildPreviewId(properties.identifier, remoteProjectLocale),
+      previewId: this.buildPreviewId(
+        properties.identifier,
+        remoteProjectLocale
+      ),
       id: properties.identifier,
       remoteProjectId,
     }
@@ -697,13 +762,22 @@ export class CaaSMapper {
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
     const mappedAreas = await Promise.all(
       areas.map(async (area, index) =>
-        this.mapImageMapArea(area, [...path, 'areas', index], remoteProjectLocale, remoteProjectId)
+        this.mapImageMapArea(
+          area,
+          [...path, 'areas', index],
+          remoteProjectLocale,
+          remoteProjectId
+        )
       )
     )
 
     let image = null
     if (media) {
-      image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
+      image = this.registerReferencedItem(
+        media.identifier,
+        [...path, 'media'],
+        media.remoteProject
+      )
       this._imageMapForcedResolutions.push({
         imageId: `${media.identifier}.${this.locale}`,
         resolution: resolution.uid,
@@ -813,7 +887,10 @@ export class CaaSMapper {
     rev?: number
   ): CaaSApiMediaPictureResolutions {
     for (let resolution in resolutions) {
-      resolutions[resolution].url = this.buildMediaUrl(resolutions[resolution].url, rev)
+      resolutions[resolution].url = this.buildMediaUrl(
+        resolutions[resolution].url,
+        rev
+      )
     }
     return resolutions
   }
@@ -852,9 +929,19 @@ export class CaaSMapper {
     }
     switch (item.mediaType) {
       case 'PICTURE':
-        return this.mapMediaPicture(item, path, remoteProjectLocale, remoteProjectId)
+        return this.mapMediaPicture(
+          item,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       case 'FILE':
-        return this.mapMediaFile(item, path, remoteProjectLocale, remoteProjectId)
+        return this.mapMediaFile(
+          item,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       default:
         return item
     }
@@ -909,7 +996,9 @@ export class CaaSMapper {
                     remoteProjectId
                   )
                 default:
-                  this.logger.warn(`Item at index'${index}' could not be mapped!`)
+                  this.logger.warn(
+                    `Item at index'${index}' could not be mapped!`
+                  )
                   return unmappedItem
               }
             })
@@ -936,7 +1025,9 @@ export class CaaSMapper {
     const remoteReferencesValues = Object.values(this._remoteReferences)
     const remoteReferencesMerged =
       remoteReferencesValues.length > 0
-        ? remoteReferencesValues.reduce((result, current) => Object.assign(result, current))
+        ? remoteReferencesValues.reduce((result, current) =>
+            Object.assign(result, current)
+          )
         : {}
 
     // return
@@ -956,7 +1047,9 @@ export class CaaSMapper {
   async resolveAllReferences(filterContext?: unknown): Promise<void> {
     if (this.referenceDepth >= this.maxReferenceDepth) {
       // hint: handle unresolved references TNG-1169
-      this.logger.warn(`Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`)
+      this.logger.warn(
+        `Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`
+      )
       return
     }
     this.referenceDepth++
@@ -965,21 +1058,25 @@ export class CaaSMapper {
 
     await Promise.all([
       this.resolveReferencesPerProject(undefined, filterContext),
-      ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(remoteId, filterContext)),
+      ...remoteIds.map((remoteId) =>
+        this.resolveReferencesPerProject(remoteId, filterContext)
+      ),
     ])
 
     // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(({ imageId, resolution }, index) => {
-      const resolvedImage = this.resolvedReferences[imageId]
-      if ((resolvedImage as Image).resolutions) {
-        update(resolvedImage, 'resolutions', (resolutions) => {
-          if (resolution in resolutions) {
-            return { [resolution]: resolutions[resolution] }
-          }
-          return resolutions
-        })
+    this._imageMapForcedResolutions.forEach(
+      ({ imageId, resolution }, index) => {
+        const resolvedImage = this.resolvedReferences[imageId]
+        if ((resolvedImage as Image).resolutions) {
+          update(resolvedImage, 'resolutions', (resolutions) => {
+            if (resolution in resolutions) {
+              return { [resolution]: resolutions[resolution] }
+            }
+            return resolutions
+          })
+        }
       }
-    })
+    )
   }
 
   /**
@@ -987,8 +1084,13 @@ export class CaaSMapper {
    * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferencesPerProject(remoteProjectId?: string, filterContext?: unknown) {
-    this.logger.debug('CaaSMapper.resolveReferencesPerProject', { remoteProjectId })
+  async resolveReferencesPerProject(
+    remoteProjectId?: string,
+    filterContext?: unknown
+  ) {
+    this.logger.debug('CaaSMapper.resolveReferencesPerProject', {
+      remoteProjectId,
+    })
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
@@ -1040,5 +1142,15 @@ export class CaaSMapper {
         )
       )
     }
+  }
+
+  private getRemoteConfigForProject(
+    projectId?: string
+  ): RemoteProjectConfigurationEntry | undefined {
+    return projectId
+      ? Object.values(this.api.remotes || {}).find(
+          (entry) => entry.id === projectId
+        )
+      : undefined
   }
 }

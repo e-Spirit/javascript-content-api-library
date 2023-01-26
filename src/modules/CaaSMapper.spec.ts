@@ -42,12 +42,22 @@ import {
 } from '../testutils/createDataEntry'
 import { createProjectProperties } from '../testutils/createProjectProperties'
 import { createGCAPage } from '../testutils/createGCAPage'
-import { createDataset, createDatasetReference } from '../testutils/createDataset'
+import {
+  createDataset,
+  createDatasetReference,
+} from '../testutils/createDataset'
 import { createMediaPicture } from '../testutils/createMediaPicture'
 import { createMediaFile } from '../testutils/createMediaFile'
 import { createImageMap } from '../testutils/createImageMap'
-import { CaaSApi_CMSInputPermission, CaaSAPI_PermissionGroup, Link, Option, Reference } from '..'
+import {
+  CaaSApi_CMSInputPermission,
+  CaaSAPI_PermissionGroup,
+  Link,
+  Option,
+  Reference,
+} from '..'
 import { createFetchResponse } from '../testutils/createFetchResponse'
+import { createPageRefBody } from '../testutils'
 
 jest.mock('./FSXARemoteApi')
 jest.mock('date-fns')
@@ -55,8 +65,10 @@ jest.mock('date-fns')
 describe('CaaSMapper', () => {
   const createPath = () => [faker.random.word(), faker.random.word()]
   const createLogger = () => new Logger(LogLevel.NONE, 'Querybuilder')
-  const createApi = () => jest.mocked<FSXARemoteApi>(new (FSXARemoteApi as any)())
-  const createMapper = () => new CaaSMapper(createApi(), 'de', {}, createLogger())
+  const createApi = () =>
+    jest.mocked<FSXARemoteApi>(new (FSXARemoteApi as any)())
+  const createMapper = () =>
+    new CaaSMapper(createApi(), 'de', {}, createLogger())
   let remoteProjectLocale: string
   let remoteProjectId: string
 
@@ -69,7 +81,9 @@ describe('CaaSMapper', () => {
       const path = createPath()
       const item = mapper.registerReferencedItem(refId, path)
 
-      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path] })
+      expect(mapper._referencedItems).toEqual({
+        [`${refId}.${locale}`]: [path],
+      })
       expect(mapper._remoteReferences).toEqual({})
       expect(item).toEqual(`[REFERENCED-ITEM-${`${refId}.${locale}`}]`)
     })
@@ -84,7 +98,9 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem(refId, path)
       mapper.registerReferencedItem(refId, path2)
 
-      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path, path2] })
+      expect(mapper._referencedItems).toEqual({
+        [`${refId}.${locale}`]: [path, path2],
+      })
     })
     it('should register a remote reference and return its remote reference key', () => {
       const remotes = { someName: { id: 'remoteId', locale: 'de' } }
@@ -96,7 +112,11 @@ describe('CaaSMapper', () => {
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
       expect(mapper._remoteReferences).toEqual({
-        remoteId: { [`${remotes.someName.id}#${refId}.${remotes.someName.locale}`]: [path] },
+        remoteId: {
+          [`${remotes.someName.id}#${refId}.${remotes.someName.locale}`]: [
+            path,
+          ],
+        },
       })
       expect(mapper._referencedItems).toEqual({})
       expect(item).toEqual(
@@ -112,7 +132,9 @@ describe('CaaSMapper', () => {
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
       expect(mapper._remoteReferences).toEqual({})
-      expect(mapper._referencedItems).toEqual({ [`${refId}.${locale}`]: [path] })
+      expect(mapper._referencedItems).toEqual({
+        [`${refId}.${locale}`]: [path],
+      })
       expect(item).toEqual(`[REFERENCED-ITEM-${refId}.${locale}]`)
     })
   })
@@ -139,7 +161,9 @@ describe('CaaSMapper', () => {
       expect(mapper.buildMediaUrl(url)).toEqual(url)
       expect(mapper.buildMediaUrl(url, 5593)).toEqual(`${url}?rev=5593`)
       // check media string construction
-      expect(mapper.buildMediaUrl(`${url}?prev`, 5593)).toEqual(`${url}?prev&rev=5593`)
+      expect(mapper.buildMediaUrl(`${url}?prev`, 5593)).toEqual(
+        `${url}?prev&rev=5593`
+      )
     })
   })
 
@@ -168,11 +192,15 @@ describe('CaaSMapper', () => {
       expect(result).toEqual('test-mapper-result')
     })
     it('should use the internal mapping if the custom mapper did not return anything', async () => {
-      const customMapper: CustomMapper = jest.fn().mockImplementation(async () => undefined)
+      const customMapper: CustomMapper = jest
+        .fn()
+        .mockImplementation(async () => undefined)
       const api = createApi()
       const mapper = new CaaSMapper(api, 'de', { customMapper }, createLogger())
       const entry = createNumberEntry()
-      await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(entry.value)
+      await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+        entry.value
+      )
       expect(customMapper).toHaveBeenCalled()
     })
     it('should return entries of an unknown fsType as-is', async () => {
@@ -180,7 +208,9 @@ describe('CaaSMapper', () => {
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       const entry = createNumberEntry()
       entry.fsType = null!
-      await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(entry)
+      await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(
+        entry
+      )
     })
 
     describe('CMS_INPUT_COMBOBOX', () => {
@@ -201,7 +231,9 @@ describe('CaaSMapper', () => {
           value: entry.value!.label,
           type: 'Option',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(expected)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          expected
+        )
       })
       it('should map entries to null if their value is falsy', async () => {
         const api = createApi()
@@ -211,7 +243,9 @@ describe('CaaSMapper', () => {
           value: null,
           fsType: 'CMS_INPUT_COMBOBOX',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBeNull()
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
       })
     })
 
@@ -251,14 +285,18 @@ describe('CaaSMapper', () => {
           value: '',
           fsType: 'CMS_INPUT_DOMTABLE',
         }
-        await expect(mapper.mapDataEntry(domTableEntry, createPath())).resolves.toEqual([])
+        await expect(
+          mapper.mapDataEntry(domTableEntry, createPath())
+        ).resolves.toEqual([])
         expect(mapper.xmlParser.parse).not.toHaveBeenCalled()
         const domEntry: CaaSApi_CMSInputDOM = {
           name: faker.random.word(),
           value: '',
           fsType: 'CMS_INPUT_DOM',
         }
-        await expect(mapper.mapDataEntry(domEntry, createPath())).resolves.toEqual([])
+        await expect(
+          mapper.mapDataEntry(domEntry, createPath())
+        ).resolves.toEqual([])
         expect(mapper.xmlParser.parse).not.toHaveBeenCalled()
       })
     })
@@ -268,7 +306,9 @@ describe('CaaSMapper', () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         const entry = createNumberEntry()
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(entry.value)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          entry.value
+        )
       })
     })
 
@@ -281,7 +321,9 @@ describe('CaaSMapper', () => {
           value: faker.random.words(5),
           fsType: 'CMS_INPUT_TEXT',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(entry.value)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          entry.value
+        )
       })
     })
 
@@ -294,7 +336,9 @@ describe('CaaSMapper', () => {
           value: faker.random.words(5),
           fsType: 'CMS_INPUT_TEXTAREA',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(entry.value)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          entry.value
+        )
       })
     })
 
@@ -311,12 +355,14 @@ describe('CaaSMapper', () => {
           },
           fsType: 'CMS_INPUT_RADIOBUTTON',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual({
-          type: 'Option',
-          key: entry.value!.identifier,
-          value: entry.value!.label,
-          ...entry.value,
-        })
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          {
+            type: 'Option',
+            key: entry.value!.identifier,
+            value: entry.value!.label,
+            ...entry.value,
+          }
+        )
       })
     })
 
@@ -331,7 +377,9 @@ describe('CaaSMapper', () => {
           fsType: 'CMS_INPUT_DATE',
         }
         jest.mocked(parseISO).mockReturnValue(now)
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(now)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(
+          now
+        )
         expect(parseISO).toHaveBeenCalledWith(entry.value)
       })
       it('should return null and not call the iso date parser if the value is falsy', async () => {
@@ -343,7 +391,9 @@ describe('CaaSMapper', () => {
           value: null,
           fsType: 'CMS_INPUT_DATE',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBeNull()
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
         expect(parseISO).not.toHaveBeenCalled()
       })
     })
@@ -382,7 +432,9 @@ describe('CaaSMapper', () => {
           meta: entry.value.metaFormData,
           type: 'Link',
         }
-        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(expected)
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(
+          expected
+        )
         expect(mapper.mapDataEntries).toHaveBeenNthCalledWith(
           1,
           entry.value.formData,
@@ -407,7 +459,9 @@ describe('CaaSMapper', () => {
           value: null!,
           fsType: 'CMS_INPUT_LINK',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBeNull()
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
         expect(mapper.mapDataEntries).not.toHaveBeenCalled()
       })
     })
@@ -422,7 +476,9 @@ describe('CaaSMapper', () => {
           value: null!,
           fsType: 'CMS_INPUT_LIST',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual([])
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          []
+        )
         expect(mapper.mapDataEntries).not.toHaveBeenCalled()
       })
       it('should map each entry in the list', async () => {
@@ -432,10 +488,17 @@ describe('CaaSMapper', () => {
         const path = createPath()
         const entry: CaaSApi_CMSInputList = {
           name: faker.random.word(),
-          value: [createNumberEntry(4), createNumberEntry(7), createNumberEntry(11)],
+          value: [
+            createNumberEntry(4),
+            createNumberEntry(7),
+            createNumberEntry(11),
+          ],
           fsType: 'CMS_INPUT_LIST',
         }
-        const result = (await mapper.mapDataEntry(entry, path)) as CaaSApi_CMSInputNumber[]
+        const result = (await mapper.mapDataEntry(
+          entry,
+          path
+        )) as CaaSApi_CMSInputNumber[]
         // our call from the test and three subsequent calls due to the entry list size
         expect(mapper.mapDataEntry).toHaveBeenCalledTimes(4)
         entry.value.forEach(($, index) => {
@@ -462,7 +525,9 @@ describe('CaaSMapper', () => {
           value: null!,
           fsType: 'CMS_INPUT_CHECKBOX',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual([])
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          []
+        )
         expect(mapper.mapDataEntries).not.toHaveBeenCalled()
       })
       it('should map each entry in the list', async () => {
@@ -479,7 +544,10 @@ describe('CaaSMapper', () => {
           ],
           fsType: 'CMS_INPUT_CHECKBOX',
         }
-        const result = (await mapper.mapDataEntry(entry, path)) as { key: string; value: string }[]
+        const result = (await mapper.mapDataEntry(entry, path)) as {
+          key: string
+          value: string
+        }[]
         // our call from the test and three subsequent calls due to the entry list size
         expect(mapper.mapDataEntry).toHaveBeenCalledTimes(4)
         entry.value.forEach(($, index) => {
@@ -491,7 +559,9 @@ describe('CaaSMapper', () => {
             undefined
           )
           // ensure Options were correctly mapped (depends on Option working)
-          expect(result.find(($) => $.key === entry.value[index].identifier)).toBeDefined()
+          expect(
+            result.find(($) => $.key === entry.value[index].identifier)
+          ).toBeDefined()
         })
       })
     })
@@ -533,7 +603,14 @@ describe('CaaSMapper', () => {
         expect(mock.mock.calls[0][0]).toEqual(entry)
         expect(mock.mock.calls[0][1]).toEqual(path)
         expect(mock.mock.calls[1][0]).toEqual(childEntry)
-        expect(mock.mock.calls[1][1]).toEqual([...path, 'areas', 0, 'link', 'data', 'childEntry'])
+        expect(mock.mock.calls[1][1]).toEqual([
+          ...path,
+          'areas',
+          0,
+          'link',
+          'data',
+          'childEntry',
+        ])
       })
     })
 
@@ -548,7 +625,9 @@ describe('CaaSMapper', () => {
           value: null!,
           fsType: 'FS_DATASET',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBeNull()
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
         expect(mapper.mapDataEntries).not.toHaveBeenCalled()
         expect(mapper.registerReferencedItem).not.toHaveBeenCalled()
       })
@@ -559,11 +638,18 @@ describe('CaaSMapper', () => {
         const path = createPath()
         const entry: CaaSApi_FSDataset = {
           name: faker.random.word(),
-          value: [createNumberEntry(4), createNumberEntry(7), createNumberEntry(11)],
+          value: [
+            createNumberEntry(4),
+            createNumberEntry(7),
+            createNumberEntry(11),
+          ],
           fsType: 'FS_DATASET',
         }
         const entryValue = entry.value as CaaSApi_CMSInputNumber[]
-        const result = (await mapper.mapDataEntry(entry, path)) as CaaSApi_CMSInputNumber[]
+        const result = (await mapper.mapDataEntry(
+          entry,
+          path
+        )) as CaaSApi_CMSInputNumber[]
         // our call from the test and three subsequent calls due to the entry list size
         expect(mapper.mapDataEntry).toHaveBeenCalledTimes(4)
         entryValue.forEach(($, index) => {
@@ -583,7 +669,9 @@ describe('CaaSMapper', () => {
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         mapper.registerReferencedItem = jest.fn().mockReturnValue('[REF]')
         const entry = createDatasetReference()
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual('[REF]')
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          '[REF]'
+        )
         expect(mapper.registerReferencedItem).toHaveBeenCalled()
       })
       it('should return null if the entry is corrupted', async () => {
@@ -596,7 +684,9 @@ describe('CaaSMapper', () => {
           value: { fsType: null } as any,
           fsType: 'FS_DATASET',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBeNull()
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
         expect(mapper.mapDataEntries).not.toHaveBeenCalled()
         expect(mapper.registerReferencedItem).not.toHaveBeenCalled()
       })
@@ -612,11 +702,17 @@ describe('CaaSMapper', () => {
           value: true,
           fsType: 'CMS_INPUT_TOGGLE',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(true)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(
+          true
+        )
         entry.value = false
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(false)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(
+          false
+        )
         entry.value = null
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(false)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(
+          false
+        )
       })
       it('should return the entry value if the entry value is truthy', async () => {
         // this test is probably useless, or rather its premiss is incorrect
@@ -629,7 +725,9 @@ describe('CaaSMapper', () => {
           value: 'hey!' as unknown as boolean,
           fsType: 'CMS_INPUT_TOGGLE',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(entry.value)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          entry.value
+        )
       })
     })
 
@@ -637,7 +735,9 @@ describe('CaaSMapper', () => {
       it('should map section or link templates to sections', async () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
-        mapper.mapSection = jest.fn().mockImplementation(async ($) => ({ uuid: $.uuid }))
+        mapper.mapSection = jest
+          .fn()
+          .mockImplementation(async ($) => ({ uuid: $.uuid }))
         const path = createPath()
         const entry: CaaSApi_FSCatalog = {
           name: faker.random.word(),
@@ -739,7 +839,9 @@ describe('CaaSMapper', () => {
             id: entryValue.identifier,
             previewId: 'preview',
             template: entryValue.template.uid,
-            data: { num: (entryValue.formData.num as CaaSApi_CMSInputNumber).value },
+            data: {
+              num: (entryValue.formData.num as CaaSApi_CMSInputNumber).value,
+            },
           }),
         ])
         expect(mapper.buildPreviewId).toHaveBeenCalledWith(
@@ -771,7 +873,9 @@ describe('CaaSMapper', () => {
           ],
           fsType: 'FS_CATALOG',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual([entry.value![0]])
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          [entry.value![0]]
+        )
       })
     })
 
@@ -784,7 +888,9 @@ describe('CaaSMapper', () => {
           value: null!,
           fsType: 'FS_REFERENCE',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBeNull()
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
       })
       it('should register a reference on Media entries', async () => {
         const api = createApi()
@@ -838,7 +944,9 @@ describe('CaaSMapper', () => {
           type: 'Reference',
         }
 
-        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(expectedPageRef)
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(
+          expectedPageRef
+        )
         entry.value!.fsType = 'GCAPage'
         entry.value!.uidType = 'GLOBALSTORE'
         entry.value!.url = ''
@@ -848,7 +956,9 @@ describe('CaaSMapper', () => {
           referenceType: entry.value!.fsType,
           type: 'Reference',
         }
-        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(expectedGCARef)
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(
+          expectedGCARef
+        )
       })
       it('should return corrupted entries as-is', async () => {
         const api = createApi()
@@ -858,7 +968,9 @@ describe('CaaSMapper', () => {
           value: { fsType: 'magic!' } as any,
           fsType: 'FS_REFERENCE',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(entry)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(
+          entry
+        )
       })
     })
 
@@ -867,7 +979,9 @@ describe('CaaSMapper', () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         const path = createPath()
-        mapper.registerReferencedItem = jest.fn().mockImplementation(($) => `REF-${$}`)
+        mapper.registerReferencedItem = jest
+          .fn()
+          .mockImplementation(($) => `REF-${$}`)
         const entry: CaaSApi_FSIndex = {
           name: faker.random.word(),
           dapType: 'DatasetDataAccessPlugin',
@@ -885,7 +999,9 @@ describe('CaaSMapper', () => {
           ],
           fsType: 'FS_INDEX',
         }
-        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(['REF-target-id'])
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual([
+          'REF-target-id',
+        ])
         expect(mapper.registerReferencedItem).toHaveBeenCalledTimes(1)
         expect(mapper.registerReferencedItem).toHaveBeenCalledWith(
           'target-id',
@@ -902,7 +1018,9 @@ describe('CaaSMapper', () => {
           value: [],
           fsType: 'FS_INDEX',
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(entry)
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toBe(
+          entry
+        )
       })
     })
 
@@ -915,7 +1033,9 @@ describe('CaaSMapper', () => {
           label: faker.random.word(),
           identifier: faker.datatype.uuid(),
         }
-        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toMatchObject({
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toMatchObject({
           key: entry.identifier,
           value: entry.label,
         })
@@ -1022,7 +1142,9 @@ describe('CaaSMapper', () => {
     it('should return a new dictionary containing the mapped result', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const entries = createEntries()
-      mapper.mapDataEntry = jest.fn().mockImplementation(($: CaaSApi_CMSInputNumber) => $.value)
+      mapper.mapDataEntry = jest
+        .fn()
+        .mockImplementation(($: CaaSApi_CMSInputNumber) => $.value)
       const path = createPath()
       await expect(mapper.mapDataEntries(entries, path)).resolves.toEqual({
         v1: entries.v1.value,
@@ -1033,7 +1155,9 @@ describe('CaaSMapper', () => {
     it('should handle empty dictionaries', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       await expect(mapper.mapDataEntries({}, createPath())).resolves.toEqual({})
-      await expect(mapper.mapDataEntries(null!, createPath())).resolves.toEqual({})
+      await expect(mapper.mapDataEntries(null!, createPath())).resolves.toEqual(
+        {}
+      )
     })
   })
 
@@ -1061,34 +1185,91 @@ describe('CaaSMapper', () => {
         undefined
       )
     })
+
+    it('given missing displayed property in source should not contain displayed property in result', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const section: CaaSApi_Section = createSection()
+      await expect(mapper.mapSection(section, createPath())).resolves.toEqual({
+        id: section.identifier,
+        type: 'Section',
+        sectionType: section.template.uid,
+        previewId: expect.any(String),
+        data: {
+          v1: (section.formData.v1 as CaaSApi_CMSInputNumber).value,
+          v2: (section.formData.v2 as CaaSApi_CMSInputNumber).value,
+        },
+        children: [],
+      })
+    })
+
+    it('given displayed property in source should contain displayed property in mapping result', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const section: CaaSApi_Section = createSection()
+      section.displayed = true
+      await expect(mapper.mapSection(section, createPath())).resolves.toEqual({
+        id: section.identifier,
+        type: 'Section',
+        sectionType: section.template.uid,
+        previewId: expect.any(String),
+        data: {
+          v1: (section.formData.v1 as CaaSApi_CMSInputNumber).value,
+          v2: (section.formData.v2 as CaaSApi_CMSInputNumber).value,
+        },
+        children: [],
+        displayed: true,
+      })
+    })
   })
 
   describe('mapBodyContent', () => {
     it('should call and return the value of mapContent2Section on fsType `Content2Section`', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
-      const content = { fsType: 'Content2Section' } as unknown as CaaSApi_Content2Section
+      const content = {
+        fsType: 'Content2Section',
+      } as unknown as CaaSApi_Content2Section
       mapper.mapContent2Section = jest.fn().mockResolvedValue(content)
       await expect(mapper.mapBodyContent(content, path)).resolves.toBe(content)
-      expect(mapper.mapContent2Section).toHaveBeenCalledWith(content, remoteProjectLocale)
+      expect(mapper.mapContent2Section).toHaveBeenCalledWith(
+        content,
+        remoteProjectLocale
+      )
     })
     it('should call and return the value of mapSection on fsType `Section` and `SectionReference`', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
-      const section = { fsType: 'Section' } as unknown as CaaSApi_Content2Section
-      const sectionRef = { fsType: 'SectionReference' } as unknown as CaaSApi_Content2Section
+      const section = {
+        fsType: 'Section',
+      } as unknown as CaaSApi_Content2Section
+      const sectionRef = {
+        fsType: 'SectionReference',
+      } as unknown as CaaSApi_Content2Section
       mapper.mapSection = jest.fn().mockResolvedValue(section)
       await expect(mapper.mapBodyContent(section, path)).resolves.toBe(section)
-      expect(mapper.mapSection).toHaveBeenCalledWith(section, path, undefined, undefined)
+      expect(mapper.mapSection).toHaveBeenCalledWith(
+        section,
+        path,
+        undefined,
+        undefined
+      )
       mapper.mapSection = jest.fn().mockResolvedValue(sectionRef)
-      await expect(mapper.mapBodyContent(sectionRef, path)).resolves.toBe(sectionRef)
-      expect(mapper.mapSection).toHaveBeenCalledWith(sectionRef, path, undefined, undefined)
+      await expect(mapper.mapBodyContent(sectionRef, path)).resolves.toBe(
+        sectionRef
+      )
+      expect(mapper.mapSection).toHaveBeenCalledWith(
+        sectionRef,
+        path,
+        undefined,
+        undefined
+      )
     })
     it('should throw on unexpected fsTypes', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const content = { fsType: 'magic!' } as unknown as CaaSApi_Content2Section
       const promise = mapper.mapBodyContent(content, createPath())
-      await expect(promise).rejects.toThrow(CaaSMapperErrors.UNKNOWN_BODY_CONTENT)
+      await expect(promise).rejects.toThrow(
+        CaaSMapperErrors.UNKNOWN_BODY_CONTENT
+      )
     })
   })
 
@@ -1102,9 +1283,13 @@ describe('CaaSMapper', () => {
         identifier: faker.datatype.uuid(),
         children: [1, 2, 3] as any,
       }
-      mapper.mapBodyContent = jest.fn().mockImplementation(async ($) => `mapped-${$}`)
+      mapper.mapBodyContent = jest
+        .fn()
+        .mockImplementation(async ($) => `mapped-${$}`)
       await expect(mapper.mapPageBody(body, path)).resolves.toEqual(
-        expect.objectContaining({ children: ['mapped-1', 'mapped-2', 'mapped-3'] })
+        expect.objectContaining({
+          children: ['mapped-1', 'mapped-2', 'mapped-3'],
+        })
       )
       expect(mapper.mapBodyContent).toHaveBeenNthCalledWith(
         1,
@@ -1135,10 +1320,20 @@ describe('CaaSMapper', () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
       const pageRef = createPageRef()
-      const body1: CaaSApi_Body = { ...createDataEntry(), fsType: 'Body', children: [] }
-      const body2: CaaSApi_Body = { ...createDataEntry(), fsType: 'Body', children: [] }
+      const body1: CaaSApi_Body = {
+        ...createDataEntry(),
+        fsType: 'Body',
+        children: [],
+      }
+      const body2: CaaSApi_Body = {
+        ...createDataEntry(),
+        fsType: 'Body',
+        children: [],
+      }
       pageRef.page.children.push(body1, body2)
-      mapper.mapPageBody = jest.fn().mockImplementation(async ($) => `mapped-${$.uid}`)
+      mapper.mapPageBody = jest
+        .fn()
+        .mockImplementation(async ($) => `mapped-${$.uid}`)
       await mapper.mapPageRef(pageRef, path)
       expect(mapper.mapPageBody).toHaveBeenCalledWith(
         body1,
@@ -1255,10 +1450,20 @@ describe('CaaSMapper', () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const path = createPath()
       const gcaPage = createGCAPage()
-      const body1: CaaSApi_Body = { ...createDataEntry(), fsType: 'Body', children: [] }
-      const body2: CaaSApi_Body = { ...createDataEntry(), fsType: 'Body', children: [] }
+      const body1: CaaSApi_Body = {
+        ...createDataEntry(),
+        fsType: 'Body',
+        children: [],
+      }
+      const body2: CaaSApi_Body = {
+        ...createDataEntry(),
+        fsType: 'Body',
+        children: [],
+      }
       gcaPage.children.push(body1, body2)
-      mapper.mapPageBody = jest.fn().mockImplementation(async ($) => `mapped-${$.uid}`)
+      mapper.mapPageBody = jest
+        .fn()
+        .mockImplementation(async ($) => `mapped-${$.uid}`)
       await mapper.mapGCAPage(gcaPage, path)
       expect(mapper.mapPageBody).toHaveBeenCalledWith(
         body1,
@@ -1302,7 +1507,12 @@ describe('CaaSMapper', () => {
       const path = createPath()
       const dataset = createDataset()
 
-      const mappedDatasetWithRoutes = await mapper.mapDataset(dataset, path, undefined, undefined)
+      const mappedDatasetWithRoutes = await mapper.mapDataset(
+        dataset,
+        path,
+        undefined,
+        undefined
+      )
       //@ts-ignore
       delete dataset.routes
 
@@ -1416,7 +1626,10 @@ describe('CaaSMapper', () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       mapper.resolveReferencesPerProject = jest.fn()
       await mapper.resolveAllReferences()
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(remoteProjectId, undefined)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
+        remoteProjectId,
+        undefined
+      )
     })
     it('should call resolveReferencesPerProject for all remote projects', async () => {
       const api = createApi()
@@ -1431,9 +1644,18 @@ describe('CaaSMapper', () => {
       mapper.registerReferencedItem('id2', [], 'remote-id2')
       mapper.registerReferencedItem('id3', [], 'remote-id3')
       await mapper.resolveAllReferences()
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id1', remoteProjectId)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id2', remoteProjectId)
-      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith('remote-id3', remoteProjectId)
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
+        'remote-id1',
+        remoteProjectId
+      )
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
+        'remote-id2',
+        remoteProjectId
+      )
+      expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
+        'remote-id3',
+        remoteProjectId
+      )
     })
   })
 
@@ -1501,7 +1723,11 @@ describe('CaaSMapper', () => {
       expect(funArguments).toEqual(
         expect.objectContaining({
           filters: [
-            { field: 'identifier', operator: '$in', value: ['id1', 'id2', 'id3', 'id4', 'id5'] },
+            {
+              field: 'identifier',
+              operator: '$in',
+              value: ['id1', 'id2', 'id3', 'id4', 'id5'],
+            },
           ],
         })
       )
