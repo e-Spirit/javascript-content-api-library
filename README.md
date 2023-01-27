@@ -48,6 +48,12 @@ The FSXA-API is subject to the Apache-2.0 license.
 
 In this section all available methods will be explained using examples.
 
+## Requirements
+
+The FSXA-API requires a `fetch` implementation to run on a Node server environment.
+This dependency can be fulfilled with a cross-fetch polyfill in older Node versions.
+A working example can be found in the chapter _Constructor_.
+
 ### Constructor
 
 To be able to use the FSXA-API, a new object must be created.
@@ -170,7 +176,7 @@ fsxaApi.fetchNavigation({
 
 ### fetchElement
 
-This method fetches an element from the configured CaaS. The `FetchElementParams` object defines options to specify your request. Check `FSXA.RemoteApi.buildCaaSUrl` to know which URL will be used.
+This method fetches an element from the configured CaaS. The `FetchElementParams` object defines options to specify your request. Check `FSXARemoteApi.buildCaaSUrl` to know which URL will be used.
 
 ```typescript
 fsxaApi.fetchElement({
@@ -179,9 +185,15 @@ fsxaApi.fetchElement({
 })
 ```
 
+> **_Note_**<br>
+> The 'raw' CaaS data might be helpful when you want to know the key names that you can filter for.
+> It is possible to access those data directly with the authorization header and the CaaS Url.
+
 ### fetchByFilter
 
 Returns the matching CaaS data entries.
+It maps the given entries to a more frontend-friendly format.
+Which means that unneccessary fields will be omitted and the structure is simpler.
 
 Expects as input parameter an array of filters and a language abbreviation.
 Optionally a page number, page size, sort and additional parameters can be passed.
@@ -220,6 +232,9 @@ fsxaApi.fetchByFilter({
 ```
 
 The default sorting is by the id descending. Multisort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
+
+> **_Attention_**<br>
+> The fieldnames and keys that can be passed to the `fetchByFilter` method have to match the key names that are present in the CaaS data.
 
 ### fetchProjectProperties
 
