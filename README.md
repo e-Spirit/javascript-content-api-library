@@ -53,14 +53,14 @@ In this section all available methods will be explained using examples.
 To be able to use the FSXA-API, a new object must be created.
 How you create the object depends on how you want to use the FSXA-API.
 
-If you want to use the information provided by the CaaS in your frontend, you have to use the `proxy` mode.
-If you want to use it in your server, you have to use the `remote` mode.
+If you want to use the information provided by the CaaS in your frontend, you can use the `FSXAProxyApi`.
+It proxies the requested resources to a middleware Rest Api, that does not expose secrets.
+If you want to use it in your server, you can use the `FSXARemoteApi`.
+It can be registered as a Rest Api that can be called from a `FSXAProxyApi` instance.
 
 However, to have a fully running application, we recommend using the FSXA-API in your server as well as in your frontend.
 
-In each case you have to specify the content mode, the configuration and optionally the log level.
-
-The config mode can be `preview` or `release`. It depends on which information you want to get.
+The config mode can be `preview` or `release`. Depending on the state of the content you want to fetch.
 <br />
 There is an enum to use these modes.
 <br />
@@ -68,21 +68,18 @@ There is an enum to use these modes.
 <br />
 `FSXAContentMode.RELEASE` for `release`
 
-The configuration depends on which in which mode you want to run the FSXA-API.
-
-If you want to use the `FSXARemoteApi`, you have to specify all authorization keys:
+If you want to use the `FSXARemoteApi`, you have to specify the following parameters:
 
 ```typescript
-{
-    apikey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"!,
-    caasURL: "https://your.caas.url",
-    contentMode: FSXAContentMode.PREVIEW,
-    navigationServiceURL: "https://your.navigation-service.url/navigation",
-    projectID: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    tenantID: "your-tenant-id",
-    remotes: { "media": {"id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "locale": "en_GB"} },
-    logLevel: LogLevel.INFO,
-    enableEventStream: true || false,
+const config = {
+  apikey: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'!,
+  caasURL: 'https://your.caas.url',
+  contentMode: FSXAContentMode.PREVIEW,
+  navigationServiceURL: 'https://your.navigation-service.url/navigation',
+  projectID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  tenantID: 'your-tenant-id',
+  logLevel: LogLevel.INFO,
+  enableEventStream: true || false,
 }
 ```
 
@@ -90,20 +87,15 @@ You can also include remote projects if you want to use remote media.
 
 > **_Attention_**<br>
 > Currently the FSXA-API can only work with the master language of the remote media project.
+> You also require a configured CAAS API key with read permissions to both projects.
 
-For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
+> For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
 
 ```typescript
 const config = {
-    apikey: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"!,
-    caasURL: "https://your.caas.url",
-    contentMode: FSXAContentMode.PREVIEW,
-    navigationServiceURL: "https://your.navigation-service.url/navigation",
-    projectID: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    tenantID: "your-tenant-id",
-    remotes: { "media": {"id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "locale": "en_GB"} },
-    logLevel: LogLevel.INFO,
-    enableEventStream: true || false,
+  ...
+  remotes: { media: { id: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', locale: 'en_GB' } },
+  ...
 }
 ```
 
@@ -118,24 +110,24 @@ Here is an example of how the `FSXARemoteApi` and `FSXAProxyApi` could be used w
 Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
 
 ```typescript
-require('cross-fetch/polyfill')
-const express = require('express')
-const { FSXAProxyApi, FSXARemoteApi, FSXAContentMode, LogLevel } = require('fsxa-api')
-const expressIntegration = require('fsxa-api/dist/lib/integrations/express').default
-const cors = require('cors')
+import dotenv from 'dotenv'
+import express from 'express'
+import cors from 'cors'
+import { FSXAContentMode, FSXAProxyApi, LogLevel, FSXARemoteApi } from 'fsxa-api'
+import getExpressRouter from 'fsxa-api/dist/lib/integrations/express'
+import 'cross-fetch/polyfill'
 
+dotenv.config({ path: '.env' })
 const app = express()
-
 const remoteApi = new FSXARemoteApi(config)
 
 app.use(cors())
-app.use('/api', expressIntegration({ api: remoteApi }))
+app.use('/api', getExpressRouter({ api: remoteApi }))
 
-app.listen(3002, async() => {
+app.listen(3002, async () => {
   console.log('Listening at http://localhost:3002')
   try {
     const locale = 'de_DE'
-
     const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
     // you can also fetch navigation from proxyAPI
     const navigationResponse = await proxyAPI.fetchNavigation({ locale, initialPath: '/' })
@@ -145,19 +137,7 @@ app.listen(3002, async() => {
 })
 ```
 
-### setConfiguration
-
-The configuration of the FSXA-API can be set via a method.
-
-The config mode can be `preview` or `release`. It depends on which information you want to get.
-<br />
-There is an enum to use these modes.
-<br />
-`FSXAContentMode.PREVIEW` for `preview`
-<br />
-`FSXAContentMode.RELEASE` for `release`
-
-### buildAuthorizationHeaders
+### get authorizationHeader
 
 Returns the build authorization header in the following format when using `FSXARemoteApi`:
 
@@ -184,19 +164,19 @@ Example:
 ```typescript
 fsxaApi.fetchNavigation({
   locale: 'en_EN',
-  initialPath: '/'
-});
+  initialPath: '/',
+})
 ```
 
 ### fetchElement
 
-This method fetches an element from the configured CaaS. The `FetchElementParams` object defines options to specify your request. Check `buildCaaSUrl` to know which URL will be used.
+This method fetches an element from the configured CaaS. The `FetchElementParams` object defines options to specify your request. Check `FSXA.RemoteApi.buildCaaSUrl` to know which URL will be used.
 
 ```typescript
-fsxaApi.fetchNavigation({
+fsxaApi.fetchElement({
   id: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-  locale: 'de_DE'
-});
+  locale: 'de_DE',
+})
 ```
 
 ### fetchByFilter
@@ -224,20 +204,19 @@ In this example we search for all elements with the `fsType` equals `Example`. W
 
 ```typescript
 fsxaApi.fetchByFilter({
-    filters: [
-      {
-        field: 'fsType',
-        operator: ComparisonQueryOperatorEnum.EQUALS,
-        value: 'Example',
-      },
-    ],
-    locale: 'en',
-    page: 2,
-    pagesize: 50,
-    additionalParams: { keys: { identifier: 0 } },
-    sort: [{name:'fsType', order:'desc'}],
-  }
-)
+  filters: [
+    {
+      field: 'fsType',
+      operator: ComparisonQueryOperatorEnum.EQUALS,
+      value: 'Example',
+    },
+  ],
+  locale: 'en',
+  page: 2,
+  pagesize: 50,
+  additionalParams: { keys: { identifier: 0 } },
+  sort: [{ name: 'fsType', order: 'desc' }],
+})
 ```
 
 The default sorting is by the id descending. Multisort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
@@ -289,11 +268,12 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 | ComparisonQueryOperatorEnum.NOT_IN              | \$nin     |
 
 ### Evaluation Query Operators
+
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-evaluation/)
 
-| Enum                                         | Operation |
-| -------------------------------------------- | --------- |
-| EvaluationQueryOperatorEnum.REGEX            | \$regex   |
+| Enum                              | Operation |
+| --------------------------------- | --------- |
+| EvaluationQueryOperatorEnum.REGEX | \$regex   |
 
 ### Array Query Operators
 
@@ -307,25 +287,25 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 
 ### Input Components
 
-This table gives an overview of the FirstSpirit input components, which could be defined in the "Form" tab of the FirstSpirit templates.
+This table gives an overview of the FirstSpirit input components, which can be defined in the "Form" tab of the FirstSpirit templates.
 Each input component has a (Java) data type, which has a representation in the CaaS. Those values are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the fsxa-api.
 
 | <nobr>FirstSpirit Input Component</nobr>                                 | <nobr>CaaS Representation</nobr>                                                                                                                  | <nobr>FSXA-API [Value](src/types.ts)</nobr> |
-| ------------------------------------------------------------------------ |---------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------------------------ |
-| [FS_CATALOG]<br />[`Catalog`][fs-catalog]`<`[`Catalog$Card`][fs-card]`>` | <nobr>= `CaaSApi_FSCatalog`</nobr><br />= `CaaSApi_Card[]`                                                                                        | `Section[]`                                |
-| [CMS_INPUT_CHECKBOX]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`     | <nobr>= `CaaSApi_CMSInputCheckbox`</nobr><br />= `CaaSApi_Option[]`                                                                               | `Option[]`                                 |
-| [CMS_INPUT_COMBOBOX]<br />[`Option`][fs-option]                          | <nobr>= `CaaSApi_CMSInputCombobox`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                     | `Option`                                   |
-| [FS_DATASET]<br />[`DatasetContainer`][fs-datasetcontainer]              | <nobr>= `CaaSApi_FSDataset`</nobr><br />= `CaaSApi_Dataset`&#124;`CaaSApi_DataEntry[]`&#124;`null`                                                | `Dataset`                                  |
-| [CMS_INPUT_DATE]<br />[`Date`][fs-date]                                  | <nobr>= `CaaSApi_CMSInputDate`</nobr><br />= `string(ISO_8601)`&#124;`null`                                                                       | [`Date`][js-date]                          |
-| [CMS_INPUT_DOM]<br>[`DomElement`][fs-domelement]                         | <nobr>= `CaaSApi_CMSInputDOM`</nobr><br />= `string` (FS-XML)                                                                                     | `RichTextElement[]`                        |
-| [CMS_INPUT_DOMTABLE]<br>[`Table`][fs-table]                              | <nobr>= `CaaSApi_CMSInputDOMTable`</nobr><br />= `string` (FS-XML)                                                                                | `RichTextElement[]`                        |
-| [CMS_INPUT_IMAGEMAP]<br>[`MappingMedium`][fs-mappingmedium]              | <nobr>= `CaaSApi_CMSImageMap`</nobr><br />= `CaaSApi_CMSImageMap`                                                                                 | `ImageMap`                                 |
-| [FS_INDEX]<br />[`Index`][fs-index]`<`[`Index$Record`][fs-record]`>`     | <nobr>= `CaaSApi_FSIndex`</nobr><br />= `CaaSApi_Record[]`                                                                                        | `DataEntries[]`                            |
-| [CMS_INPUT_LINK]<br />[`Link`][fs-link]                                  | <nobr>= `CaaSApi_CMSInputLink`</nobr><br />= `Object`                                                                                             | `Link`                                     |
-| [CMS_INPUT_LIST]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`         | <nobr>= `CaaSApi_CMSInputList`</nobr><br />= `any[]`                                                                                              | `Option[]`                                 |
-| [CMS_INPUT_NUMBER]<br />[`Number`][fs-number]                            | <nobr>= `CaaSApi_CMSInputNumber`</nobr><br />= `number`                                                                                           | [`number`](js-number)                      |
-| [CMS_INPUT_PERMISSION]<br />[`Permissions`][fs-permissions]              | <nobr>= `CaaSApi_CMSInputPermission`</nobr><br />= `CaaSAPI_PermissionActivity[][]`                                                               | `Permission`                               |
-| [CMS_INPUT_RADIOBUTTON]<br />[`Option`][fs-option]                       | <nobr>= `CaaSApi_CMSInputRadioButton`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                  | `Option`                                   |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| [FS_CATALOG]<br />[`Catalog`][fs-catalog]`<`[`Catalog$Card`][fs-card]`>` | <nobr>= `CaaSApi_FSCatalog`</nobr><br />= `CaaSApi_Card[]`                                                                                        | `Section[]`                                 |
+| [CMS_INPUT_CHECKBOX]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`     | <nobr>= `CaaSApi_CMSInputCheckbox`</nobr><br />= `CaaSApi_Option[]`                                                                               | `Option[]`                                  |
+| [CMS_INPUT_COMBOBOX]<br />[`Option`][fs-option]                          | <nobr>= `CaaSApi_CMSInputCombobox`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                     | `Option`                                    |
+| [FS_DATASET]<br />[`DatasetContainer`][fs-datasetcontainer]              | <nobr>= `CaaSApi_FSDataset`</nobr><br />= `CaaSApi_Dataset`&#124;`CaaSApi_DataEntry[]`&#124;`null`                                                | `Dataset`                                   |
+| [CMS_INPUT_DATE]<br />[`Date`][fs-date]                                  | <nobr>= `CaaSApi_CMSInputDate`</nobr><br />= `string(ISO_8601)`&#124;`null`                                                                       | [`Date`][js-date]                           |
+| [CMS_INPUT_DOM]<br>[`DomElement`][fs-domelement]                         | <nobr>= `CaaSApi_CMSInputDOM`</nobr><br />= `string` (FS-XML)                                                                                     | `RichTextElement[]`                         |
+| [CMS_INPUT_DOMTABLE]<br>[`Table`][fs-table]                              | <nobr>= `CaaSApi_CMSInputDOMTable`</nobr><br />= `string` (FS-XML)                                                                                | `RichTextElement[]`                         |
+| [CMS_INPUT_IMAGEMAP]<br>[`MappingMedium`][fs-mappingmedium]              | <nobr>= `CaaSApi_CMSImageMap`</nobr><br />= `CaaSApi_CMSImageMap`                                                                                 | `ImageMap`                                  |
+| [FS_INDEX]<br />[`Index`][fs-index]`<`[`Index$Record`][fs-record]`>`     | <nobr>= `CaaSApi_FSIndex`</nobr><br />= `CaaSApi_Record[]`                                                                                        | `DataEntries[]`                             |
+| [CMS_INPUT_LINK]<br />[`Link`][fs-link]                                  | <nobr>= `CaaSApi_CMSInputLink`</nobr><br />= `Object`                                                                                             | `Link`                                      |
+| [CMS_INPUT_LIST]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`         | <nobr>= `CaaSApi_CMSInputList`</nobr><br />= `any[]`                                                                                              | `Option[]`                                  |
+| [CMS_INPUT_NUMBER]<br />[`Number`][fs-number]                            | <nobr>= `CaaSApi_CMSInputNumber`</nobr><br />= `number`                                                                                           | [`number`](js-number)                       |
+| [CMS_INPUT_PERMISSION]<br />[`Permissions`][fs-permissions]              | <nobr>= `CaaSApi_CMSInputPermission`</nobr><br />= `CaaSAPI_PermissionActivity[][]`                                                               | `Permission`                                |
+| [CMS_INPUT_RADIOBUTTON]<br />[`Option`][fs-option]                       | <nobr>= `CaaSApi_CMSInputRadioButton`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                  | `Option`                                    |
 | [FS_REFERENCE]<br />[`TargetReference`][fs-targetreference]              | <nobr>= `CaaSApi_FSReference`</nobr><br />= `CaaSApi_BaseRef`&#124;`CaaSApi_PageRefRef`&#124;`CaaSApi_GCARef`&#124;`CaaSApi_MediaRef`&#124;`null` |
 | [CMS_INPUT_TEXT]<br />[`String`][fs-string]                              | <nobr>= `CaaSApi_CMSInputText`</nobr><br />= `string`                                                                                             | [`string`][js-string]                       |
 | [CMS_INPUT_TEXTAREA]<br />[`String`][fs-string]                          | <nobr>= `CaaSApi_CMSInputTextArea`</nobr><br />= `string`                                                                                         | [`string`][js-string]                       |
