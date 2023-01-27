@@ -57,7 +57,9 @@ describe('QueryBuilder', () => {
               },
             ],
           })
-        ).toEqual({ 'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' } })
+        ).toEqual({
+          'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' },
+        })
       })
 
       it('should return filter array if two or more child filters are passed', () => {
@@ -112,7 +114,9 @@ describe('QueryBuilder', () => {
               },
             ],
           })
-        ).toEqual({ 'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' } })
+        ).toEqual({
+          'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' },
+        })
       })
 
       it('should return filter array if two or more child filters are passed', () => {
@@ -167,7 +171,9 @@ describe('QueryBuilder', () => {
               },
             ],
           })
-        ).toEqual({ 'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' } })
+        ).toEqual({
+          'foo.bar': { [ComparisonQueryOperatorEnum.EQUALS]: 'foobar' },
+        })
       })
 
       it('should return filter array if two or more child filters are passed', () => {
@@ -283,7 +289,9 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
-          (filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.EQUALS as string]
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.EQUALS as string
+          ]
         ).toBe('foo')
       })
 
@@ -296,9 +304,39 @@ describe('QueryBuilder', () => {
         expect(filter).toBeTruthy()
         expect(
           Array.isArray(
-            (filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.EQUALS as string]
+            (filter!['foobar'] as MappedFilter)[
+              ComparisonQueryOperatorEnum.EQUALS as string
+            ]
           )
         ).toBe(true)
+      })
+
+      it('should returns the ISODate with the specified date. <YYYY-mm-dd>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+          value: '2022-01-01',
+          field: foobar,
+        })
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.EQUALS as string
+          ]
+        ).toBe('2022-01-01')
+      })
+
+      it("should returns the ISODate with the specified datetime client's local timezone  in UTC. <YYYY-mm-ddTHH:MM:ss>", () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+          value: '2022-01-01T00:00:00',
+          field: foobar,
+        })
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.EQUALS as string
+          ]
+        ).toBe('2022-01-01T00:00:00')
       })
     })
 
@@ -341,7 +379,9 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
-          (filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.NOT_EQUALS as string]
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.NOT_EQUALS as string
+          ]
         ).toBe('foo')
       })
 
@@ -354,7 +394,9 @@ describe('QueryBuilder', () => {
         expect(filter).toBeTruthy()
         expect(
           Array.isArray(
-            (filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.NOT_EQUALS as string]
+            (filter!['foobar'] as MappedFilter)[
+              ComparisonQueryOperatorEnum.NOT_EQUALS as string
+            ]
           )
         ).toBe(true)
       })
@@ -381,17 +423,6 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
 
-      it('should throw an error if no valid number is provided', () => {
-        expect(() =>
-          builder.build({
-            operator: ComparisonQueryOperatorEnum.GREATER_THAN,
-            // @ts-ignore
-            value: 'foobar',
-            field: foobar,
-          })
-        ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
-      })
-
       it('should return the correct value', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN,
@@ -400,8 +431,39 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
-          (filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.GREATER_THAN]
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.GREATER_THAN
+          ]
         ).toEqual(2)
+      })
+
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.GREATER_THAN,
+          value: '2022-01-02',
+          field: foobar,
+        })
+
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.GREATER_THAN as string
+          ] > '2022-01-01'
+        ).toBe(true)
+      })
+
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.GREATER_THAN,
+          value: '2022-01-01T01:02:00',
+          field: foobar,
+        })
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.GREATER_THAN as string
+          ] > '2022-01-01T01:01:00'
+        ).toBe(true)
       })
     })
 
@@ -426,17 +488,6 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
 
-      it('should throw an error if no valid number is provided', () => {
-        expect(() =>
-          builder.build({
-            operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
-            // @ts-ignore
-            value: 'foobar',
-            field: foobar,
-          })
-        ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
-      })
-
       it('should return the correct value', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
@@ -445,8 +496,38 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
-          (filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS]
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS
+          ]
         ).toEqual(2)
+      })
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
+          value: '2022-01-02',
+          field: foobar,
+        })
+
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS as string
+          ] >= '2022-01-02'
+        ).toBe(true)
+      })
+
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
+          value: '2022-01-01T01:02:00',
+          field: foobar,
+        })
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS as string
+          ] >= '2022-01-01T01:01:00'
+        ).toBe(true)
       })
     })
 
@@ -471,17 +552,6 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
 
-      it('should throw an error if no valid number is provided', () => {
-        expect(() =>
-          builder.build({
-            operator: ComparisonQueryOperatorEnum.LESS_THAN,
-            // @ts-ignore
-            value: 'foobar',
-            field: foobar,
-          })
-        ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
-      })
-
       it('should return the correct value', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN,
@@ -489,9 +559,39 @@ describe('QueryBuilder', () => {
           value: 2,
         })
         expect(filter).toBeTruthy()
-        expect((filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.LESS_THAN]).toEqual(
-          2
-        )
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.LESS_THAN
+          ]
+        ).toEqual(2)
+      })
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.LESS_THAN,
+          value: '2022-01-01',
+          field: foobar,
+        })
+
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.LESS_THAN as string
+          ] < '2022-01-02'
+        ).toBe(true)
+      })
+
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.LESS_THAN,
+          value: '2022-01-01T01:01:00',
+          field: foobar,
+        })
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.LESS_THAN as string
+          ] < '2022-01-01T01:02:00'
+        ).toBe(true)
       })
     })
 
@@ -516,17 +616,6 @@ describe('QueryBuilder', () => {
         ).toThrow(QueryBuilderErrors.MISSING_VALUE)
       })
 
-      it('should throw an error if no valid number is provided', () => {
-        expect(() =>
-          builder.build({
-            operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
-            // @ts-ignore
-            value: 'foobar',
-            field: foobar,
-          })
-        ).toThrow(QueryBuilderErrors.NOT_A_NUMBER)
-      })
-
       it('should return the correct value', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
@@ -535,8 +624,38 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
-          (filter!['foobar'] as MappedFilter)[ComparisonQueryOperatorEnum.LESS_THAN_EQUALS]
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.LESS_THAN_EQUALS
+          ]
         ).toEqual(2)
+      })
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
+          value: '2022-01-02',
+          field: foobar,
+        })
+
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.LESS_THAN_EQUALS as string
+          ] <= '2022-01-02'
+        ).toBe(true)
+      })
+
+      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
+          value: '2022-01-01T01:01:00',
+          field: foobar,
+        })
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.LESS_THAN_EQUALS as string
+          ] <= '2022-01-01T01:02:00'
+        ).toBe(true)
       })
     })
 

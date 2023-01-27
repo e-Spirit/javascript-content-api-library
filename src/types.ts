@@ -152,7 +152,13 @@ export interface CaaSApi_ImageMapAreaPoly extends CaaSApi_ImageMapArea {
 export interface CaaSApi_ImageMapMedia
   extends Pick<
     CaaSApi_Media,
-    'fsType' | 'name' | 'displayName' | 'identifier' | 'uid' | 'uidType' | 'mediaType'
+    | 'fsType'
+    | 'name'
+    | 'displayName'
+    | 'identifier'
+    | 'uid'
+    | 'uidType'
+    | 'mediaType'
   > {
   url: string
   pictureMetaData: Omit<CaaSApi_Media_Picture_Resolution_MetaData, 'url'>
@@ -261,7 +267,12 @@ export interface CaaSApi_PageRefRef extends CaaSApi_BaseRef {
 export interface CaaSApi_FSReference {
   fsType: 'FS_REFERENCE'
   name: string
-  value: CaaSApi_BaseRef | CaaSApi_PageRefRef | CaaSApi_GCARef | CaaSApi_MediaRef | null
+  value:
+    | CaaSApi_BaseRef
+    | CaaSApi_PageRefRef
+    | CaaSApi_GCARef
+    | CaaSApi_MediaRef
+    | null
 }
 
 export interface CaaSAPI_PermissionGroup {
@@ -387,7 +398,11 @@ export interface CaaSApi_Body {
   fsType: 'Body' | 'GCABody'
   name: string
   identifier: string
-  children: (CaaSApi_Section | CaaSApi_Content2Section | CaaSApi_SectionReference)[]
+  children: (
+    | CaaSApi_Section
+    | CaaSApi_Content2Section
+    | CaaSApi_SectionReference
+  )[]
 }
 
 export interface CaaSApi_GCAPage {
@@ -491,7 +506,13 @@ export interface CaasApi_FilterResponse {
   _etag: { $oid: string }
   _returned: number
   _embedded: {
-    'rh:doc': (CaaSApi_PageRef | CaaSApi_Dataset | CaaSApi_Media | CaaSApi_GCAPage | any)[]
+    'rh:doc': (
+      | CaaSApi_PageRef
+      | CaaSApi_Dataset
+      | CaaSApi_Media
+      | CaaSApi_GCAPage
+      | any
+    )[]
   }
 }
 
@@ -706,11 +727,20 @@ export type CustomMapper = (
     registerReferencedItem: (identifier: string, path: NestedPath) => string
     buildPreviewId: (identifier: string) => string
     buildMediaUrl: (url: string, rev?: number) => string
-    mapDataEntries: (entries: CaaSApi_DataEntries, path: NestedPath) => Promise<DataEntries>
+    mapDataEntries: (
+      entries: CaaSApi_DataEntries,
+      path: NestedPath
+    ) => Promise<DataEntries>
   }
 ) => Promise<any>
 
-export type MappedCaasItem = Page | GCAPage | Dataset | Image | File | ProjectProperties
+export type MappedCaasItem =
+  | Page
+  | GCAPage
+  | Dataset
+  | Image
+  | File
+  | ProjectProperties
 
 export type CaasApi_Item =
   | CaaSApi_Dataset
@@ -784,16 +814,20 @@ export type ComparisonFilter =
         | ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS
         | ComparisonQueryOperatorEnum.LESS_THAN
         | ComparisonQueryOperatorEnum.LESS_THAN_EQUALS
-      value: number
+      value: number | string
     }
   | {
       field: string
-      operator: ComparisonQueryOperatorEnum.IN | ComparisonQueryOperatorEnum.NOT_IN
+      operator:
+        | ComparisonQueryOperatorEnum.IN
+        | ComparisonQueryOperatorEnum.NOT_IN
       value: ComparisonFilterValue[]
     }
   | {
       field: string
-      operator: ComparisonQueryOperatorEnum.EQUALS | ComparisonQueryOperatorEnum.NOT_EQUALS
+      operator:
+        | ComparisonQueryOperatorEnum.EQUALS
+        | ComparisonQueryOperatorEnum.NOT_EQUALS
       value: ComparisonFilterValue | ComparisonFilterValue[]
     }
 
@@ -831,14 +865,30 @@ export type EvaluationFilter = {
   value: string
 }
 
-export type QueryBuilderQuery = LogicalFilter | ComparisonFilter | ArrayFilter | EvaluationFilter
+export type QueryBuilderQuery =
+  | LogicalFilter
+  | ComparisonFilter
+  | ArrayFilter
+  | EvaluationFilter
 
 export interface MappedFilter {
-  [key: string]: MappedFilter | MappedFilter[] | ComparisonFilterValue | ComparisonFilterValue[]
+  [key: string]:
+    | MappedFilter
+    | MappedFilter[]
+    | ComparisonFilterValue
+    | ComparisonFilterValue[]
 }
 
 export interface RichTextElement {
-  type: 'block' | 'text' | 'paragraph' | 'list' | 'listitem' | 'linebreak' | 'link' | string
+  type:
+    | 'block'
+    | 'text'
+    | 'paragraph'
+    | 'list'
+    | 'listitem'
+    | 'linebreak'
+    | 'link'
+    | string
   content: RichTextElement[] | string
   data: Link | Record<string, any>
 }
@@ -977,7 +1027,9 @@ export interface FSXAApi {
     params: FetchElementParams
   ) => Promise<T>
   fetchByFilter: (params: FetchByFilterParams) => Promise<FetchResponse>
-  fetchNavigation: (params: FetchNavigationParams) => Promise<NavigationData | null>
+  fetchNavigation: (
+    params: FetchNavigationParams
+  ) => Promise<NavigationData | null>
   fetchProjectProperties: (
     params: FetchProjectPropertiesParams
   ) => Promise<ProjectProperties | NormalizedProjectPropertyResponse | null>
