@@ -66,7 +66,7 @@ It can be registered as a Rest Api that can be called from a `FSXAProxyApi` inst
 
 However, to have a fully running application, we recommend using the FSXA-API in your server as well as in your frontend.
 
-The config mode can be `preview` or `release`. Depending on the state of the content you want to fetch.
+The config mode can be `preview` or `release`, depending on the state of the content you want to fetch.
 <br />
 There is an enum to use these modes.
 <br />
@@ -187,13 +187,13 @@ fsxaApi.fetchElement({
 
 > **_Note_**<br>
 > The 'raw' CaaS data might be helpful when you want to know the key names that you can filter for.
-> It is possible to access those data directly with the authorization header and the CaaS Url.
+> It is possible to access that data directly with the authorization header and the CaaS Url.
 
 ### fetchByFilter
 
 Returns the matching CaaS data entries.
 It maps the given entries to a more frontend-friendly format.
-Which means that unneccessary fields will be omitted and the structure is simpler.
+Unneccessary fields will be omitted and the structure is simpler.
 
 Expects as input parameter an array of filters and a language abbreviation.
 Optionally a page number, page size, sort and additional parameters can be passed.
@@ -240,7 +240,7 @@ The default sorting is by the id descending. Multisort is possible and the first
 
 Returns the project properties of the given language.
 
-Expects an object parameter with the language abbreviation property
+Expects a parameter object with the locale.
 
 ATTENTION: Works only with CaaSConnect module version 3 onwards.
 
