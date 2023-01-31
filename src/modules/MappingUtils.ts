@@ -41,7 +41,7 @@ const denormalizeResolvedReferences = (
         set(resolvedReferences, path, resolvedReferences[referencedId])
       } else {
         console.warn(
-          `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization`
+          `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization. resolvedReferencesKeys: {[${Object.keys(resolvedReferences).join("],[")}]}`
         )
       }
     })
