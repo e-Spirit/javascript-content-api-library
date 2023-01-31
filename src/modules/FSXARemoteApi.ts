@@ -131,14 +131,12 @@ export class FSXARemoteApi implements FSXAApi {
     }
   }
 
-  private getRemoteProjectById(remoteProjectId: string) {
+  private verifyRemoteProjectExists(remoteProjectId: string) {
     const remoteProjectConfig = Object.values(this._remotes)
     const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProjectId)
     if (!foundRemoteProject) {
       throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
     }
-
-    return remoteProjectId
   }
 
   private getRemoteConfigById(remoteProjectId: string) {
@@ -172,12 +170,13 @@ export class FSXARemoteApi implements FSXAApi {
     pagesize,
     sort,
   }: buildCaaSUrlParams = {}) {
-    let project = this.projectID
+    let projectId = this.projectID
     if (remoteProjectId) {
-      project = this.getRemoteProjectById(remoteProjectId)
+      this.verifyRemoteProjectExists(remoteProjectId);
+      projectId = remoteProjectId;
     }
 
-    let baseURL = `${this.caasURL}/${this.tenantID}/${project}.${this.contentMode}.content`
+    let baseURL = `${this.caasURL}/${this.tenantID}/${projectId}.${this.contentMode}.content`
     let encodedBaseURL = encodeURI(baseURL)
 
     if (id) {

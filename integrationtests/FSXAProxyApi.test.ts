@@ -50,7 +50,7 @@ describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
   const remoteProjectId = Faker.datatype.uuid()
-  const remoteProjectLocale = Faker.random.locale()
+  const remoteProjectLocale = "en_GB"
 
   let caasClientProperties = {
     apikey: INTEGRATION_TEST_API_KEY!,
@@ -77,6 +77,7 @@ describe('FSXAProxyAPI', () => {
   let proxyAPI: FSXAProxyApi
   let server: Server
   let caasClient: CaasTestingClient
+
   beforeAll(async () => {
     // start express server
     const app = express()
@@ -89,12 +90,14 @@ describe('FSXAProxyAPI', () => {
     // create instance of caas client to easily read and write testing data to caas
     caasClient = await CaasTestingClient.init(caasClientProperties)
   })
+
   afterAll(async () => {
     const res = await caasClient.getCollection()
     const parsedRes = await res.json()
     await caasClient.removeCollection(parsedRes._etag.$oid)
     server.close()
   })
+
   describe('fetchProjectProps', () => {
     const locale = {
       identifier: 'de_DE',
@@ -145,6 +148,7 @@ describe('FSXAProxyAPI', () => {
       expect(res!.data.dataset.data.ref22.id).toEqual(dataset2.identifier)
     })
   })
+
   describe('fetchElement', () => {
     const locale = {
       identifier: 'de_DE',
@@ -421,6 +425,7 @@ describe('FSXAProxyAPI', () => {
       expect(mappedRef.referenceRemoteProject).toEqual(remotePageRefReference.value?.remoteProject)
     })
   })
+
   describe('fetchByFilter', () => {
     const country = 'GB'
     const language = 'en'
@@ -807,6 +812,7 @@ describe('FSXAProxyAPI', () => {
       })
     })
   })
+
   describe('RemoteProjects', () => {
     const locale = {
       identifier: 'de_DE',

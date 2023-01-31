@@ -121,7 +121,8 @@ export class FSXAProxyApi implements FSXAApi {
         case 401:
           throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
         default:
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+          const bodyString = await response.text();
+          throw new Error(FSXAApiErrors.UNKNOWN_ERROR + " Response: " + response.status + " " + bodyString)
       }
     }
     const jsonRes = await response.json()
