@@ -234,7 +234,7 @@ fsxaApi.fetchByFilter({
 The default sorting is by the id descending. Multisort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
 
 > **_Attention_**<br>
-> The fieldnames and keys that can be passed to the `fetchByFilter` method have to match the key names that are present in the CaaS data.
+> The keys names which are passed to the `fetchByFilter` method (e.g. in the filters or the additionalParams) have to match the key names that are present in the CaaS data.
 
 ### fetchProjectProperties
 
