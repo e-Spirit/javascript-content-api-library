@@ -58,7 +58,7 @@ export class CaasTestingClient {
     const caasClient = new CaasTestingClient(CaaSTestingClientData)
     await caasClient.createCollection()
     CaaSTestingClientData.remoteProjectId &&
-      (await caasClient.createCollection(CaaSTestingClientData.remoteProjectId))
+      (await caasClient.createRemoteCollection())
     return caasClient
   }
 
@@ -77,12 +77,10 @@ export class CaasTestingClient {
    * @returns Http Response | undefined
    */
   async getRemoteCollection() {
-    return this.remoteBaseUrl
-      ? await fetch(this.remoteBaseUrl, {
+    return await fetch(this.remoteBaseUrl!, {
           method: RequestMethodEnum.GET,
           headers: this.headers,
         })
-      : undefined
   }
   /**
    * Get item from integration test database in CaaS
@@ -101,10 +99,20 @@ export class CaasTestingClient {
    * Create collection in integration test database in CaaS
    * @returns Http Response
    */
-  async createCollection(projectId?: string) {
-    const adjustedUrl = projectId ? this.baseUrl.replace(this.projectId, projectId) : this.baseUrl
+  async createCollection() {
+    return await fetch(this.baseUrl, {
+      method: RequestMethodEnum.PUT,
+      headers: this.headers,
+    })
+  }
 
-    return await fetch(adjustedUrl, {
+
+  /**
+   * Create collection in integration test database in CaaS
+   * @returns Http Response
+   */
+  async createRemoteCollection() { //TODO
+    return await fetch(this.remoteBaseUrl!, {
       method: RequestMethodEnum.PUT,
       headers: this.headers,
     })
