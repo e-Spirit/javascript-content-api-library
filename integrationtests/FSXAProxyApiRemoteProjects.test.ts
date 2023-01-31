@@ -89,7 +89,6 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       remoteProjectId,
     })
 
-    debugger
     await prepareDataInCaas(remoteProjectId, remoteProjectLocale);
   }
 
@@ -116,12 +115,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     }
 
     await caasClient.addItemsToCollection(
-      [
-        {
-          ...localMedia,
-          _id: localMedia.identifier,
-        },
-      ],
+      [localMedia],
       projectLocale
     )
 
@@ -129,13 +123,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
 
     // add items to remote project collection
     await caasClient.addItemsToRemoteCollection(
-      [
-        {
-          ...remoteMedia,
-          _id: remoteMedia.identifier,
-        },
-        dataset,
-      ],
+      [remoteMedia, dataset],
       { language, country, identifier: remoteProjectLocale }
     )
 
@@ -145,12 +133,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     }
 
     await caasClient.addItemsToCollection(
-      [
-        {
-          ...pageRef,
-          _id: pageRef.identifier,
-        },
-      ],
+      [pageRef],
       projectLocale
     )
   }
@@ -159,6 +142,10 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     const res = await caasClient.getCollection()
     const parsedRes = await res.json()
     await caasClient.removeCollection(parsedRes._etag.$oid)
+
+    const res2 = await caasClient.getRemoteCollection()
+    const parsedRes2 = await res2.json()
+    await caasClient.removeRemoteCollection(parsedRes2._etag.$oid)
     server.close()
   })
 
@@ -213,6 +200,8 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
     expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
   })
+
+  //TODO: add test where media ids are different
 
 
   it('Dataset references on metadata of remote media should be fetchable', async () => {
