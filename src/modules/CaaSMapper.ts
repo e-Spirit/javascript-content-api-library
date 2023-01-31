@@ -131,6 +131,8 @@ export class CaaSMapper {
     if (id) {
       this.logger.debug('Add to resolvedReferences', id)
       this.resolvedReferences[id] = item
+    } else {
+      this.logger.warn('No id for item', item)
     }
   }
 
@@ -1102,7 +1104,8 @@ export class CaaSMapper {
 
     const referencedIds = Object.keys(referencedItems)
 
-    const resolvedIds = new Set(Object.keys(this.resolvedReferences))
+    const resolvedIdsArray = Object.keys(this.resolvedReferences)
+    const resolvedIds = new Set(resolvedIdsArray)
 
     const idsToFetchFromCaaS = referencedIds
       .filter((id) => !resolvedIds.has(id))
@@ -1111,8 +1114,8 @@ export class CaaSMapper {
     const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
 
     this.logger.info('CaaSMapper.resolveReferencesPerProject: Id data', {
-      remoteProjectId,
-      resolvedIds,
+      project: remoteProjectId || 'localProject',
+      resolvedIdsArray,
       referencedIds,
       idsToFetchFromCaaS,
     })
@@ -1140,6 +1143,10 @@ export class CaaSMapper {
             this
           )
         )
+      )
+    } else {
+      this.logger.info(
+        'CaaSMapper.resolveReferencesPerProject: Nothing to fetch'
       )
     }
   }
