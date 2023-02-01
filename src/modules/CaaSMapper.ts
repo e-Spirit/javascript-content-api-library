@@ -52,7 +52,7 @@ import {
 import { parseISO } from 'date-fns'
 import { chunk, update } from 'lodash'
 import XMLParser from './XMLParser'
-import { Logger } from './Logger'
+import { Logger, LogLevel } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { FSXAContentMode, ImageMapAreaType } from '../enums'
 import { findResolvedReferencesByIds, getItemId } from './MappingUtils'
@@ -116,36 +116,53 @@ export class CaaSMapper {
     )
     this.logger = logger
     this.referenceDepth = utils.referenceDepth ?? 0
-    this.maxReferenceDepth = utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
+    this.maxReferenceDepth =
+      utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
 
     this.logger.debug('Created new CaaSMapper')
   }
 
-  addToResolvedReferences(item: MappedCaasItem | CaasApi_Item) {
+  addToResolvedReferences(
+    item: MappedCaasItem | CaasApi_Item,
+    remoteProjectId?: string
+  ) {
     // Page has pageId as id instead of PageRef Id. --> use refId instead for mapped Pages
-    const id = getItemId(item)
-
+    const id = getItemId(item, remoteProjectId)
     if (id) {
+      this.logger.debug('Add to resolvedReferences', id)
       this.resolvedReferences[id] = item
+    } else {
+      this.logger.warn('No id for item', item)
     }
   }
 
   /**
    * unifies the two different id formats {id}.{locale} and {id} to {id}.{locale}
+   * if remoteProjectConfiguration is passed, prefix with project id to avoid uuid clashes
    *
    * @param id uuid, may be of form {id}.{locale} or {id}
-   * @param overrideLocale force specific locale
-   * @returns uuid of form {id}.{locale}
+   * @param remoteProjectConfiguration remoteProjectConfig
+   * @returns uuid of form {id}.{locale} or {remoteProjectId}#{id}.{locale}
    */
-  unifyId(id: string, overrideLocale?: string) {
+  unifyId(
+    id: string,
+    remoteProjectConfiguration?: RemoteProjectConfigurationEntry
+  ) {
     const indexOfSeparator = id.indexOf('.')
-
+    const remoteLocale = remoteProjectConfiguration?.locale
+    let idWithLocale
     if (indexOfSeparator > 0) {
       // id has form {id}.{locale}. Override Locale if set
-      return overrideLocale ? `${id.substring(0, indexOfSeparator)}.${overrideLocale}` : id
+      idWithLocale = remoteLocale
+        ? `${id.substring(0, indexOfSeparator)}.${remoteLocale}`
+        : id
+    } else {
+      // id has form {id}. transform to {id}.{locale}
+      idWithLocale = `${id}.${remoteLocale || this.locale}`
     }
-    // id has form {id}. transform to {id}.{locale}
-    return `${id}.${overrideLocale || this.locale}`
+    return remoteProjectConfiguration
+      ? `${remoteProjectConfiguration.id}#${idWithLocale}`
+      : idWithLocale
   }
 
   /**
@@ -156,10 +173,13 @@ export class CaaSMapper {
    * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
    * @returns placeholder string
    */
-  registerReferencedItem(identifier: string, path: NestedPath, remoteProjectId?: string): string {
+  registerReferencedItem(
+    identifier: string,
+    path: NestedPath,
+    remoteProjectId?: string
+  ): string {
     const remoteData = this.getRemoteConfigForProject(remoteProjectId)
     const remoteProjectKey = remoteData?.id
-    const remoteProjectLocale = remoteData?.locale
 
     if (remoteProjectId && !remoteProjectKey) {
       this.logger.warn(
@@ -167,7 +187,15 @@ export class CaaSMapper {
       )
     }
 
-    const unifiedId = this.unifyId(identifier, remoteProjectLocale)
+    const unifiedId = this.unifyId(identifier, remoteData)
+
+    // Preflight check to avoid costly operations in non debug mode
+    this.logger.logLevel === LogLevel.DEBUG &&
+      this.logger.debug('Registering Referenced Item ', {
+        remoteProjectKey,
+        identifier,
+        path: path.join('/'),
+      })
 
     if (remoteProjectKey) {
       this._remoteReferences[remoteProjectKey][unifiedId] = [
@@ -177,12 +205,15 @@ export class CaaSMapper {
       return `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
     }
 
-    this._referencedItems[unifiedId] = [...(this._referencedItems[unifiedId] || []), path]
+    this._referencedItems[unifiedId] = [
+      ...(this._referencedItems[unifiedId] || []),
+      path,
+    ]
     return `[REFERENCED-ITEM-${unifiedId}]`
   }
 
-  buildPreviewId(identifier: string) {
-    return [identifier, this.locale].join('.')
+  buildPreviewId(identifier: string, remoteProjectLocale?: string) {
+    return [identifier, remoteProjectLocale || this.locale].join('.')
   }
 
   buildMediaUrl(url: string, rev?: number) {
@@ -192,7 +223,12 @@ export class CaaSMapper {
     return url
   }
 
-  async mapDataEntry(entry: CaaSApi_DataEntry, path: NestedPath): Promise<DataEntry> {
+  async mapDataEntry(
+    entry: CaaSApi_DataEntry,
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<DataEntry> {
     if (this.customMapper) {
       const result = await this.customMapper(entry, path, {
         api: this.api as any,
@@ -207,7 +243,11 @@ export class CaaSMapper {
     switch (entry.fsType) {
       case 'CMS_INPUT_COMBOBOX':
         const comboboxOption: Option | null = entry.value
-          ? { type: 'Option', key: entry.value.identifier, value: entry.value.label }
+          ? {
+              type: 'Option',
+              key: entry.value.identifier,
+              value: entry.value.label,
+            }
           : null
         return comboboxOption
       case 'CMS_INPUT_DOM':
@@ -215,7 +255,12 @@ export class CaaSMapper {
         const richTextElements: RichTextElement[] = entry.value
           ? await this.xmlParser.parse(entry.value)
           : []
-        return this.mapLinksInRichTextElements(richTextElements, path)
+        return this.mapLinksInRichTextElements(
+          richTextElements,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       case 'CMS_INPUT_NUMBER':
       case 'CMS_INPUT_TEXT':
       case 'CMS_INPUT_TEXTAREA':
@@ -233,41 +278,83 @@ export class CaaSMapper {
           : null
         return radiobuttonOption
       case 'CMS_INPUT_DATE':
-        const dateValue: Date | null = entry.value ? parseISO(entry.value) : null
+        const dateValue: Date | null = entry.value
+          ? parseISO(entry.value)
+          : null
         return dateValue
       case 'CMS_INPUT_LINK':
         const link: Link | null = entry.value
           ? {
               type: 'Link',
               template: entry.value.template.uid,
-              data: await this.mapDataEntries(entry.value.formData, [...path, 'data']),
-              meta: await this.mapDataEntries(entry.value.metaFormData, [...path, 'meta']),
+              data: await this.mapDataEntries(
+                entry.value.formData,
+                [...path, 'data'],
+                remoteProjectLocale,
+                remoteProjectId
+              ),
+              meta: await this.mapDataEntries(
+                entry.value.metaFormData,
+                [...path, 'meta'],
+                remoteProjectLocale,
+                remoteProjectId
+              ),
             }
           : null
         return link
       case 'CMS_INPUT_LIST':
         if (!entry.value) return []
         return Promise.all(
-          entry.value.map((childEntry, index) => this.mapDataEntry(childEntry, [...path, index]))
+          entry.value.map((childEntry, index) =>
+            this.mapDataEntry(
+              childEntry,
+              [...path, index],
+              remoteProjectLocale,
+              remoteProjectId
+            )
+          )
         )
       case 'CMS_INPUT_CHECKBOX':
         if (!entry.value) return []
         return Promise.all(
-          entry.value.map((childEntry, index) => this.mapDataEntry(childEntry, [...path, index]))
+          entry.value.map((childEntry, index) =>
+            this.mapDataEntry(
+              childEntry,
+              [...path, index],
+              remoteProjectLocale,
+              remoteProjectId
+            )
+          )
         )
       case 'CMS_INPUT_IMAGEMAP':
         if (!entry || !entry.value) {
           return null
         }
-        return this.mapImageMap(entry as CaaSApi_CMSImageMap, path)
+        return this.mapImageMap(
+          entry as CaaSApi_CMSImageMap,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       case 'FS_DATASET':
         if (!entry.value) return null
         if (Array.isArray(entry.value)) {
           return Promise.all(
-            entry.value.map((childEntry, index) => this.mapDataEntry(childEntry, [...path, index]))
+            entry.value.map((childEntry, index) =>
+              this.mapDataEntry(
+                childEntry,
+                [...path, index],
+                remoteProjectLocale,
+                remoteProjectId
+              )
+            )
           )
         } else if (entry.value.fsType === 'DatasetReference') {
-          return this.registerReferencedItem(entry.value.target.identifier, path)
+          return this.registerReferencedItem(
+            entry.value.target.identifier,
+            path,
+            remoteProjectId
+          )
         }
         return null
       case 'CMS_INPUT_TOGGLE':
@@ -285,14 +372,24 @@ export class CaaSMapper {
                     name: card.template.name,
                     displayName: card.template.displayName,
                   },
-                  [...path, index]
+                  [...path, index],
+                  remoteProjectLocale,
+                  remoteProjectId
                 )
               case 'PageTemplate':
                 return {
                   id: card.identifier,
-                  previewId: this.buildPreviewId(card.identifier),
+                  previewId: this.buildPreviewId(
+                    card.identifier,
+                    remoteProjectLocale
+                  ),
                   template: card.template.uid,
-                  data: await this.mapDataEntries(card.formData, [...path, index, 'data']),
+                  data: await this.mapDataEntries(
+                    card.formData,
+                    [...path, index, 'data'],
+                    remoteProjectLocale,
+                    remoteProjectId
+                  ),
                 }
               default:
                 return card
@@ -323,9 +420,14 @@ export class CaaSMapper {
         if (entry.dapType === 'DatasetDataAccessPlugin') {
           return entry.value
             .map((record, index) => {
-              const identifier = record?.value?.target?.identifier
+              const identifier: string | undefined =
+                record?.value?.target?.identifier
               if (!identifier) return null
-              return this.registerReferencedItem(identifier, [...path, index])
+              return this.registerReferencedItem(
+                identifier,
+                [...path, index],
+                remoteProjectId
+              )
             })
             .filter(Boolean)
         }
@@ -344,8 +446,12 @@ export class CaaSMapper {
           name: entry.name,
           value: entry.value.map((activity) => {
             return {
-              allowed: activity.allowed.map((group) => this._mapPermissionGroup(group)),
-              forbidden: activity.forbidden.map((group) => this._mapPermissionGroup(group)),
+              allowed: activity.allowed.map((group) =>
+                this._mapPermissionGroup(group)
+              ),
+              forbidden: activity.forbidden.map((group) =>
+                this._mapPermissionGroup(group)
+              ),
             } as PermissionActivity
           }),
         }
@@ -355,29 +461,35 @@ export class CaaSMapper {
     }
   }
 
-  async mapLinksInRichTextElements(richTextElements: RichTextElement[], path: NestedPath) {
+  async mapLinksInRichTextElements(
+    richTextElements: RichTextElement[],
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ) {
     await Promise.all(
       richTextElements.map(async (richTextElement, index) => {
         if (richTextElement.type === 'link') {
           const link = {
             type: 'Link',
             template: richTextElement.data.type as string,
-            data: await this.mapDataEntries(richTextElement.data.data, [
-              ...path,
-              index,
-              'data',
-              'data',
-            ]),
+            data: await this.mapDataEntries(
+              richTextElement.data.data,
+              [...path, index, 'data', 'data'],
+              remoteProjectLocale,
+              remoteProjectId
+            ),
             meta: {},
           }
           richTextElement.data = link
         }
         if (Array.isArray(richTextElement.content)) {
-          richTextElement.content = await this.mapLinksInRichTextElements(richTextElement.content, [
-            ...path,
-            index,
-            'content',
-          ])
+          richTextElement.content = await this.mapLinksInRichTextElements(
+            richTextElement.content,
+            [...path, index, 'content'],
+            remoteProjectLocale,
+            remoteProjectId
+          )
         }
       })
     )
@@ -392,10 +504,22 @@ export class CaaSMapper {
     } as PermissionGroup
   }
 
-  async mapDataEntries(entries: CaaSApi_DataEntries, path: NestedPath): Promise<DataEntries> {
+  async mapDataEntries(
+    entries: CaaSApi_DataEntries,
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<DataEntries> {
     const keys = Object.keys(entries || {})
     const mappedEntries: any[] = await Promise.all(
-      Object.keys(entries || {}).map((key) => this.mapDataEntry(entries[key], [...path, key]))
+      Object.keys(entries || {}).map((key) =>
+        this.mapDataEntry(
+          entries[key],
+          [...path, key],
+          remoteProjectLocale,
+          remoteProjectId
+        )
+      )
     )
     return keys.reduce(
       (result, key, index) => ({
@@ -408,23 +532,36 @@ export class CaaSMapper {
 
   async mapSection(
     section: CaaSApi_Section | CaaSApi_SectionReference,
-    path: NestedPath
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
   ): Promise<Section> {
     return {
       id: section.identifier,
       type: 'Section',
       sectionType: section.template.uid,
-      previewId: this.buildPreviewId(section.identifier),
-      data: await this.mapDataEntries(section.formData, [...path, 'data']),
+      previewId: this.buildPreviewId(section.identifier, remoteProjectLocale),
+      data: await this.mapDataEntries(
+        section.formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
       displayed: section.displayed,
       children: [],
     }
   }
 
-  async mapContent2Section(content2Section: CaaSApi_Content2Section): Promise<Section> {
+  async mapContent2Section(
+    content2Section: CaaSApi_Content2Section,
+    remoteProjectLocale?: string
+  ): Promise<Section> {
     return {
       id: content2Section.identifier,
-      previewId: this.buildPreviewId(content2Section.identifier),
+      previewId: this.buildPreviewId(
+        content2Section.identifier,
+        remoteProjectLocale
+      ),
       type: 'Section',
       data: {
         entityType: content2Section.entityType,
@@ -441,81 +578,151 @@ export class CaaSMapper {
   }
 
   async mapBodyContent(
-    content: CaaSApi_Content2Section | CaaSApi_Section | CaaSApi_SectionReference,
-    path: NestedPath
+    content:
+      | CaaSApi_Content2Section
+      | CaaSApi_Section
+      | CaaSApi_SectionReference,
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
   ): Promise<PageBodyContent> {
     switch (content.fsType) {
       case 'Content2Section':
-        return this.mapContent2Section(content)
+        return this.mapContent2Section(content, remoteProjectLocale)
       case 'Section':
       case 'SectionReference':
       case 'GCASection':
-        return this.mapSection(content, path)
+        return this.mapSection(
+          content,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       default:
         throw new Error(
-          CaaSMapperErrors.UNKNOWN_BODY_CONTENT + ` fsType=[${(content as any)?.fsType}]`
+          CaaSMapperErrors.UNKNOWN_BODY_CONTENT +
+            ` fsType=[${(content as any)?.fsType}]`
         )
     }
   }
 
-  async mapPageBody(body: CaaSApi_Body, path: NestedPath): Promise<PageBody> {
+  async mapPageBody(
+    body: CaaSApi_Body,
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<PageBody> {
     return {
       type: 'PageBody',
       name: body.name,
-      previewId: this.buildPreviewId(body.identifier),
+      previewId: this.buildPreviewId(body.identifier, remoteProjectLocale),
       children: await Promise.all(
         body.children.map((child, index) =>
-          this.mapBodyContent(child, [...path, 'children', index])
+          this.mapBodyContent(
+            child,
+            [...path, 'children', index],
+            remoteProjectLocale,
+            remoteProjectId
+          )
         )
       ),
     }
   }
 
-  async mapPageRef(pageRef: CaaSApi_PageRef, path: NestedPath = []): Promise<Page> {
+  async mapPageRef(
+    pageRef: CaaSApi_PageRef,
+    path: NestedPath = [],
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<Page> {
     return {
       type: 'Page',
       id: pageRef.page.identifier,
       refId: pageRef.identifier,
-      previewId: this.buildPreviewId(pageRef.identifier),
+      previewId: this.buildPreviewId(pageRef.identifier, remoteProjectLocale),
       name: pageRef.page.name,
       layout: pageRef.page.template.uid,
       children: await Promise.all(
         pageRef.page.children.map((child, index) =>
-          this.mapPageBody(child, [...path, 'children', index])
+          this.mapPageBody(
+            child,
+            [...path, 'children', index],
+            remoteProjectLocale,
+            remoteProjectId
+          )
         )
       ),
-      data: await this.mapDataEntries(pageRef.page.formData, [...path, 'data']),
-      meta: await this.mapDataEntries(pageRef.page.metaFormData, [...path, 'meta']),
+      data: await this.mapDataEntries(
+        pageRef.page.formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
+      meta: await this.mapDataEntries(
+        pageRef.page.metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
       ...(pageRef.metaFormData && {
-        metaPageRef: await this.mapDataEntries(pageRef.metaFormData, [...path, 'metaPageRef']),
+        metaPageRef: await this.mapDataEntries(
+          pageRef.metaFormData,
+          [...path, 'metaPageRef'],
+          remoteProjectLocale,
+          remoteProjectId
+        ),
       }),
+      remoteProjectId,
     }
   }
 
   async mapProjectProperties(
     properties: CaaSApi_ProjectProperties,
-    path: NestedPath = []
+    path: NestedPath = [],
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
   ): Promise<ProjectProperties> {
     return {
       type: 'ProjectProperties',
-      data: await this.mapDataEntries(properties.formData, [...path, 'data']),
+      data: await this.mapDataEntries(
+        properties.formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
       layout: properties.template.uid,
-      meta: await this.mapDataEntries(properties.metaFormData, [...path, 'meta']),
+      meta: await this.mapDataEntries(
+        properties.metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
       name: properties.name,
-      previewId: this.buildPreviewId(properties.identifier),
+      previewId: this.buildPreviewId(
+        properties.identifier,
+        remoteProjectLocale
+      ),
       id: properties.identifier,
+      remoteProjectId,
     }
   }
 
   async mapImageMapArea(
     area: CaaSApi_ImageMapArea,
-    path: NestedPath
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
   ): Promise<ImageMapArea | null> {
     const base: Partial<ImageMapArea> = {
       areaType: area.areaType,
       link: area.link && {
         template: area.link.template.uid,
-        data: await this.mapDataEntries(area.link.formData, [...path, 'link', 'data']),
+        data: await this.mapDataEntries(
+          area.link.formData,
+          [...path, 'link', 'data'],
+          remoteProjectLocale,
+          remoteProjectId
+        ),
       },
     }
     switch (area.areaType) {
@@ -541,7 +748,12 @@ export class CaaSMapper {
     }
   }
 
-  async mapImageMap(imageMap: CaaSApi_CMSImageMap, path: NestedPath): Promise<ImageMap> {
+  async mapImageMap(
+    imageMap: CaaSApi_CMSImageMap,
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<ImageMap> {
     if (!imageMap.value) {
       throw new Error('ImageMap value is null')
     }
@@ -551,12 +763,23 @@ export class CaaSMapper {
 
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
     const mappedAreas = await Promise.all(
-      areas.map(async (area, index) => this.mapImageMapArea(area, [...path, 'areas', index]))
+      areas.map(async (area, index) =>
+        this.mapImageMapArea(
+          area,
+          [...path, 'areas', index],
+          remoteProjectLocale,
+          remoteProjectId
+        )
+      )
     )
 
     let image = null
     if (media) {
-      image = this.registerReferencedItem(media.identifier, [...path, 'media'], media.remoteProject)
+      image = this.registerReferencedItem(
+        media.identifier,
+        [...path, 'media'],
+        media.remoteProject
+      )
       this._imageMapForcedResolutions.push({
         imageId: `${media.identifier}.${this.locale}`,
         resolution: resolution.uid,
@@ -571,50 +794,93 @@ export class CaaSMapper {
     }
   }
 
-  async mapGCAPage(gcaPage: CaaSApi_GCAPage, path: NestedPath = []): Promise<GCAPage> {
+  async mapGCAPage(
+    gcaPage: CaaSApi_GCAPage,
+    path: NestedPath = [],
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<GCAPage> {
     return {
       type: 'GCAPage',
       id: gcaPage.identifier,
-      previewId: this.buildPreviewId(gcaPage.identifier),
+      previewId: this.buildPreviewId(gcaPage.identifier, remoteProjectLocale),
       name: gcaPage.name,
       layout: gcaPage.template.uid,
       children: await Promise.all(
         gcaPage.children.map((child, index) =>
-          this.mapPageBody(child, [...path, 'children', index])
+          this.mapPageBody(
+            child,
+            [...path, 'children', index],
+            remoteProjectLocale,
+            remoteProjectId
+          )
         )
       ),
-      data: await this.mapDataEntries(gcaPage.formData, [...path, 'data']),
-      meta: await this.mapDataEntries(gcaPage.metaFormData, [...path, 'meta']),
+      data: await this.mapDataEntries(
+        gcaPage.formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
+      meta: await this.mapDataEntries(
+        gcaPage.metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
+      remoteProjectId,
     }
   }
 
-  async mapDataset(dataset: CaaSApi_Dataset, path: NestedPath = []): Promise<Dataset> {
+  async mapDataset(
+    dataset: CaaSApi_Dataset,
+    path: NestedPath = [],
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<Dataset> {
     return {
       type: 'Dataset',
       id: dataset.identifier,
-      previewId: this.buildPreviewId(dataset.identifier),
+      previewId: this.buildPreviewId(dataset.identifier, remoteProjectLocale),
       schema: dataset.schema,
       entityType: dataset.entityType,
-      data: await this.mapDataEntries(dataset.formData, [...path, 'data']),
+      data: await this.mapDataEntries(
+        dataset.formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
       route: dataset.route,
       routes: dataset.routes,
       template: dataset.template?.uid,
       children: [],
+      remoteProjectId,
       locale: dataset.locale.language + '_' + dataset.locale.country,
     }
   }
 
-  async mapMediaPicture(item: CaaSApi_Media_Picture, path: NestedPath = []): Promise<Image> {
+  async mapMediaPicture(
+    item: CaaSApi_Media_Picture,
+    path: NestedPath = [],
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<Image> {
     return {
       type: 'Image',
       id: item.identifier,
-      previewId: this.buildPreviewId(item.identifier),
-      meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
+      previewId: this.buildPreviewId(item.identifier, remoteProjectLocale),
+      meta: await this.mapDataEntries(
+        item.metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
       description: item.description,
       resolutions: this.mapMediaPictureResolutionUrls(
         item.resolutionsMetaData,
         item.changeInfo?.revision
       ),
+      remoteProjectId,
     }
   }
 
@@ -623,32 +889,61 @@ export class CaaSMapper {
     rev?: number
   ): CaaSApiMediaPictureResolutions {
     for (let resolution in resolutions) {
-      resolutions[resolution].url = this.buildMediaUrl(resolutions[resolution].url, rev)
+      resolutions[resolution].url = this.buildMediaUrl(
+        resolutions[resolution].url,
+        rev
+      )
     }
     return resolutions
   }
 
-  async mapMediaFile(item: CaaSApi_Media_File, path: NestedPath): Promise<File> {
+  async mapMediaFile(
+    item: CaaSApi_Media_File,
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<File> {
     return {
       type: 'File',
       id: item.identifier,
-      previewId: this.buildPreviewId(item.identifier),
-      meta: await this.mapDataEntries(item.metaFormData, [...path, 'meta']),
+      previewId: this.buildPreviewId(item.identifier, remoteProjectLocale),
+      meta: await this.mapDataEntries(
+        item.metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      ),
       fileName: item.fileName,
       fileMetaData: item.fileMetaData,
       url: item.url,
+      remoteProjectId,
     }
   }
 
-  async mapMedia(item: CaaSApi_Media, path: NestedPath): Promise<Image | File | null> {
+  async mapMedia(
+    item: CaaSApi_Media,
+    path: NestedPath,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<Image | File | null> {
     if (item === null) {
       return null
     }
     switch (item.mediaType) {
       case 'PICTURE':
-        return this.mapMediaPicture(item, path)
+        return this.mapMediaPicture(
+          item,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       case 'FILE':
-        return this.mapMediaFile(item, path)
+        return this.mapMediaFile(
+          item,
+          path,
+          remoteProjectLocale,
+          remoteProjectId
+        )
       default:
         return item
     }
@@ -657,7 +952,9 @@ export class CaaSMapper {
   async mapFilterResponse(
     unmappedItems: (CaasApi_Item | any)[],
     additionalParams?: Record<string, any>,
-    filterContext?: unknown
+    filterContext?: unknown,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
   ): Promise<MapResponse> {
     let items: (MappedCaasItem | CaasApi_Item)[] = additionalParams?.keys
       ? unmappedItems // don't map data, if additional params have been set
@@ -666,17 +963,44 @@ export class CaaSMapper {
             unmappedItems.map((unmappedItem, index) => {
               switch (unmappedItem.fsType) {
                 case 'Dataset':
-                  return this.mapDataset(unmappedItem, [getItemId(unmappedItem)])
+                  return this.mapDataset(
+                    unmappedItem,
+                    [getItemId(unmappedItem, remoteProjectId)],
+                    remoteProjectLocale,
+                    remoteProjectId
+                  )
                 case 'PageRef':
-                  return this.mapPageRef(unmappedItem, [getItemId(unmappedItem)])
+                  return this.mapPageRef(
+                    unmappedItem,
+                    [getItemId(unmappedItem, remoteProjectId)],
+                    remoteProjectLocale,
+                    remoteProjectId
+                  )
                 case 'Media':
-                  return this.mapMedia(unmappedItem, [getItemId(unmappedItem)])
+                  return this.mapMedia(
+                    unmappedItem,
+                    [getItemId(unmappedItem, remoteProjectId)],
+                    remoteProjectLocale,
+                    remoteProjectId
+                  )
                 case 'GCAPage':
-                  return this.mapGCAPage(unmappedItem, [getItemId(unmappedItem)])
+                  return this.mapGCAPage(
+                    unmappedItem,
+                    [getItemId(unmappedItem, remoteProjectId)],
+                    remoteProjectLocale,
+                    remoteProjectId
+                  )
                 case 'ProjectProperties':
-                  return this.mapProjectProperties(unmappedItem, [getItemId(unmappedItem)])
+                  return this.mapProjectProperties(
+                    unmappedItem,
+                    [getItemId(unmappedItem, remoteProjectId)],
+                    remoteProjectLocale,
+                    remoteProjectId
+                  )
                 default:
-                  this.logger.warn(`Item at index'${index}' could not be mapped!`)
+                  this.logger.warn(
+                    `Item at index [${index}] with type [${unmappedItem.fsType}] could not be mapped!`
+                  )
                   return unmappedItem
               }
             })
@@ -686,7 +1010,7 @@ export class CaaSMapper {
     // cache items to avoid fetching them multiple times
     items.forEach((item) => {
       if (item) {
-        this.addToResolvedReferences(item)
+        this.addToResolvedReferences(item, remoteProjectId)
       }
     })
 
@@ -703,7 +1027,9 @@ export class CaaSMapper {
     const remoteReferencesValues = Object.values(this._remoteReferences)
     const remoteReferencesMerged =
       remoteReferencesValues.length > 0
-        ? remoteReferencesValues.reduce((result, current) => Object.assign(result, current))
+        ? remoteReferencesValues.reduce((result, current) =>
+            Object.assign(result, current)
+          )
         : {}
 
     // return
@@ -723,7 +1049,9 @@ export class CaaSMapper {
   async resolveAllReferences(filterContext?: unknown): Promise<void> {
     if (this.referenceDepth >= this.maxReferenceDepth) {
       // hint: handle unresolved references TNG-1169
-      this.logger.warn(`Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`)
+      this.logger.warn(
+        `Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`
+      )
       return
     }
     this.referenceDepth++
@@ -732,21 +1060,25 @@ export class CaaSMapper {
 
     await Promise.all([
       this.resolveReferencesPerProject(undefined, filterContext),
-      ...remoteIds.map((remoteId) => this.resolveReferencesPerProject(remoteId, filterContext)),
+      ...remoteIds.map((remoteId) =>
+        this.resolveReferencesPerProject(remoteId, filterContext)
+      ),
     ])
 
     // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(({ imageId, resolution }, index) => {
-      const resolvedImage = this.resolvedReferences[imageId]
-      if ((resolvedImage as Image).resolutions) {
-        update(resolvedImage, 'resolutions', (resolutions) => {
-          if (resolution in resolutions) {
-            return { [resolution]: resolutions[resolution] }
-          }
-          return resolutions
-        })
+    this._imageMapForcedResolutions.forEach(
+      ({ imageId, resolution }, index) => {
+        const resolvedImage = this.resolvedReferences[imageId]
+        if ((resolvedImage as Image).resolutions) {
+          update(resolvedImage, 'resolutions', (resolutions) => {
+            if (resolution in resolutions) {
+              return { [resolution]: resolutions[resolution] }
+            }
+            return resolutions
+          })
+        }
       }
-    })
+    )
   }
 
   /**
@@ -754,8 +1086,13 @@ export class CaaSMapper {
    * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
    * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
    */
-  async resolveReferencesPerProject(remoteProjectId?: string, filterContext?: unknown) {
-    this.logger.debug('CaaSMapper.resolveReferencesPerProject', { remoteProjectId })
+  async resolveReferencesPerProject(
+    remoteProjectId?: string,
+    filterContext?: unknown
+  ) {
+    this.logger.debug('CaaSMapper.resolveReferencesPerProject', {
+      remoteProjectId,
+    })
     const referencedItems = remoteProjectId
       ? this._remoteReferences[remoteProjectId]
       : this._referencedItems
@@ -767,19 +1104,23 @@ export class CaaSMapper {
 
     const referencedIds = Object.keys(referencedItems)
 
-    const resolvedIds = new Set(Object.keys(this.resolvedReferences))
+    const resolvedIdsArray = Object.keys(this.resolvedReferences)
+    const resolvedIds = new Set(resolvedIdsArray)
 
     const idsToFetchFromCaaS = referencedIds
       .filter((id) => !resolvedIds.has(id))
-      .map((id) => id.substring(0, id.indexOf('.')))
+      .map((id) => id.substring(id.indexOf('#') + 1, id.indexOf('.')))
 
     const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
 
-    this.logger.debug('CaaSMapper.resolveReferencesPerProject: Id data', {
-      resolvedIds,
-      referencedIds,
-      idsToFetchFromCaaS,
-    })
+    // skip stringification if logLevel is higher than debug
+    this.logger.logLevel === LogLevel.DEBUG &&
+      this.logger.debug('CaaSMapper.resolveReferencesPerProject: Id data', {
+        project: remoteProjectId || 'localProject',
+        resolvedIdsArray,
+        referencedIds,
+        idsToFetchFromCaaS,
+      })
 
     // we need to resolve some refs
     if (idsToFetchFromCaaS.length > 0) {
@@ -805,6 +1146,10 @@ export class CaaSMapper {
           )
         )
       )
+    } else {
+      this.logger.debug(
+        'CaaSMapper.resolveReferencesPerProject: Nothing to fetch'
+      )
     }
   }
 
@@ -812,7 +1157,9 @@ export class CaaSMapper {
     projectId?: string
   ): RemoteProjectConfigurationEntry | undefined {
     return projectId
-      ? Object.values(this.api.remotes || {}).find((entry) => entry.id === projectId)
+      ? Object.values(this.api.remotes || {}).find(
+          (entry) => entry.id === projectId
+        )
       : undefined
   }
 }

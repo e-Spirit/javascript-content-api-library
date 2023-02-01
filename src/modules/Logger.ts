@@ -9,9 +9,29 @@ export enum LogLevel {
   NONE = 4,
 }
 
+const getCircularReplacer = () => {
+  const seen = new WeakMap()
+  return (key: any, value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        const representation = []
+        const firstSeen = seen.get(value)
+        firstSeen && representation.push(`first occurence: ${firstSeen}`)
+        value.type && representation.push(`type: ${value.type}`)
+        value.id && representation.push(`id: ${value.id}`)
+
+        return `[~circle. ${representation.join(', ')}]`
+      }
+      seen.set(value, key)
+    }
+    return value
+  }
+}
+
 const formatOutput = (...args: any[]) => {
   args = args.map((entry) => {
-    if (typeof entry === 'object') return JSON.stringify(entry)
+    if (typeof entry === 'object')
+      return JSON.stringify(entry, getCircularReplacer)
     return entry
   })
   return inspect(args.join(' | '), {
@@ -31,10 +51,18 @@ export class Logger {
     this._name = name
   }
 
+  get logLevel() {
+    return this._logLevel
+  }
+
   debug(...args: any[]) {
     if (this._logLevel <= LogLevel.DEBUG) {
       console.info(
-        chalk.gray(`${chalk.bgWhite.black(' DEBUG ')} ${this._name} | ${formatOutput(...args)}`)
+        chalk.gray(
+          `${chalk.bgWhite.black(' DEBUG ')} ${this._name} | ${formatOutput(
+            ...args
+          )}`
+        )
       )
     }
   }
@@ -46,7 +74,11 @@ export class Logger {
   info(...args: any[]) {
     if (this._logLevel <= LogLevel.INFO) {
       console.info(
-        chalk.blue(`${chalk.bgBlue.white(' INFO ')} ${this._name} | ${formatOutput(...args)}`)
+        chalk.blue(
+          `${chalk.bgBlue.white(' INFO ')} ${this._name} | ${formatOutput(
+            ...args
+          )}`
+        )
       )
     }
   }
@@ -54,7 +86,11 @@ export class Logger {
   warn(...args: any[]) {
     if (this._logLevel <= LogLevel.WARNING) {
       console.warn(
-        chalk.yellow(`${chalk.bgYellow.black(' WARN ')} ${this._name} | ${formatOutput(...args)}`)
+        chalk.yellow(
+          `${chalk.bgYellow.black(' WARN ')} ${this._name} | ${formatOutput(
+            ...args
+          )}`
+        )
       )
     }
   }
@@ -62,7 +98,11 @@ export class Logger {
   error(...args: any[]) {
     if (this._logLevel <= LogLevel.ERROR) {
       console.error(
-        chalk.red(`${chalk.bgRed.black(' ERROR ')} ${this._name} | ${formatOutput(...args)}`)
+        chalk.red(
+          `${chalk.bgRed.black(' ERROR ')} ${this._name} | ${formatOutput(
+            ...args
+          )}`
+        )
       )
     }
   }

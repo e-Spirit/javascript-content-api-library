@@ -1,7 +1,7 @@
 export enum FSXAApiErrors {
   UNKNOWN_CONTENT_MODE = 'The content mode must be preview or release.',
   UNKNOWN_API_MODE = 'The api mode must be remote or proxy.',
-  UNKNOWN_ERROR = 'An unknown error occured. Please check the logs for more information',
+  UNKNOWN_ERROR = 'An unknown error occured. Please check the logs for more information.',
   UNKNOWN_REMOTE = 'The specified remote project was not found in the configuration. [remotes]',
   MISSING_BASE_URL = 'You do need to specify a baseUrl in proxy mode.',
   MISSING_API_KEY = 'No CaaS-ApiKey was passed via the configuration. [apiKey]',

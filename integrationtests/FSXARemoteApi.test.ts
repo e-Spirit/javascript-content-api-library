@@ -45,6 +45,12 @@ describe('FSXARemoteApi', () => {
     const res = await caasClient.getCollection()
     const parsedRes = await res.json()
     await caasClient.removeCollection(parsedRes._etag.$oid)
+
+    if(caasClient.remoteBaseUrl) {
+      const resRemote = await caasClient.getRemoteCollection()
+      const parsedResRemote = await resRemote!.json()
+      await caasClient.removeCollection(parsedResRemote._etag.$oid)
+    }
   })
 
   it('return normalized data if fetch element is called with normalized switched on', async () => {

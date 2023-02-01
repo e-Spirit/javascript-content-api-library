@@ -69,6 +69,8 @@ describe('CaaSMapper', () => {
     jest.mocked<FSXARemoteApi>(new (FSXARemoteApi as any)())
   const createMapper = () =>
     new CaaSMapper(createApi(), 'de', {}, createLogger())
+  let remoteProjectLocale: string
+  let remoteProjectId: string
 
   describe('registerReferencedItem', () => {
     it('should register a reference and return the reference key', () => {
@@ -110,11 +112,15 @@ describe('CaaSMapper', () => {
       const item = mapper.registerReferencedItem(refId, path, 'remoteId')
 
       expect(mapper._remoteReferences).toEqual({
-        remoteId: { [`${refId}.${remotes.someName.locale}`]: [path] },
+        remoteId: {
+          [`${remotes.someName.id}#${refId}.${remotes.someName.locale}`]: [
+            path,
+          ],
+        },
       })
       expect(mapper._referencedItems).toEqual({})
       expect(item).toEqual(
-        `[REFERENCED-REMOTE-ITEM-${refId}.${remotes.someName.locale}]`
+        `[REFERENCED-REMOTE-ITEM-${remotes.someName.id}#${refId}.${remotes.someName.locale}]`
       )
     })
     it('should register a non-remote item if the remote project was not found', () => {
@@ -432,12 +438,16 @@ describe('CaaSMapper', () => {
         expect(mapper.mapDataEntries).toHaveBeenNthCalledWith(
           1,
           entry.value.formData,
-          [...path, 'data']
+          [...path, 'data'],
+          remoteProjectLocale,
+          remoteProjectId
         )
         expect(mapper.mapDataEntries).toHaveBeenNthCalledWith(
           2,
           entry.value.metaFormData,
-          [...path, 'meta']
+          [...path, 'meta'],
+          remoteProjectLocale,
+          remoteProjectId
         )
       })
       it('should return null and not map the linked entries if the value is falsy', async () => {
@@ -495,7 +505,9 @@ describe('CaaSMapper', () => {
           expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(
             2 + index, // nth call
             entry.value[index], // child entry
-            [...path, index] // path augmentation for the child entry
+            [...path, index], // path augmentation for the child entry
+            undefined,
+            undefined
           )
           // ensure list elements were correctly mapped (depends on CMS_INPUT_NUMBER working)
           expect(result).toContain(entry.value[index].value)
@@ -542,7 +554,9 @@ describe('CaaSMapper', () => {
           expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(
             2 + index, // nth call
             entry.value[index], // child entry
-            [...path, index] // path augmentation for the Option
+            [...path, index], // path augmentation for the Option
+            undefined,
+            undefined
           )
           // ensure Options were correctly mapped (depends on Option working)
           expect(
@@ -570,7 +584,9 @@ describe('CaaSMapper', () => {
           if (area.link) {
             expect(mapper.mapDataEntries).toHaveBeenCalledWith(
               area.link.formData,
-              [...path, 'areas', index, 'link', 'data']
+              [...path, 'areas', index, 'link', 'data'],
+              undefined,
+              undefined
             )
           }
         })
@@ -640,7 +656,9 @@ describe('CaaSMapper', () => {
           expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(
             2 + index, // nth call
             entryValue[index], // child entry
-            [...path, index] // path augmentation for the child entry
+            [...path, index], // path augmentation for the child entry
+            undefined,
+            undefined
           )
           // ensure list elements were correctly mapped (depends on CMS_INPUT_NUMBER working)
           expect(result).toContain(entryValue[index].value)
@@ -770,7 +788,9 @@ describe('CaaSMapper', () => {
             name: entry.value![0].template.name,
             displayName: entry.value![0].template.displayName,
           }),
-          [...path, 0]
+          [...path, 0],
+          undefined,
+          undefined
         )
         expect(mapper.mapSection).toHaveBeenNthCalledWith(
           2,
@@ -780,7 +800,9 @@ describe('CaaSMapper', () => {
             name: entry.value![1].template.name,
             displayName: entry.value![1].template.displayName,
           }),
-          [...path, 1]
+          [...path, 1],
+          undefined,
+          undefined
         )
       })
       it('should map page templates', async () => {
@@ -823,11 +845,14 @@ describe('CaaSMapper', () => {
           }),
         ])
         expect(mapper.buildPreviewId).toHaveBeenCalledWith(
-          entryValue.identifier
+          entryValue.identifier,
+          remoteProjectLocale
         )
         expect(mapper.mapDataEntries).toHaveBeenCalledWith(
           entryValue.formData,
-          [...path, 0, 'data']
+          [...path, 0, 'data'],
+          remoteProjectLocale,
+          remoteProjectId
         )
       })
       it('should return other template types as-is', async () => {
@@ -980,7 +1005,8 @@ describe('CaaSMapper', () => {
         expect(mapper.registerReferencedItem).toHaveBeenCalledTimes(1)
         expect(mapper.registerReferencedItem).toHaveBeenCalledWith(
           'target-id',
-          [...path, 0]
+          [...path, 0],
+          remoteProjectId
         )
       })
       it("should return entries which are not of dapType 'DatasetDataAccessPlugin' as-is", async () => {
@@ -1091,18 +1117,27 @@ describe('CaaSMapper', () => {
       mapper.mapDataEntry = jest.fn()
       const path = createPath()
       await mapper.mapDataEntries(entries, path)
-      expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(1, entries.v1, [
-        ...path,
-        'v1',
-      ])
-      expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(2, entries.v2, [
-        ...path,
-        'v2',
-      ])
-      expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(3, entries.v3, [
-        ...path,
-        'v3',
-      ])
+      expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(
+        1,
+        entries.v1,
+        [...path, 'v1'],
+        undefined,
+        undefined
+      )
+      expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(
+        2,
+        entries.v2,
+        [...path, 'v2'],
+        undefined,
+        undefined
+      )
+      expect(mapper.mapDataEntry).toHaveBeenNthCalledWith(
+        3,
+        entries.v3,
+        [...path, 'v3'],
+        undefined,
+        undefined
+      )
     })
     it('should return a new dictionary containing the mapped result', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1143,10 +1178,12 @@ describe('CaaSMapper', () => {
         },
         children: [],
       })
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(section.formData, [
-        ...path,
-        'data',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        section.formData,
+        [...path, 'data'],
+        undefined,
+        undefined
+      )
     })
 
     it('given missing displayed property in source should not contain displayed property in result', async () => {
@@ -1193,7 +1230,10 @@ describe('CaaSMapper', () => {
       } as unknown as CaaSApi_Content2Section
       mapper.mapContent2Section = jest.fn().mockResolvedValue(content)
       await expect(mapper.mapBodyContent(content, path)).resolves.toBe(content)
-      expect(mapper.mapContent2Section).toHaveBeenCalledWith(content)
+      expect(mapper.mapContent2Section).toHaveBeenCalledWith(
+        content,
+        remoteProjectLocale
+      )
     })
     it('should call and return the value of mapSection on fsType `Section` and `SectionReference`', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1206,12 +1246,22 @@ describe('CaaSMapper', () => {
       } as unknown as CaaSApi_Content2Section
       mapper.mapSection = jest.fn().mockResolvedValue(section)
       await expect(mapper.mapBodyContent(section, path)).resolves.toBe(section)
-      expect(mapper.mapSection).toHaveBeenCalledWith(section, path)
+      expect(mapper.mapSection).toHaveBeenCalledWith(
+        section,
+        path,
+        undefined,
+        undefined
+      )
       mapper.mapSection = jest.fn().mockResolvedValue(sectionRef)
       await expect(mapper.mapBodyContent(sectionRef, path)).resolves.toBe(
         sectionRef
       )
-      expect(mapper.mapSection).toHaveBeenCalledWith(sectionRef, path)
+      expect(mapper.mapSection).toHaveBeenCalledWith(
+        sectionRef,
+        path,
+        undefined,
+        undefined
+      )
     })
     it('should throw on unexpected fsTypes', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1241,21 +1291,27 @@ describe('CaaSMapper', () => {
           children: ['mapped-1', 'mapped-2', 'mapped-3'],
         })
       )
-      expect(mapper.mapBodyContent).toHaveBeenNthCalledWith(1, 1, [
-        ...path,
-        'children',
-        0,
-      ])
-      expect(mapper.mapBodyContent).toHaveBeenNthCalledWith(2, 2, [
-        ...path,
-        'children',
+      expect(mapper.mapBodyContent).toHaveBeenNthCalledWith(
         1,
-      ])
-      expect(mapper.mapBodyContent).toHaveBeenNthCalledWith(3, 3, [
-        ...path,
-        'children',
+        1,
+        [...path, 'children', 0],
+        undefined,
+        undefined
+      )
+      expect(mapper.mapBodyContent).toHaveBeenNthCalledWith(
         2,
-      ])
+        2,
+        [...path, 'children', 1],
+        undefined,
+        undefined
+      )
+      expect(mapper.mapBodyContent).toHaveBeenNthCalledWith(
+        3,
+        3,
+        [...path, 'children', 2],
+        undefined,
+        undefined
+      )
     })
   })
 
@@ -1279,16 +1335,18 @@ describe('CaaSMapper', () => {
         .fn()
         .mockImplementation(async ($) => `mapped-${$.uid}`)
       await mapper.mapPageRef(pageRef, path)
-      expect(mapper.mapPageBody).toHaveBeenCalledWith(body1, [
-        ...path,
-        'children',
-        0,
-      ])
-      expect(mapper.mapPageBody).toHaveBeenCalledWith(body2, [
-        ...path,
-        'children',
-        1,
-      ])
+      expect(mapper.mapPageBody).toHaveBeenCalledWith(
+        body1,
+        [...path, 'children', 0],
+        undefined,
+        undefined
+      )
+      expect(mapper.mapPageBody).toHaveBeenCalledWith(
+        body2,
+        [...path, 'children', 1],
+        undefined,
+        undefined
+      )
     })
     it('should call mapDataEntries for formData and metaFormData', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1301,14 +1359,18 @@ describe('CaaSMapper', () => {
       metaFormData.num1 = createNumberEntry(4)
       metaFormData.num2 = createNumberEntry(8)
       await mapper.mapPageRef(pageRef, path)
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [
-        ...path,
-        'data',
-      ])
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [
-        ...path,
-        'meta',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
     it('should call mapDataEntries for PageRef FormData', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1320,7 +1382,9 @@ describe('CaaSMapper', () => {
       await mapper.mapPageRef(pageRef, path)
       expect(mapper.mapDataEntries).not.toHaveBeenCalledWith(
         pageRef.metaFormData,
-        [...path, 'metaPageRef']
+        [...path, 'metaPageRef'],
+        remoteProjectLocale,
+        remoteProjectId
       )
       // w/ metadata
       pageRef.metaFormData = {
@@ -1329,10 +1393,12 @@ describe('CaaSMapper', () => {
         num2: createNumberEntry(8),
       }
       await mapper.mapPageRef(pageRef, path)
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(pageRef.metaFormData, [
-        ...path,
-        'metaPageRef',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        pageRef.metaFormData,
+        [...path, 'metaPageRef'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
   })
 
@@ -1344,14 +1410,18 @@ describe('CaaSMapper', () => {
       const { formData, metaFormData } = projectProps
       jest.spyOn(mapper, 'mapDataEntries')
       await mapper.mapProjectProperties(projectProps, path)
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [
-        ...path,
-        'data',
-      ])
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [
-        ...path,
-        'meta',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
   })
 
@@ -1363,14 +1433,18 @@ describe('CaaSMapper', () => {
       const { formData, metaFormData } = gcaPage
       jest.spyOn(mapper, 'mapDataEntries')
       await mapper.mapGCAPage(gcaPage, path)
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [
-        ...path,
-        'data',
-      ])
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [
-        ...path,
-        'meta',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
     it('should call mapPageBody for all children', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1391,16 +1465,18 @@ describe('CaaSMapper', () => {
         .fn()
         .mockImplementation(async ($) => `mapped-${$.uid}`)
       await mapper.mapGCAPage(gcaPage, path)
-      expect(mapper.mapPageBody).toHaveBeenCalledWith(body1, [
-        ...path,
-        'children',
-        0,
-      ])
-      expect(mapper.mapPageBody).toHaveBeenCalledWith(body2, [
-        ...path,
-        'children',
-        1,
-      ])
+      expect(mapper.mapPageBody).toHaveBeenCalledWith(
+        body1,
+        [...path, 'children', 0],
+        remoteProjectLocale,
+        remoteProjectId
+      )
+      expect(mapper.mapPageBody).toHaveBeenCalledWith(
+        body2,
+        [...path, 'children', 1],
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
   })
 
@@ -1412,10 +1488,12 @@ describe('CaaSMapper', () => {
       const { formData } = dataset
       jest.spyOn(mapper, 'mapDataEntries')
       await mapper.mapDataset(dataset, path)
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(formData, [
-        ...path,
-        'data',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        formData,
+        [...path, 'data'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
     it('should contain routes property in response', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1429,11 +1507,21 @@ describe('CaaSMapper', () => {
       const path = createPath()
       const dataset = createDataset()
 
-      const mappedDatasetWithRoutes = await mapper.mapDataset(dataset, path)
+      const mappedDatasetWithRoutes = await mapper.mapDataset(
+        dataset,
+        path,
+        undefined,
+        undefined
+      )
       //@ts-ignore
       delete dataset.routes
 
-      const mappedDatasetWithoutRoutes = await mapper.mapDataset(dataset, path)
+      const mappedDatasetWithoutRoutes = await mapper.mapDataset(
+        dataset,
+        path,
+        remoteProjectLocale,
+        remoteProjectId
+      )
 
       //@ts-ignore
       delete mappedDatasetWithRoutes.routes
@@ -1450,10 +1538,12 @@ describe('CaaSMapper', () => {
       const { metaFormData } = media
       jest.spyOn(mapper, 'mapDataEntries')
       await mapper.mapMediaPicture(media, path)
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [
-        ...path,
-        'meta',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        metaFormData,
+        [...path, 'meta'],
+        undefined,
+        undefined
+      )
     })
   })
 
@@ -1493,10 +1583,12 @@ describe('CaaSMapper', () => {
       const { metaFormData } = mediaFile
       jest.spyOn(mapper, 'mapDataEntries')
       await mapper.mapMediaFile(mediaFile, path)
-      expect(mapper.mapDataEntries).toHaveBeenCalledWith(metaFormData, [
-        ...path,
-        'meta',
-      ])
+      expect(mapper.mapDataEntries).toHaveBeenCalledWith(
+        metaFormData,
+        [...path, 'meta'],
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
   })
 
@@ -1507,7 +1599,12 @@ describe('CaaSMapper', () => {
       const mediaFile = createMediaFile()
       jest.spyOn(mapper, 'mapMediaFile')
       await mapper.mapMedia(mediaFile, path)
-      expect(mapper.mapMediaFile).toHaveBeenCalledWith(mediaFile, path)
+      expect(mapper.mapMediaFile).toHaveBeenCalledWith(
+        mediaFile,
+        path,
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
     it('should call mapMediaFile on PICTURE media types', async () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
@@ -1515,7 +1612,12 @@ describe('CaaSMapper', () => {
       const mediaPicture = createMediaPicture()
       jest.spyOn(mapper, 'mapMediaPicture')
       await mapper.mapMedia(mediaPicture, path)
-      expect(mapper.mapMediaPicture).toHaveBeenCalledWith(mediaPicture, path)
+      expect(mapper.mapMediaPicture).toHaveBeenCalledWith(
+        mediaPicture,
+        path,
+        remoteProjectLocale,
+        remoteProjectId
+      )
     })
   })
 
@@ -1525,7 +1627,7 @@ describe('CaaSMapper', () => {
       mapper.resolveReferencesPerProject = jest.fn()
       await mapper.resolveAllReferences()
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
-        undefined,
+        remoteProjectId,
         undefined
       )
     })
@@ -1544,15 +1646,15 @@ describe('CaaSMapper', () => {
       await mapper.resolveAllReferences()
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
         'remote-id1',
-        undefined
+        remoteProjectId
       )
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
         'remote-id2',
-        undefined
+        remoteProjectId
       )
       expect(mapper.resolveReferencesPerProject).toHaveBeenCalledWith(
         'remote-id3',
-        undefined
+        remoteProjectId
       )
     })
   })
