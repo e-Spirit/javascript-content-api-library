@@ -7,7 +7,10 @@ import {
   CaaSAPI_PermissionGroup,
 } from '../types'
 
-export function createDataEntry(id = faker.datatype.uuid(), locale = faker.random.locale()) {
+export function createDataEntry(
+  id = faker.datatype.uuid(),
+  locale = faker.random.locale()
+) {
   return {
     _id: `${id}.${locale}`,
     label: `${id}-label`,
@@ -23,7 +26,7 @@ export function createDataEntry(id = faker.datatype.uuid(), locale = faker.rando
 
 export function createMediaPictureReferenceValue(
   id = faker.datatype.uuid(),
-  remoteProject = `${id}-remoteProject`
+  remoteProject?: string
 ): CaaSApi_MediaRef {
   return {
     fsType: 'Media',
@@ -39,7 +42,7 @@ export function createMediaPictureReferenceValue(
 
 export function createMediaPictureReference(
   id = faker.datatype.uuid(),
-  remoteProject = `${id}-remoteProject`
+  remoteProject?: string
 ): CaaSApi_FSReference {
   return {
     fsType: 'FS_REFERENCE',

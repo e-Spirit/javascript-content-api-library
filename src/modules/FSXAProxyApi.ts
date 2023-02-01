@@ -69,7 +69,11 @@ export class FSXAProxyApi implements FSXAApi {
    * @param logLevel specifies the restrictions of logs which will be displayed
    * @param filterOptions optional {@link ProxyApiFilterOptions ProxyApiFilterOptions} (EXPERIMENTAL)
    */
-  constructor(baseUrl: string, logLevel = LogLevel.ERROR, filterOptions?: ProxyApiFilterOptions) {
+  constructor(
+    baseUrl: string,
+    logLevel = LogLevel.ERROR,
+    filterOptions?: ProxyApiFilterOptions
+  ) {
     this.baseUrl = baseUrl
     this._logger = new Logger(logLevel, 'FSXAProxyApi')
     this._filterContextProvider = filterOptions?.filterContextProvider
@@ -92,7 +96,9 @@ export class FSXAProxyApi implements FSXAApi {
     remoteProject,
     fetchOptions,
   }: FetchElementParams): Promise<T> {
-    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
+    const filterContext = this._filterContextProvider
+      ? this._filterContextProvider()
+      : undefined
 
     const body = {
       id,
@@ -121,13 +127,25 @@ export class FSXAProxyApi implements FSXAApi {
         case 401:
           throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
         default:
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+          const bodyString = await response.text()
+          throw new Error(
+            FSXAApiErrors.UNKNOWN_ERROR +
+              ' Response: ' +
+              response.status +
+              ' ' +
+              bodyString
+          )
       }
     }
     const jsonRes = await response.json()
-    let { mappedItems, referenceMap, resolvedReferences } = jsonRes as MapResponse
+    let { mappedItems, referenceMap, resolvedReferences } =
+      jsonRes as MapResponse
 
-    mappedItems = denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences)
+    mappedItems = denormalizeResolvedReferences(
+      mappedItems,
+      referenceMap,
+      resolvedReferences
+    )
 
     return mappedItems[0] as unknown as T
   }
@@ -168,11 +186,16 @@ export class FSXAProxyApi implements FSXAApi {
     }
 
     if (page < 1) {
-      this._logger.warn('fetchByFilter', 'page must be greater than zero! Using fallback of 1.')
+      this._logger.warn(
+        'fetchByFilter',
+        'page must be greater than zero! Using fallback of 1.'
+      )
       page = 1
     }
 
-    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
+    const filterContext = this._filterContextProvider
+      ? this._filterContextProvider()
+      : undefined
 
     const body = {
       filter: filters,
@@ -242,7 +265,9 @@ export class FSXAProxyApi implements FSXAApi {
       filterContextProvider: this._filterContextProvider,
     })
 
-    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
+    const filterContext = this._filterContextProvider
+      ? this._filterContextProvider()
+      : undefined
     const body = {
       initialPath,
       locale,
@@ -289,7 +314,9 @@ export class FSXAProxyApi implements FSXAApi {
   }: FetchProjectPropertiesParams): Promise<ProjectProperties | null> {
     this._logger.debug('fetchProjectProperties', 'start', { locale })
 
-    const filterContext = this._filterContextProvider ? this._filterContextProvider() : undefined
+    const filterContext = this._filterContextProvider
+      ? this._filterContextProvider()
+      : undefined
     const body = {
       locale,
       resolver,
@@ -351,9 +378,8 @@ export class FSXAProxyApi implements FSXAApi {
 
     //Insert fetched Data into projectProperties
     resolveElements.forEach((element) => {
-      denormalizedProjectProperties.data[data.idToKeyMap[(element as any).id]] = (
-        element as any
-      ).data
+      denormalizedProjectProperties.data[data.idToKeyMap[(element as any).id]] =
+        (element as any).data
     })
 
     return denormalizedProjectProperties
@@ -374,8 +400,13 @@ export class FSXAProxyApi implements FSXAApi {
    * @param remoteProject specifies the remote Project
    * @returns an EventSource
    */
-  connectEventStream({ remoteProject }: ConnectEventStreamParams = {}): EventSource {
-    const url = new URL(this.baseUrl + FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE, location.origin)
+  connectEventStream({
+    remoteProject,
+  }: ConnectEventStreamParams = {}): EventSource {
+    const url = new URL(
+      this.baseUrl + FSXAProxyRoutes.STREAM_CHANGE_EVENTS_ROUTE,
+      location.origin
+    )
     if (remoteProject) {
       url.searchParams.set('remoteProject', remoteProject)
     }
@@ -391,8 +422,10 @@ export class FSXAProxyApi implements FSXAApi {
       baseUrl: this.baseUrl,
       url,
       options,
-      isServer: typeof process === 'undefined' ? undefined : (process as any)?.server,
-      isClient: typeof process === 'undefined' ? undefined : (process as any)?.client,
+      isServer:
+        typeof process === 'undefined' ? undefined : (process as any)?.server,
+      isClient:
+        typeof process === 'undefined' ? undefined : (process as any)?.client,
       window: typeof window,
     })
     return fetch(this.baseUrl + url, options as RequestInit)

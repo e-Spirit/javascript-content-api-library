@@ -48,7 +48,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         })
         return res.json(response)
       } catch (err: any) {
-        logger.error('could not fetch element: ', err.message)
+        logger.error('could not fetch element: ', req, err.message)
         if (
           err.message === FSXAApiErrors.NOT_FOUND ||
           err.message === FSXAApiErrors.UNKNOWN_REMOTE
@@ -128,10 +128,17 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   router.post(
     FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
     async (req: express.Request<any, any, FetchProjectPropertiesBody>, res) => {
-      logger.info('Received POST on route', FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE)
+      logger.info(
+        'Received POST on route',
+        FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE
+      )
       logger.debug('POST request body', req.body)
       if (!req.body || req.body.locale == null) {
-        logger.error(FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE, 'missing locale', req.body)
+        logger.error(
+          FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
+          'missing locale',
+          req.body
+        )
         return res.status(400).json({
           error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
         })
@@ -177,5 +184,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 export default getExpressRouter
 
 export const getMappedFilters = (filters: any | any[]): QueryBuilderQuery[] => {
-  return (Array.isArray(filters) ? filters : filters ? [filters] : []) as any as QueryBuilderQuery[]
+  return (Array.isArray(filters)
+    ? filters
+    : filters
+    ? [filters]
+    : []) as any as QueryBuilderQuery[]
 }

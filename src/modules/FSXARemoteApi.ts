@@ -1,5 +1,10 @@
 import { stringify } from 'qs'
-import { CaaSMapper, Logger, ReferencedItemsInfo, ResolvedReferencesInfo } from '.'
+import {
+  CaaSMapper,
+  Logger,
+  ReferencedItemsInfo,
+  ResolvedReferencesInfo,
+} from '.'
 import { FetchResponse, ProjectProperties } from '..'
 import {
   NavigationData,
@@ -20,7 +25,11 @@ import {
   NormalizedFetchResponse,
   NormalizedProjectPropertyResponse,
 } from '../types'
-import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
+import {
+  removeFromIdMap,
+  removeFromSeoRouteMap,
+  removeFromStructure,
+} from '../utils'
 import { FSXAApiErrors } from './../enums'
 import { LogLevel } from './Logger'
 import { denormalizeResolvedReferences } from './MappingUtils'
@@ -131,14 +140,25 @@ export class FSXARemoteApi implements FSXAApi {
     }
   }
 
-  private getRemoteProject(remoteProject: string) {
+  private verifyRemoteProjectExists(remoteProjectId: string) {
     const remoteProjectConfig = Object.values(this._remotes)
-    const foundRemoteProject = remoteProjectConfig.find((config) => config.id === remoteProject)
+    const foundRemoteProject = remoteProjectConfig.find(
+      (config) => config.id === remoteProjectId
+    )
     if (!foundRemoteProject) {
       throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
     }
+  }
 
-    return remoteProject
+  private getRemoteConfigById(remoteProjectId: string) {
+    const remoteProjectConfig = Object.values(this._remotes)
+    const foundRemoteProject = remoteProjectConfig.find(
+      (config) => config.id === remoteProjectId
+    )
+    if (!foundRemoteProject) {
+      throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
+    }
+    return foundRemoteProject
   }
 
   /**
@@ -156,19 +176,20 @@ export class FSXARemoteApi implements FSXAApi {
   buildCaaSUrl({
     id,
     locale,
-    remoteProject,
+    remoteProject: remoteProjectId,
     additionalParams,
     filters,
     page,
     pagesize,
     sort,
   }: buildCaaSUrlParams = {}) {
-    let project = this.projectID
-    if (remoteProject) {
-      project = this.getRemoteProject(remoteProject)
+    let projectId = this.projectID
+    if (remoteProjectId) {
+      this.verifyRemoteProjectExists(remoteProjectId)
+      projectId = remoteProjectId
     }
 
-    let baseURL = `${this.caasURL}/${this.tenantID}/${project}.${this.contentMode}.content`
+    let baseURL = `${this.caasURL}/${this.tenantID}/${projectId}.${this.contentMode}.content`
     let encodedBaseURL = encodeURI(baseURL)
 
     if (id) {
@@ -179,7 +200,8 @@ export class FSXARemoteApi implements FSXAApi {
     }
 
     const params: string[] = []
-    const additionalParamsDefined = additionalParams && Object.keys(additionalParams).length > 0
+    const additionalParamsDefined =
+      additionalParams && Object.keys(additionalParams).length > 0
     if (additionalParamsDefined && additionalParams) {
       params.push(this.buildStringifiedQueryParams(additionalParams))
     }
@@ -221,13 +243,16 @@ export class FSXARemoteApi implements FSXAApi {
     }
     if (sort && sort.length) {
       sort.forEach(({ name, order }: SortParams) => {
-        params.push(`sort=${order === 'desc' ? '-' : ''}${encodeURIComponent(name)}`)
+        params.push(
+          `sort=${order === 'desc' ? '-' : ''}${encodeURIComponent(name)}`
+        )
       })
     }
 
     if (params.length) {
       encodedBaseURL += `?${params.join('&')}`
     }
+    this._logger.info(`[buildCaaSUrl] built URL:`, encodedBaseURL)
 
     return encodedBaseURL
   }
@@ -242,7 +267,11 @@ export class FSXARemoteApi implements FSXAApi {
    * @param initialPath can be provided when you want to access a subtree of the navigation
    * @returns {string} the Navigation Service url for either a subtree of or a complete navigation
    */
-  buildNavigationServiceUrl({ locale, initialPath, all }: buildNavigationServiceURLParams = {}) {
+  buildNavigationServiceUrl({
+    locale,
+    initialPath,
+    all,
+  }: buildNavigationServiceURLParams = {}) {
     this._logger.debug('[buildNavigationServiceUrl]', { locale, initialPath })
     const useInitialPath = initialPath && initialPath !== '/'
     if (locale && useInitialPath) {
@@ -255,13 +284,23 @@ export class FSXARemoteApi implements FSXAApi {
     const baseNavigationServiceUrl = `${this.navigationServiceURL}/${this.contentMode}.${this.projectID}`
 
     if (useInitialPath) {
-      this._logger.debug('[buildNavigationServiceUrl]', `Using initial path: ${useInitialPath}`)
-      const queryParams = ['depth=99', '&format=caas', `${all ? '&all' : ''}`].join('')
+      this._logger.debug(
+        '[buildNavigationServiceUrl]',
+        `Using initial path: ${useInitialPath}`
+      )
+      const queryParams = [
+        'depth=99',
+        '&format=caas',
+        `${all ? '&all' : ''}`,
+      ].join('')
       return `${baseNavigationServiceUrl}/by-seo-route/${initialPath}?${queryParams}`
     }
 
     if (locale) {
-      this._logger.debug('[buildNavigationServiceUrl]', `Using locale: ${locale}`)
+      this._logger.debug(
+        '[buildNavigationServiceUrl]',
+        `Using locale: ${locale}`
+      )
       return `${baseNavigationServiceUrl}?depth=99&format=caas&language=${encodeURIComponent(
         locale
       )}`
@@ -332,7 +371,10 @@ export class FSXARemoteApi implements FSXAApi {
     return this.getFilteredNavigation(response, filterContext)
   }
 
-  private async getFilteredNavigation(response: Response, filterContext?: unknown) {
+  private async getFilteredNavigation(
+    response: Response,
+    filterContext?: unknown
+  ) {
     if (!this._navigationItemFilter) {
       return response.json()
     }
@@ -361,7 +403,12 @@ export class FSXARemoteApi implements FSXAApi {
     const seo = removeFromSeoRouteMap(navigation.seoRouteMap, allowedRouteIds)
     const structure = removeFromStructure(navigation.structure, allowedRouteIds)
     const filteredIdMap = removeFromIdMap(navigation.idMap, allowedRouteIds)
-    const filteredNavigation = { ...navigation, idMap: filteredIdMap, seoRouteMap: seo, structure }
+    const filteredNavigation = {
+      ...navigation,
+      idMap: filteredIdMap,
+      seoRouteMap: seo,
+      structure,
+    }
     return filteredNavigation
   }
 
@@ -386,13 +433,22 @@ export class FSXARemoteApi implements FSXAApi {
     filterContext,
     normalized = false,
   }: FetchElementParams): Promise<any> {
-    locale = remoteProject && this.remotes ? this.remotes[remoteProject].locale : locale
+    locale =
+      remoteProject && this.remotes
+        ? this.remotes[remoteProject].locale
+        : locale
     const {
       items,
       referenceMap = {},
       resolvedReferences = {},
     } = await this.fetchByFilter({
-      filters: [{ field: 'identifier', operator: ComparisonQueryOperatorEnum.EQUALS, value: id }],
+      filters: [
+        {
+          field: 'identifier',
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+          value: id,
+        },
+      ],
       additionalParams,
       remoteProject,
       fetchOptions,
@@ -451,7 +507,7 @@ export class FSXARemoteApi implements FSXAApi {
       page = 1,
       pagesize = 30,
       additionalParams = {},
-      remoteProject,
+      remoteProject: remoteProjectId,
       fetchOptions,
       filterContext,
       sort = [],
@@ -461,11 +517,15 @@ export class FSXARemoteApi implements FSXAApi {
   ): Promise<FetchResponse> {
     // we need this in order to pass CaaSMapper context
     if (pagesize < 1) {
-      this._logger.warn(`[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`)
+      this._logger.warn(
+        `[fetchByFilter] pagesize must be greater than zero! Using fallback of 30.`
+      )
       pagesize = 30
     }
     if (page < 1) {
-      this._logger.warn(`[fetchByFilter] page must be greater than zero! Using fallback of 1.`)
+      this._logger.warn(
+        `[fetchByFilter] page must be greater than zero! Using fallback of 1.`
+      )
       page = 1
     }
     const url = this.buildCaaSUrl({
@@ -474,7 +534,7 @@ export class FSXARemoteApi implements FSXAApi {
         ...additionalParams,
         rep: 'hal',
       },
-      remoteProject,
+      remoteProject: remoteProjectId,
       locale,
       page,
       pagesize,
@@ -504,20 +564,18 @@ export class FSXARemoteApi implements FSXAApi {
     let data = await caasApiResponse.json()
 
     const unmappedItems =
-      !data._embedded || !data._embedded['rh:doc'] ? [] : data._embedded['rh:doc']
-    if (unmappedItems.length === 0) {
-      return {
-        page,
-        pagesize,
-        totalPages: data['_total_pages'],
-        size: data['_size'],
-        items: [],
-      }
-    }
+      !data._embedded || !data._embedded['rh:doc']
+        ? []
+        : data._embedded['rh:doc']
+
+    const remoteProjectLocale = remoteProjectId
+      ? this.getRemoteConfigById(remoteProjectId).locale
+      : undefined
 
     let mapperLocale = locale
     if (!mapperLocale) {
-      mapperLocale = unmappedItems[0].locale.language + '_' + unmappedItems[0].locale.country
+      mapperLocale =
+        unmappedItems[0].locale.language + '_' + unmappedItems[0].locale.country
     }
 
     mapper =
@@ -531,19 +589,23 @@ export class FSXARemoteApi implements FSXAApi {
         },
         new Logger(this._logLevel, 'CaaSMapper')
       )
-    let { mappedItems, referenceMap, resolvedReferences } = await mapper.mapFilterResponse(
-      unmappedItems,
-      additionalParams,
-      filterContext
-    )
+    let { mappedItems, referenceMap, resolvedReferences } =
+      await mapper.mapFilterResponse(
+        unmappedItems,
+        additionalParams,
+        filterContext,
+        remoteProjectLocale,
+        remoteProjectId
+      )
 
     if (this._caasItemFilter) {
-      ;({ mappedItems, referenceMap, resolvedReferences } = await this.filterMapResponse(
-        mappedItems,
-        referenceMap,
-        resolvedReferences,
-        filterContext
-      ))
+      ;({ mappedItems, referenceMap, resolvedReferences } =
+        await this.filterMapResponse(
+          mappedItems,
+          referenceMap,
+          resolvedReferences,
+          filterContext
+        ))
     }
 
     return {
@@ -553,7 +615,11 @@ export class FSXARemoteApi implements FSXAApi {
       size: data['_size'],
       items: normalized
         ? mappedItems
-        : denormalizeResolvedReferences(mappedItems, referenceMap, resolvedReferences),
+        : denormalizeResolvedReferences(
+            mappedItems,
+            referenceMap,
+            resolvedReferences
+          ),
       ...(normalized && { referenceMap }),
       ...(normalized && { resolvedReferences }),
     }
@@ -636,8 +702,8 @@ export class FSXARemoteApi implements FSXAApi {
     // We need to match keys from projectSettings to ElementIds later to insert them directly
     const idToKeyMap: Record<string, string> = {}
 
-    const objectKeysToResolve = Object.keys(projectProperties.data).filter((key) =>
-      resolve.includes(projectProperties.data[key]?.referenceType)
+    const objectKeysToResolve = Object.keys(projectProperties.data).filter(
+      (key) => resolve.includes(projectProperties.data[key]?.referenceType)
     )
 
     const idsToFetch = objectKeysToResolve.map((key) => {
@@ -658,7 +724,11 @@ export class FSXARemoteApi implements FSXAApi {
     } = (await this.fetchByFilter({
       locale: locale,
       filters: [
-        { field: 'identifier', operator: ComparisonQueryOperatorEnum.IN, value: idsToFetch },
+        {
+          field: 'identifier',
+          operator: ComparisonQueryOperatorEnum.IN,
+          value: idsToFetch,
+        },
       ],
       pagesize: 100,
       filterContext,
@@ -681,7 +751,9 @@ export class FSXARemoteApi implements FSXAApi {
 
     //Insert fetched Data into projectProperties
     resolveItems.forEach((element) => {
-      projectProperties.data[idToKeyMap[(element as any).id]] = (element as any).data
+      projectProperties.data[idToKeyMap[(element as any).id]] = (
+        element as any
+      ).data
     })
 
     return projectProperties

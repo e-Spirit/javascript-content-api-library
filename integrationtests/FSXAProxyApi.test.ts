@@ -49,6 +49,15 @@ const startSever = (app: Express) =>
 describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
+
+  let caasClientProperties = {
+    apikey: INTEGRATION_TEST_API_KEY!,
+    caasURL: INTEGRATION_TEST_CAAS!,
+    projectID: randomProjectID,
+    tenantID: tenantID,
+    contentMode: FSXAContentMode.PREVIEW,
+  }
+
   const remoteApi = new FSXARemoteApi({
     apikey: INTEGRATION_TEST_API_KEY!,
     caasURL: INTEGRATION_TEST_CAAS!,
@@ -63,6 +72,7 @@ describe('FSXAProxyAPI', () => {
   let proxyAPI: FSXAProxyApi
   let server: Server
   let caasClient: CaasTestingClient
+
   beforeAll(async () => {
     // start express server
     const app = express()
@@ -73,20 +83,16 @@ describe('FSXAProxyAPI', () => {
     proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
 
     // create instance of caas client to easily read and write testing data to caas
-    caasClient = await CaasTestingClient.init({
-      apikey: INTEGRATION_TEST_API_KEY!,
-      caasURL: INTEGRATION_TEST_CAAS!,
-      projectID: randomProjectID,
-      tenantID: tenantID,
-      contentMode: FSXAContentMode.PREVIEW,
-    })
+    caasClient = await CaasTestingClient.init(caasClientProperties)
   })
+
   afterAll(async () => {
     const res = await caasClient.getCollection()
     const parsedRes = await res.json()
     await caasClient.removeCollection(parsedRes._etag.$oid)
     server.close()
   })
+
   describe('fetchProjectProps', () => {
     const locale = {
       identifier: 'de_DE',
@@ -137,6 +143,7 @@ describe('FSXAProxyAPI', () => {
       expect(res!.data.dataset.data.ref22.id).toEqual(dataset2.identifier)
     })
   })
+
   describe('fetchElement', () => {
     const locale = {
       identifier: 'de_DE',
@@ -413,6 +420,7 @@ describe('FSXAProxyAPI', () => {
       expect(mappedRef.referenceRemoteProject).toEqual(remotePageRefReference.value?.remoteProject)
     })
   })
+
   describe('fetchByFilter', () => {
     const country = 'GB'
     const language = 'en'
