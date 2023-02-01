@@ -69,7 +69,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       remotes: {
         media: { id: remoteProjectId, locale: remoteProjectLocale },
       },
-      logLevel: LogLevel.DEBUG,
+      logLevel: LogLevel.INFO,
       enableEventStream: false,
     })
 
