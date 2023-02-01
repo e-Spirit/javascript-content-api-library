@@ -142,14 +142,19 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
   }
 
   afterEach(async () => {
-    const res = await caasClient.getCollection()
-    const parsedRes = await res.json()
-    await caasClient.removeCollection(parsedRes._etag.$oid)
+    try {
+      const res = await caasClient.getCollection()
+      const parsedRes = await res.json()
+      await caasClient.removeCollection(parsedRes._etag.$oid)
 
-    const res2 = await caasClient.getRemoteCollection()
-    const parsedRes2 = await res2.json()
-    await caasClient.removeRemoteCollection(parsedRes2._etag.$oid)
-    server.close()
+      const res2 = await caasClient.getRemoteCollection()
+      if (res2.status != 404) {
+        const parsedRes2 = await res2.json()
+        await caasClient.removeRemoteCollection(parsedRes2._etag.$oid)
+      }
+    } finally {
+      server.close()
+    }
   })
 
 

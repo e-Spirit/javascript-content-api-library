@@ -49,8 +49,6 @@ const startSever = (app: Express) =>
 describe('FSXAProxyAPI', () => {
   const randomProjectID = Faker.datatype.uuid()
   const tenantID = 'fsxa-api-integration-test'
-  const remoteProjectId = Faker.datatype.uuid()
-  const remoteProjectLocale = "en_GB"
 
   let caasClientProperties = {
     apikey: INTEGRATION_TEST_API_KEY!,
@@ -58,7 +56,6 @@ describe('FSXAProxyAPI', () => {
     projectID: randomProjectID,
     tenantID: tenantID,
     contentMode: FSXAContentMode.PREVIEW,
-    remoteProjectId,
   }
 
   const remoteApi = new FSXARemoteApi({
@@ -68,9 +65,7 @@ describe('FSXAProxyAPI', () => {
     navigationServiceURL: 'https://your-navigationservice.e-spirit.cloud/navigation'!,
     projectID: randomProjectID,
     tenantID: tenantID,
-    remotes: {
-      media: { id: remoteProjectId, locale: remoteProjectLocale },
-    },
+    remotes: {},
     logLevel: LogLevel.INFO,
     enableEventStream: false,
   })
@@ -810,95 +805,6 @@ describe('FSXAProxyAPI', () => {
           expect(item.filterProp).toMatch(new RegExp(regex))
         }
       })
-    })
-  })
-
-  describe('RemoteProjects', () => {
-    const locale = {
-      identifier: 'de_DE',
-      country: 'DE',
-      language: 'de',
-    }
-    const mediaId = Faker.datatype.uuid()
-
-    const localMedia = createMediaPicture(mediaId, locale.identifier)
-    const remoteMedia = createMediaPicture(mediaId, remoteProjectLocale)
-    const pageRef = createPageRef([createPageRefBody()])
-    const pictureLocal = createMediaPictureReference(mediaId)
-    const pictureRemote = createMediaPictureReference(mediaId, remoteProjectId)
-
-    // create dataset
-    const dataset = createDataset('ds-id')
-    const datasetReference = createDatasetReference('ds-id')
-
-    beforeAll(async () => {
-      // add different descriptions to differentiate between local and remote media
-      localMedia.description = 'local media'
-      remoteMedia.description = 'remote media'
-
-      remoteMedia.metaFormData = {
-        md_dataset: datasetReference,
-      }
-
-      await caasClient.addItemsToCollection(
-        [
-          {
-            ...localMedia,
-            _id: localMedia.identifier,
-          },
-        ],
-        locale
-      )
-
-      const [language, country] = remoteProjectLocale.split('_')
-
-      // add items to remote project collection
-      await caasClient.addItemsToRemoteCollection(
-        [
-          {
-            ...remoteMedia,
-            _id: remoteMedia.identifier,
-          },
-          dataset,
-        ],
-        { language, country, identifier: remoteProjectLocale }
-      )
-
-      pageRef.page.formData = {
-        pt_pictureLocal: pictureLocal,
-        pt_pictureRemote: pictureRemote,
-      }
-
-      await caasClient.addItemsToCollection(
-        [
-          {
-            ...pageRef,
-            _id: pageRef.identifier,
-          },
-        ],
-        {
-          identifier: 'de',
-          country: 'DE',
-          language: 'de',
-        }
-      )
-    })
-
-    it('remote media with same UUID as local media should be resolvable, local project and remote project locale can be different', async () => {
-      const res: Page = await proxyAPI.fetchElement({
-        id: pageRef.identifier,
-        locale: 'de_DE',
-      })
-      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
-      expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-      expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
-    })
-    it('Dataset references on metadata of remote media should be fetchable', async () => {
-      const res: Page = await proxyAPI.fetchElement({
-        id: pageRef.identifier,
-        locale: 'de_DE',
-      })
-      expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(dataset.identifier)
     })
   })
 })

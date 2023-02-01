@@ -49,6 +49,12 @@ export class CaasTestingClient {
     }
   }
 
+  static async delay(milliseconds: number){
+    return new Promise(resolve => {
+      setTimeout(resolve, milliseconds);
+    });
+  }
+
   /**
    * Initialize the CaaSTestingClient
    * @param CaaSTestingClientData data for testing client
@@ -59,6 +65,9 @@ export class CaasTestingClient {
     await caasClient.createCollection()
     CaaSTestingClientData.remoteProjectId &&
       (await caasClient.createRemoteCollection())
+
+    await this.delay(1000)
+
     return caasClient
   }
 

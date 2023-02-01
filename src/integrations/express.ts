@@ -48,7 +48,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         })
         return res.json(response)
       } catch (err: any) {
-        logger.error('could not fetch element: ', err.message)
+        logger.error('could not fetch element: ', req, err.message)
         if (
           err.message === FSXAApiErrors.NOT_FOUND ||
           err.message === FSXAApiErrors.UNKNOWN_REMOTE
