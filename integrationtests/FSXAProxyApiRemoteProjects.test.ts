@@ -168,7 +168,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
     expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
-  })
+  }, 15000)
 
   it('local project id != remote project id, local locale == remote locale', async () => {
     await init(randomId2, "de_DE")
@@ -180,7 +180,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
     expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
-  })
+  }, 15000)
 
 
   it('local project id == remote project id, local locale != remote locale', async () => {
@@ -193,7 +193,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
     expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
-  })
+  }, 15000)
 
   it('local project id == remote project id, local locale == remote locale', async () => {
     await init(randomId1, "de_DE")
@@ -205,7 +205,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     // Since projectId same and Ids the same, we expect the same media
     expect(res.data.pt_pictureRemote.description).toEqual(res.data.pt_pictureLocal.description)
-  })
+  }, 15000)
 
   it('local project id == remote project id, local locale == remote locale, different media Ids', async () => {
     await init(randomId1, "de_DE", true)
@@ -216,7 +216,8 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     })
     expect(res.data.pt_pictureLocal.id).not.toEqual(res.data.pt_pictureRemote.id)
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)  })
+    expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
+  }, 15000)
 
   it('Dataset references on metadata of remote media should be fetchable', async () => {
     await init(randomId2, "en_GB")
@@ -226,7 +227,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       locale: 'de_DE',
     })
     expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(dataset.identifier)
-  })
+  }, 15000)
 
 })
 
