@@ -999,7 +999,7 @@ export class CaaSMapper {
                   )
                 default:
                   this.logger.warn(
-                    `Item at index'${index}' could not be mapped!`
+                    `Item at index [${index}] with type [${unmappedItem.fsType}] could not be mapped!`
                   )
                   return unmappedItem
               }
@@ -1113,12 +1113,14 @@ export class CaaSMapper {
 
     const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
 
-    this.logger.info('CaaSMapper.resolveReferencesPerProject: Id data', {
-      project: remoteProjectId || 'localProject',
-      resolvedIdsArray,
-      referencedIds,
-      idsToFetchFromCaaS,
-    })
+    // skip stringification if logLevel is higher than debug
+    this.logger.logLevel === LogLevel.DEBUG &&
+      this.logger.debug('CaaSMapper.resolveReferencesPerProject: Id data', {
+        project: remoteProjectId || 'localProject',
+        resolvedIdsArray,
+        referencedIds,
+        idsToFetchFromCaaS,
+      })
 
     // we need to resolve some refs
     if (idsToFetchFromCaaS.length > 0) {
