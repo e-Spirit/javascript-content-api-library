@@ -170,7 +170,6 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
   })
 
-  //TODO: currently flaky
   it('local project id != remote project id, local locale == remote locale', async () => {
     await init(randomId2, "de_DE")
 
