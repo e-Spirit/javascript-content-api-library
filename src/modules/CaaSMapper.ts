@@ -1147,7 +1147,7 @@ export class CaaSMapper {
         )
       )
     } else {
-      this.logger.info(
+      this.logger.debug(
         'CaaSMapper.resolveReferencesPerProject: Nothing to fetch'
       )
     }
