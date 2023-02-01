@@ -1,3 +1,10 @@
+## [10.8.1](https://github.com/e-Spirit/fsxa-api/compare/v10.8.0...v10.8.1) (2023-02-01)
+
+
+### Bug Fixes
+
+* **remote references:** fix handling of remote references ([#139](https://github.com/e-Spirit/fsxa-api/issues/139)) ([23a40f0](https://github.com/e-Spirit/fsxa-api/commit/23a40f049c4a749cd325058737be9329df524618))
+
 # [10.8.0](https://github.com/e-Spirit/fsxa-api/compare/v10.7.0...v10.8.0) (2023-01-24)
 
 
