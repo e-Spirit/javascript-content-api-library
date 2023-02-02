@@ -8,7 +8,10 @@ import {
   LogLevel,
   MapResponse,
 } from '../modules'
-import getExpressRouter, { ExpressRouterIntegrationErrors, getMappedFilters } from './express'
+import getExpressRouter, {
+  ExpressRouterIntegrationErrors,
+  getMappedFilters,
+} from './express'
 import {
   FETCH_BY_FILTER_ROUTE,
   FETCH_NAVIGATION_ROUTE,
@@ -16,7 +19,12 @@ import {
   HEALTH_ROUTE,
 } from '../routes'
 import 'cross-fetch/polyfill'
-import { Page, QueryBuilderQuery, NavigationData, FetchResponse } from '../types'
+import {
+  Page,
+  QueryBuilderQuery,
+  NavigationData,
+  FetchResponse,
+} from '../types'
 import { FSXAContentMode } from '../enums'
 import Faker from 'faker'
 import faker from 'faker'
@@ -66,16 +74,18 @@ describe('Express-Integration', () => {
     fetchNavigationSpy = jest
       .spyOn(remoteApi, 'fetchNavigation')
       .mockImplementation(async () => navigationData as NavigationData)
-    fetchByFilterSpy = jest.spyOn(remoteApi, 'fetchByFilter').mockImplementation(
-      async () =>
-        ({
-          page: 1,
-          pagesize: 30,
-          pages: 0,
-          total: 0,
-          items: [],
-        } as FetchResponse)
-    )
+    fetchByFilterSpy = jest
+      .spyOn(remoteApi, 'fetchByFilter')
+      .mockImplementation(
+        async () =>
+          ({
+            page: 1,
+            pagesize: 30,
+            pages: 0,
+            total: 0,
+            items: [],
+          } as FetchResponse)
+      )
   })
 
   afterEach(() => {
@@ -97,7 +107,9 @@ describe('Express-Integration', () => {
 
   describe(HEALTH_ROUTE, () => {
     it('should exist and always return http status 200', async () => {
-      let getHealth = await fetch(`http://localhost:${PORT}/api/fsxa/health`, { method: 'GET' })
+      let getHealth = await fetch(`http://localhost:${PORT}/api/fsxa/health`, {
+        method: 'GET',
+      })
       expect(getHealth.status).toEqual(200)
     })
   })
@@ -177,7 +189,10 @@ describe('Express-Integration', () => {
         initialPath: '/',
         locale: 'de_DE',
       })
-      await proxyApi.fetchNavigation({ initialPath: '/foobar', locale: 'de_DE' })
+      await proxyApi.fetchNavigation({
+        initialPath: '/foobar',
+        locale: 'de_DE',
+      })
       expect(fetchNavigationSpy).toHaveBeenCalledTimes(3)
       expect(fetchNavigationSpy).toHaveBeenCalledWith({
         initialPath: '/foobar',
@@ -194,16 +209,18 @@ describe('Express-Integration', () => {
 
     it('should return an error, when locale is not specified', async () => {
       expect(
-        await (await fetch(`http://localhost:${PORT}/navigation`, { method: 'POST' })).json()
+        await (
+          await fetch(`http://localhost:${PORT}/navigation`, { method: 'POST' })
+        ).json()
       ).toEqual({
         error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
       })
     })
 
     it('should pass through response data', async () => {
-      expect(await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE' })).toEqual(
-        navigationData
-      )
+      expect(
+        await proxyApi.fetchNavigation({ initialPath: '/', locale: 'de_DE' })
+      ).toEqual(navigationData)
     })
   })
 
@@ -255,12 +272,21 @@ describe('Express-Integration', () => {
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(3)
       expect(fetchByFilterSpy.mock.calls[2][0].filters).toEqual(filters_3)
 
-      await proxyApi.fetchByFilter({ filters: [], locale: 'de_DE', page: 3, pagesize: 30 })
+      await proxyApi.fetchByFilter({
+        filters: [],
+        locale: 'de_DE',
+        page: 3,
+        pagesize: 30,
+      })
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(4)
       expect(fetchByFilterSpy.mock.calls[3][0].page).toEqual(3)
       expect(fetchByFilterSpy.mock.calls[3][0].pagesize).toEqual(30)
 
-      const additionalParams = { keys: ['1', '2', '3'], sort: '-age', rep: 'hal' }
+      const additionalParams = {
+        keys: ['1', '2', '3'],
+        sort: '-age',
+        rep: 'hal',
+      }
       await proxyApi.fetchByFilter({
         filters: [],
         locale: 'de_DE',
@@ -269,14 +295,66 @@ describe('Express-Integration', () => {
         additionalParams,
       })
       expect(fetchByFilterSpy).toHaveBeenCalledTimes(5)
-      expect(fetchByFilterSpy.mock.calls[4][0].additionalParams).toEqual(additionalParams)
+      expect(fetchByFilterSpy.mock.calls[4][0].additionalParams).toEqual(
+        additionalParams
+      )
+    })
+
+    it('should correctly map the datetime iso format <YYYY-mm-dd>', async () => {
+      const filters_1: QueryBuilderQuery[] = [
+        {
+          operator: ComparisonQueryOperatorEnum.GREATER_THAN,
+          value: '2022-01-01',
+          field: 'foo',
+        },
+      ]
+      await proxyApi.fetchByFilter({ filters: filters_1, locale: 'de_DE' })
+      expect(fetchByFilterSpy).toHaveBeenCalledTimes(1)
+      expect(fetchByFilterSpy.mock.calls[0][0].filters).toEqual(filters_1)
+
+      const filters_2: QueryBuilderQuery[] = [
+        {
+          operator: ComparisonQueryOperatorEnum.LESS_THAN,
+          value: '2022-01-01',
+          field: 'foo',
+        },
+      ]
+      await proxyApi.fetchByFilter({ filters: filters_2, locale: 'de_DE' })
+      expect(fetchByFilterSpy).toHaveBeenCalledTimes(2)
+      expect(fetchByFilterSpy.mock.calls[1][0].filters).toEqual(filters_2)
+    })
+
+    it('should correctly map the datetime iso format <YYYY-mm-ddTHH:MM:ss>', async () => {
+      const filters_1: QueryBuilderQuery[] = [
+        {
+          operator: ComparisonQueryOperatorEnum.GREATER_THAN,
+          value: '2022-01-01T01:01:00',
+          field: 'foo',
+        },
+      ]
+      await proxyApi.fetchByFilter({ filters: filters_1, locale: 'de_DE' })
+      expect(fetchByFilterSpy).toHaveBeenCalledTimes(1)
+      expect(fetchByFilterSpy.mock.calls[0][0].filters).toEqual(filters_1)
+
+      const filters_2: QueryBuilderQuery[] = [
+        {
+          operator: ComparisonQueryOperatorEnum.LESS_THAN,
+          value: '2022-01-01T01:01:00',
+          field: 'foo',
+        },
+      ]
+      await proxyApi.fetchByFilter({ filters: filters_2, locale: 'de_DE' })
+      expect(fetchByFilterSpy).toHaveBeenCalledTimes(2)
+      expect(fetchByFilterSpy.mock.calls[1][0].filters).toEqual(filters_2)
     })
   })
 
   describe('catch all route', () => {
     it('should return an error, when unknown route is called', async () => {
       expect(
-        await (await fetch(`http://localhost:${PORT}/foobar`, { method: 'POST' })).json()
+        await (
+          await fetch(`http://localhost:${PORT}/foobar`, { method: 'POST' })
+        ).json()
       ).toEqual({
         error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE,
       })

@@ -55,14 +55,16 @@ export class QueryBuilder {
   build(filter: QueryBuilderQuery): MappedFilter | null {
     // throw an error if no operator is specified
     this.logger.debug('[QueryBuilder.build]: Received Filter', filter)
-    if (filter.operator == null) throw new Error(QueryBuilderErrors.MISSING_OPERATOR)
+    if (filter.operator == null)
+      throw new Error(QueryBuilderErrors.MISSING_OPERATOR)
 
     switch (filter.operator) {
       case LogicalQueryOperatorEnum.AND:
       case LogicalQueryOperatorEnum.NOR:
       case LogicalQueryOperatorEnum.OR:
         // throw an error if no filters are specified
-        if (filter.filters == null) throw new Error(QueryBuilderErrors.MISSING_FILTERS)
+        if (filter.filters == null)
+          throw new Error(QueryBuilderErrors.MISSING_FILTERS)
         const childFilters = filter.filters
           .map((child) => this.build(child))
           .filter(Boolean) as MappedFilter[]
@@ -89,7 +91,8 @@ export class QueryBuilder {
         if (!filter.field) throw new Error(QueryBuilderErrors.MISSING_FIELD)
         if (!filter.value) throw new Error(QueryBuilderErrors.MISSING_VALUE)
         // if array is empty we will invalidate this query
-        if (Array.isArray(filter.value) && filter.value.length === 0) return null
+        if (Array.isArray(filter.value) && filter.value.length === 0)
+          return null
         return {
           [filter.field]: {
             [filter.operator]: filter.value,
@@ -101,8 +104,6 @@ export class QueryBuilder {
       case ComparisonQueryOperatorEnum.LESS_THAN_EQUALS:
         if (!filter.field) throw new Error(QueryBuilderErrors.MISSING_FIELD)
         if (!filter.value) throw new Error(QueryBuilderErrors.MISSING_VALUE)
-        // throw an error if value is not a number
-        if (isNaN(filter.value)) throw new Error(QueryBuilderErrors.NOT_A_NUMBER)
         return {
           [filter.field]: {
             [filter.operator]: filter.value,
@@ -112,9 +113,11 @@ export class QueryBuilder {
         if (!filter.field) throw new Error(QueryBuilderErrors.MISSING_FIELD)
         if (!filter.value) throw new Error(QueryBuilderErrors.MISSING_VALUE)
         // throw an error if not a string
-        if (typeof filter.value !== 'string') throw new Error(QueryBuilderErrors.NOT_A_STRING)
+        if (typeof filter.value !== 'string')
+          throw new Error(QueryBuilderErrors.NOT_A_STRING)
         // throw error if regex is invalid
-        if (!isValidRegex(filter.value)) throw new Error(QueryBuilderErrors.INVALID_REGEX)
+        if (!isValidRegex(filter.value))
+          throw new Error(QueryBuilderErrors.INVALID_REGEX)
         return {
           [filter.field]: {
             [filter.operator]: filter.value,
@@ -125,7 +128,8 @@ export class QueryBuilder {
       case ArrayQueryOperatorEnum.ALL:
         if (!filter.field) throw new Error(QueryBuilderErrors.MISSING_FIELD)
         if (!filter.value) throw new Error(QueryBuilderErrors.MISSING_VALUE)
-        if (!Array.isArray(filter.value)) throw new Error(QueryBuilderErrors.NOT_AN_ARRAY)
+        if (!Array.isArray(filter.value))
+          throw new Error(QueryBuilderErrors.NOT_AN_ARRAY)
         return {
           [filter.field]: {
             [filter.operator]: filter.value,

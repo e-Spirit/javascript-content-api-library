@@ -1,7 +1,10 @@
 import { createDataEntry } from './createDataEntry'
 import { CaaSApi_Body, CaaSApi_PageRef } from '../types'
 
-export function createPageRef(pageChildren: CaaSApi_Body[] = [], locale?: string): CaaSApi_PageRef {
+export function createPageRef(
+  pageChildren: CaaSApi_Body[] = [],
+  locale?: string
+): CaaSApi_PageRef {
   const base = createDataEntry(locale)
   const page = createDataEntry(locale)
   const template = createDataEntry(locale)

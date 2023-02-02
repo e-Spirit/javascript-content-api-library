@@ -826,7 +826,7 @@ export type ComparisonFilter =
         | ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS
         | ComparisonQueryOperatorEnum.LESS_THAN
         | ComparisonQueryOperatorEnum.LESS_THAN_EQUALS
-      value: number
+      value: number | string
     }
   | {
       field: string
