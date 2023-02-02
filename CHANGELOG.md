@@ -1,3 +1,10 @@
+# [10.9.0](https://github.com/e-Spirit/fsxa-api/compare/v10.8.1...v10.9.0) (2023-02-02)
+
+
+### Features
+
+* **querybuilder:** comparison operators should support string value types ([#146](https://github.com/e-Spirit/fsxa-api/issues/146)) ([94c6781](https://github.com/e-Spirit/fsxa-api/commit/94c67814b5980a4be37220173bd1b7c35536e120))
+
 ## [10.8.1](https://github.com/e-Spirit/fsxa-api/compare/v10.8.0...v10.8.1) (2023-02-01)
 
 
