@@ -300,7 +300,7 @@ describe('Express-Integration', () => {
       )
     })
 
-    it('should should correctly map the datetime iso format <YYYY-mm-dd>', async () => {
+    it('should correctly map the datetime iso format <YYYY-mm-dd>', async () => {
       const filters_1: QueryBuilderQuery[] = [
         {
           operator: ComparisonQueryOperatorEnum.GREATER_THAN,
@@ -324,7 +324,7 @@ describe('Express-Integration', () => {
       expect(fetchByFilterSpy.mock.calls[1][0].filters).toEqual(filters_2)
     })
 
-    it('should should correctly map the datetime iso format <YYYY-mm-ddTHH:MM:ss>', async () => {
+    it('should correctly map the datetime iso format <YYYY-mm-ddTHH:MM:ss>', async () => {
       const filters_1: QueryBuilderQuery[] = [
         {
           operator: ComparisonQueryOperatorEnum.GREATER_THAN,

@@ -311,7 +311,7 @@ describe('QueryBuilder', () => {
         ).toBe(true)
       })
 
-      it('should returns the ISODate with the specified date. <YYYY-mm-dd>', () => {
+      it('equals filter should return the ISODate with the specified date. <YYYY-mm-dd>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: '2022-01-01',
@@ -325,7 +325,7 @@ describe('QueryBuilder', () => {
         ).toBe('2022-01-01')
       })
 
-      it("should returns the ISODate with the specified datetime client's local timezone  in UTC. <YYYY-mm-ddTHH:MM:ss>", () => {
+      it("equals filter should return the ISODate with the specified datetime client's local timezone  in UTC. <YYYY-mm-ddTHH:MM:ss>", () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.EQUALS,
           value: '2022-01-01T00:00:00',
@@ -437,7 +437,7 @@ describe('QueryBuilder', () => {
         ).toEqual(2)
       })
 
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+      it('gt filter should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN,
           value: '2022-01-02',
@@ -452,7 +452,7 @@ describe('QueryBuilder', () => {
         ).toBe(true)
       })
 
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+      it('gt filter should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN,
           value: '2022-01-01T01:02:00',
@@ -501,7 +501,7 @@ describe('QueryBuilder', () => {
           ]
         ).toEqual(2)
       })
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+      it('gte filter should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
           value: '2022-01-02',
@@ -516,7 +516,7 @@ describe('QueryBuilder', () => {
         ).toBe(true)
       })
 
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+      it('gte filter should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS,
           value: '2022-01-01T01:02:00',
@@ -565,7 +565,7 @@ describe('QueryBuilder', () => {
           ]
         ).toEqual(2)
       })
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+      it('lt filter should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN,
           value: '2022-01-01',
@@ -580,7 +580,7 @@ describe('QueryBuilder', () => {
         ).toBe(true)
       })
 
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+      it('lt filter should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN,
           value: '2022-01-01T01:01:00',
@@ -629,7 +629,7 @@ describe('QueryBuilder', () => {
           ]
         ).toEqual(2)
       })
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
+      it('lte filter should return the correct value ISODate with the specified date. <YYYY-mm-dd>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
           value: '2022-01-02',
@@ -644,7 +644,7 @@ describe('QueryBuilder', () => {
         ).toBe(true)
       })
 
-      it('should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
+      it('lte filter should return the correct value ISODate with the specified date. <YYYY-mm-ddTHH:MM:ss>', () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.LESS_THAN_EQUALS,
           value: '2022-01-01T01:01:00',
