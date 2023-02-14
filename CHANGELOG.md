@@ -1,3 +1,10 @@
+# [10.10.0](https://github.com/e-Spirit/fsxa-api/compare/v10.9.0...v10.10.0) (2023-02-14)
+
+
+### Features
+
+* **updatenode:** update node to 18 ([#148](https://github.com/e-Spirit/fsxa-api/issues/148)) ([29647a4](https://github.com/e-Spirit/fsxa-api/commit/29647a48134c80495eb17d49fb2a5f871aafc3cc))
+
 # [10.9.0](https://github.com/e-Spirit/fsxa-api/compare/v10.8.1...v10.9.0) (2023-02-02)
 
 
