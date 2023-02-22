@@ -1064,21 +1064,6 @@ export class CaaSMapper {
         this.resolveReferencesPerProject(remoteId, filterContext)
       ),
     ])
-
-    // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(
-      ({ imageId, resolution }, index) => {
-        const resolvedImage = this.resolvedReferences[imageId]
-        if ((resolvedImage as Image).resolutions) {
-          update(resolvedImage, 'resolutions', (resolutions) => {
-            if (resolution in resolutions) {
-              return { [resolution]: resolutions[resolution] }
-            }
-            return resolutions
-          })
-        }
-      }
-    )
   }
 
   /**

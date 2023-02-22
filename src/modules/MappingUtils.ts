@@ -34,10 +34,13 @@ const denormalizeResolvedReferences = (
   if (!referenceMap || Object.keys(referenceMap).length === 0)
     return mappedItems
   // denormalize
-  for (const [referencedId, occurences] of Object.entries(referenceMap)) {
+  for (const [referencedId, occurrences] of Object.entries(referenceMap)) {
     // Iterate over all insertion paths and insert references into objects
-    occurences.forEach((path) => {
+    occurrences.forEach((path) => {
       if (resolvedReferences[referencedId]) {
+        // here the references are actually injected
+        // So here could come a special treatment for ImageMaps
+        // if(imageMapForcedResolutions.find(referenceId)) --> Then manipulate the object injected here. ATTENTION DO NOT MANIPULATE THE ORIGINAL
         set(resolvedReferences, path, resolvedReferences[referencedId])
       } else {
         console.warn(

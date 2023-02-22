@@ -1,6 +1,6 @@
 {
   "name": "fsxa-api",
-  "version": "10.10.0",
+  "version": "10.10.1-alpha.0",
   "description": "",
   "keywords": [],
   "main": "dist/fsxa-api.cjs.js",
@@ -44,7 +44,8 @@
     "prepush": "jest --verbose ./src",
     "commitmsg": "commitlint -E HUSKY_GIT_PARAMS",
     "dts": "./node_modules/.bin/npm-dts generate -e ./src/FSXAApi.ts",
-    "dev": "npx nodemon dev/index.ts --ignore ./**/dist"
+    "dev": "npx nodemon dev/index.ts --ignore ./**/dist",
+    "dev:debug": "nodemon --inspect dev/index.ts --ignore ./**/dist"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [

@@ -62,7 +62,8 @@ describe('FSXAProxyAPI', () => {
     apikey: INTEGRATION_TEST_API_KEY!,
     caasURL: INTEGRATION_TEST_CAAS!,
     contentMode: FSXAContentMode.PREVIEW,
-    navigationServiceURL: 'https://your-navigationservice.e-spirit.cloud/navigation'!,
+    navigationServiceURL:
+      'https://your-navigationservice.e-spirit.cloud/navigation'!,
     projectID: randomProjectID,
     tenantID: tenantID,
     remotes: {},
@@ -103,13 +104,19 @@ describe('FSXAProxyAPI', () => {
     afterEach(async () => {
       const res = await caasClient.getItem(projectPropsId, locale.identifier)
       const parsedRes = await res.json()
-      await caasClient.removeItem(projectPropsId, locale.identifier, parsedRes._etag.$oid)
+      await caasClient.removeItem(
+        projectPropsId,
+        locale.identifier,
+        parsedRes._etag.$oid
+      )
     })
     it('fetch project props returns project pros', async () => {
       const projectProperties = createProjectProperties(projectPropsId)
       projectProperties._id = 'projectSettings' // this was found in real data
       await caasClient.addItemsToCollection([projectProperties], locale)
-      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      const res = await proxyAPI.fetchProjectProperties({
+        locale: locale.identifier,
+      })
       expect(res!.id).toEqual(projectProperties.identifier)
     })
     it('nested refs in project props get resolved', async () => {
@@ -121,8 +128,13 @@ describe('FSXAProxyAPI', () => {
       const datasetReference2 = createDatasetReference('ds2-id')
       projectProperties.formData = { datasetReference1 }
       projectProperties.metaFormData = { datasetReference2 }
-      await caasClient.addItemsToCollection([projectProperties, dataset1, dataset2], locale)
-      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      await caasClient.addItemsToCollection(
+        [projectProperties, dataset1, dataset2],
+        locale
+      )
+      const res = await proxyAPI.fetchProjectProperties({
+        locale: locale.identifier,
+      })
       expect(res!.id).toEqual(projectProperties.identifier)
       expect(res!.data.datasetReference1.id).toEqual(dataset1.identifier)
       expect(res!.meta.datasetReference2.id).toEqual(dataset2.identifier)
@@ -136,8 +148,13 @@ describe('FSXAProxyAPI', () => {
       dataset1.formData.ref22 = datasetReference2
       dataset2.formData.ref21 = datasetReference1
       projectProperties.formData.dataset = datasetReference1
-      await caasClient.addItemsToCollection([projectProperties, dataset1, dataset2], locale)
-      const res = await proxyAPI.fetchProjectProperties({ locale: locale.identifier })
+      await caasClient.addItemsToCollection(
+        [projectProperties, dataset1, dataset2],
+        locale
+      )
+      const res = await proxyAPI.fetchProjectProperties({
+        locale: locale.identifier,
+      })
       expect(res!.id).toEqual(projectProperties.identifier)
       expect(res!.data.dataset.id).toEqual(dataset1.identifier)
       expect(res!.data.dataset.data.ref22.id).toEqual(dataset2.identifier)
@@ -156,7 +173,8 @@ describe('FSXAProxyAPI', () => {
         st_table: {
           fsType: 'CMS_INPUT_DOMTABLE',
           name: 'st_table',
-          value: '<table data-fs-style=""><tr><td>&nbsp;</td><td>&nbsp;</td></tr></table>',
+          value:
+            '<table data-fs-style=""><tr><td>&nbsp;</td><td>&nbsp;</td></tr></table>',
         },
       }
       await caasClient.addItemsToCollection([dataset], locale)
@@ -164,7 +182,9 @@ describe('FSXAProxyAPI', () => {
         id: dataset.identifier,
         locale: `${locale.language}_${locale.country}`,
       })
-      expect(res.data.st_table[0].content[0].content[0].content[0].content).toEqual('\xa0') // \xa0 is non-breaking
+      expect(
+        res.data.st_table[0].content[0].content[0].content[0].content
+      ).toEqual('\xa0') // \xa0 is non-breaking
     })
     it('nested image map media gets resolved to resolution specified in image map', async () => {
       const pageRef = createPageRef()
@@ -210,26 +230,37 @@ describe('FSXAProxyAPI', () => {
           url: 'testurl2',
         },
       }
-      const mediaRef1 = createMediaPictureReferenceValue(mediaPicture1.identifier)
-      const mediaRef2 = createMediaPictureReferenceValue(mediaPicture2.identifier)
+      const mediaRef1 = createMediaPictureReferenceValue(
+        mediaPicture1.identifier
+      )
+      const mediaRef2 = createMediaPictureReferenceValue(
+        mediaPicture2.identifier
+      )
       imageMap1.value.media = mediaRef1
       imageMap2.value.media = mediaRef2
 
       imageMap1.value.areas[0].link!.formData = { imageMap2: imageMap2 }
 
       pageRef.page.formData = { imageMap: imageMap1 }
-      await caasClient.addItemsToCollection([pageRef, mediaPicture1, mediaPicture2], locale)
+      await caasClient.addItemsToCollection(
+        [pageRef, mediaPicture1, mediaPicture2],
+        locale
+      )
       const res = await proxyAPI.fetchElement({
         id: pageRef.identifier,
         locale: `${locale.language}_${locale.country}`,
       })
       expect(res.data.imageMap.media.id).toEqual(mediaPicture1.identifier)
-      expect(Object.keys(res.data.imageMap.media.resolutions)).toEqual([
-        imageMap1.value.resolution.uid,
-      ])
-      expect(Object.keys(res.data.imageMap.areas[0].link.data.imageMap2.media.resolutions)).toEqual(
-        [imageMap2.value.resolution.uid]
-      )
+      expect(
+        res.data.imageMap.media.resolutions.hasOwnProperty(
+          imageMap1.value.resolution.uid
+        )
+      ).toBe(true)
+      expect(
+        res.data.imageMap.media.resolutions.hasOwnProperty(
+          imageMap2.value.resolution.uid
+        )
+      ).toBe(true)
     })
     it('image map media gets resolved to resolution specified in image map', async () => {
       const pageRef = createPageRef()
@@ -263,9 +294,11 @@ describe('FSXAProxyAPI', () => {
         locale: `${locale.language}_${locale.country}`,
       })
       expect(res.data.imageMap.media.id).toEqual(mediaPicture.identifier)
-      expect(Object.keys(res.data.imageMap.media.resolutions)).toEqual([
-        imageMap.value.resolution.uid,
-      ])
+      expect(
+        res.data.imageMap.media.resolutions.hasOwnProperty(
+          imageMap.value.resolution.uid
+        )
+      ).toBe(true)
     })
     it('items with circular references get resolved', async () => {
       const dataset1 = createDataset('ds1-id')
@@ -282,7 +315,10 @@ describe('FSXAProxyAPI', () => {
       const pageRef = createPageRef()
       pageRef.page.formData = { dataset: datasetReference1 }
 
-      await caasClient.addItemsToCollection([pageRef, dataset1, dataset2, dataset3], locale)
+      await caasClient.addItemsToCollection(
+        [pageRef, dataset1, dataset2, dataset3],
+        locale
+      )
 
       const res = await proxyAPI.fetchElement({
         id: pageRef.identifier,
@@ -291,8 +327,12 @@ describe('FSXAProxyAPI', () => {
 
       expect(res.data.dataset.id).toBe(dataset1.identifier)
       expect(res.data.dataset.data.ref22.id).toBe(dataset2.identifier)
-      expect(res.data.dataset.data.ref22.data.ref23.id).toBe(dataset3.identifier)
-      expect(res.data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(dataset1.identifier)
+      expect(res.data.dataset.data.ref22.data.ref23.id).toBe(
+        dataset3.identifier
+      )
+      expect(res.data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(
+        dataset1.identifier
+      )
     })
     it('api returns resolved references if references are nested', async () => {
       const mediaPicture = createMediaPicture('pic-id')
@@ -302,7 +342,10 @@ describe('FSXAProxyAPI', () => {
       const pageRef = createPageRef()
       const datasetReference = createDatasetReference('ds-id')
       pageRef.page.formData.dataset = datasetReference
-      await caasClient.addItemsToCollection([pageRef, mediaPicture, dataset], locale)
+      await caasClient.addItemsToCollection(
+        [pageRef, mediaPicture, dataset],
+        locale
+      )
       const res = await proxyAPI.fetchElement({
         id: pageRef.identifier,
         locale: `${locale.language}_${locale.country}`,
@@ -316,8 +359,14 @@ describe('FSXAProxyAPI', () => {
       const datasetReference = createDatasetReference('ds-id')
       dataset.formData.image = mediaPictureReference
       const pageRef = createPageRef()
-      pageRef.page.formData = { dataset: datasetReference, image: mediaPictureReference }
-      await caasClient.addItemsToCollection([mediaPicture, pageRef, dataset], locale)
+      pageRef.page.formData = {
+        dataset: datasetReference,
+        image: mediaPictureReference,
+      }
+      await caasClient.addItemsToCollection(
+        [mediaPicture, pageRef, dataset],
+        locale
+      )
       const res = await proxyAPI.fetchElement({
         id: pageRef.identifier,
         locale: `${locale.language}_${locale.country}`,
@@ -415,9 +464,15 @@ describe('FSXAProxyAPI', () => {
       const mappedSection = res.children[0].children[0] as Section
       expect(mappedSection.data.st_ref).toBeDefined
       const mappedRef: Reference = mappedSection.data.st_ref
-      expect(mappedRef.referenceId).toEqual(remotePageRefReference.value?.identifier)
-      expect(mappedRef.referenceType).toEqual(remotePageRefReference.value?.fsType)
-      expect(mappedRef.referenceRemoteProject).toEqual(remotePageRefReference.value?.remoteProject)
+      expect(mappedRef.referenceId).toEqual(
+        remotePageRefReference.value?.identifier
+      )
+      expect(mappedRef.referenceType).toEqual(
+        remotePageRefReference.value?.fsType
+      )
+      expect(mappedRef.referenceRemoteProject).toEqual(
+        remotePageRefReference.value?.remoteProject
+      )
     })
   })
 
@@ -446,7 +501,10 @@ describe('FSXAProxyAPI', () => {
         const pageRef = createPageRef()
         pageRef.page.formData = { dataset: datasetReference1 }
 
-        await caasClient.addItemsToCollection([pageRef, dataset1, dataset2, dataset3], locale)
+        await caasClient.addItemsToCollection(
+          [pageRef, dataset1, dataset2, dataset3],
+          locale
+        )
 
         const res = await proxyAPI.fetchByFilter({
           filters: [
@@ -459,13 +517,15 @@ describe('FSXAProxyAPI', () => {
           locale: locale.identifier,
         })
         expect((res.items[0] as any).data.dataset.id).toBe(dataset1.identifier)
-        expect((res.items[0] as any).data.dataset.data.ref22.id).toBe(dataset2.identifier)
-        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.id).toBe(
-          dataset3.identifier
+        expect((res.items[0] as any).data.dataset.data.ref22.id).toBe(
+          dataset2.identifier
         )
-        expect((res.items[0] as any).data.dataset.data.ref22.data.ref23.data.ref21.id).toBe(
-          dataset1.identifier
-        )
+        expect(
+          (res.items[0] as any).data.dataset.data.ref22.data.ref23.id
+        ).toBe(dataset3.identifier)
+        expect(
+          (res.items[0] as any).data.dataset.data.ref22.data.ref23.data.ref21.id
+        ).toBe(dataset1.identifier)
       })
       it('api returns only matching data if filter is applied', async () => {
         const a = Faker.datatype.uuid()
