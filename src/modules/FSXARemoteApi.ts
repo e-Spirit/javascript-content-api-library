@@ -57,6 +57,7 @@ type buildCaaSUrlParams = {
  */
 export class FSXARemoteApi implements FSXAApi {
   public mode: 'remote' = 'remote'
+  public defaultLocale: string = process.env.FSXA_LOCALE || 'en_GB'
   private _apikey: string = this.apikey
   private _caasURL: string = this.caasURL
   private _navigationServiceURL: string = this.navigationServiceURL
@@ -528,6 +529,14 @@ export class FSXARemoteApi implements FSXAApi {
       )
       page = 1
     }
+
+    if (!locale) {
+      this._logger.warn(
+        '[fetchByFilter] locale is missing. Setting default locale.'
+      )
+      locale = this.defaultLocale
+    }
+
     const url = this.buildCaaSUrl({
       filters,
       additionalParams: {
