@@ -31,7 +31,7 @@ const getCircularReplacer = () => {
 const formatOutput = (...args: any[]) => {
   args = args.map((entry) => {
     if (typeof entry === 'object')
-      return JSON.stringify(entry, getCircularReplacer)
+      return JSON.stringify(entry, getCircularReplacer())
     return entry
   })
   return inspect(args.join(' | '), {
