@@ -573,9 +573,9 @@ export class FSXARemoteApi implements FSXAApi {
     if (unmappedItems.length === 0) {
       return {
         page: 1,
-        pagesize: 0,
-        totalPages: undefined,
+        pagesize: 30,
         size: undefined,
+        totalPages: undefined,
         items: [],
       }
     }
