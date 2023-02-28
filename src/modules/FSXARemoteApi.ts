@@ -57,7 +57,6 @@ type buildCaaSUrlParams = {
  */
 export class FSXARemoteApi implements FSXAApi {
   public mode: 'remote' = 'remote'
-  public defaultLocale: string = process.env.FSXA_LOCALE || 'en_GB'
   private _apikey: string = this.apikey
   private _caasURL: string = this.caasURL
   private _navigationServiceURL: string = this.navigationServiceURL
@@ -530,13 +529,6 @@ export class FSXARemoteApi implements FSXAApi {
       page = 1
     }
 
-    if (!locale) {
-      this._logger.warn(
-        '[fetchByFilter] locale is missing. Setting default locale.'
-      )
-      locale = this.defaultLocale
-    }
-
     const url = this.buildCaaSUrl({
       filters,
       additionalParams: {
@@ -577,11 +569,23 @@ export class FSXARemoteApi implements FSXAApi {
         ? []
         : data._embedded['rh:doc']
 
+    // if we have no items, we can return early
+    if (unmappedItems.length === 0) {
+      return {
+        page: 1,
+        pagesize: 0,
+        totalPages: undefined,
+        size: undefined,
+        items: [],
+      }
+    }
+
     const remoteProjectLocale = remoteProjectId
       ? this.getRemoteConfigById(remoteProjectId).locale
       : undefined
 
     let mapperLocale = locale
+
     if (!mapperLocale) {
       mapperLocale =
         unmappedItems[0].locale.language + '_' + unmappedItems[0].locale.country
