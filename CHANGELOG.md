@@ -1,3 +1,10 @@
+## [10.10.1](https://github.com/e-Spirit/fsxa-api/compare/v10.10.0...v10.10.1) (2023-02-28)
+
+
+### Bug Fixes
+
+* **logger:** fix circularReplacer usage ([#153](https://github.com/e-Spirit/fsxa-api/issues/153)) ([ebe5cdc](https://github.com/e-Spirit/fsxa-api/commit/ebe5cdc8d7943c27e554ff5effe50a8f064bb089))
+
 # [10.10.0](https://github.com/e-Spirit/fsxa-api/compare/v10.9.0...v10.10.0) (2023-02-14)
 
 
