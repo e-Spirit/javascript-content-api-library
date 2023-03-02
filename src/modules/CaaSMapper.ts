@@ -1069,7 +1069,7 @@ export class CaaSMapper {
     this._imageMapForcedResolutions.forEach(
       ({ imageId, resolution }, index) => {
         const resolvedImage = this.resolvedReferences[imageId]
-        if ((resolvedImage as Image).resolutions) {
+        if (resolvedImage && (resolvedImage as Image).resolutions) {
           update(resolvedImage, 'resolutions', (resolutions) => {
             if (resolution in resolutions) {
               return { [resolution]: resolutions[resolution] }
