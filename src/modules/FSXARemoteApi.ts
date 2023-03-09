@@ -528,6 +528,7 @@ export class FSXARemoteApi implements FSXAApi {
       )
       page = 1
     }
+
     const url = this.buildCaaSUrl({
       filters,
       additionalParams: {
@@ -568,11 +569,23 @@ export class FSXARemoteApi implements FSXAApi {
         ? []
         : data._embedded['rh:doc']
 
+    // if we have no items, we can return early
+    if (unmappedItems.length === 0) {
+      return {
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items: [],
+      }
+    }
+
     const remoteProjectLocale = remoteProjectId
       ? this.getRemoteConfigById(remoteProjectId).locale
       : undefined
 
     let mapperLocale = locale
+
     if (!mapperLocale) {
       mapperLocale =
         unmappedItems[0].locale.language + '_' + unmappedItems[0].locale.country
