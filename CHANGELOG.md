@@ -1,3 +1,10 @@
+## [10.10.2](https://github.com/e-Spirit/fsxa-api/compare/v10.10.1...v10.10.2) (2023-03-09)
+
+
+### Bug Fixes
+
+* **remoteapi:** improve error handling in reference resolving ([801a0ed](https://github.com/e-Spirit/fsxa-api/commit/801a0ed4d5597f75bb2e3d3d52c9d3f448a2d181))
+
 ## [10.10.1](https://github.com/e-Spirit/fsxa-api/compare/v10.10.0...v10.10.1) (2023-02-28)
 
 
