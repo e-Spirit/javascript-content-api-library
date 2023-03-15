@@ -1,6 +1,9 @@
 import { set, get } from 'lodash'
-import { CaasApi_Item, MappedCaasItem } from '../types'
+import { CaasApi_Item, Image, MappedCaasItem, NestedPath } from '../types'
 import { ResolvedReferencesInfo, ReferencedItemsInfo } from './CaaSMapper'
+
+const IMAGE_MAP_PLACEHOLDER = 'IMAGEMAP'
+const IMAGE_MAP_RESOLUTION_SPLIT_DELIMITER = '___'
 
 const getItemId = (
   item: MappedCaasItem | CaasApi_Item,
@@ -26,6 +29,38 @@ const findResolvedReferencesByIds = (
   return ids.map((id) => resolvedReferences[id]).filter((item) => item)
 }
 
+// Check for image map and force to single resolution
+const imageMapForceResolution = ({
+  resolvedReferences,
+  path,
+  referencedId,
+}: {
+  resolvedReferences: ResolvedReferencesInfo
+  path: NestedPath
+  referencedId: string
+}): Image | null => {
+  // get the registered reference item value by path
+  const registeredReferenceItem = get(resolvedReferences, path)
+  // check if the registered reference item is an ImageMap
+  if (!registeredReferenceItem.startsWith(IMAGE_MAP_PLACEHOLDER)) {
+    return null
+  }
+  // Get the forced resolution from the registered referenced item image map
+  // e.g. IMAGEMAP___{RESOLUTION}___{IMAGE_ID}
+  const forcedResolution = registeredReferenceItem.split(
+    IMAGE_MAP_RESOLUTION_SPLIT_DELIMITER
+  )[1]
+  // get the Image Object from the resolved references by referencedId -> ImageMapId
+  const resolvedImage = { ...resolvedReferences[referencedId] } as Image
+  // force to a single resolution
+  if (resolvedImage && forcedResolution) {
+    resolvedImage.resolutions = {
+      [forcedResolution]: resolvedImage.resolutions[forcedResolution],
+    }
+  }
+  return resolvedImage
+}
+
 const denormalizeResolvedReferences = (
   mappedItems: (CaasApi_Item | MappedCaasItem)[],
   referenceMap: ReferencedItemsInfo,
@@ -38,13 +73,16 @@ const denormalizeResolvedReferences = (
     // Iterate over all insertion paths and insert references into objects
     occurences.forEach((path) => {
       if (resolvedReferences[referencedId]) {
-        const placeholder = get(resolvedReferences, path)
-        if (placeholder.startsWith('IMAGEMAP')) {
-          const forcedResolution = placeholder.split('___')[1]
-          // set forcedResolution
-        } else {
-          set(resolvedReferences, path, resolvedReferences[referencedId])
-        }
+        const resolvedImage = imageMapForceResolution({
+          resolvedReferences,
+          path,
+          referencedId,
+        })
+        set(
+          resolvedReferences,
+          path,
+          resolvedImage || resolvedReferences[referencedId]
+        )
       } else {
         console.warn(
           `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization. resolvedReferencesKeys: {[${Object.keys(

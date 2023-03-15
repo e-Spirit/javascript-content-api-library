@@ -90,8 +90,6 @@ export class CaaSMapper {
   resolvedReferences: ResolvedReferencesInfo = {}
   // stores references to items of current Project
   _referencedItems: ReferencedItemsInfo = {}
-  // stores the forced resolution for image map media, which could applied after reference resolving
-  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
   // stores References to remote Items
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
@@ -786,10 +784,6 @@ export class CaaSMapper {
         media.remoteProject,
         resolution.uid
       )
-      this._imageMapForcedResolutions.push({
-        imageId: `${media.identifier}.${this.locale}`,
-        resolution: resolution.uid,
-      })
     }
 
     return {
@@ -1070,21 +1064,6 @@ export class CaaSMapper {
         this.resolveReferencesPerProject(remoteId, filterContext)
       ),
     ])
-
-    // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(
-      ({ imageId, resolution }, index) => {
-        const resolvedImage = this.resolvedReferences[imageId]
-        if (resolvedImage && (resolvedImage as Image).resolutions) {
-          update(resolvedImage, 'resolutions', (resolutions) => {
-            if (resolution in resolutions) {
-              return { [resolution]: resolutions[resolution] }
-            }
-            return resolutions
-          })
-        }
-      }
-    )
   }
 
   /**
