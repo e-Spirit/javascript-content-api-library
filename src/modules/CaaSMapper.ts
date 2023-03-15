@@ -176,7 +176,8 @@ export class CaaSMapper {
   registerReferencedItem(
     identifier: string,
     path: NestedPath,
-    remoteProjectId?: string
+    remoteProjectId?: string,
+    imageMapResolution?: string
   ): string {
     const remoteData = this.getRemoteConfigForProject(remoteProjectId)
     const remoteProjectKey = remoteData?.id
@@ -202,14 +203,18 @@ export class CaaSMapper {
         ...(this._remoteReferences[remoteProjectKey][unifiedId] || []),
         path,
       ]
-      return `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
+      return imageMapResolution
+        ? `IMAGEMAP___${imageMapResolution}___${unifiedId}`
+        : `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
     }
 
     this._referencedItems[unifiedId] = [
       ...(this._referencedItems[unifiedId] || []),
       path,
     ]
-    return `[REFERENCED-ITEM-${unifiedId}]`
+    return imageMapResolution
+      ? `IMAGEMAP___${imageMapResolution}___${unifiedId}`
+      : `[REFERENCED-ITEM-${unifiedId}]`
   }
 
   buildPreviewId(identifier: string, remoteProjectLocale?: string) {
@@ -778,7 +783,8 @@ export class CaaSMapper {
       image = this.registerReferencedItem(
         media.identifier,
         [...path, 'media'],
-        media.remoteProject
+        media.remoteProject,
+        resolution.uid
       )
       this._imageMapForcedResolutions.push({
         imageId: `${media.identifier}.${this.locale}`,

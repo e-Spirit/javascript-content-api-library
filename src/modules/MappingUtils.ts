@@ -1,4 +1,4 @@
-import { set } from 'lodash'
+import { set, get } from 'lodash'
 import { CaasApi_Item, MappedCaasItem } from '../types'
 import { ResolvedReferencesInfo, ReferencedItemsInfo } from './CaaSMapper'
 
@@ -38,7 +38,13 @@ const denormalizeResolvedReferences = (
     // Iterate over all insertion paths and insert references into objects
     occurences.forEach((path) => {
       if (resolvedReferences[referencedId]) {
-        set(resolvedReferences, path, resolvedReferences[referencedId])
+        const placeholder = get(resolvedReferences, path)
+        if (placeholder.startsWith('IMAGEMAP')) {
+          const forcedResolution = placeholder.split('___')[1]
+          // set forcedResolution
+        } else {
+          set(resolvedReferences, path, resolvedReferences[referencedId])
+        }
       } else {
         console.warn(
           `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization. resolvedReferencesKeys: {[${Object.keys(
