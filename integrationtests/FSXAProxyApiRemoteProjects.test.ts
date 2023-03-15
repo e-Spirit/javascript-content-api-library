@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import express, {Express} from 'express'
+import express, { Express } from 'express'
 import cors from 'cors'
 import {
   CaaSApi_Dataset,
@@ -10,10 +10,10 @@ import {
   LogLevel,
   Page,
 } from '../src'
-import {default as expressIntegration} from '../src/integrations/express'
-import {FSXARemoteApi} from '../src/modules/FSXARemoteApi'
-import {CaasTestingClient} from './utils'
-import {Server} from 'http'
+import { default as expressIntegration } from '../src/integrations/express'
+import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
+import { CaasTestingClient } from './utils'
+import { Server } from 'http'
 import Faker from 'faker'
 import {
   createDataset,
@@ -36,8 +36,6 @@ const startSever = (app: Express) =>
     })
   })
 
-
-
 describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
   const randomId1 = Faker.datatype.uuid()
   const projectLocale = {
@@ -52,18 +50,22 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
   let server: Server
   let caasClient: CaasTestingClient
 
-  let localMedia: CaaSApi_Media_Picture;
-  let remoteMedia: CaaSApi_Media_Picture;
-  let pageRef: CaaSApi_PageRef;
-  let dataset: CaaSApi_Dataset;
+  let localMedia: CaaSApi_Media_Picture
+  let remoteMedia: CaaSApi_Media_Picture
+  let pageRef: CaaSApi_PageRef
+  let dataset: CaaSApi_Dataset
 
-
-  async function init(remoteProjectId: string, remoteProjectLocale: string, differentMediaIds: boolean = false) {
+  async function init(
+    remoteProjectId: string,
+    remoteProjectLocale: string,
+    differentMediaIds: boolean = false
+  ) {
     let remoteApi = new FSXARemoteApi({
       apikey: INTEGRATION_TEST_API_KEY!,
       caasURL: INTEGRATION_TEST_CAAS!,
       contentMode: FSXAContentMode.PREVIEW,
-      navigationServiceURL: 'https://your-navigationservice.e-spirit.cloud/navigation'!,
+      navigationServiceURL:
+        'https://your-navigationservice.e-spirit.cloud/navigation'!,
       projectID: randomId1,
       tenantID: tenantID,
       remotes: {
@@ -89,56 +91,61 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       remoteProjectId,
     })
 
-    await prepareDataInCaas(remoteProjectId, remoteProjectLocale, differentMediaIds);
+    await prepareDataInCaas(
+      remoteProjectId,
+      remoteProjectLocale,
+      differentMediaIds
+    )
   }
 
-
-  async function prepareDataInCaas(remoteProjectId: string, remoteProjectLocale: string, differentMediaIds: boolean) {
+  async function prepareDataInCaas(
+    remoteProjectId: string,
+    remoteProjectLocale: string,
+    differentMediaIds: boolean
+  ) {
     const mediaId = Faker.datatype.uuid()
 
     const remoteMediaId = differentMediaIds ? Faker.datatype.uuid() : mediaId
 
-    localMedia = createMediaPicture(mediaId, "de_DE");
+    localMedia = createMediaPicture(mediaId, 'de_DE')
     localMedia.description = 'local media'
 
     remoteMedia = createMediaPicture(remoteMediaId, remoteProjectLocale)
     remoteMedia.description = 'remote media'
 
-    pageRef = createPageRef([createPageRefBody()]);
+    pageRef = createPageRef([createPageRefBody()])
 
     const pictureLocal = createMediaPictureReference(mediaId)
-    const pictureRemote = createMediaPictureReference(remoteMediaId, remoteProjectId)
+    const pictureRemote = createMediaPictureReference(
+      remoteMediaId,
+      remoteProjectId
+    )
 
     // create dataset
     const datasetId = Faker.datatype.uuid()
-    dataset = createDataset(datasetId);
+    dataset = createDataset(datasetId)
     const datasetReference = createDatasetReference(datasetId)
     remoteMedia.metaFormData = {
       md_dataset: datasetReference,
     }
 
-    await caasClient.addItemsToCollection(
-      [localMedia],
-      projectLocale
-    )
+    await caasClient.addItemsToCollection([localMedia], projectLocale)
 
     const [language, country] = remoteProjectLocale.split('_')
 
     // add items to remote project collection
-    await caasClient.addItemsToRemoteCollection(
-      [remoteMedia, dataset],
-      { language, country, identifier: remoteProjectLocale }
-    )
+    await caasClient.addItemsToRemoteCollection([remoteMedia, dataset], {
+      language,
+      country,
+      identifier: remoteProjectLocale,
+    })
 
     pageRef.page.formData = {
       pt_pictureLocal: pictureLocal,
       pt_pictureRemote: pictureRemote,
     }
 
-    await caasClient.addItemsToCollection(
-      [pageRef],
-      projectLocale
-    )
+    await caasClient.addItemsToCollection([pageRef], projectLocale)
   }
 
   afterEach(async () => {
@@ -157,9 +164,8 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     }
   })
 
-
   it('local project id != remote project id, local locale != remote locale', async () => {
-    await init(randomId2, "en_GB")
+    await init(randomId2, 'en_GB')
 
     const res: Page = await proxyAPI.fetchElement({
       id: pageRef.identifier,
@@ -167,11 +173,13 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     })
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
+    expect(remoteMedia.description).toEqual(
+      res.data.pt_pictureRemote.description
+    )
   }, 15000)
 
   it('local project id != remote project id, local locale == remote locale', async () => {
-    await init(randomId2, "de_DE")
+    await init(randomId2, 'de_DE')
 
     const res: Page = await proxyAPI.fetchElement({
       id: pageRef.identifier,
@@ -179,12 +187,13 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     })
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
+    expect(remoteMedia.description).toEqual(
+      res.data.pt_pictureRemote.description
+    )
   }, 15000)
 
-
   it('local project id == remote project id, local locale != remote locale', async () => {
-    await init(randomId1, "en_GB")
+    await init(randomId1, 'en_GB')
 
     const res: Page = await proxyAPI.fetchElement({
       id: pageRef.identifier,
@@ -192,11 +201,13 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     })
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
+    expect(remoteMedia.description).toEqual(
+      res.data.pt_pictureRemote.description
+    )
   }, 15000)
 
   it('local project id == remote project id, local locale == remote locale', async () => {
-    await init(randomId1, "de_DE")
+    await init(randomId1, 'de_DE')
 
     const res: Page = await proxyAPI.fetchElement({
       id: pageRef.identifier,
@@ -204,31 +215,36 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     })
     expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
     // Since projectId same and Ids the same, we expect the same media
-    expect(res.data.pt_pictureRemote.description).toEqual(res.data.pt_pictureLocal.description)
+    expect(res.data.pt_pictureRemote.description).toEqual(
+      res.data.pt_pictureLocal.description
+    )
   }, 15000)
 
   it('local project id == remote project id, local locale == remote locale, different media Ids', async () => {
-    await init(randomId1, "de_DE", true)
+    await init(randomId1, 'de_DE', true)
 
     const res: Page = await proxyAPI.fetchElement({
       id: pageRef.identifier,
       locale: 'de_DE',
     })
-    expect(res.data.pt_pictureLocal.id).not.toEqual(res.data.pt_pictureRemote.id)
+    expect(res.data.pt_pictureLocal.id).not.toEqual(
+      res.data.pt_pictureRemote.id
+    )
     expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(res.data.pt_pictureRemote.description)
+    expect(remoteMedia.description).toEqual(
+      res.data.pt_pictureRemote.description
+    )
   }, 15000)
 
   it('Dataset references on metadata of remote media should be fetchable', async () => {
-    await init(randomId2, "en_GB")
+    await init(randomId2, 'en_GB')
 
     const res: Page = await proxyAPI.fetchElement({
       id: pageRef.identifier,
       locale: 'de_DE',
     })
-    expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(dataset.identifier)
+    expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(
+      dataset.identifier
+    )
   }, 15000)
-
 })
-
-

@@ -42,14 +42,24 @@ const imageMapForceResolution = ({
   // get the registered reference item value by path
   const registeredReferenceItem = get(resolvedReferences, path)
   // check if the registered reference item is an ImageMap
-  if (!registeredReferenceItem.startsWith(IMAGE_MAP_PLACEHOLDER)) {
+  if (
+    !registeredReferenceItem ||
+    typeof registeredReferenceItem !== 'string' ||
+    !registeredReferenceItem.startsWith(IMAGE_MAP_PLACEHOLDER)
+  ) {
     return null
   }
   // Get the forced resolution from the registered referenced item image map
   // e.g. IMAGEMAP___{RESOLUTION}___{IMAGE_ID}
-  const forcedResolution = registeredReferenceItem.split(
+  const segments = registeredReferenceItem.split(
     IMAGE_MAP_RESOLUTION_SPLIT_DELIMITER
-  )[1]
+  )
+
+  // Check if it is exactly 3 parts
+  if (!segments || segments.length !== 3) {
+    return null
+  }
+  const forcedResolution = segments[1]
   // get the Image Object from the resolved references by referencedId -> ImageMapId
   const resolvedImage = { ...resolvedReferences[referencedId] } as Image
   // force to a single resolution
