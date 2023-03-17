@@ -90,8 +90,6 @@ export class CaaSMapper {
   resolvedReferences: ResolvedReferencesInfo = {}
   // stores references to items of current Project
   _referencedItems: ReferencedItemsInfo = {}
-  // stores the forced resolution for image map media, which could applied after reference resolving
-  _imageMapForcedResolutions: { imageId: string; resolution: string }[] = []
   // stores References to remote Items
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
@@ -176,7 +174,8 @@ export class CaaSMapper {
   registerReferencedItem(
     identifier: string,
     path: NestedPath,
-    remoteProjectId?: string
+    remoteProjectId?: string,
+    imageMapResolution?: string
   ): string {
     const remoteData = this.getRemoteConfigForProject(remoteProjectId)
     const remoteProjectKey = remoteData?.id
@@ -202,14 +201,18 @@ export class CaaSMapper {
         ...(this._remoteReferences[remoteProjectKey][unifiedId] || []),
         path,
       ]
-      return `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
+      return imageMapResolution
+        ? `IMAGEMAP___${imageMapResolution}___${unifiedId}`
+        : `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
     }
 
     this._referencedItems[unifiedId] = [
       ...(this._referencedItems[unifiedId] || []),
       path,
     ]
-    return `[REFERENCED-ITEM-${unifiedId}]`
+    return imageMapResolution
+      ? `IMAGEMAP___${imageMapResolution}___${unifiedId}`
+      : `[REFERENCED-ITEM-${unifiedId}]`
   }
 
   buildPreviewId(identifier: string, remoteProjectLocale?: string) {
@@ -778,12 +781,9 @@ export class CaaSMapper {
       image = this.registerReferencedItem(
         media.identifier,
         [...path, 'media'],
-        media.remoteProject
+        media.remoteProject,
+        resolution.uid
       )
-      this._imageMapForcedResolutions.push({
-        imageId: `${media.identifier}.${this.locale}`,
-        resolution: resolution.uid,
-      })
     }
 
     return {
@@ -1064,21 +1064,6 @@ export class CaaSMapper {
         this.resolveReferencesPerProject(remoteId, filterContext)
       ),
     ])
-
-    // force a single resolution for image map media
-    this._imageMapForcedResolutions.forEach(
-      ({ imageId, resolution }, index) => {
-        const resolvedImage = this.resolvedReferences[imageId]
-        if (resolvedImage && (resolvedImage as Image).resolutions) {
-          update(resolvedImage, 'resolutions', (resolutions) => {
-            if (resolution in resolutions) {
-              return { [resolution]: resolutions[resolution] }
-            }
-            return resolutions
-          })
-        }
-      }
-    )
   }
 
   /**
