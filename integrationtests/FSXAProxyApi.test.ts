@@ -875,7 +875,7 @@ describe('FSXAProxyAPI', () => {
     const imageMap1 = createImageMap()
     const imageMap2 = createImageMap()
     const mediaPicture = createMediaPicture(
-      Faker.datatype.uuid(),
+      'this-is-a-test-imagemap-id',
       locale.identifier
     )
     const mediaRef = createMediaPictureReferenceValue(mediaPicture.identifier)

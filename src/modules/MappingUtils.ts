@@ -39,10 +39,6 @@ const imageMapForceResolution = ({
   path: NestedPath
   referencedId: string
 }): Image | null => {
-  // check if referenceId exists in resolvedReferences
-  if (!resolvedReferences[referencedId]) {
-    return null
-  }
   // get the registered reference item value by path
   const registeredReferenceItem = get(resolvedReferences, path)
   // check if the registered reference item is an ImageMap
