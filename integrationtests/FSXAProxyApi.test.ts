@@ -875,12 +875,13 @@ describe('FSXAProxyAPI', () => {
     const imageMap1 = createImageMap()
     const imageMap2 = createImageMap()
     const mediaPicture = createMediaPicture(
-      'pt_imagem-resolution-id',
+      Faker.datatype.uuid(),
       locale.identifier
     )
     const mediaRef = createMediaPictureReferenceValue(mediaPicture.identifier)
     imageMap1.value.resolution.uid = 'res3'
     imageMap2.value.resolution.uid = 'res2'
+    // asign images map to media reference
     imageMap1.value.media = mediaRef
     imageMap2.value.media = mediaRef
     mediaPicture.resolutionsMetaData = {
