@@ -1,3 +1,10 @@
+## [10.10.3](https://github.com/e-Spirit/fsxa-api/compare/v10.10.2...v10.10.3) (2023-03-17)
+
+
+### Bug Fixes
+
+* **imagemap:** remove side effects for images when resolving ([#154](https://github.com/e-Spirit/fsxa-api/issues/154)) ([23e452e](https://github.com/e-Spirit/fsxa-api/commit/23e452e416a2dd3597738bf19a966201038a46ef))
+
 ## [10.10.2](https://github.com/e-Spirit/fsxa-api/compare/v10.10.1...v10.10.2) (2023-03-09)
 
 
