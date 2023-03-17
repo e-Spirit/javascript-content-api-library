@@ -926,12 +926,13 @@ describe('FSXAProxyAPI', () => {
         locale: locale.identifier,
       })
     })
-    it('should resolve imagemap media to single resolution', async () => {
+    it('should resolve first imagemap media to single resolution', async () => {
       expect(Object.keys(res.data.imagemap1.media.resolutions).length).toBe(1)
       expect(Object.keys(res.data.imagemap1.media.resolutions)).toEqual([
         imageMap1.value.resolution.uid,
       ])
-      // Second image map should have the same resolution
+    })
+    it('should resolve second imagemap media to single resolution', async () => {
       expect(Object.keys(res.data.imagemap2.media.resolutions).length).toBe(1)
       expect(Object.keys(res.data.imagemap2.media.resolutions)).toEqual([
         imageMap2.value.resolution.uid,
