@@ -872,14 +872,17 @@ describe('FSXAProxyAPI', () => {
     }
     // to avoid data conflicts with other tests
     const pageRef = createPageRef([], locale.identifier)
-    const imageMap = createImageMap()
+    const imageMap1 = createImageMap()
+    const imageMap2 = createImageMap()
     const mediaPicture = createMediaPicture(
       'pt_imagem-resolution-id',
       locale.identifier
     )
     const mediaRef = createMediaPictureReferenceValue(mediaPicture.identifier)
-    imageMap.value.resolution.uid = 'res3'
-    imageMap.value.media = mediaRef
+    imageMap1.value.resolution.uid = 'res3'
+    imageMap2.value.resolution.uid = 'res2'
+    imageMap1.value.media = mediaRef
+    imageMap2.value.media = mediaRef
     mediaPicture.resolutionsMetaData = {
       res1: {
         fileSize: 100,
@@ -907,10 +910,11 @@ describe('FSXAProxyAPI', () => {
       },
     }
     pageRef.page.formData = {
-      pt_imagemap: imageMap,
-      pt_picture: {
+      imagemap1: imageMap1,
+      imagemap2: imageMap2,
+      picture: {
         fsType: 'FS_REFERENCE',
-        name: 'pt_picture',
+        name: 'picture',
         value: mediaRef,
       },
     }
@@ -923,13 +927,18 @@ describe('FSXAProxyAPI', () => {
       })
     })
     it('should resolve imagemap media to single resolution', async () => {
-      expect(Object.keys(res.data.pt_imagemap.media.resolutions).length).toBe(1)
-      expect(Object.keys(res.data.pt_imagemap.media.resolutions)).toEqual([
-        imageMap.value.resolution.uid,
+      expect(Object.keys(res.data.imagemap1.media.resolutions).length).toBe(1)
+      expect(Object.keys(res.data.imagemap1.media.resolutions)).toEqual([
+        imageMap1.value.resolution.uid,
+      ])
+      // Second image map should have the same resolution
+      expect(Object.keys(res.data.imagemap2.media.resolutions).length).toBe(1)
+      expect(Object.keys(res.data.imagemap2.media.resolutions)).toEqual([
+        imageMap2.value.resolution.uid,
       ])
     })
     it('should resolve image media reference to all resolutions', async () => {
-      expect(res.data.pt_picture.resolutions).toEqual(
+      expect(res.data.picture.resolutions).toEqual(
         mediaPicture.resolutionsMetaData
       )
     })
