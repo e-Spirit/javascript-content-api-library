@@ -4,7 +4,10 @@ import { FSXAContentMode } from '..'
 import { FSXAApiErrors } from '../enums'
 import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import { ArrayQueryOperatorEnum, ComparisonQueryOperatorEnum } from './QueryBuilder'
+import {
+  ArrayQueryOperatorEnum,
+  ComparisonQueryOperatorEnum,
+} from './QueryBuilder'
 
 import 'jest-fetch-mock'
 import { createDataEntry } from '../testutils'
@@ -110,8 +113,12 @@ describe('FSXARemoteAPI', () => {
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const actualAuthorizationHeaders = remoteApi.authorizationHeader
-      const expectedAuthorizationHeaders = { authorization: `apikey="${config.apikey}"` }
-      expect(actualAuthorizationHeaders).toStrictEqual(expectedAuthorizationHeaders)
+      const expectedAuthorizationHeaders = {
+        authorization: `Bearer ${config.apikey}`,
+      }
+      expect(actualAuthorizationHeaders).toStrictEqual(
+        expectedAuthorizationHeaders
+      )
     })
   })
   describe('buildCaaSUrl', () => {
@@ -126,7 +133,9 @@ describe('FSXARemoteAPI', () => {
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
       const remoteProjectId = config.remotes.remote.id
-      const actualCaaSUrl = remoteApi.buildCaaSUrl({ remoteProject: remoteProjectId })
+      const actualCaaSUrl = remoteApi.buildCaaSUrl({
+        remoteProject: remoteProjectId,
+      })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${remoteProjectId}.${config.contentMode}.content`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
@@ -162,11 +171,19 @@ describe('FSXARemoteAPI', () => {
       const keysValue = { firstValue: 1, secondValue: 1 }
       const sortValue = { firstName: 1 }
       const additionalParams = { keys: keysValue, sort: sortValue }
-      const encodedKeysValue = encodeURIComponent(JSON.stringify({ firstValue: 1, secondValue: 1 }))
-      const encodedSortValue = encodeURIComponent(JSON.stringify({ firstName: 1 }))
+      const encodedKeysValue = encodeURIComponent(
+        JSON.stringify({ firstValue: 1, secondValue: 1 })
+      )
+      const encodedSortValue = encodeURIComponent(
+        JSON.stringify({ firstName: 1 })
+      )
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
-      const actualCaaSUrl = remoteApi.buildCaaSUrl({ id, locale, additionalParams })
+      const actualCaaSUrl = remoteApi.buildCaaSUrl({
+        id,
+        locale,
+        additionalParams,
+      })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content/${id}.${locale}?keys=${encodedKeysValue}&sort=${encodedSortValue}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
@@ -219,8 +236,12 @@ describe('FSXARemoteAPI', () => {
       }
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
-      const actualCaaSUrl = remoteApi.buildCaaSUrl({ filters, additionalParams })
-      const encodedAdditionalParamsValue = encodeURIComponent(`{"identifier":1}`)
+      const actualCaaSUrl = remoteApi.buildCaaSUrl({
+        filters,
+        additionalParams,
+      })
+      const encodedAdditionalParamsValue =
+        encodeURIComponent(`{"identifier":1}`)
       const encodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"${filterOperator}":"${filterValue}"}}`
       )
@@ -242,16 +263,26 @@ describe('FSXARemoteAPI', () => {
         keys: {
           identifier: 1,
         },
-        filter: [{ schema: 'newsroom' }, { entityType: { $in: ['item', 'type'] } }],
+        filter: [
+          { schema: 'newsroom' },
+          { entityType: { $in: ['item', 'type'] } },
+        ],
       }
-      const firstEncodedParamsValue = encodeURIComponent(JSON.stringify({ identifier: 1 }))
-      const secondEncodedParamsValue = encodeURIComponent(JSON.stringify({ schema: 'newsroom' }))
+      const firstEncodedParamsValue = encodeURIComponent(
+        JSON.stringify({ identifier: 1 })
+      )
+      const secondEncodedParamsValue = encodeURIComponent(
+        JSON.stringify({ schema: 'newsroom' })
+      )
       const thirdEncodedParamsValue = encodeURIComponent(
         JSON.stringify({ entityType: { $in: ['item', 'type'] } })
       )
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
-      const actualCaaSUrl = remoteApi.buildCaaSUrl({ filters, additionalParams })
+      const actualCaaSUrl = remoteApi.buildCaaSUrl({
+        filters,
+        additionalParams,
+      })
       const additionalParamsQuery = `keys=${firstEncodedParamsValue}&filter=${secondEncodedParamsValue}&filter=${thirdEncodedParamsValue}`
       const encodedFilterValue = encodeURIComponent(
         `{"${filterField}":{"${filterOperator}":"${filterValue}"}}`
@@ -313,7 +344,10 @@ describe('FSXARemoteAPI', () => {
     it('should return the correct caas url when special chars are used in additionalParams', () => {
       const specialChars = "*_'();:@&=+$,?%#[]_*'();:@&=+$,?%#[]"
       const additionalParams = {
-        [specialChars]: [{ [specialChars]: specialChars }, { [specialChars]: specialChars }],
+        [specialChars]: [
+          { [specialChars]: specialChars },
+          { [specialChars]: specialChars },
+        ],
       }
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
@@ -321,7 +355,9 @@ describe('FSXARemoteAPI', () => {
         additionalParams,
       })
       const encodedKey = encodeURIComponent(`${specialChars}`)
-      const encodedValue = encodeURIComponent(JSON.stringify({ [specialChars]: specialChars }))
+      const encodedValue = encodeURIComponent(
+        JSON.stringify({ [specialChars]: specialChars })
+      )
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${encodedKey}=${encodedValue}&${encodedKey}=${encodedValue}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
@@ -359,10 +395,14 @@ describe('FSXARemoteAPI', () => {
         `{"${`secondField${specialChars}`}":{"${filterOperator}":"${`secondVal${specialChars}`}"}}`
       )
       const thirdEncodedFilter = encodeURIComponent(
-        `{"locale.language":{"${filterOperator}":"${specialChars.split('_')[0]}"}}`
+        `{"locale.language":{"${filterOperator}":"${
+          specialChars.split('_')[0]
+        }"}}`
       )
       const fourthEncodedFilter = encodeURIComponent(
-        `{"locale.country":{"${filterOperator}":"${specialChars.split('_')[1]}"}}`
+        `{"locale.country":{"${filterOperator}":"${
+          specialChars.split('_')[1]
+        }"}}`
       )
       const encodedSortName = encodeURIComponent(specialChars)
       const encodedSort = `sort=-${encodedSortName}&sort=${encodedSortName}`
@@ -388,22 +428,34 @@ describe('FSXARemoteAPI', () => {
     })
     it('should return a correct url when passing the locale', () => {
       const locale = `${Faker.locale}_${Faker.locale}`
-      const actualNavigationSericeUrl = remoteApi.buildNavigationServiceUrl({ locale })
+      const actualNavigationSericeUrl = remoteApi.buildNavigationServiceUrl({
+        locale,
+      })
       const expectedEndOfNavigationServiceUrl = `?depth=99&format=caas&language=${locale}`
-      expect(actualNavigationSericeUrl.endsWith(expectedEndOfNavigationServiceUrl)).toBe(true)
+      expect(
+        actualNavigationSericeUrl.endsWith(expectedEndOfNavigationServiceUrl)
+      ).toBe(true)
     })
     it('should return a correct url when passing the initialPath', () => {
       const initialPath = Faker.lorem.words(3).split(' ').join('/')
 
-      const actualNavigationSericeUrl = remoteApi.buildNavigationServiceUrl({ initialPath })
+      const actualNavigationSericeUrl = remoteApi.buildNavigationServiceUrl({
+        initialPath,
+      })
       const expectedEndOfNavigationServiceUrl = `/by-seo-route/${initialPath}?depth=99&format=caas`
-      expect(actualNavigationSericeUrl.endsWith(expectedEndOfNavigationServiceUrl)).toBe(true)
+      expect(
+        actualNavigationSericeUrl.endsWith(expectedEndOfNavigationServiceUrl)
+      ).toBe(true)
     })
     it('should not return the seo-route url when initialPath is /', () => {
       const initialPath = '/'
-      const actualNavigationSericeUrl = remoteApi.buildNavigationServiceUrl({ initialPath })
+      const actualNavigationSericeUrl = remoteApi.buildNavigationServiceUrl({
+        initialPath,
+      })
       const expectedEndOfNavigationServiceUrl = `/by-seo-route/${initialPath}?depth=99&format=caas&all`
-      expect(actualNavigationSericeUrl.endsWith(expectedEndOfNavigationServiceUrl)).not.toBe(true)
+      expect(
+        actualNavigationSericeUrl.endsWith(expectedEndOfNavigationServiceUrl)
+      ).not.toBe(true)
     })
   })
   describe('fetchElement', () => {
@@ -420,9 +472,11 @@ describe('FSXARemoteAPI', () => {
     it('should call fetchByFilter internally', async () => {
       const data = createDataEntry()
       fetchMock.mockResponseOnce(JSON.stringify(data))
-      remoteApi.fetchByFilter = jest
-        .fn()
-        .mockResolvedValue({ page: 1, pagesize: 1, items: ['myItem'] as any } as FetchResponse)
+      remoteApi.fetchByFilter = jest.fn().mockResolvedValue({
+        page: 1,
+        pagesize: 1,
+        items: ['myItem'] as any,
+      } as FetchResponse)
       await remoteApi.fetchElement({
         id: data.identifier,
         locale,
@@ -753,7 +807,9 @@ describe('FSXARemoteAPI', () => {
       const locale = localeLanguage + '_' + localeCountry
       remoteApi.fetchProjectProperties({ locale })
       const actualURL = fetchMock.mock.calls[0][0]
-      const firstEncodedFilterValue = encodeURIComponent(`{"fsType":{"$eq":"ProjectProperties"}}`)
+      const firstEncodedFilterValue = encodeURIComponent(
+        `{"fsType":{"$eq":"ProjectProperties"}}`
+      )
       const secondEncodedFilterValue = encodeURIComponent(
         `{"locale.language":{"$eq":"${localeLanguage}"}}`
       )
@@ -770,7 +826,9 @@ describe('FSXARemoteAPI', () => {
       const locale = localeLanguage + '_' + localeCountry
       remoteApi.fetchProjectProperties({ locale })
       const actualURL = fetchMock.mock.calls[0][0]
-      const firstEncodedFilterValue = encodeURIComponent(`{"fsType":{"$eq":"ProjectProperties"}}`)
+      const firstEncodedFilterValue = encodeURIComponent(
+        `{"fsType":{"$eq":"ProjectProperties"}}`
+      )
       const secondEncodedFilterValue = encodeURIComponent(
         `{"locale.language":{"$eq":"${localeLanguage}"}}`
       )

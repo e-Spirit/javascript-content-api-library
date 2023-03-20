@@ -136,7 +136,7 @@ export class FSXARemoteApi implements FSXAApi {
    */
   get authorizationHeader() {
     return {
-      authorization: `apikey="${this.apikey}"`,
+      authorization: `Bearer ${this.apikey}`,
     }
   }
 

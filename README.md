@@ -119,7 +119,12 @@ Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsx
 import dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
-import { FSXAContentMode, FSXAProxyApi, LogLevel, FSXARemoteApi } from 'fsxa-api'
+import {
+  FSXAContentMode,
+  FSXAProxyApi,
+  LogLevel,
+  FSXARemoteApi,
+} from 'fsxa-api'
 import getExpressRouter from 'fsxa-api/dist/lib/integrations/express'
 import 'cross-fetch/polyfill'
 
@@ -134,9 +139,15 @@ app.listen(3002, async () => {
   console.log('Listening at http://localhost:3002')
   try {
     const locale = 'de_DE'
-    const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
+    const proxyAPI = new FSXAProxyApi(
+      'http://localhost:3002/api',
+      LogLevel.INFO
+    )
     // you can also fetch navigation from proxyAPI
-    const navigationResponse = await proxyAPI.fetchNavigation({ locale, initialPath: '/' })
+    const navigationResponse = await proxyAPI.fetchNavigation({
+      locale,
+      initialPath: '/',
+    })
   } catch (e) {
     console.log(e)
   }
@@ -149,7 +160,7 @@ Returns the build authorization header in the following format when using `FSXAR
 
 ```typescript
 {
-  authorization: 'apikey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"'
+  authorization: 'Bearer xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 }
 ```
 
@@ -158,7 +169,7 @@ Example:
 ```typescript
 const remoteApi = new FSXARemoteApi(config)
 const authorizationHeader = remoteApi.authorizationHeader
-// console.log { authorization: `apikey="${config.apikey}"` }
+// console.log { authorization: `Bearer ${config.apikey}` }
 ```
 
 ### fetchNavigation
