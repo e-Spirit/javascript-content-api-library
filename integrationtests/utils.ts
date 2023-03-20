@@ -35,7 +35,7 @@ export class CaasTestingClient {
 
   private constructor(CaaSTestingClientData: CaaSTestingClientData) {
     this.headers = {
-      Authorization: `apikey="${CaaSTestingClientData.apikey}"`,
+      Authorization: `Bearer ${CaaSTestingClientData.apikey}`,
       'Content-Type': 'application/json',
     }
     this.caasTestingClientData = CaaSTestingClientData
@@ -49,10 +49,10 @@ export class CaasTestingClient {
     }
   }
 
-  static async delay(milliseconds: number){
-    return new Promise(resolve => {
-      setTimeout(resolve, milliseconds);
-    });
+  static async delay(milliseconds: number) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, milliseconds)
+    })
   }
 
   /**
@@ -87,9 +87,9 @@ export class CaasTestingClient {
    */
   async getRemoteCollection() {
     return await fetch(this.remoteBaseUrl!, {
-          method: RequestMethodEnum.GET,
-          headers: this.headers,
-        })
+      method: RequestMethodEnum.GET,
+      headers: this.headers,
+    })
   }
   /**
    * Get item from integration test database in CaaS
@@ -115,12 +115,12 @@ export class CaasTestingClient {
     })
   }
 
-
   /**
    * Create collection in integration test database in CaaS
    * @returns Http Response
    */
-  async createRemoteCollection() { //TODO
+  async createRemoteCollection() {
+    //TODO
     return await fetch(this.remoteBaseUrl!, {
       method: RequestMethodEnum.PUT,
       headers: this.headers,
@@ -183,7 +183,9 @@ export class CaasTestingClient {
    * @returns Http Response
    */
   async addDocToCollection(doc: TestDocument) {
-    const encodedLocale = encodeURIComponent(`${doc.locale.language}_${doc.locale.country}`)
+    const encodedLocale = encodeURIComponent(
+      `${doc.locale.language}_${doc.locale.country}`
+    )
     const encodedId = encodeURIComponent(doc._id)
     const url = this.baseUrl + `/${encodedId}.${encodedLocale}`
     const docWithLocale = { ...doc, _id: undefined }
@@ -237,7 +239,8 @@ export class CaasTestingClient {
     const docsWithLocale = docs.map((doc) => {
       const docWithLocale: any = { ...doc }
       docWithLocale.locale = locale
-      docWithLocale._id = doc.identifier + `.${locale.language}_${locale.country}`
+      docWithLocale._id =
+        doc.identifier + `.${locale.language}_${locale.country}`
       return docWithLocale
     })
     return await fetch(baseUrl, {
