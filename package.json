@@ -1,6 +1,6 @@
 {
   "name": "fsxa-api",
-  "version": "10.10.3",
+  "version": "10.11.0",
   "description": "",
   "keywords": [],
   "main": "dist/fsxa-api.cjs.js",

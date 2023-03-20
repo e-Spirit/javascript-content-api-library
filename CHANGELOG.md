@@ -1,3 +1,10 @@
+# [10.11.0](https://github.com/e-Spirit/fsxa-api/compare/v10.10.3...v10.11.0) (2023-03-20)
+
+
+### Features
+
+* **authorization:** update header format for apikeys ([#155](https://github.com/e-Spirit/fsxa-api/issues/155)) ([027ca26](https://github.com/e-Spirit/fsxa-api/commit/027ca26eb5e67a2185307f280d3e689507a71d15))
+
 ## [10.10.3](https://github.com/e-Spirit/fsxa-api/compare/v10.10.2...v10.10.3) (2023-03-17)
 
 
