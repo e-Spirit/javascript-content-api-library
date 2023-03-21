@@ -1,3 +1,10 @@
+## [10.11.1](https://github.com/e-Spirit/fsxa-api/compare/v10.11.0...v10.11.1) (2023-03-21)
+
+
+### Bug Fixes
+
+* **caasmapper:** fix context of remoteReference resolving ([#156](https://github.com/e-Spirit/fsxa-api/issues/156)) ([7ea9b56](https://github.com/e-Spirit/fsxa-api/commit/7ea9b56c29ad6b563a72424e987a8a35eba7ad4c))
+
 # [10.11.0](https://github.com/e-Spirit/fsxa-api/compare/v10.10.3...v10.11.0) (2023-03-20)
 
 
