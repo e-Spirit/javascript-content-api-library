@@ -405,13 +405,14 @@ export class CaaSMapper {
           return this.registerReferencedItem(
             entry.value.identifier,
             path,
-            entry.value.remoteProject
+            entry.value.remoteProject || remoteProjectId
           )
         } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
           const reference: Reference = {
             type: 'Reference',
             referenceId: entry.value.identifier,
-            referenceRemoteProject: entry.value.remoteProject,
+            referenceRemoteProject:
+              entry.value.remoteProject || remoteProjectId,
             referenceType: entry.value.fsType,
           }
           Object.keys(entry.value).includes('section') &&
@@ -1121,7 +1122,7 @@ export class CaaSMapper {
                   field: 'identifier',
                 },
               ],
-              locale,
+              locale: remoteProjectLocale || locale,
               pagesize: REFERENCED_ITEMS_CHUNK_SIZE,
               remoteProject: remoteProjectId,
               filterContext,
