@@ -36,10 +36,11 @@ The FSXA stack consists of five repositories:
 - [FSXA-UI](https://github.com/e-Spirit/fsxa-ui)/ Component Library
 - [FSXA-Nuxt-Module](https://github.com/e-Spirit/fsxa-nuxt-module)
 - [FSXA-Pattern-Library](https://github.com/e-Spirit/fsxa-pattern-library)
-- FSXA-API
+- [FSXA-API](https://github.com/e-Spirit/fsxa-api)
 
-While the FSXA-API is a maintained product with a life cycle, the FSXA-PWA, FSXA-UI, FSXA-Nuxt-Module and FSXA-Pattern-Library are not.
-The latter repositories represent a reference implementation that can be forked to speed up the startup time of a frontend project or to understand how common use cases can be solved in headless projects.
+While the FSXA-API is a maintained product with a life cycle, the FSXA-PWA, FSXA-UI, FSXA-Nuxt-Module and FSXA-Pattern-Library are merely best practices examples how a project could be set up and integrate the FSXA-API.
+The latter repositories can be forked to speed up the startup time of a frontend project or to understand how common use cases can be solved in headless projects.
+The code itself can therefore also be used as documentation of best practices.
 
 The following image illustrates the product cut:
 ![fsxa-stack product cut overview](docs/assets/fsxa-stack-product-status.png)
