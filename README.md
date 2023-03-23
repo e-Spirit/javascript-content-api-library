@@ -51,7 +51,7 @@ The following image illustrates the product cut:
 ## Experimental features
 
 Features marked as experimental are subject to change as long as they remain in the experimental state.
-Breaking changes to experimental features are not reflected in major version changes.
+Breaking changes to experimental features are not reflected in a major version changes.
 
 ## Legal Notices
 
