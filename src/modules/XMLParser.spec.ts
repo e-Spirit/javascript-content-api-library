@@ -22,7 +22,11 @@ describe('XMLParser', () => {
   it('should parse &apos correct', async () => {
     const xml = "<div>'</div>"
     const expectedValue = [
-      { content: [{ content: "'", data: {}, type: 'text' }], data: {}, type: 'block' },
+      {
+        content: [{ content: "'", data: {}, type: 'text' }],
+        data: {},
+        type: 'block',
+      },
     ]
     const result = await xmlParser.parse(xml)
 
@@ -32,7 +36,11 @@ describe('XMLParser', () => {
   it('should parse &nbsp; correctly', async () => {
     const xml = '<div>&nbsp;</div>'
     const expectedValue = [
-      { data: {}, content: [{ type: 'text', content: '\xa0', data: {} }], type: 'block' },
+      {
+        data: {},
+        content: [{ type: 'text', content: '\xa0', data: {} }],
+        type: 'block',
+      },
     ]
     const result = await xmlParser.parse(xml)
     expect(result).toEqual(expectedValue)
@@ -80,6 +88,13 @@ describe('XMLParser', () => {
         expect(result).toEqual(expectedValue)
       }
     )
+    it('should quotes the slashes', async () => {
+      let oldFormat = "<script type=\\\"application\/json\\\">{\\\"spacing\\\":{\\\"fsType\\\":\\\"CMS_INPUT_COMBOBOX\\\",\\\"name\\\":\\\"spacing\\\",\\\"value\\\":{\\\"fsType\\\":\\\"Option\\\",\\\"label\\\":\\\"14px\\\\\/1.0rem\\\",\\\"identifier\\\":\\\"10\\\"}}}<\/script>"
+      const xmlNewFormat =
+        '<script type=\\\"application/json\\\">{\\\"spacing\\\":{\\\"fsType\\\":\\\"CMS_INPUT_COMBOBOX\\\",\\\"name\\\":\\\"spacing\\\",\\\"value\\\":{\\\"fsType\\\":\\\"Option\\\",\\\"label\\\":\\\"14px/1.0rem\\\",\\\"identifier\\\":\\\"10\\\"}}}</script>'
+      const res = await xmlParser.parse(oldFormat)
+      console.log(res)
+    })
   })
 
   describe('Link Element', () => {
@@ -97,7 +112,9 @@ describe('XMLParser', () => {
       const dataIdentifier = 'data-test-id'
       const testValue = '2'
       const xml = `<link ${dataIdentifier}="${testValue}"></link>`
-      const expectedValue = [{ content: [], data: { [dataIdentifier]: testValue }, type: 'link' }]
+      const expectedValue = [
+        { content: [], data: { [dataIdentifier]: testValue }, type: 'link' },
+      ]
       const result = await xmlParser.parse(xml)
 
       expect(result).toEqual(expectedValue)
