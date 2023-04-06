@@ -9,6 +9,8 @@ const ENTITIES = new Map([
   ['"', '&quot;'],
   ['&', '&amp;'],
   ['<', '&lt;'],
+  ['>', '&gt;'],
+  ['\'', '&apos;'],
 ])
 
 class XMLParser {
@@ -25,13 +27,15 @@ class XMLParser {
           .replace(/&nbsp;/g, '&#160;')
           // replace all non closing br tags with self-closing once (legacy, fixed with CORE-13424)
           .replace(/<br>/g, '<br />')
+          .replace(/(.\\){2,}/g, '')
           // restructure the link structure into one single link element  (hint: *? matches non-eager)
           .replace(
             // capturing groups:      _____1 type                                _____2 data          _____ 3 text
-            /<div data-fs-type="link\.(.*?)">\s*<script type="application\/json">(.*?)<\/script>\s*<a>(.*?)<\/a>\s*<\/div>/g,
+            /<div data-fs-type="link\.(.*?)">\s*|.*<script type="application\/json">(.*?)<\/script>\s*|.*<a>(.*?)<\/a>\s*<\/div>/g,
             (...args: any[]) => {
               // replace characters not valid for xml attributes
-              const data = args[2].replace(/(["&<])/g, (...args: any[]) => ENTITIES.get(args[1]))
+              const data = args[2]
+              .replace(/(["&<])/g, (...args: any[]) => ENTITIES.get(args[1]))
               // construct new node
               return `<link type="${args[1]}" data="${data}">${args[3]}</link>`
             }
