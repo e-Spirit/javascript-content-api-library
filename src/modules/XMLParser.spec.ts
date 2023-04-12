@@ -95,7 +95,9 @@ describe('XMLParser', () => {
       const parsedOldFormat = await xmlParser.parse(oldFormat)
       const parsedNewFormat = await xmlParser.parse(newFormat)
       // expect both outputs to be equal
-      expect(JSON.stringify(parsedNewFormat)).toEqual(JSON.stringify(parsedOldFormat))
+      expect(JSON.stringify(parsedNewFormat)).toEqual(
+        JSON.stringify(parsedOldFormat)
+      )
     })
   })
 

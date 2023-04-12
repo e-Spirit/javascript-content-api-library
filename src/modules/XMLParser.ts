@@ -2,6 +2,7 @@ import { Logger } from './Logger'
 import * as saxes from 'saxes'
 import { RichTextElement } from '../types'
 import { get } from 'lodash'
+import { replaceUnnestedLinkTemplatesWithOneLinkElement } from '../utils'
 
 // map characters which are not valid inside XML attributes enclosed in double quotes to their
 // entity representation
@@ -9,6 +10,8 @@ const ENTITIES = new Map([
   ['"', '&quot;'],
   ['&', '&amp;'],
   ['<', '&lt;'],
+  ['>', '&gt;'],
+  ["'", 'apos;'],
 ])
 
 class XMLParser {
@@ -20,22 +23,13 @@ class XMLParser {
 
   sanitizeXml(xml: string) {
     try {
-      return (
+      return replaceUnnestedLinkTemplatesWithOneLinkElement(
         xml
           .replace(/&nbsp;/g, '&#160;')
           // replace all non closing br tags with self-closing once (legacy, fixed with CORE-13424)
-          .replace(/<br>/g, '<br />')
-          // restructure the link structure into one single link element  (hint: *? matches non-eager)
-          .replace(
-            // capturing groups:      _____1 type                                _____2 data          _____ 3 text
-            /<div data-fs-type="link\.(.*?)">\s*<script type="application\/json">(.*?)<\/script>\s*<a>(.*?)<\/a>\s*<\/div>/g,
-            (...args: any[]) => {
-              // replace characters not valid for xml attributes
-              const data = args[2].replace(/(["&<])/g, (...args: any[]) => ENTITIES.get(args[1]))
-              // construct new node
-              return `<link type="${args[1]}" data="${data}">${args[3]}</link>`
-            }
-          )
+          .replace(/<br>/g, '<br />'),
+        // restructure the link structure into one single link element  (hint: *? matches non-eager)
+        ENTITIES
       )
     } catch (err) {
       this.logger.error('[XMLParser]: Error sanitizing the xml', err, xml)
@@ -62,7 +56,9 @@ class XMLParser {
       })
 
       parser.on('end', () => {
-        resolve((result.content as RichTextElement[])[0].content as RichTextElement[])
+        resolve(
+          (result.content as RichTextElement[])[0].content as RichTextElement[]
+        )
       })
 
       parser.on('text', (text) => {
@@ -78,7 +74,9 @@ class XMLParser {
       parser.on('opentag', (tag) => {
         const parent = this.getCurrentElement(result, path)
         if (!parent || !Array.isArray(parent.content)) return
-        const elementIndex = parent.content.push(this.createRichTextElement(tag))
+        const elementIndex = parent.content.push(
+          this.createRichTextElement(tag)
+        )
         path = [...path, 'content', elementIndex - 1 + '']
       })
 
