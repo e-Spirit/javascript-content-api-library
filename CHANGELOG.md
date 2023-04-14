@@ -1,3 +1,10 @@
+## [10.11.2](https://github.com/e-Spirit/fsxa-api/compare/v10.11.1...v10.11.2) (2023-04-14)
+
+
+### Bug Fixes
+
+* **xmlparser:** fix parsing nested elements in richtext ([#159](https://github.com/e-Spirit/fsxa-api/issues/159)) ([c7e74bb](https://github.com/e-Spirit/fsxa-api/commit/c7e74bb6a83b4640af7a9defeb94cc48ae22ed45))
+
 ## [10.11.1](https://github.com/e-Spirit/fsxa-api/compare/v10.11.0...v10.11.1) (2023-03-21)
 
 
