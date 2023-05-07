@@ -910,6 +910,7 @@ export type FetchNavigationParams = {
   initialPath?: string
   fetchOptions?: RequestInit
   filterContext?: unknown
+  availableLocalesOnly?: boolean
 }
 
 export type SortParams = {

@@ -792,6 +792,12 @@ describe('FSXARemoteAPI', () => {
       const expectedURL = `${config.navigationServiceURL}/${config.contentMode}.${config.projectID}/by-seo-route/${encodedInitialPath}?depth=99&format=caas&all`
       expect(actualURL).toBe(expectedURL)
     })
+    it('should get available locales', async () => {
+      const locale = `${Faker.locale}_${Faker.locale}`
+      const mockfn = jest.fn(remoteApi.getAvailableLocales)
+      mockfn.mockReturnValue(Promise.resolve([locale]))
+      expect(mockfn()).resolves.toContain([locale])
+    })
   })
   describe('fetchProjectProperties', () => {
     let remoteApi: FSXARemoteApi
