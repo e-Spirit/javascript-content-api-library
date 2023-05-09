@@ -470,57 +470,6 @@ export class FSXARemoteApi implements FSXAApi {
         )[0]
   }
 
-  async getAvailableLocales(): Promise<string[]> {
-    const headers = {
-      'Accept-Language': '*',
-    }
-    const queryParam = `preview.${this.projectID}`
-    const url = `${this.navigationServiceURL}?from=${queryParam}&to=${queryParam}`
-    this._logger.debug('getAvailableLocales', 'url', url)
-    const caasApiResponse = await fetch(url, {
-      headers,
-      method: 'GET',
-    })
-    this._logger.debug(
-      'getAvailableLocales',
-      'response',
-      caasApiResponse.status
-    )
-
-    if (!caasApiResponse.ok) {
-      switch (caasApiResponse.status) {
-        case 401:
-          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
-        default:
-          if (caasApiResponse.status === 400) {
-            try {
-              const { message } = await caasApiResponse.json()
-              this._logger.error(
-                `[getAvailableLocales] Bad Request: ${message}`
-              )
-            } catch (ignore) {}
-          }
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
-      }
-    }
-
-    let data = await caasApiResponse.json()
-
-    if (!data._embedded) {
-      return []
-    }
-    const locales: string[] = []
-
-    // it can have duplicates
-    data._embedded.forEach((item: any) => {
-      if (!locales.includes(item.languageId)) {
-        locales.push(item.languageId)
-      }
-    })
-
-    return locales
-  }
-
   /**
    * This method fetches a filtered page from the configured CaaS.
    * The {@link FetchElementParams FetchElementParams} object defines options to specify your request.

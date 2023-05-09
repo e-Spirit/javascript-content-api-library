@@ -12,5 +12,6 @@ export {
 } from './modules'
 export * from './enums'
 export * from './types'
+export * from './helpers/misc'
 import * as ROUTES from './routes'
 export { ROUTES }
