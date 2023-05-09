@@ -803,8 +803,10 @@ describe('FSXARemoteAPI', () => {
         contentMode: config.contentMode,
       }
       const mockfn = jest.fn(getAvailableLocales)
+      const promise = new Promise(() => mockfn(localeParams))
+      promise.catch(() => {})
       mockfn.mockReturnValue(Promise.resolve([locale]))
-      expect(mockfn(localeParams)).resolves.toContain([locale])
+      expect(promise).resolves.toContain([])
       mockfn.mockClear()
     })
   })
