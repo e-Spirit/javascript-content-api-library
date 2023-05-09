@@ -1,6 +1,6 @@
 import Faker from 'faker'
 import { LogLevel } from '.'
-import { FSXAContentMode } from '..'
+import { FSXAContentMode, getAvailableLocales } from '..'
 import { FSXAApiErrors } from '../enums'
 import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -793,10 +793,18 @@ describe('FSXARemoteAPI', () => {
       expect(actualURL).toBe(expectedURL)
     })
     it('should get available locales', async () => {
-      const locale = `${Faker.locale}_${Faker.locale}`
-      const mockfn = jest.fn(remoteApi.getAvailableLocales)
+      const locale = {
+        name: 'English',
+        identifier: `${Faker.locale}_${Faker.locale}`,
+      }
+      const mockfn = jest.fn(getAvailableLocales)
+      const localeParams = {
+        navigationServiceURL: config.navigationServiceURL,
+        projectID: config.projectID,
+        contentMode: config.contentMode,
+      }
       mockfn.mockReturnValue(Promise.resolve([locale]))
-      expect(mockfn()).resolves.toContain([locale])
+      expect(mockfn(localeParams)).resolves.toContain([locale])
     })
   })
   describe('fetchProjectProperties', () => {
