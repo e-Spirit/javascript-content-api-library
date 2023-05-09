@@ -1,21 +1,28 @@
 import { FSXAApiErrors } from '../enums'
+import { LOCALE_WITH_NAMES } from '../types'
 
 type AvailableLocaleParams = {
   navigationServiceURL: string
   projectID: string
-  contentMode: 'preview' | 'release'
+  contentMode: string | ('preview' | 'release')
 }
+
+type LocalesType = { name: string; identifier: string }
 
 export const getAvailableLocales = async ({
   navigationServiceURL,
   projectID,
   contentMode,
-}: AvailableLocaleParams): Promise<string[]> => {
+}: AvailableLocaleParams): Promise<LocalesType[]> => {
   const queryParam = `${contentMode}.${projectID}`
   const url = `${navigationServiceURL}?from=${queryParam}&until=${queryParam}`
 
+  //@TODO: use appropriate language headers
   const caasApiResponse = await fetch(url, {
     method: 'GET',
+    headers: {
+      'Accept-Language': 'www',
+    },
   })
 
   if (!caasApiResponse.ok) {
@@ -38,13 +45,18 @@ export const getAvailableLocales = async ({
   if (!data._embedded) {
     return []
   }
-  const locales: string[] = []
+
+  const locales: LocalesType[] = []
 
   // it can have duplicates
   data._embedded.forEach((item: any) => {
-    if (!locales.includes(item.languageId)) {
-      locales.push(item.languageId)
-    }
+    const identifier = item.languageId
+    const [language, region]: [string, string] = identifier.split('_')
+    const regionName = LOCALE_WITH_NAMES[language] ?? 'German'
+    locales.push({
+      name: regionName,
+      identifier,
+    })
   })
 
   return locales

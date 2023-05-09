@@ -1071,3 +1071,20 @@ export interface NormalizedFetchResponse extends FetchResponseBase {
   resolvedReferences?: ResolvedReferencesInfo
   referenceMap?: ReferencedItemsInfo
 }
+
+export const LOCALE_WITH_NAMES: Record<string, string> = {
+  nl: 'Dutch',
+  fr: 'French',
+  es: 'Spanish',
+  hu: 'Hungarian',
+  dk: 'Danish',
+  se: 'Swedish',
+  no: 'Norwegian',
+  pl: 'Polish',
+  de: 'German',
+  ph: 'Philippine',
+  fi: 'Finnish',
+  lv: 'Latvian',
+  ee: 'Estonian',
+  en: 'English',
+}
