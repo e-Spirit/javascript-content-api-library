@@ -1,3 +1,10 @@
+## [10.11.3](https://github.com/e-Spirit/fsxa-api/compare/v10.11.2...v10.11.3) (2023-05-09)
+
+
+### Bug Fixes
+
+* **dependencies:** remove CVEs ([#161](https://github.com/e-Spirit/fsxa-api/issues/161)) ([3408821](https://github.com/e-Spirit/fsxa-api/commit/34088212e65d62b9e031d96380a40500bebb8461))
+
 ## [10.11.2](https://github.com/e-Spirit/fsxa-api/compare/v10.11.1...v10.11.2) (2023-04-14)
 
 
