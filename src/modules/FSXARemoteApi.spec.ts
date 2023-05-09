@@ -797,14 +797,15 @@ describe('FSXARemoteAPI', () => {
         name: 'English',
         identifier: `${Faker.locale}_${Faker.locale}`,
       }
-      const mockfn = jest.fn(getAvailableLocales)
       const localeParams = {
         navigationServiceURL: config.navigationServiceURL,
         projectID: config.projectID,
         contentMode: config.contentMode,
       }
+      const mockfn = jest.fn(getAvailableLocales)
       mockfn.mockReturnValue(Promise.resolve([locale]))
       expect(mockfn(localeParams)).resolves.toContain([locale])
+      mockfn.mockClear()
     })
   })
   describe('fetchProjectProperties', () => {
