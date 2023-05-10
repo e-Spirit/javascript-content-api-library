@@ -9,18 +9,18 @@ Navigation Service. The data is processed and transformed so that it can be used
   - [Experimental features](#experimental-features)
   - [Legal Notices](#legal-notices)
   - [Methods](#methods)
+  - [Requirements](#requirements)
     - [Constructor](#constructor)
-    - [setConfiguration](#setconfiguration)
-    - [config](#config)
-    - [buildAuthorizationHeaders](#buildauthorizationheaders)
-    - [buildCaaSURL](#buildcaasurl)
-    - [buildNavigationServiceUrl](#buildnavigationserviceurl)
+    - [get authorizationHeader](#get-authorizationheader)
+    - [fetchNavigation](#fetchnavigation)
     - [fetchElement](#fetchelement)
     - [fetchByFilter](#fetchbyfilter)
     - [fetchProjectProperties](#fetchprojectproperties)
   - [Filter](#filter)
+    - [Helpers](#helpers)
     - [Logical Query Operators](#logical-query-operators)
     - [Comparison Query Operators](#comparison-query-operators)
+    - [Evaluation Query Operators](#evaluation-query-operators)
     - [Array Query Operators](#array-query-operators)
   - [Type Mapping](#type-mapping)
     - [Input Components](#input-components)
@@ -280,6 +280,34 @@ fsxaApi.fetchProjectProperties({
 ## Filter
 
 You can customize your queries in the [fetchByFilter](#fetchbyfilter) method with these operations. For more information please refer to the MongoDB documentation. Links are provided in each section.
+
+### Helpers
+
+There are also some additional helper methods which can be used for different purpose.
+
+```typescript
+type AvailableLocaleParams = {
+  navigationServiceURL: string
+  projectID: string
+  contentMode: string | ('preview' | 'release')
+}
+
+type LocalesType = { name: string; identifier: string }
+```
+
+```typescript
+getAvailableLocales({
+  projectID: 'projectID',
+  navigationServiceURL: '[www](https://examplehost.com/navigation)',
+  contentMode: 'preview',
+})
+```
+
+This method provides a list of available languages. Return a promise of array
+
+```typescript
+  Promise<LocalesType[]>
+```
 
 ### Logical Query Operators
 
