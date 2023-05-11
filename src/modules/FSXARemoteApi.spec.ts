@@ -793,13 +793,10 @@ describe('FSXARemoteAPI', () => {
       expect(actualURL).toBe(expectedURL)
     })
     it('should get available locales', async () => {
-      const locale = {
-        name: 'English',
-        identifier: `${Faker.locale}_${Faker.locale}`,
-      }
+      const locale = `${Faker.locale}_${Faker.locale}`
       const localeParams = {
         navigationServiceURL: config.navigationServiceURL,
-        projectID: config.projectID,
+        projectId: config.projectID,
         contentMode: config.contentMode,
       }
       const mockfn = jest.fn(getAvailableLocales)
