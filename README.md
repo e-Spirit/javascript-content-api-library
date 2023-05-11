@@ -288,25 +288,24 @@ There are also some additional helper methods which can be used for different pu
 ```typescript
 type AvailableLocaleParams = {
   navigationServiceURL: string
-  projectID: string
+  projectId: string
   contentMode: string | ('preview' | 'release')
 }
-
-type LocalesType = { name: string; identifier: string }
 ```
 
 ```typescript
 getAvailableLocales({
-  projectID: 'projectID',
+  projectId: 'projectId',
   navigationServiceURL: '[www](https://examplehost.com/navigation)',
   contentMode: 'preview',
-})
+}: AvailableLocaleParams)
 ```
 
-This method provides a list of available languages. Return a promise of array
+This method provides a list of available identifiers in ISO format. example: de_DE
+Return a promise of array
 
 ```typescript
-  Promise<LocalesType[]>
+  Promise<string[]>
 ```
 
 ### Logical Query Operators
