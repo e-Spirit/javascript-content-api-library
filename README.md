@@ -9,19 +9,21 @@ Navigation Service. The data is processed and transformed so that it can be used
   - [Experimental features](#experimental-features)
   - [Legal Notices](#legal-notices)
   - [Methods](#methods)
-  - [Requirements](#requirements)
     - [Constructor](#constructor)
-    - [get authorizationHeader](#get-authorizationheader)
-    - [fetchNavigation](#fetchnavigation)
+    - [setConfiguration](#setconfiguration)
+    - [config](#config)
+    - [buildAuthorizationHeaders](#buildauthorizationheaders)
+    - [buildCaaSURL](#buildcaasurl)
+    - [buildNavigationServiceUrl](#buildnavigationserviceurl)
     - [fetchElement](#fetchelement)
     - [fetchByFilter](#fetchbyfilter)
     - [fetchProjectProperties](#fetchprojectproperties)
   - [Filter](#filter)
-    - [Helpers](#helpers)
     - [Logical Query Operators](#logical-query-operators)
     - [Comparison Query Operators](#comparison-query-operators)
     - [Evaluation Query Operators](#evaluation-query-operators)
     - [Array Query Operators](#array-query-operators)
+  - [Helpers](#helpers)
   - [Type Mapping](#type-mapping)
     - [Input Components](#input-components)
   - [Disclaimer](#disclaimer)
@@ -283,7 +285,7 @@ You can customize your queries in the [fetchByFilter](#fetchbyfilter) method wit
 
 ### Helpers
 
-There are also some additional helper methods which can be used for different purpose.
+There are also some additional helper methods which can be used for different purposes.
 
 ```typescript
 type AvailableLocaleParams = {
@@ -295,14 +297,13 @@ type AvailableLocaleParams = {
 
 ```typescript
 getAvailableLocales({
-  projectId: 'projectId',
-  navigationServiceURL: '[www](https://examplehost.com/navigation)',
+  projectId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  navigationServiceURL: 'https://your.navigation-service.url/navigation',
   contentMode: 'preview',
-}: AvailableLocaleParams)
+})
 ```
 
-This method provides a list of available identifiers in ISO format. example: de_DE
-Return a promise of array
+This method provides a list of available locales configured in your FirstSpirit project. It is recommended that the configuration matches the ISO format. E.g. ["en_GB", "de_DE"]
 
 ```typescript
   Promise<string[]>

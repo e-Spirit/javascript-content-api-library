@@ -9,35 +9,11 @@ import {
   ComparisonQueryOperatorEnum,
 } from './QueryBuilder'
 
+import { generateRandomConfig } from '../testutils/generateRandomConfig'
+
 import 'jest-fetch-mock'
 import { createDataEntry } from '../testutils'
 require('jest-fetch-mock').enableFetchMocks()
-
-const generateRandomConfig = () => {
-  const API_KEY = Faker.datatype.uuid()
-  const CAAS_URL = Faker.internet.url()
-  const NAVIGATION_SERVICE_URL = Faker.internet.url()
-  const TENANT_ID = Faker.internet.domainWord()
-  const PROJECT_ID = Faker.datatype.uuid()
-  const CONTENT_MODE: FSXAContentMode = Faker.datatype.boolean()
-    ? FSXAContentMode.PREVIEW
-    : FSXAContentMode.RELEASE
-  const REMOTES = {
-    remote: { id: Faker.datatype.uuid(), locale: Faker.locale },
-    secondRemote: { id: Faker.datatype.uuid(), locale: Faker.locale },
-  }
-
-  return {
-    apikey: API_KEY,
-    caasURL: CAAS_URL,
-    navigationServiceURL: NAVIGATION_SERVICE_URL,
-    tenantID: TENANT_ID,
-    projectID: PROJECT_ID,
-    remotes: REMOTES,
-    contentMode: CONTENT_MODE,
-    logLevel: LogLevel.NONE,
-  }
-}
 
 describe('FSXARemoteAPI', () => {
   beforeEach(() => {
@@ -791,20 +767,6 @@ describe('FSXARemoteAPI', () => {
       const actualURL = fetchMock.mock.calls[0][0]
       const expectedURL = `${config.navigationServiceURL}/${config.contentMode}.${config.projectID}/by-seo-route/${encodedInitialPath}?depth=99&format=caas&all`
       expect(actualURL).toBe(expectedURL)
-    })
-    it('should get available locales', async () => {
-      const locale = `${Faker.locale}_${Faker.locale}`
-      const localeParams = {
-        navigationServiceURL: config.navigationServiceURL,
-        projectId: config.projectID,
-        contentMode: config.contentMode,
-      }
-      const mockfn = jest.fn(getAvailableLocales)
-      const promise = new Promise(() => mockfn(localeParams))
-      promise.catch(() => {})
-      mockfn.mockReturnValue(Promise.resolve([locale]))
-      expect(promise).resolves.toContain([])
-      mockfn.mockClear()
     })
   })
   describe('fetchProjectProperties', () => {
