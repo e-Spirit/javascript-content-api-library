@@ -59,7 +59,7 @@ export const getAvailableLocales = async ({
 
     let data = await navigationResponse.json()
 
-    if (!data._embedded) {
+    if (!data._embedded || data._embedded.length === 0) {
       return []
     }
 
