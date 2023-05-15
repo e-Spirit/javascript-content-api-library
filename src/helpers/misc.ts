@@ -1,7 +1,7 @@
 import { FSXAApiErrors } from '../enums'
 import { Logger, LogLevel } from '../modules'
 
-const logger = new Logger(LogLevel.INFO, 'FSXARemoteApi')
+const logger = new Logger(LogLevel.INFO, 'helpers/misc.ts')
 
 type AvailableLocaleParams = {
   navigationServiceURL: string
