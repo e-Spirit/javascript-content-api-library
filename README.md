@@ -21,7 +21,9 @@ Navigation Service. The data is processed and transformed so that it can be used
   - [Filter](#filter)
     - [Logical Query Operators](#logical-query-operators)
     - [Comparison Query Operators](#comparison-query-operators)
+    - [Evaluation Query Operators](#evaluation-query-operators)
     - [Array Query Operators](#array-query-operators)
+  - [Helpers](#helpers)
   - [Type Mapping](#type-mapping)
     - [Input Components](#input-components)
   - [Disclaimer](#disclaimer)
@@ -280,6 +282,32 @@ fsxaApi.fetchProjectProperties({
 ## Filter
 
 You can customize your queries in the [fetchByFilter](#fetchbyfilter) method with these operations. For more information please refer to the MongoDB documentation. Links are provided in each section.
+
+### Helpers
+
+There are also some additional helper methods which can be used for different purposes.
+
+```typescript
+type AvailableLocaleParams = {
+  navigationServiceURL: string
+  projectId: string
+  contentMode: string | ('preview' | 'release')
+}
+```
+
+```typescript
+getAvailableLocales({
+  projectId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  navigationServiceURL: 'https://your.navigation-service.url/navigation',
+  contentMode: 'preview',
+})
+```
+
+This method provides a list of available locales configured in your FirstSpirit project. It is recommended that the configuration matches the ISO format. E.g. ["en_GB", "de_DE"]
+
+```typescript
+  Promise<string[]>
+```
 
 ### Logical Query Operators
 
