@@ -1,3 +1,10 @@
+# [10.12.0](https://github.com/e-Spirit/fsxa-api/compare/v10.11.3...v10.12.0) (2023-05-15)
+
+
+### Features
+
+* **helpers:** add method to fetch available locales ([#163](https://github.com/e-Spirit/fsxa-api/issues/163)) ([3a01920](https://github.com/e-Spirit/fsxa-api/commit/3a01920857117b6da38e86f472e56cfe6c0db10d))
+
 ## [10.11.3](https://github.com/e-Spirit/fsxa-api/compare/v10.11.2...v10.11.3) (2023-05-09)
 
 
