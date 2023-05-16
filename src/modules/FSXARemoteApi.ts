@@ -618,7 +618,7 @@ export class FSXARemoteApi implements FSXAApi {
           referenceMap,
           resolvedReferences,
           filterContext,
-          additionalParams?.keys !== undefined
+          !!additionalParams?.keys
         ))
     }
 
