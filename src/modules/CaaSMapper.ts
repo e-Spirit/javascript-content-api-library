@@ -962,6 +962,9 @@ export class CaaSMapper {
       : (
           await Promise.all(
             unmappedItems.map((unmappedItem, index) => {
+              // reassigned locale to avoid wrong preview ids
+              this.locale =
+                unmappedItem.locale.language + '_' + unmappedItem.locale.country
               switch (unmappedItem.fsType) {
                 case 'Dataset':
                   return this.mapDataset(
