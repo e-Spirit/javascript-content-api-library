@@ -9,6 +9,7 @@ export {
   FSXAProxyApi,
   FSXAApiSingleton,
   FSXARemoteApi,
+  Logger,
 } from './modules'
 export * from './enums'
 export * from './types'
