@@ -1,3 +1,10 @@
+# [10.13.0](https://github.com/e-Spirit/fsxa-api/compare/v10.12.0...v10.13.0) (2023-06-07)
+
+
+### Features
+
+* **logger:** export Logger class ([#168](https://github.com/e-Spirit/fsxa-api/issues/168)) ([b58dbbb](https://github.com/e-Spirit/fsxa-api/commit/b58dbbb89b44764ae8da1c2f8067a86c6a1a2d4a))
+
 # [10.12.0](https://github.com/e-Spirit/fsxa-api/compare/v10.11.3...v10.12.0) (2023-05-15)
 
 
