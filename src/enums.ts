@@ -13,6 +13,7 @@ export enum FSXAApiErrors {
   NOT_FOUND = 'Resource could not be found',
   MISSING_REMOTE_LOCALE = 'The specified remote project did not include a locale',
   MISSING_REMOTE_ID = 'The specified remote project did not include an id',
+  INVALID_LOCALE = 'The specified locale is not valid, eg. xx_YY',
 }
 
 export enum FSXAProxyRoutes {
