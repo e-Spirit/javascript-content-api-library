@@ -82,7 +82,7 @@ export interface MapResponse {
 export class CaaSMapper {
   public logger: Logger
   api: FSXARemoteApi
-  locale: string
+  locale: string | undefined
   xmlParser: XMLParser
   customMapper?: CustomMapper
   referenceDepth: number
@@ -97,7 +97,7 @@ export class CaaSMapper {
 
   constructor(
     api: FSXARemoteApi,
-    locale: string,
+    locale: string | undefined,
     utils: {
       customMapper?: CustomMapper
       referenceDepth?: number

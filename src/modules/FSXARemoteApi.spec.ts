@@ -1,6 +1,4 @@
 import Faker from 'faker'
-import { LogLevel } from '.'
-import { FSXAContentMode, getAvailableLocales } from '..'
 import { FSXAApiErrors } from '../enums'
 import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -13,6 +11,7 @@ import { generateRandomConfig } from '../testutils/generateRandomConfig'
 
 import 'jest-fetch-mock'
 import { createDataEntry } from '../testutils'
+import { create } from 'lodash'
 require('jest-fetch-mock').enableFetchMocks()
 
 describe('FSXARemoteAPI', () => {
@@ -683,6 +682,27 @@ describe('FSXARemoteAPI', () => {
       fetchMock.mockResponseOnce(JSON.stringify(json))
       await remoteApi.fetchByFilter({ filters: arrayFilter, locale })
       expect(fetchMock).toBeCalledTimes(2)
+    })
+    it('should return right data if no locale is provided', async () => {
+      const id = Faker.datatype.uuid()
+      const id2 = Faker.datatype.uuid()
+      const localeLanguage = Faker.lorem.word(2).toLowerCase()
+      const localeCountry = Faker.lorem.word(2).toUpperCase()
+      const locale2 = localeLanguage + '_' + localeCountry
+      const items = [createDataEntry(id, locale), createDataEntry(id2, locale2)]
+      const caasApiItems = { _embedded: { 'rh:doc': items } }
+      fetchMock.mockResponseOnce(JSON.stringify(caasApiItems))
+      const actualRequest = await remoteApi.fetchByFilter({
+        filters,
+      })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items,
+      })
     })
   })
   describe('fetchNavigation', () => {

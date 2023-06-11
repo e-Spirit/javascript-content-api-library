@@ -586,7 +586,7 @@ export class FSXARemoteApi implements FSXAApi {
 
     let mapperLocale = locale
 
-    if (!mapperLocale) {
+    if (!mapperLocale && unmappedItems[0].locale) {
       mapperLocale =
         unmappedItems[0].locale.language + '_' + unmappedItems[0].locale.country
     }
