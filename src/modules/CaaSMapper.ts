@@ -82,7 +82,7 @@ export interface MapResponse {
 export class CaaSMapper {
   public logger: Logger
   api: FSXARemoteApi
-  locale: string
+  locale: string | undefined
   xmlParser: XMLParser
   customMapper?: CustomMapper
   referenceDepth: number
@@ -97,7 +97,7 @@ export class CaaSMapper {
 
   constructor(
     api: FSXARemoteApi,
-    locale: string,
+    locale: string | undefined,
     utils: {
       customMapper?: CustomMapper
       referenceDepth?: number
@@ -950,6 +950,14 @@ export class CaaSMapper {
     }
   }
 
+  // reassigned locale to avoid wrong preview ids
+  // each item has its own locale
+  private setLocaleFromCaasItem(item: CaasApi_Item | any) {
+    if (item.locale) {
+      this.locale = item.locale.language + '_' + item.locale.country
+    }
+  }
+
   async mapFilterResponse(
     unmappedItems: (CaasApi_Item | any)[],
     additionalParams?: Record<string, any>,
@@ -962,6 +970,7 @@ export class CaaSMapper {
       : (
           await Promise.all(
             unmappedItems.map((unmappedItem, index) => {
+              this.setLocaleFromCaasItem(unmappedItem)
               switch (unmappedItem.fsType) {
                 case 'Dataset':
                   return this.mapDataset(
