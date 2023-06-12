@@ -387,7 +387,7 @@ describe('FSXARemoteAPI', () => {
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should thrown an error when invalid locale is passed', () => {
-      const locale = 'invalid_locale'
+      const locale = 'invalidlocale'
       const config = generateRandomConfig()
       const filters: QueryBuilderQuery[] = [
         {
@@ -456,7 +456,7 @@ describe('FSXARemoteAPI', () => {
     let locale: string
     beforeEach(() => {
       uuid = Faker.datatype.uuid()
-      locale = `${Faker.locale}_${Faker.locale}`
+      locale = `${Faker.locale}_${Faker.locale.toUpperCase()}`
       config = generateRandomConfig()
       remoteApi = new FSXARemoteApi(config)
     })
