@@ -386,6 +386,21 @@ describe('FSXARemoteAPI', () => {
       const expectedCaaSUrl = `${baseURL}?filter=${firstEncodedFilter}&filter=${secondEncodedFilter}&filter=${thirdEncodedFilter}&filter=${fourthEncodedFilter}&${encodedSort}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
+    it('should thrown an error when invalid locale is passed', () => {
+      const locale = 'invalid_locale'
+      const config = generateRandomConfig()
+      const filters: QueryBuilderQuery[] = [
+        {
+          value: Faker.lorem.word(),
+          field: Faker.lorem.word(),
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+        },
+      ]
+      const remoteApi = new FSXARemoteApi(config)
+      expect(() => {
+        remoteApi.buildCaaSUrl({ filters, locale })
+      }).toThrow(FSXAApiErrors.INVALID_LOCALE)
+    })
   })
   describe('buildNavigationServiceUrl', () => {
     let remoteApi: FSXARemoteApi
