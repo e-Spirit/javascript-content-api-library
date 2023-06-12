@@ -50,7 +50,7 @@ import {
   Section,
 } from '../types'
 import { parseISO } from 'date-fns'
-import { chunk, set, update } from 'lodash'
+import { chunk, update } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger, LogLevel } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
@@ -952,7 +952,7 @@ export class CaaSMapper {
 
   // reassigned locale to avoid wrong preview ids
   // each item has its own locale
-  private async setLocaleFromCaasItem(item: CaasApi_Item | any) {
+  private setLocaleFromCaasItem(item: CaasApi_Item | any) {
     if (item.locale) {
       this.locale = item.locale.language + '_' + item.locale.country
     }
