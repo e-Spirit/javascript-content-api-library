@@ -1,3 +1,10 @@
+## [10.13.1](https://github.com/e-Spirit/fsxa-api/compare/v10.13.0...v10.13.1) (2023-06-12)
+
+
+### Bug Fixes
+
+* **caasmapper:** fix wrong preview id ([#167](https://github.com/e-Spirit/fsxa-api/issues/167)) ([20fc8c2](https://github.com/e-Spirit/fsxa-api/commit/20fc8c23233ffd3c5097570a94d16d4bed7a9840))
+
 # [10.13.0](https://github.com/e-Spirit/fsxa-api/compare/v10.12.0...v10.13.0) (2023-06-07)
 
 
