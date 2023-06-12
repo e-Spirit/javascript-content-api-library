@@ -210,10 +210,10 @@ export class FSXARemoteApi implements FSXAApi {
     if (filters) {
       let localeFilter: QueryBuilderQuery[] = []
       if (locale) {
-        if (typeof locale !== 'string' || !locale.includes('_')) {
-          this._logger.warn(
+        if (!/^[a-z]{2}_[A-Z]{2}$/.test(locale)) {
+          this._logger.error(
             '[buildNavigationServiceUrl]',
-            'Parameter "locale" has been given.'
+            `Invalid locale format. Expected format: 'xx_YY' but got '${locale.toString()}'`
           )
           throw new Error(FSXAApiErrors.INVALID_LOCALE)
         }
