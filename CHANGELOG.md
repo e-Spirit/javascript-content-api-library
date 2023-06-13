@@ -1,3 +1,10 @@
+# [10.14.0](https://github.com/e-Spirit/fsxa-api/compare/v10.13.1...v10.14.0) (2023-06-13)
+
+
+### Features
+
+* **localevalidation:** validate locale ([#170](https://github.com/e-Spirit/fsxa-api/issues/170)) ([1fa7870](https://github.com/e-Spirit/fsxa-api/commit/1fa7870ca2e59a6fb87342d47f9ea9e79f434608))
+
 ## [10.13.1](https://github.com/e-Spirit/fsxa-api/compare/v10.13.0...v10.13.1) (2023-06-12)
 
 
