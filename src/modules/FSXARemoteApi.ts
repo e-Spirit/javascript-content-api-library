@@ -34,6 +34,7 @@ import { FSXAApiErrors } from './../enums'
 import { LogLevel } from './Logger'
 import { denormalizeResolvedReferences } from './MappingUtils'
 import { ComparisonQueryOperatorEnum, QueryBuilder } from './QueryBuilder'
+import { type } from 'os'
 
 type buildNavigationServiceURLParams = {
   locale?: string
@@ -209,6 +210,14 @@ export class FSXARemoteApi implements FSXAApi {
     if (filters) {
       let localeFilter: QueryBuilderQuery[] = []
       if (locale) {
+        if (typeof locale !== 'string' || !locale.includes('_')) {
+          this._logger.error(
+            '[buildNavigationServiceUrl]',
+            `Invalid locale format. Expected format: 'xx_YY' but got '${locale.toString()}'`
+          )
+          throw new Error(FSXAApiErrors.INVALID_LOCALE)
+        }
+
         localeFilter = [
           {
             operator: ComparisonQueryOperatorEnum.EQUALS,
