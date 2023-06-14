@@ -1,3 +1,11 @@
+### UPDATE NOTICE
+
+We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. 
+The project is now called "JavaScript Content API Library", but please note that this change solely affects the project's name, repository, and associated branding elements. 
+The core code and functionality of the library remain unchanged. The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. 
+The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. 
+The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
+
 # [10.14.0](https://github.com/e-Spirit/fsxa-api/compare/v10.13.1...v10.14.0) (2023-06-13)
 
 
