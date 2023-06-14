@@ -1,3 +1,10 @@
+## [10.14.1](https://github.com/e-Spirit/fsxa-api/compare/v10.14.0...v10.14.1) (2023-06-14)
+
+
+### Bug Fixes
+
+* **repository:** rename FSXA-API to JavaScript Content API Library ([#171](https://github.com/e-Spirit/fsxa-api/issues/171)) ([30f6fcc](https://github.com/e-Spirit/fsxa-api/commit/30f6fccc7b19cb848227da205f2f6639dd311f5c))
+
 ### UPDATE NOTICE
 
 We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. 
