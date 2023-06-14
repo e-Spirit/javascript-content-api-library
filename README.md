@@ -9,16 +9,12 @@ Navigation Service. The data is processed and transformed so that it can be used
 The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
 
 - [JavaScript Content API Library](#javascript-content-api-library)
-  - [About the legacy FSXA](#about-the-legacy-fsxa)
   - [Experimental features](#experimental-features)
   - [Legal Notices](#legal-notices)
   - [Methods](#methods)
     - [Constructor](#constructor)
-    - [setConfiguration](#setconfiguration)
-    - [config](#config)
-    - [buildAuthorizationHeaders](#buildauthorizationheaders)
-    - [buildCaaSURL](#buildcaasurl)
-    - [buildNavigationServiceUrl](#buildnavigationserviceurl)
+    - [buildAuthorizationHeaders](#get-authorizationheader)
+    - [fetchNavigation](#fetchnavigation)
     - [fetchElement](#fetchelement)
     - [fetchByFilter](#fetchbyfilter)
     - [fetchProjectProperties](#fetchprojectproperties)
@@ -31,28 +27,6 @@ The purpose and scope of the library, as well as its intended usage and compatib
   - [Type Mapping](#type-mapping)
     - [Input Components](#input-components)
   - [Disclaimer](#disclaimer)
-
-## About the legacy FSXA
-
-The FirstSpirit Experience Accelerator (FSXA) is the hybrid solution of a digital
-experience platform, combining a headless approach with enterprise capabilities.
-The FSXA stack consists of five repositories:
-
-- [FSXA-PWA](https://github.com/e-Spirit/fsxa-pwa)
-- [FSXA-UI](https://github.com/e-Spirit/fsxa-ui)/ Component Library
-- [FSXA-Nuxt-Module](https://github.com/e-Spirit/fsxa-nuxt-module)
-- [FSXA-Pattern-Library](https://github.com/e-Spirit/fsxa-pattern-library)
-- [FSXA-API](https://github.com/e-Spirit/fsxa-api)
-
-While the FSXA-API is a maintained product with a life cycle, the FSXA-PWA, FSXA-UI, FSXA-Nuxt-Module and FSXA-Pattern-Library are merely best practices examples how a project could be set up and integrate the FSXA-API.
-The latter repositories can be forked to speed up the startup time of a frontend project or to understand how common use cases can be solved in headless projects.
-The code itself can therefore also be used as documentation of best practices.
-
-The following image illustrates the product cut:
-![fsxa-stack product cut overview](docs/assets/fsxa-stack-product-status.png)
-
-> **_Attention_**
-> Since the reference implementation does not represent a maintained product, we do not guarantee support for its use.
 
 ## Experimental features
 
