@@ -1,11 +1,15 @@
-# FSXA-API
+# JavaScript Content API Library
 
-The FSXA-API is an interface handling data coming from the FirstSpirit
+The JavaScript Content API Library a.k.a Content API is an interface handling data coming from the FirstSpirit
 [CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
 Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
 
-- [FSXA-API](#fsxa-api)
-  - [About the FSXA](#about-the-fsxa)
+> **_Attention_**
+> We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. The project is now called "JavaScript Content API Library", but please note that this change solely affects the project's name, repository, and associated branding elements. The core code and functionality of the library remain unchanged.
+The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
+
+- [JavaScript Content API Library](#javascript-content-api-library)
+  - [About the legacy FSXA](#about-the-legacy-fsxa)
   - [Experimental features](#experimental-features)
   - [Legal Notices](#legal-notices)
   - [Methods](#methods)
@@ -28,7 +32,7 @@ Navigation Service. The data is processed and transformed so that it can be used
     - [Input Components](#input-components)
   - [Disclaimer](#disclaimer)
 
-## About the FSXA
+## About the legacy FSXA
 
 The FirstSpirit Experience Accelerator (FSXA) is the hybrid solution of a digital
 experience platform, combining a headless approach with enterprise capabilities.
@@ -57,8 +61,8 @@ Breaking changes to experimental features are not reflected in a major version c
 
 ## Legal Notices
 
-FSXA-API is a product of [Crownpeak Technology GmbH](http://www.e-spirit.com), Dortmund, Germany.
-The FSXA-API is subject to the Apache-2.0 license.
+JavaScript Content API Library is a product of [Crownpeak Technology GmbH](http://www.e-spirit.com), Dortmund, Germany.
+The JavaScript Content API Library is subject to the Apache-2.0 license.
 
 ## Methods
 
@@ -66,21 +70,21 @@ In this section all available methods will be explained using examples.
 
 ## Requirements
 
-The FSXA-API requires a `fetch` implementation to run on a Node server environment.
+The JavaScript Content API Library requires a `fetch` implementation to run on a Node server environment.
 This dependency can be fulfilled with a cross-fetch polyfill in older Node versions.
 A working example can be found in the chapter _Constructor_.
 
 ### Constructor
 
-To be able to use the FSXA-API, a new object must be created.
-How you create the object depends on how you want to use the FSXA-API.
+To be able to use the Content API, a new object must be created.
+How you create the object depends on how you want to use the Content API.
 
 If you want to use the information provided by the CaaS in your frontend, you can use the `FSXAProxyApi`.
 It proxies the requested resources to a middleware Rest Api, that does not expose secrets.
 If you want to use it in your server, you can use the `FSXARemoteApi`.
 It can be registered as a Rest Api that can be called from a `FSXAProxyApi` instance.
 
-However, to have a fully running application, we recommend using the FSXA-API in your server as well as in your frontend.
+However, to have a fully running application, we recommend using the Content API in your server as well as in your frontend.
 
 The config mode can be `preview` or `release`, depending on the state of the content you want to fetch.
 <br />
@@ -108,7 +112,7 @@ const config = {
 You can also include remote projects if you want to use remote media.
 
 > **_Attention_**<br>
-> Currently the FSXA-API can only work with the master language of the remote media project.
+> Currently the Content API can only work with the master language of the remote media project.
 > You also require a configured CAAS API key with read permissions to both projects.
 
 > For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
@@ -356,9 +360,9 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 ### Input Components
 
 This table gives an overview of the FirstSpirit input components, which can be defined in the "Form" tab of the FirstSpirit templates.
-Each input component has a (Java) data type, which has a representation in the CaaS. Those values are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the fsxa-api.
+Each input component has a (Java) data type, which has a representation in the CaaS. Those values are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the Content API.
 
-| <nobr>FirstSpirit Input Component</nobr>                                 | <nobr>CaaS Representation</nobr>                                                                                                                  | <nobr>FSXA-API [Value](src/types.ts)</nobr> |
+| <nobr>FirstSpirit Input Component</nobr>                                 | <nobr>CaaS Representation</nobr>                                                                                                                  | <nobr>Content API [Value](src/types.ts)</nobr> |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | [FS_CATALOG]<br />[`Catalog`][fs-catalog]`<`[`Catalog$Card`][fs-card]`>` | <nobr>= `CaaSApi_FSCatalog`</nobr><br />= `CaaSApi_Card[]`                                                                                        | `Section[]`                                 |
 | [CMS_INPUT_CHECKBOX]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`     | <nobr>= `CaaSApi_CMSInputCheckbox`</nobr><br />= `CaaSApi_Option[]`                                                                               | `Option[]`                                  |
