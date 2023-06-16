@@ -1,3 +1,10 @@
+# [10.15.0](https://github.com/e-Spirit/fsxa-api/compare/v10.14.1...v10.15.0) (2023-06-16)
+
+
+### Features
+
+* **fsxaapisingleton:** update singleton to instatiate many instances ([#166](https://github.com/e-Spirit/fsxa-api/issues/166)) ([7241cd5](https://github.com/e-Spirit/fsxa-api/commit/7241cd5a030ec7220790945e772beafad7b18461))
+
 ## [10.14.1](https://github.com/e-Spirit/fsxa-api/compare/v10.14.0...v10.14.1) (2023-06-14)
 
 
