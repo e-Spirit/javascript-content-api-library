@@ -338,6 +338,20 @@ describe('QueryBuilder', () => {
           ]
         ).toBe('2022-01-01T00:00:00')
       })
+
+      it('should allow comparison with null value', () => {
+        const filter = builder.build({
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+          value: null,
+          field: foobar,
+        })
+        expect(filter).toBeTruthy()
+        expect(
+          (filter!['foobar'] as MappedFilter)[
+            ComparisonQueryOperatorEnum.EQUALS as string
+          ]
+        ).toBe(null)
+      })
     })
 
     describe(ComparisonQueryOperatorEnum.NOT_EQUALS, () => {
@@ -446,6 +460,7 @@ describe('QueryBuilder', () => {
 
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.GREATER_THAN as string
           ] > '2022-01-01'
@@ -460,6 +475,7 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.GREATER_THAN as string
           ] > '2022-01-01T01:01:00'
@@ -510,6 +526,7 @@ describe('QueryBuilder', () => {
 
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS as string
           ] >= '2022-01-02'
@@ -524,6 +541,7 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS as string
           ] >= '2022-01-01T01:01:00'
@@ -574,6 +592,7 @@ describe('QueryBuilder', () => {
 
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.LESS_THAN as string
           ] < '2022-01-02'
@@ -588,6 +607,7 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.LESS_THAN as string
           ] < '2022-01-01T01:02:00'
@@ -638,6 +658,7 @@ describe('QueryBuilder', () => {
 
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.LESS_THAN_EQUALS as string
           ] <= '2022-01-02'
@@ -652,6 +673,7 @@ describe('QueryBuilder', () => {
         })
         expect(filter).toBeTruthy()
         expect(
+          // @ts-ignore
           (filter!['foobar'] as MappedFilter)[
             ComparisonQueryOperatorEnum.LESS_THAN_EQUALS as string
           ] <= '2022-01-01T01:02:00'

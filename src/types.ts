@@ -816,7 +816,7 @@ export interface NavigationData {
   }
 }
 
-export type ComparisonFilterValue = string | number | RegExp | boolean
+export type ComparisonFilterValue = string | number | RegExp | boolean | null
 
 export type ComparisonFilter =
   | {
