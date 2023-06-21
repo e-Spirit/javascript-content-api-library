@@ -262,7 +262,6 @@ export class FSXAProxyApi implements FSXAApi {
     this._logger.debug('fetchNavigation', 'start', {
       locale,
       initialPath,
-      filterContextProvider: this._filterContextProvider,
     })
 
     const filterContext = this._filterContextProvider
