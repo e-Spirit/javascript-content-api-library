@@ -1,3 +1,10 @@
+## [10.15.1](https://github.com/e-Spirit/fsxa-api/compare/v10.15.0...v10.15.1) (2023-06-21)
+
+
+### Bug Fixes
+
+* **filtercontext:** remove filtercontext from debug log ([#173](https://github.com/e-Spirit/fsxa-api/issues/173)) ([ea5802d](https://github.com/e-Spirit/fsxa-api/commit/ea5802d20b2b744d8d1ccea70fb6ed3a91eafa22))
+
 # [10.15.0](https://github.com/e-Spirit/fsxa-api/compare/v10.14.1...v10.15.0) (2023-06-16)
 
 
