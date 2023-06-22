@@ -11,7 +11,6 @@ import { generateRandomConfig } from '../testutils/generateRandomConfig'
 
 import 'jest-fetch-mock'
 import { createDataEntry } from '../testutils'
-import { create, filter } from 'lodash'
 require('jest-fetch-mock').enableFetchMocks()
 
 describe('FSXARemoteAPI', () => {
