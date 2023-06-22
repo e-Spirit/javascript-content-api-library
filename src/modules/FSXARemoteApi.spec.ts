@@ -697,6 +697,27 @@ describe('FSXARemoteAPI', () => {
       await remoteApi.fetchByFilter({ filters: arrayFilter, locale })
       expect(fetchMock).toBeCalledTimes(2)
     })
+    it('should allow comparison with null values', async () => {
+      const filter1: QueryBuilderQuery[] = [
+        {
+          value: null,
+          field: filterField,
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+        },
+      ]
+      const filter2: QueryBuilderQuery[] = [
+        {
+          value: null,
+          field: filterField,
+          operator: ComparisonQueryOperatorEnum.NOT_EQUALS,
+        },
+      ]
+      fetchMock.mockResponseOnce(JSON.stringify(json))
+      await remoteApi.fetchByFilter({ filters: filter1, locale })
+      fetchMock.mockResponseOnce(JSON.stringify(json))
+      await remoteApi.fetchByFilter({ filters: filter2, locale })
+      expect(fetchMock).toBeCalledTimes(2)
+    })
     it('should return right data if no locale is provided', async () => {
       const id = Faker.datatype.uuid()
       const id2 = Faker.datatype.uuid()

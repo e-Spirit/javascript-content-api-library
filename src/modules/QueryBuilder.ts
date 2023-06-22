@@ -89,7 +89,8 @@ export class QueryBuilder {
       case ComparisonQueryOperatorEnum.EQUALS:
       case ComparisonQueryOperatorEnum.NOT_EQUALS:
         if (!filter.field) throw new Error(QueryBuilderErrors.MISSING_FIELD)
-        if (!filter.value) throw new Error(QueryBuilderErrors.MISSING_VALUE)
+        if (!filter.value && filter.value !== null)
+          throw new Error(QueryBuilderErrors.MISSING_VALUE)
         // if array is empty we will invalidate this query
         if (Array.isArray(filter.value) && filter.value.length === 0)
           return null
