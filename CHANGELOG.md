@@ -1,3 +1,10 @@
+# [10.16.0](https://github.com/e-Spirit/fsxa-api/compare/v10.15.1...v10.16.0) (2023-06-22)
+
+
+### Features
+
+* **querybuilder:** allow comparison with null values ([#172](https://github.com/e-Spirit/fsxa-api/issues/172)) ([364b9ea](https://github.com/e-Spirit/fsxa-api/commit/364b9ea2ef20eddb6272b2c62909e7fe4056a784))
+
 ## [10.15.1](https://github.com/e-Spirit/fsxa-api/compare/v10.15.0...v10.15.1) (2023-06-21)
 
 
