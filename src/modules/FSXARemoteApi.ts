@@ -34,7 +34,7 @@ import { FSXAApiErrors } from './../enums'
 import { LogLevel } from './Logger'
 import { denormalizeResolvedReferences } from './MappingUtils'
 import { ComparisonQueryOperatorEnum, QueryBuilder } from './QueryBuilder'
-import { type } from 'os'
+import { NotFoundException } from '../exceptions'
 
 type buildNavigationServiceURLParams = {
   locale?: string
@@ -215,7 +215,7 @@ export class FSXARemoteApi implements FSXAApi {
             '[buildNavigationServiceUrl]',
             `Invalid locale format. Expected format: 'xx_YY' but got '${locale.toString()}'`
           )
-          throw new Error(FSXAApiErrors.INVALID_LOCALE)
+          throw new NotFoundException(FSXAApiErrors.INVALID_LOCALE)
         }
 
         localeFilter = [
@@ -371,7 +371,7 @@ export class FSXARemoteApi implements FSXAApi {
       })
       switch (response.status) {
         case 404:
-          throw new Error(FSXAApiErrors.NOT_FOUND)
+          throw new NotFoundException(FSXAApiErrors.NOT_FOUND)
         default:
           throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
       }
@@ -467,7 +467,7 @@ export class FSXARemoteApi implements FSXAApi {
     })
 
     if (items.length === 0) {
-      throw new Error(FSXAApiErrors.NOT_FOUND)
+      throw new NotFoundException(FSXAApiErrors.NOT_FOUND)
     }
 
     return normalized
@@ -826,7 +826,7 @@ export class FSXARemoteApi implements FSXAApi {
     if (!response.ok) {
       if (response.status === 404) {
         this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_FOUND)
-        throw new Error(FSXAApiErrors.NOT_FOUND)
+        throw new NotFoundException(FSXAApiErrors.NOT_FOUND)
       } else if (response.status === 401) {
         this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_AUTHORIZED)
         throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
@@ -977,10 +977,10 @@ export class FSXARemoteApi implements FSXAApi {
     keys.forEach((key) => {
       const { id, locale } = value[key]
       if (!id) {
-        throw new Error(FSXAApiErrors.MISSING_REMOTE_ID)
+        throw new NotFoundException(FSXAApiErrors.MISSING_REMOTE_ID)
       }
       if (!locale) {
-        throw new Error(FSXAApiErrors.MISSING_REMOTE_LOCALE)
+        throw new NotFoundException(FSXAApiErrors.MISSING_REMOTE_LOCALE)
       }
     })
 

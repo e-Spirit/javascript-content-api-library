@@ -2,10 +2,21 @@ import { createFile } from './utils'
 import dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
-import { FSXAContentMode, FSXAProxyApi, LogLevel, NavigationItem } from '../src'
+import {
+  FSXAContentMode,
+  FSXAProxyApi,
+  HttpStatus,
+  LogLevel,
+  NavigationItem,
+} from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
 import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
 require('cross-fetch/polyfill')
+
+import {
+  UnauthorizedException,
+  InternalServerErrorException,
+} from '../src/exceptions'
 
 dotenv.config({ path: './dev/.env' })
 const app = express()
@@ -39,26 +50,40 @@ app.listen(3002, async () => {
   try {
     const locale = 'en_GB'
 
-    const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
-    const navigationResponse = await proxyAPI.fetchNavigation({ locale, initialPath: '/' })
-
-    createFile({
-      dirName: 'dev/dist',
-      fileName: `navigation.${locale}.json`,
-      content: navigationResponse,
+    const proxyAPI = new FSXAProxyApi(
+      'http://localhost:3002/api',
+      LogLevel.INFO
+    )
+    const navigationResponse = await proxyAPI.fetchNavigation({
+      locale,
+      initialPath: '/',
     })
 
     if (navigationResponse) {
-      const pageInNavigationId = navigationResponse.seoRouteMap[navigationResponse.pages.index]
-      const { caasDocumentId } = navigationResponse.idMap[pageInNavigationId]
-      const homepageResponse = await proxyAPI.fetchElement({ id: caasDocumentId, locale })
-
-      createFile({
-        dirName: 'dev/dist',
-        fileName: `homepage.${locale}.json`,
-        content: homepageResponse,
-      })
+      throw new InternalServerErrorException('this is a internal server error')
     }
+
+    // createFile({
+    //   dirName: 'dev/dist',
+    //   fileName: `navigation.${locale}.json`,
+    //   content: navigationResponse,
+    // })
+
+    // if (navigationResponse) {
+    //   const pageInNavigationId =
+    //     navigationResponse.seoRouteMap[navigationResponse.pages.index]
+    //   const { caasDocumentId } = navigationResponse.idMap[pageInNavigationId]
+    //   const homepageResponse = await proxyAPI.fetchElement({
+    //     id: caasDocumentId,
+    //     locale,
+    //   })
+
+    //   createFile({
+    //     dirName: 'dev/dist',
+    //     fileName: `homepage.${locale}.json`,
+    //     content: homepageResponse,
+    //   })
+    // }
   } catch (e) {
     console.log(e)
   }
