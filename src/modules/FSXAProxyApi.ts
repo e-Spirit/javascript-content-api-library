@@ -23,9 +23,9 @@ import { FetchResponse } from '..'
 import { MapResponse } from '.'
 import { denormalizeResolvedReferences } from './MappingUtils'
 import {
-  InternalServerErrorException,
-  NotFoundException,
-  UnauthorizedException,
+  InternalServerError,
+  NotFoundError,
+  UnauthorizedError,
 } from '../exceptions'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
@@ -63,7 +63,7 @@ export class FSXAProxyApi implements FSXAApi {
   set baseUrl(value: string) {
     value = value.trim()
     if (value === '') {
-      throw new NotFoundException(FSXAApiErrors.MISSING_BASE_URL)
+      throw new NotFoundError(FSXAApiErrors.MISSING_BASE_URL)
     }
     this._baseUrl = value
   }
@@ -128,9 +128,9 @@ export class FSXAProxyApi implements FSXAApi {
     if (!response.ok) {
       switch (response.status) {
         case 404:
-          throw new NotFoundException(FSXAApiErrors.NOT_FOUND)
+          throw new NotFoundError(FSXAApiErrors.NOT_FOUND)
         case 401:
-          throw new UnauthorizedException(FSXAApiErrors.NOT_AUTHORIZED)
+          throw new UnauthorizedError(FSXAApiErrors.NOT_AUTHORIZED)
         default:
           const bodyString = await response.text()
           throw new Error(
@@ -234,9 +234,9 @@ export class FSXAProxyApi implements FSXAApi {
     if (!response.ok) {
       switch (response.status) {
         case 401:
-          throw new UnauthorizedException(FSXAApiErrors.NOT_AUTHORIZED)
+          throw new UnauthorizedError(FSXAApiErrors.NOT_AUTHORIZED)
         default:
-          throw new InternalServerErrorException(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new InternalServerError(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
 
@@ -296,9 +296,9 @@ export class FSXAProxyApi implements FSXAApi {
     if (!response.ok) {
       switch (response.status) {
         case 404:
-          throw new NotFoundException(FSXAApiErrors.NOT_FOUND)
+          throw new NotFoundError(FSXAApiErrors.NOT_FOUND)
         default:
-          throw new InternalServerErrorException(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new InternalServerError(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
     return response.json()
@@ -347,9 +347,9 @@ export class FSXAProxyApi implements FSXAApi {
     if (!response.ok) {
       switch (response.status) {
         case 404:
-          throw new NotFoundException(FSXAApiErrors.NOT_FOUND)
+          throw new NotFoundError(FSXAApiErrors.NOT_FOUND)
         default:
-          throw new InternalServerErrorException(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new InternalServerError(FSXAApiErrors.UNKNOWN_ERROR)
       }
     }
     // We need to denormalize here
