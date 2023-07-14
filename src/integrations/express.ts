@@ -49,16 +49,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('could not fetch element: ', req, err.message)
-        if (
-          err.message === FSXAApiErrors.NOT_FOUND ||
-          err.message === FSXAApiErrors.UNKNOWN_REMOTE
-        ) {
-          return res.status(404).send({ message: err.message })
-        } else if (FSXAApiErrors.NOT_AUTHORIZED === err.message) {
-          return res.status(401).send({ message: err.message })
-        } else {
-          return res.status(500).send({ message: err.message })
-        }
+        return res
+          .status(err.statusCode)
+          .send({ message: err.message, error: err.message })
       }
     }
   )
@@ -83,14 +76,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch Navigation: ' + err.message)
-        if (
-          err.message === FSXAApiErrors.NOT_FOUND ||
-          err.message === FSXAApiErrors.UNKNOWN_REMOTE
-        ) {
-          return res.status(404).send(err)
-        } else {
-          return res.status(500).send(err)
-        }
+        res
+          .status(err.statusCode)
+          .send({ message: err.message, error: err.message })
       }
     }
   )
@@ -115,13 +103,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch by filter: ', err.message)
-        if (err.message === FSXAApiErrors.NOT_FOUND) {
-          return res.status(404).send()
-        } else if (err.message === FSXAApiErrors.NOT_AUTHORIZED) {
-          return res.status(401).send()
-        } else {
-          return res.status(500).send()
-        }
+        return res
+          .status(err.statusCode)
+          .send({ message: err.message, error: err.message })
       }
     }
   )
@@ -155,13 +139,9 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch project properties', err.message)
-        if (err.message === FSXAApiErrors.NOT_FOUND) {
-          return res.status(404).send()
-        } else if (err.message === FSXAApiErrors.NOT_AUTHORIZED) {
-          return res.status(401).send()
-        } else {
-          return res.status(500).send()
-        }
+        return res
+          .status(err.statusCode)
+          .send({ message: err.message, error: err.message })
       }
     }
   )

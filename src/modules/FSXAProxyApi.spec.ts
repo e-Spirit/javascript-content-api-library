@@ -1,11 +1,6 @@
 import { ComparisonQueryOperatorEnum } from './QueryBuilder'
-import {
-  FetchResponse,
-  NormalizedProjectPropertyResponse,
-  QueryBuilderQuery,
-  SortParams,
-} from './../types'
-import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
+import { FetchResponse, QueryBuilderQuery, SortParams } from './../types'
+import { FSXAApiErrors, FSXAProxyRoutes, HttpStatus } from '../enums'
 import { FSXAProxyApi } from './FSXAProxyApi'
 import Faker from 'faker'
 import { LogLevel } from '.'
@@ -51,11 +46,15 @@ describe('FSXAProxyAPI', () => {
       proxyApi = new FSXAProxyApi(baseURL, LogLevel.NONE)
     })
     it('should make a fetch request to retrieve given id', async () => {
-      fetchMock.mockResponseOnce(JSON.stringify({ mappedItems: [{ test: 'name' }] }))
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ mappedItems: [{ test: 'name' }] })
+      )
 
       await proxyApi.fetchElement({ id, locale })
 
-      const fetchMockBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+      const fetchMockBody = JSON.parse(
+        fetchMock.mock.calls[0][1]?.body as string
+      )
       const actualRequestUrl = fetchMock.mock.calls[0][0]
       const expectedRequestUrl = `${baseURL}${FSXAProxyRoutes.FETCH_ELEMENT_ROUTE}`
       expect(expectedRequestUrl).toEqual(actualRequestUrl)
@@ -65,20 +64,33 @@ describe('FSXAProxyAPI', () => {
       expect(locale).toEqual(actualRequestLocale)
     })
 
-    it('should throw a not found error when the response is 404', () => {
-      fetchMock.mockResponseOnce('', { status: 404 })
-      const actualRequest = proxyApi.fetchElement({ id, locale })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+    it('should throw a not found error when the response is 404', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.NOT_FOUND })
+      try {
+        await proxyApi.fetchElement({ id, locale })
+      } catch (error: any) {
+        expect(error.message).toBe(FSXAApiErrors.NOT_FOUND)
+        expect(error.statusCode).toBe(HttpStatus.NOT_FOUND)
+      }
     })
-    it('should throw an unauthorized error when the response is 401', () => {
-      fetchMock.mockResponseOnce('', { status: 401 })
-      const actualRequest = proxyApi.fetchElement({ id, locale })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_AUTHORIZED)
+    it('should throw an unauthorized error when the response is 401', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.UNAUTHORIZED })
+      try {
+        await proxyApi.fetchElement({ id, locale })
+      } catch (error: any) {
+        expect(error.message).toBe(FSXAApiErrors.NOT_AUTHORIZED)
+        expect(error.statusCode).toBe(HttpStatus.UNAUTHORIZED)
+      }
     })
-    it('should throw an unknown error when the response is not ok', () => {
-      fetchMock.mockResponseOnce('', { status: 400 })
-      const actualRequest = proxyApi.fetchElement({ id, locale })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+    it('should throw an unknown error with status 400 when the response is not ok', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.BAD_REQUEST })
+      try {
+        await proxyApi.fetchElement({ id, locale })
+      } catch (error: any) {
+        //this one works differently than all of the other unknown errors due to backwards compatibility
+        expect(error.message).toContain(FSXAApiErrors.UNKNOWN_ERROR)
+        expect(error.statusCode).toBe(HttpStatus.BAD_REQUEST)
+      }
     })
     it('should return the response', async () => {
       const item = Faker.datatype.json()
@@ -177,21 +189,30 @@ describe('FSXAProxyAPI', () => {
       const actualBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
       expect(actualBody.page).toEqual(1)
     })
-    it('should throw an unauthorized error when the response is 401', () => {
-      fetchMock.mockResponseOnce('', { status: 401 })
-      const actualRequest = proxyApi.fetchByFilter({
-        filters: defaultFilters,
-        locale,
-      })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_AUTHORIZED)
+    it('should throw an unauthorized error when the response is 401', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.UNAUTHORIZED })
+      try {
+        await proxyApi.fetchByFilter({
+          filters: defaultFilters,
+          locale,
+        })
+      } catch (error: any) {
+        expect(error.message).toBe(FSXAApiErrors.NOT_AUTHORIZED)
+        expect(error.statusCode).toBe(HttpStatus.UNAUTHORIZED)
+      }
     })
-    it('should throw an unknown error when the response is not ok', () => {
-      fetchMock.mockResponseOnce('', { status: 400 })
-      const actualRequest = proxyApi.fetchByFilter({
-        filters: defaultFilters,
-        locale,
-      })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+    it('should throw an unknown error when the response is not ok', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.BAD_REQUEST })
+      try {
+        await proxyApi.fetchByFilter({
+          filters: defaultFilters,
+          locale,
+        })
+      } catch (error: any) {
+        console.log(error)
+        expect(error.message).toBe(FSXAApiErrors.UNKNOWN_ERROR)
+        expect(error.statusCode).toBe(HttpStatus.BAD_REQUEST)
+      }
     })
 
     it('should return the response', async () => {
@@ -229,21 +250,32 @@ describe('FSXAProxyAPI', () => {
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.initialPath).toEqual(initialPath)
     })
-    it('should throw a not found error when the response is 404', () => {
-      fetchMock.mockResponseOnce('', { status: 404 })
-      const actualRequest = proxyApi.fetchNavigation({ initialPath, locale })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+    it('should throw a not found error when the response is 404', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.NOT_FOUND })
+      try {
+        await proxyApi.fetchNavigation({ initialPath, locale })
+      } catch (error: any) {
+        expect(error.message).toBe(FSXAApiErrors.NOT_FOUND)
+        expect(error.statusCode).toBe(HttpStatus.NOT_FOUND)
+      }
     })
-    it('should throw an unknown error when the response is not ok', () => {
-      fetchMock.mockResponseOnce('', { status: 400 })
-      const actualRequest = proxyApi.fetchNavigation({ initialPath, locale })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+    it('should throw an unknown error when the response is not ok', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.BAD_REQUEST })
+      try {
+        await proxyApi.fetchNavigation({ initialPath, locale })
+      } catch (error: any) {
+        expect(error.message).toBe(FSXAApiErrors.UNKNOWN_ERROR)
+        expect(error.statusCode).toBe(HttpStatus.BAD_REQUEST)
+      }
     })
     it('should return the response', async () => {
       const expectedResponse = Faker.datatype.json()
       fetchMock.mockResponseOnce(JSON.stringify(expectedResponse))
 
-      const actualResponse = await proxyApi.fetchNavigation({ initialPath, locale })
+      const actualResponse = await proxyApi.fetchNavigation({
+        initialPath,
+        locale,
+      })
       expect(expectedResponse).toEqual(actualResponse)
     })
   })
@@ -267,7 +299,11 @@ describe('FSXAProxyAPI', () => {
       fetchMock.mockResponseOnce('{}')
       const resolver = ['Media']
       const options = { referrer: '' } as RequestInit
-      proxyApi.fetchProjectProperties({ locale, resolver, fetchOptions: options })
+      proxyApi.fetchProjectProperties({
+        locale,
+        resolver,
+        fetchOptions: options,
+      })
       const actualBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
       const actualReferrer = fetchMock.mock.calls[0][1]?.referrer
       const actualURL = fetchMock.mock.calls[0][0]
@@ -278,15 +314,23 @@ describe('FSXAProxyAPI', () => {
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.resolver).toStrictEqual(resolver)
     })
-    it('should throw a not found error when the response is 404', () => {
-      fetchMock.mockResponseOnce('', { status: 404 })
-      const actualRequest = proxyApi.fetchProjectProperties({ locale })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+    it('should throw a not found error when the response is 404', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.NOT_FOUND })
+      try {
+        await proxyApi.fetchProjectProperties({ locale })
+      } catch (error: any) {
+        expect(error.message).toBe(FSXAApiErrors.NOT_FOUND)
+        expect(error.statusCode).toBe(HttpStatus.NOT_FOUND)
+      }
     })
-    it('should throw an unknown error when the response is not ok', () => {
-      fetchMock.mockResponseOnce('', { status: 400 })
-      const actualRequest = proxyApi.fetchProjectProperties({ locale })
-      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.UNKNOWN_ERROR)
+    it('should throw an unknown error when the response is not ok', async () => {
+      fetchMock.mockResponseOnce('', { status: HttpStatus.BAD_REQUEST })
+      try {
+        await proxyApi.fetchProjectProperties({ locale })
+      } catch (error: any) {
+        expect(error.message).toBe(FSXAApiErrors.UNKNOWN_ERROR)
+        expect(error.statusCode).toBe(HttpStatus.BAD_REQUEST)
+      }
     })
     it.skip('should return the response', async () => {
       const expectedResponse = Faker.datatype.json() // --> Would need to be NormalizedProjectPropertyResponse to fix this test

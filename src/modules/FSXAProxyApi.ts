@@ -17,16 +17,12 @@ import {
   MappedCaasItem,
   NormalizedProjectPropertyResponse,
 } from '../types'
-import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
+import { FSXAApiErrors, FSXAProxyRoutes, HttpStatus } from '../enums'
 import { Logger, LogLevel } from './Logger'
 import { FetchResponse } from '..'
 import { MapResponse } from '.'
 import { denormalizeResolvedReferences } from './MappingUtils'
-import {
-  InternalServerError,
-  NotFoundError,
-  UnauthorizedError,
-} from '../exceptions'
+import { HttpError } from '../exceptions'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: BodyInit | null | object
@@ -63,7 +59,7 @@ export class FSXAProxyApi implements FSXAApi {
   set baseUrl(value: string) {
     value = value.trim()
     if (value === '') {
-      throw new NotFoundError(FSXAApiErrors.MISSING_BASE_URL)
+      throw new HttpError(FSXAApiErrors.MISSING_BASE_URL, HttpStatus.NOT_FOUND)
     }
     this._baseUrl = value
   }
@@ -127,19 +123,22 @@ export class FSXAProxyApi implements FSXAApi {
 
     if (!response.ok) {
       switch (response.status) {
-        case 404:
-          throw new NotFoundError(FSXAApiErrors.NOT_FOUND)
-        case 401:
-          throw new UnauthorizedError(FSXAApiErrors.NOT_AUTHORIZED)
+        case HttpStatus.NOT_FOUND:
+          throw new HttpError(FSXAApiErrors.NOT_FOUND, HttpStatus.NOT_FOUND)
+        case HttpStatus.UNAUTHORIZED:
+          throw new HttpError(
+            FSXAApiErrors.NOT_AUTHORIZED,
+            HttpStatus.UNAUTHORIZED
+          )
         default:
           const bodyString = await response.text()
-          throw new Error(
+          const errorMessage =
             FSXAApiErrors.UNKNOWN_ERROR +
-              ' Response: ' +
-              response.status +
-              ' ' +
-              bodyString
-          )
+            ' Response: ' +
+            response.status +
+            ' ' +
+            bodyString
+          throw new HttpError(errorMessage, HttpStatus.BAD_REQUEST)
       }
     }
     const jsonRes = await response.json()
@@ -234,9 +233,15 @@ export class FSXAProxyApi implements FSXAApi {
     if (!response.ok) {
       switch (response.status) {
         case 401:
-          throw new UnauthorizedError(FSXAApiErrors.NOT_AUTHORIZED)
+          throw new HttpError(
+            FSXAApiErrors.NOT_AUTHORIZED,
+            HttpStatus.UNAUTHORIZED
+          )
         default:
-          throw new InternalServerError(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new HttpError(
+            FSXAApiErrors.UNKNOWN_ERROR,
+            HttpStatus.BAD_REQUEST
+          )
       }
     }
 
@@ -295,10 +300,13 @@ export class FSXAProxyApi implements FSXAApi {
 
     if (!response.ok) {
       switch (response.status) {
-        case 404:
-          throw new NotFoundError(FSXAApiErrors.NOT_FOUND)
+        case HttpStatus.NOT_FOUND:
+          throw new HttpError(FSXAApiErrors.NOT_FOUND, HttpStatus.NOT_FOUND)
         default:
-          throw new InternalServerError(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new HttpError(
+            FSXAApiErrors.UNKNOWN_ERROR,
+            HttpStatus.BAD_REQUEST
+          )
       }
     }
     return response.json()
@@ -347,9 +355,12 @@ export class FSXAProxyApi implements FSXAApi {
     if (!response.ok) {
       switch (response.status) {
         case 404:
-          throw new NotFoundError(FSXAApiErrors.NOT_FOUND)
+          throw new HttpError(FSXAApiErrors.NOT_FOUND, HttpStatus.NOT_FOUND)
         default:
-          throw new InternalServerError(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new HttpError(
+            FSXAApiErrors.UNKNOWN_ERROR,
+            HttpStatus.BAD_REQUEST
+          )
       }
     }
     // We need to denormalize here
