@@ -53,6 +53,16 @@ type buildCaaSUrlParams = {
   id?: string
 }
 
+type QueryParamPair = {
+  key: string
+  value: string
+}
+
+interface CaaSRequestObject {
+  endpoint: string
+  queryParams: QueryParamPair[]
+}
+
 /**
  * This class represents the `remote` variant of the FSXA API.
  */
@@ -644,6 +654,36 @@ export class FSXARemoteApi implements FSXAApi {
           ),
       ...(normalized && { referenceMap }),
       ...(normalized && { resolvedReferences }),
+    }
+  }
+
+  async fetchFromCaas({
+    endpoint,
+    queryParams,
+  }: CaaSRequestObject): Promise<any> {
+    if (
+      queryParams.length === 0 ||
+      !queryParams.every(({ key, value }) => !!key && !!value)
+    ) {
+      throw new Error(FSXAApiErrors.NOT_FOUND)
+    }
+    try {
+      // replace first and last occurence of /
+      const replacedEndpoint = endpoint.replace(/^\/|\/$/g, '')
+      const url = `${this.caasURL}/${replacedEndpoint}`
+      const urlQueryParams = new URLSearchParams()
+      queryParams.forEach(({ key, value }) => {
+        urlQueryParams.append(key, value)
+      })
+      const baseUrl = `${url}?${urlQueryParams.toString()}`
+      const caasApiResponse = await fetch(baseUrl, {
+        headers: this.authorizationHeader,
+      })
+
+      return caasApiResponse.json()
+    } catch (e) {
+      this._logger.error(e)
+      return e
     }
   }
 

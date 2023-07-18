@@ -923,4 +923,48 @@ describe('FSXARemoteAPI', () => {
       ],
     }
   })
+  describe('fetchFromCaas', () => {
+    let remoteApi: FSXARemoteApi
+    let config: any
+    let json: Record<string, any>
+    let endpoint: string
+    beforeEach(() => {
+      config = generateRandomConfig()
+      remoteApi = new FSXARemoteApi(config)
+      endpoint = `${config.tenantID}/${config.projectID}.${config.contentMode}`
+      json = {
+        _embedded: {
+          'rh:doc': Faker.datatype.array(),
+        },
+      }
+    })
+    it('should fetch some data from the caas', async () => {
+      const item = createDataEntry()
+      const mockRes = {
+        _embedded: {
+          'rh:doc': [item],
+        },
+      }
+      fetchMock.mockResponse(JSON.stringify(mockRes))
+      const actualRequest = await remoteApi.fetchFromCaas({
+        endpoint,
+        queryParams: [
+          {
+            key: 'filter',
+            value: '{"locale.language":{"$eq":"en"}}',
+          },
+        ],
+      })
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual(mockRes)
+    })
+    it('should throw an error', async () => {
+      fetchMock.mockResponseOnce('', { status: 404 })
+      const actualRequest = remoteApi.fetchFromCaas({
+        endpoint,
+        queryParams: [],
+      })
+      return expect(actualRequest).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+    })
+  })
 })
