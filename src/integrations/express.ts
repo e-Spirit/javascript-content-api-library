@@ -49,6 +49,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('could not fetch element: ', req, err.message)
+        //response object contains error and message properties for backwards compatibility
         return res
           .status(err.statusCode)
           .send({ message: err.message, error: err.message })
@@ -76,7 +77,8 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch Navigation: ' + err.message)
-        res
+        //response object contains error and message properties for backwards compatibility
+        return res
           .status(err.statusCode)
           .send({ message: err.message, error: err.message })
       }
@@ -103,6 +105,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch by filter: ', err.message)
+        //response object contains error and message properties for backwards compatibility
         return res
           .status(err.statusCode)
           .send({ message: err.message, error: err.message })
@@ -139,6 +142,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch project properties', err.message)
+        //response object contains error and message properties for backwards compatibility
         return res
           .status(err.statusCode)
           .send({ message: err.message, error: err.message })
