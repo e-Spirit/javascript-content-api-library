@@ -30,11 +30,11 @@ import {
   removeFromSeoRouteMap,
   removeFromStructure,
 } from '../utils'
-import { FSXAApiErrors } from './../enums'
+import { FSXAApiErrors, HttpStatus } from './../enums'
 import { LogLevel } from './Logger'
 import { denormalizeResolvedReferences } from './MappingUtils'
 import { ComparisonQueryOperatorEnum, QueryBuilder } from './QueryBuilder'
-import { type } from 'os'
+import { HttpError } from '../exceptions'
 
 type buildNavigationServiceURLParams = {
   locale?: string
@@ -147,7 +147,7 @@ export class FSXARemoteApi implements FSXAApi {
       (config) => config.id === remoteProjectId
     )
     if (!foundRemoteProject) {
-      throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
+      throw new HttpError(FSXAApiErrors.UNKNOWN_REMOTE, HttpStatus.NOT_FOUND)
     }
   }
 
@@ -157,7 +157,7 @@ export class FSXARemoteApi implements FSXAApi {
       (config) => config.id === remoteProjectId
     )
     if (!foundRemoteProject) {
-      throw new Error(FSXAApiErrors.UNKNOWN_REMOTE)
+      throw new HttpError(FSXAApiErrors.UNKNOWN_REMOTE, HttpStatus.NOT_FOUND)
     }
     return foundRemoteProject
   }
@@ -215,7 +215,10 @@ export class FSXARemoteApi implements FSXAApi {
             '[buildNavigationServiceUrl]',
             `Invalid locale format. Expected format: 'xx_YY' but got '${locale.toString()}'`
           )
-          throw new Error(FSXAApiErrors.INVALID_LOCALE)
+          throw new HttpError(
+            FSXAApiErrors.INVALID_LOCALE,
+            HttpStatus.BAD_REQUEST
+          )
         }
 
         localeFilter = [
@@ -345,7 +348,7 @@ export class FSXARemoteApi implements FSXAApi {
       if (forbiddenChars.some((char) => initialPath.includes(char))) {
         // error is unknown so that we don't give away how our encoding works
         this._logger.error('[fetchNavigation] Forbidden char in initial path')
-        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        throw new HttpError(FSXAApiErrors.UNKNOWN_ERROR, HttpStatus.BAD_REQUEST)
       }
       encodedInitialPath = encodeURI(initialPath)
     }
@@ -370,10 +373,13 @@ export class FSXARemoteApi implements FSXAApi {
         body: await response.text(),
       })
       switch (response.status) {
-        case 404:
-          throw new Error(FSXAApiErrors.NOT_FOUND)
+        case HttpStatus.NOT_FOUND:
+          throw new HttpError(FSXAApiErrors.NOT_FOUND, HttpStatus.NOT_FOUND)
         default:
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new HttpError(
+            FSXAApiErrors.UNKNOWN_ERROR,
+            HttpStatus.BAD_REQUEST
+          )
       }
     }
     this._logger.debug('fetchNavigation', 'response ok', response.ok)
@@ -442,9 +448,12 @@ export class FSXARemoteApi implements FSXAApi {
     filterContext,
     normalized = false,
   }: FetchElementParams): Promise<any> {
+    if (remoteProject && !this.remotes[remoteProject]) {
+      throw new HttpError(FSXAApiErrors.UNKNOWN_REMOTE, HttpStatus.NOT_FOUND)
+    }
     locale =
       remoteProject && this.remotes
-        ? this.remotes[remoteProject].locale
+        ? this.remotes[remoteProject]?.locale
         : locale
     const {
       items,
@@ -467,7 +476,7 @@ export class FSXARemoteApi implements FSXAApi {
     })
 
     if (items.length === 0) {
-      throw new Error(FSXAApiErrors.NOT_FOUND)
+      throw new HttpError(FSXAApiErrors.NOT_FOUND, HttpStatus.NOT_FOUND)
     }
 
     return normalized
@@ -559,7 +568,10 @@ export class FSXARemoteApi implements FSXAApi {
     if (!caasApiResponse.ok) {
       switch (caasApiResponse.status) {
         case 401:
-          throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+          throw new HttpError(
+            FSXAApiErrors.NOT_AUTHORIZED,
+            HttpStatus.UNAUTHORIZED
+          )
         default:
           if (caasApiResponse.status === 400) {
             try {
@@ -567,7 +579,10 @@ export class FSXARemoteApi implements FSXAApi {
               this._logger.error(`[fetchByFilter] Bad Request: ${message}`)
             } catch (ignore) {}
           }
-          throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+          throw new HttpError(
+            FSXAApiErrors.UNKNOWN_ERROR,
+            HttpStatus.BAD_REQUEST
+          )
       }
     }
 
@@ -824,12 +839,15 @@ export class FSXARemoteApi implements FSXAApi {
       headers: this.authorizationHeader,
     })
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === HttpStatus.NOT_FOUND) {
         this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_FOUND)
-        throw new Error(FSXAApiErrors.NOT_FOUND)
-      } else if (response.status === 401) {
+        throw new HttpError(FSXAApiErrors.NOT_FOUND, HttpStatus.NOT_FOUND)
+      } else if (response.status === HttpStatus.UNAUTHORIZED) {
         this._logger.error('fetchSecureToken', FSXAApiErrors.NOT_AUTHORIZED)
-        throw new Error(FSXAApiErrors.NOT_AUTHORIZED)
+        throw new HttpError(
+          FSXAApiErrors.NOT_AUTHORIZED,
+          HttpStatus.UNAUTHORIZED
+        )
       } else {
         this._logger.error(
           'fetchSecureToken',
@@ -837,7 +855,7 @@ export class FSXARemoteApi implements FSXAApi {
           `${response.status} - ${response.statusText}`,
           await response.text()
         )
-        throw new Error(FSXAApiErrors.UNKNOWN_ERROR)
+        throw new HttpError(FSXAApiErrors.UNKNOWN_ERROR, HttpStatus.BAD_REQUEST)
       }
     }
     const { securetoken = null } = await response.json()
