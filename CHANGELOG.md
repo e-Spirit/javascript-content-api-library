@@ -1,3 +1,10 @@
+## [10.16.1](https://github.com/e-Spirit/fsxa-api/compare/v10.16.0...v10.16.1) (2023-07-31)
+
+
+### Bug Fixes
+
+* **navigationservice:** add a warning when empty locale is provided ([#179](https://github.com/e-Spirit/fsxa-api/issues/179)) ([bcd9f72](https://github.com/e-Spirit/fsxa-api/commit/bcd9f72c1dfb02b1c915fa6bef81b36721302244))
+
 # [10.16.0](https://github.com/e-Spirit/fsxa-api/compare/v10.15.1...v10.16.0) (2023-06-22)
 
 
