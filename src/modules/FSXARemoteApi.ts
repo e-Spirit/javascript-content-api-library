@@ -352,6 +352,11 @@ export class FSXARemoteApi implements FSXAApi {
       }
       encodedInitialPath = encodeURI(initialPath)
     }
+    if (locale === '') {
+      this._logger.warn(
+        '[fetchNavigation] Empty locale given. It is better to not give a locale at all, or provide a valid locale.'
+      )
+    }
     const url = this.buildNavigationServiceUrl({
       initialPath: encodedInitialPath,
       locale,
