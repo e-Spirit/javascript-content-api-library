@@ -20,7 +20,11 @@ import {
   createDatasetReference,
 } from '../src/testutils/createDataset'
 import { FetchElementRouteBody } from '../src/routes'
-import { ComparisonQueryOperatorEnum, Logger, QueryBuilder } from '../src/modules'
+import {
+  ComparisonQueryOperatorEnum,
+  Logger,
+  QueryBuilder,
+} from '../src/modules'
 
 dotenv.config({ path: './integrationtests/.env' })
 const {
@@ -243,9 +247,11 @@ describe('express integration', () => {
       })
       it('should return an error 500 if the remote api responds 500', async () => {})
     })
-    describe("fetch by filter route", () => {
-      const builder = new QueryBuilder(new Logger(LogLevel.NONE, 'Querybuilder'))
-      it.skip("should return an error 404 if the remote api responds 404", async () => {
+    describe('fetch by filter route', () => {
+      const builder = new QueryBuilder(
+        new Logger(LogLevel.NONE, 'Querybuilder')
+      )
+      it.skip('should return an error 404 if the remote api responds 404', async () => {
         const filter = builder.build({
           operator: ComparisonQueryOperatorEnum.EQUALS,
           field: 'id',
@@ -268,32 +274,35 @@ describe('express integration', () => {
         expect(json).toHaveProperty('message')
         expect(json.message).toContain(FSXAApiErrors.NOT_FOUND)
       })
-      it("should return an error 401 if the remote api responds 401", async () => {
-        const filter = builder.build({
+      it('should return an error 401 if the remote api responds 401', async () => {
+        const filter = {
           operator: ComparisonQueryOperatorEnum.EQUALS,
           field: 'id',
           value: 'non-existing-id',
-        })
+        }
         const body = {
           filters: [filter],
           locale: locale.identifier,
         }
-        const res = await fetch(`http://localhost:${UNAUTHORIZED_PORT}/api/filter`, {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify(body),
-        })
+        const res = await fetch(
+          `http://localhost:${UNAUTHORIZED_PORT}/api/filter`,
+          {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify(body),
+          }
+        )
         const json = await res.json()
         expect(res.status).toBe(401)
         expect(json).toHaveProperty('message')
         expect(json.message).toContain(FSXAApiErrors.NOT_AUTHORIZED)
       })
     })
-    describe("fetch projectProperties route", () => {
-      it("should return an error 400 if the remote api responds 400", async () => {
+    describe('fetch projectProperties route', () => {
+      it('should return an error 400 if the remote api responds 400', async () => {
         const body = {}
         const res = await fetch(`http://localhost:${PORT}/api/properties`, {
           headers: {
@@ -310,31 +319,37 @@ describe('express integration', () => {
           ExpressRouterIntegrationErrors.MISSING_LOCALE
         )
       })
-      it.skip("should return an error 404 if the remote api responds 404", async () => {
-        const body = { locale: "tr_TR" }
-        const res = await fetch(`http://localhost:${PORT}/api/properties/test`, {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify(body)
-        })
+      it.skip('should return an error 404 if the remote api responds 404', async () => {
+        const body = { locale: 'tr_TR' }
+        const res = await fetch(
+          `http://localhost:${PORT}/api/properties/test`,
+          {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify(body),
+          }
+        )
         const json = await res.json()
         expect(res.status).toBe(404)
         expect(json).toHaveProperty('message')
         expect(json.message).toContain(FSXAApiErrors.NOT_FOUND)
       })
-      it("should return an error 401 if the remote api responds 401", async () => {
+      it('should return an error 401 if the remote api responds 401', async () => {
         const body = { locale: locale.identifier }
-        const res = await fetch(`http://localhost:${UNAUTHORIZED_PORT}/api/properties`, {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify(body)
-        })
+        const res = await fetch(
+          `http://localhost:${UNAUTHORIZED_PORT}/api/properties`,
+          {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify(body),
+          }
+        )
         const json = await res.json()
         expect(res.status).toBe(401)
         expect(json).toHaveProperty('message')

@@ -125,7 +125,7 @@ describe('FSXAProxyAPI', () => {
 
       expect(expectedURL).toEqual(actualURL)
       expect(actualBody.locale).toEqual(locale)
-      expect(actualBody.filter).toStrictEqual(defaultFilters)
+      expect(actualBody.filters).toStrictEqual(defaultFilters)
     })
     it('should trigger the fetch method with the correct extended params', async () => {
       fetchMock.mockResponseOnce('{}')
@@ -153,7 +153,7 @@ describe('FSXAProxyAPI', () => {
       const expectedURL = `${baseURL}${FSXAProxyRoutes.FETCH_BY_FILTER_ROUTE}`
 
       expect(expectedURL).toEqual(actualURL)
-      expect(actualBody.filter).toStrictEqual(defaultFilters)
+      expect(actualBody.filters).toStrictEqual(defaultFilters)
       expect(actualBody.locale).toEqual(locale)
       expect(actualBody.page).toEqual(page)
       expect(actualBody.pagesize).toEqual(pagesize)

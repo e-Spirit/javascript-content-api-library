@@ -202,7 +202,7 @@ export class FSXAProxyApi implements FSXAApi {
       : undefined
 
     const body = {
-      filter: filters,
+      filters,
       locale,
       page,
       pagesize,

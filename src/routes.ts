@@ -6,7 +6,8 @@ export const FETCH_BY_FILTER_ROUTE = '/filter'
 export const HEALTH_ROUTE = '/health'
 export const STREAM_CHANGE_EVENTS_ROUTE = '/change-stream'
 
-export const getFetchElementRoute = (id: string) => `${FETCH_ELEMENT_ROUTE.replace(':id', id)}`
+export const getFetchElementRoute = (id: string) =>
+  `${FETCH_ELEMENT_ROUTE.replace(':id', id)}`
 
 export interface FetchNavigationRouteBody {
   initialPath?: string
@@ -25,7 +26,7 @@ export interface FetchElementRouteBody {
 
 export interface FetchByFilterBody {
   locale: string
-  filter: QueryBuilderQuery[]
+  filters: QueryBuilderQuery[]
   page?: number
   pagesize?: number
   sort?: SortParams[]
