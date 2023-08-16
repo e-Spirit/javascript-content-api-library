@@ -92,7 +92,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 
       try {
         const response = await api.fetchByFilter({
-          filters: req.body.filter || [],
+          filters: req.body.filters || [],
           locale: req.body.locale,
           page: req.body.page ? req.body.page : undefined,
           pagesize: req.body.pagesize ? req.body.pagesize : undefined,
@@ -105,6 +105,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         return res.json(response)
       } catch (err: any) {
         logger.error('was not able to fetch by filter: ', err.message)
+        console.log(err)
         //response object contains error and message properties for backwards compatibility
         return res
           .status(err.statusCode)
