@@ -1,3 +1,10 @@
+## [10.16.2](https://github.com/e-Spirit/fsxa-api/compare/v10.16.1...v10.16.2) (2023-08-16)
+
+
+### Bug Fixes
+
+* **expressintegration:** rename filter to filters ([#180](https://github.com/e-Spirit/fsxa-api/issues/180)) ([5274f4c](https://github.com/e-Spirit/fsxa-api/commit/5274f4c846c10bdb280b10b45048787576575525))
+
 ### UPDATE NOTICE
 
 We made changes in the request body of calls sent to the remote-API. Specifically, a property name of the JSON body has changed from 'filter' to 'filters'. These calls are usually made internally within the content-API. Thus, these changes should not be breaking. If however for some reason you rely on internal API, be aware that this attribute name change could break your implementation.
