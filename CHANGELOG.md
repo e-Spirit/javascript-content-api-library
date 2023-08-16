@@ -1,3 +1,7 @@
+### UPDATE NOTICE
+
+We made changes in the request body of calls sent to the remote-API. Specifically, a property name of the JSON body has changed from 'filter' to 'filters'. These calls are usually made internally within the content-API. Thus, these changes should not be breaking. If however for some reason you rely on internal API, be aware that this attribute name change could break your implementation.
+
 ## [10.16.1](https://github.com/e-Spirit/fsxa-api/compare/v10.16.0...v10.16.1) (2023-07-31)
 
 
