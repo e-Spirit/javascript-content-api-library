@@ -6,24 +6,27 @@ Navigation Service. The data is processed and transformed so that it can be used
 
 > **_Attention_**
 > We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. The project is now called "JavaScript Content API Library", but please note that this change solely affects the project's name, repository, and associated branding elements. The core code and functionality of the library remain unchanged.
-The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
+> The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
 
 - [JavaScript Content API Library](#javascript-content-api-library)
   - [Experimental features](#experimental-features)
   - [Legal Notices](#legal-notices)
   - [Methods](#methods)
+  - [Requirements](#requirements)
     - [Constructor](#constructor)
-    - [buildAuthorizationHeaders](#get-authorizationheader)
+    - [get authorizationHeader](#get-authorizationheader)
     - [fetchNavigation](#fetchnavigation)
     - [fetchElement](#fetchelement)
     - [fetchByFilter](#fetchbyfilter)
     - [fetchProjectProperties](#fetchprojectproperties)
   - [Filter](#filter)
-    - [Logical Query Operators](#logical-query-operators)
-    - [Comparison Query Operators](#comparison-query-operators)
-    - [Evaluation Query Operators](#evaluation-query-operators)
-    - [Array Query Operators](#array-query-operators)
-  - [Helpers](#helpers)
+    - [Helpers](#helpers)
+    - [Fetch From CaaS](#fetch-from-caas)
+- [Using `remoteApi.buildCaaSUrl()` and Authorization Headers to Send a Request to CaaS](#using-remoteapibuildcaasurl-and-authorization-headers-to-send-a-request-to-caas)
+  - [Logical Query Operators](#logical-query-operators)
+  - [Comparison Query Operators](#comparison-query-operators)
+  - [Evaluation Query Operators](#evaluation-query-operators)
+  - [Array Query Operators](#array-query-operators)
   - [Type Mapping](#type-mapping)
     - [Input Components](#input-components)
   - [Disclaimer](#disclaimer)
@@ -287,6 +290,38 @@ This method provides a list of available locales configured in your FirstSpirit 
   Promise<string[]>
 ```
 
+### Fetch From CaaS
+
+# Using `remoteApi.buildCaaSUrl()` and Authorization Headers to Send a Request to CaaS
+
+The Content as a Service (CaaS) provides a powerful way to retrieve and manage content. This guide focuses on how to construct and send requests to the CaaS service using the `buildCaasUrl` function and the aggregation URI `/_aggrs/example`. Additionally, it covers the necessary steps to include authorization headers for secure communication.
+
+In this tutorial, we will explore how to use the JavaScript Content API Library's `remoteApi.buildCaaSUrl()` method to construct a CaaS URL and how to include authorization headers for sending a fetch request to the CaaS platform.
+
+```
+const caasUrl = remote.buildCaaSUrl();
+const aggregationUri = '_aggrs/example';
+const url = `${caasUrl}/${aggregationUri}`;
+const headers = {
+  ...remoteApi.authorizationHeader,
+  // other headers if needed
+}
+
+try {
+  const response = await fetch(url, {
+    headers,
+  });
+
+  const data = await response.json();
+  // Handle the data...
+} catch (error) {
+  console.error('An error occurred:', error);
+  // Handle the error...
+}
+```
+
+This guide provided an in-depth overview of sending requests to the CaaS service using the buildCaasUrl function and the aggregation URI `/_aggrs/example`. It also covered the crucial aspect of including authorization headers to ensure secure communication. By following these steps, you can effectively retrieve and manage content from the CaaS service in your JavaScript projects.
+
 ### Logical Query Operators
 
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
@@ -337,25 +372,25 @@ This table gives an overview of the FirstSpirit input components, which can be d
 Each input component has a (Java) data type, which has a representation in the CaaS. Those values are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the Content API.
 
 | <nobr>FirstSpirit Input Component</nobr>                                 | <nobr>CaaS Representation</nobr>                                                                                                                  | <nobr>Content API [Value](src/types.ts)</nobr> |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| [FS_CATALOG]<br />[`Catalog`][fs-catalog]`<`[`Catalog$Card`][fs-card]`>` | <nobr>= `CaaSApi_FSCatalog`</nobr><br />= `CaaSApi_Card[]`                                                                                        | `Section[]`                                 |
-| [CMS_INPUT_CHECKBOX]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`     | <nobr>= `CaaSApi_CMSInputCheckbox`</nobr><br />= `CaaSApi_Option[]`                                                                               | `Option[]`                                  |
-| [CMS_INPUT_COMBOBOX]<br />[`Option`][fs-option]                          | <nobr>= `CaaSApi_CMSInputCombobox`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                     | `Option`                                    |
-| [FS_DATASET]<br />[`DatasetContainer`][fs-datasetcontainer]              | <nobr>= `CaaSApi_FSDataset`</nobr><br />= `CaaSApi_Dataset`&#124;`CaaSApi_DataEntry[]`&#124;`null`                                                | `Dataset`                                   |
-| [CMS_INPUT_DATE]<br />[`Date`][fs-date]                                  | <nobr>= `CaaSApi_CMSInputDate`</nobr><br />= `string(ISO_8601)`&#124;`null`                                                                       | [`Date`][js-date]                           |
-| [CMS_INPUT_DOM]<br>[`DomElement`][fs-domelement]                         | <nobr>= `CaaSApi_CMSInputDOM`</nobr><br />= `string` (FS-XML)                                                                                     | `RichTextElement[]`                         |
-| [CMS_INPUT_DOMTABLE]<br>[`Table`][fs-table]                              | <nobr>= `CaaSApi_CMSInputDOMTable`</nobr><br />= `string` (FS-XML)                                                                                | `RichTextElement[]`                         |
-| [CMS_INPUT_IMAGEMAP]<br>[`MappingMedium`][fs-mappingmedium]              | <nobr>= `CaaSApi_CMSImageMap`</nobr><br />= `CaaSApi_CMSImageMap`                                                                                 | `ImageMap`                                  |
-| [FS_INDEX]<br />[`Index`][fs-index]`<`[`Index$Record`][fs-record]`>`     | <nobr>= `CaaSApi_FSIndex`</nobr><br />= `CaaSApi_Record[]`                                                                                        | `DataEntries[]`                             |
-| [CMS_INPUT_LINK]<br />[`Link`][fs-link]                                  | <nobr>= `CaaSApi_CMSInputLink`</nobr><br />= `Object`                                                                                             | `Link`                                      |
-| [CMS_INPUT_LIST]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`         | <nobr>= `CaaSApi_CMSInputList`</nobr><br />= `any[]`                                                                                              | `Option[]`                                  |
-| [CMS_INPUT_NUMBER]<br />[`Number`][fs-number]                            | <nobr>= `CaaSApi_CMSInputNumber`</nobr><br />= `number`                                                                                           | [`number`](js-number)                       |
-| [CMS_INPUT_PERMISSION]<br />[`Permissions`][fs-permissions]              | <nobr>= `CaaSApi_CMSInputPermission`</nobr><br />= `CaaSAPI_PermissionActivity[][]`                                                               | `Permission`                                |
-| [CMS_INPUT_RADIOBUTTON]<br />[`Option`][fs-option]                       | <nobr>= `CaaSApi_CMSInputRadioButton`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                  | `Option`                                    |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| [FS_CATALOG]<br />[`Catalog`][fs-catalog]`<`[`Catalog$Card`][fs-card]`>` | <nobr>= `CaaSApi_FSCatalog`</nobr><br />= `CaaSApi_Card[]`                                                                                        | `Section[]`                                    |
+| [CMS_INPUT_CHECKBOX]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`     | <nobr>= `CaaSApi_CMSInputCheckbox`</nobr><br />= `CaaSApi_Option[]`                                                                               | `Option[]`                                     |
+| [CMS_INPUT_COMBOBOX]<br />[`Option`][fs-option]                          | <nobr>= `CaaSApi_CMSInputCombobox`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                     | `Option`                                       |
+| [FS_DATASET]<br />[`DatasetContainer`][fs-datasetcontainer]              | <nobr>= `CaaSApi_FSDataset`</nobr><br />= `CaaSApi_Dataset`&#124;`CaaSApi_DataEntry[]`&#124;`null`                                                | `Dataset`                                      |
+| [CMS_INPUT_DATE]<br />[`Date`][fs-date]                                  | <nobr>= `CaaSApi_CMSInputDate`</nobr><br />= `string(ISO_8601)`&#124;`null`                                                                       | [`Date`][js-date]                              |
+| [CMS_INPUT_DOM]<br>[`DomElement`][fs-domelement]                         | <nobr>= `CaaSApi_CMSInputDOM`</nobr><br />= `string` (FS-XML)                                                                                     | `RichTextElement[]`                            |
+| [CMS_INPUT_DOMTABLE]<br>[`Table`][fs-table]                              | <nobr>= `CaaSApi_CMSInputDOMTable`</nobr><br />= `string` (FS-XML)                                                                                | `RichTextElement[]`                            |
+| [CMS_INPUT_IMAGEMAP]<br>[`MappingMedium`][fs-mappingmedium]              | <nobr>= `CaaSApi_CMSImageMap`</nobr><br />= `CaaSApi_CMSImageMap`                                                                                 | `ImageMap`                                     |
+| [FS_INDEX]<br />[`Index`][fs-index]`<`[`Index$Record`][fs-record]`>`     | <nobr>= `CaaSApi_FSIndex`</nobr><br />= `CaaSApi_Record[]`                                                                                        | `DataEntries[]`                                |
+| [CMS_INPUT_LINK]<br />[`Link`][fs-link]                                  | <nobr>= `CaaSApi_CMSInputLink`</nobr><br />= `Object`                                                                                             | `Link`                                         |
+| [CMS_INPUT_LIST]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`         | <nobr>= `CaaSApi_CMSInputList`</nobr><br />= `any[]`                                                                                              | `Option[]`                                     |
+| [CMS_INPUT_NUMBER]<br />[`Number`][fs-number]                            | <nobr>= `CaaSApi_CMSInputNumber`</nobr><br />= `number`                                                                                           | [`number`](js-number)                          |
+| [CMS_INPUT_PERMISSION]<br />[`Permissions`][fs-permissions]              | <nobr>= `CaaSApi_CMSInputPermission`</nobr><br />= `CaaSAPI_PermissionActivity[][]`                                                               | `Permission`                                   |
+| [CMS_INPUT_RADIOBUTTON]<br />[`Option`][fs-option]                       | <nobr>= `CaaSApi_CMSInputRadioButton`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                  | `Option`                                       |
 | [FS_REFERENCE]<br />[`TargetReference`][fs-targetreference]              | <nobr>= `CaaSApi_FSReference`</nobr><br />= `CaaSApi_BaseRef`&#124;`CaaSApi_PageRefRef`&#124;`CaaSApi_GCARef`&#124;`CaaSApi_MediaRef`&#124;`null` |
-| [CMS_INPUT_TEXT]<br />[`String`][fs-string]                              | <nobr>= `CaaSApi_CMSInputText`</nobr><br />= `string`                                                                                             | [`string`][js-string]                       |
-| [CMS_INPUT_TEXTAREA]<br />[`String`][fs-string]                          | <nobr>= `CaaSApi_CMSInputTextArea`</nobr><br />= `string`                                                                                         | [`string`][js-string]                       |
-| [CMS_INPUT_TOGGLE]<br />[`Boolean`][fs-boolean]                          | <nobr>= `CaaSApi_CMSInputToggle`</nobr><br />= `boolean`&#124;`null`                                                                              | [`boolean`][js-boolean]                     |
+| [CMS_INPUT_TEXT]<br />[`String`][fs-string]                              | <nobr>= `CaaSApi_CMSInputText`</nobr><br />= `string`                                                                                             | [`string`][js-string]                          |
+| [CMS_INPUT_TEXTAREA]<br />[`String`][fs-string]                          | <nobr>= `CaaSApi_CMSInputTextArea`</nobr><br />= `string`                                                                                         | [`string`][js-string]                          |
+| [CMS_INPUT_TOGGLE]<br />[`Boolean`][fs-boolean]                          | <nobr>= `CaaSApi_CMSInputToggle`</nobr><br />= `boolean`&#124;`null`                                                                              | [`boolean`][js-boolean]                        |
 
 [fs_catalog]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/catalog/index.html
 [fs-catalog]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/catalog/index.html
