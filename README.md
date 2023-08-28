@@ -22,11 +22,12 @@ Navigation Service. The data is processed and transformed so that it can be used
   - [Filter](#filter)
     - [Helpers](#helpers)
     - [Fetch From CaaS](#fetch-from-caas)
-- [Using `remoteApi.buildCaaSUrl()` and Authorization Headers to Send a Request to CaaS](#using-remoteapibuildcaasurl-and-authorization-headers-to-send-a-request-to-caas)
-  - [Logical Query Operators](#logical-query-operators)
-  - [Comparison Query Operators](#comparison-query-operators)
-  - [Evaluation Query Operators](#evaluation-query-operators)
-  - [Array Query Operators](#array-query-operators)
+      - [Using `remoteApi.buildCaaSUrl()` and Authorization Headers to Send a Request to CaaS](#using-remoteapibuildcaasurl-and-authorization-headers-to-send-a-request-to-caas)
+      - [Prerequisites](#prerequisites)
+    - [Logical Query Operators](#logical-query-operators)
+    - [Comparison Query Operators](#comparison-query-operators)
+    - [Evaluation Query Operators](#evaluation-query-operators)
+    - [Array Query Operators](#array-query-operators)
   - [Type Mapping](#type-mapping)
     - [Input Components](#input-components)
   - [Disclaimer](#disclaimer)
@@ -292,11 +293,18 @@ This method provides a list of available locales configured in your FirstSpirit 
 
 ### Fetch From CaaS
 
-# Using `remoteApi.buildCaaSUrl()` and Authorization Headers to Send a Request to CaaS
+#### Using `remoteApi.buildCaaSUrl()` and Authorization Headers to Send a Request to CaaS
 
 The Content as a Service (CaaS) provides a powerful way to retrieve and manage content. This guide focuses on how to construct and send requests to the CaaS service using the `buildCaasUrl` function and the aggregation URI `/_aggrs/example`. Additionally, it covers the necessary steps to include authorization headers for secure communication.
 
 In this tutorial, we will explore how to use the JavaScript Content API Library's `remoteApi.buildCaaSUrl()` method to construct a CaaS URL and how to include authorization headers for sending a fetch request to the CaaS platform.
+
+#### Prerequisites
+
+Before proceeding, make sure you have the following:
+
+- Access to the JavaScript Content API Library.
+- Configuration details such as API keys, CaaS URL, and other required parameters.
 
 ```
 const caasUrl = remote.buildCaaSUrl();
