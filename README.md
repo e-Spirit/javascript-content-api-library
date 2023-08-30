@@ -287,6 +287,83 @@ This method provides a list of available locales configured in your FirstSpirit 
   Promise<string[]>
 ```
 
+### 1. Extending the API
+
+#### Introduction
+
+In some scenarios, you might find that the standard methods provided by the JavaScript Content API Library do not fully cover your use case. That's where the flexibility of extending the API comes into play. This guide focuses on extending the API to fetch data from an aggregation in the Content as a Service (CaaS) using the buildCaasUrl function and handling authorization headers. We'll take you through the process step by step.
+
+#### 1.1 Fetching from Aggregation
+
+This guide provided an in-depth overview of sending requests to the CaaS service using the `buildCaasUrl` function and the aggregation URI `/_aggrs/example`. It also covered the crucial aspect of including authorization headers to ensure secure communication. By following these steps, you can effectively retrieve and manage content from the CaaS in your JavaScript projects
+
+#### 1.1.1 Prerequisites
+Before you start extending the API, ensure you have the following:
+- Configuration details such as API keys, CaaS URL, and other required parameters.
+
+#### 1.1.2 Abstract Steps
+Extending the API to fetch data from an aggregation involves the following steps:
+
+1. Use the buildCaasUrl function to construct the URL for the aggregation request.
+2. Include the necessary authorization headers for secure communication.
+3. Make the fetch request to the constructed URL.
+4. Handle the response data or errors accordingly.
+
+#### 1.1.3 Implementation Notes
+It's important to note a few things before proceeding:
+- This approach requires a server-side environment due to security concerns.
+- To access the CaaS service from the server-side, you need to use the FSXARemoteApi.
+- Extending the API in this manner allows you to tailor the data retrieval to your specific requirements.
+
+#### 1.1.4 How to Use the New Function
+Let's dive into the details of extending the API to fetch data from an aggregation.
+
+1. Use `buildCaasUrl` Function
+
+Start by using the buildCaasUrl function to construct the URL for the aggregation request:
+```typescript
+import { FSXARemoteApi } from 'fsxa-api';
+
+const remoteApi = new FSXARemoteApi(config);
+const aggregationUri = '/_aggrs/example';
+const caasUrl = remoteApi.buildCaasUrl();
+const url = `${caasUrl}/${aggregationUri}`
+```
+
+2. Include Authorization Headers
+
+To ensure secure communication, include authorization headers in your request:
+```typescript
+const headers = {
+  ...remoteApi.authorizationHeader,
+  // other headers if needed
+}
+```
+
+3. Make the Fetch Request
+```typescript
+const caasUrl = remote.buildCaaSUrl();
+const aggregationUri = '_aggrs/example';
+const url = `${caasUrl}/${aggregationUri}`;
+const headers = {
+  ...remoteApi.authorizationHeader,
+  // other headers if needed
+}
+
+try {
+  const response = await fetch(url, {
+    headers,
+  });
+
+  const data = await response.json();
+  // Handle the data...
+} catch (error) {
+  console.error('An error occurred:', error);
+  // Handle the error...
+}
+```
+By following these steps, you've successfully extended the API to fetch data from an aggregation in the CaaS service. This approach empowers you to retrieve data tailored to your specific needs, enhancing the capabilities of the JavaScript Content API Library.
+
 ### Logical Query Operators
 
 These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
