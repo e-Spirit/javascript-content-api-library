@@ -707,6 +707,7 @@ export class CaaSMapper {
         remoteProjectLocale
       ),
       id: properties.identifier,
+      masterLocale: properties.projectConfiguration?.masterLocale,
       remoteProjectId,
     }
   }
