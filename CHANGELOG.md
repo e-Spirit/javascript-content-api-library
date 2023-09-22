@@ -1,3 +1,9 @@
+## [10.16.3](https://github.com/e-Spirit/javascript-content-api-library/compare/v10.16.2...v10.16.3) (2023-09-22)
+
+### Bug fixes
+
+* Export missing HttpError class
+
 ## [10.16.2](https://github.com/e-Spirit/fsxa-api/compare/v10.16.1...v10.16.2) (2023-08-16)
 
 
