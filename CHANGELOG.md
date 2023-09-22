@@ -1,3 +1,10 @@
+## [10.16.3](https://github.com/e-Spirit/fsxa-api/compare/v10.16.2...v10.16.3) (2023-09-22)
+
+
+### Bug Fixes
+
+* **release:** fix broken release v10.16.3 ([#186](https://github.com/e-Spirit/fsxa-api/issues/186)) ([e5ebe05](https://github.com/e-Spirit/fsxa-api/commit/e5ebe0508bfd3dae43cf0f5d671ecb9f9ae3e5a2))
+
 ## [10.16.3](https://github.com/e-Spirit/javascript-content-api-library/compare/v10.16.2...v10.16.3) (2023-09-22)
 
 ### Bug fixes
