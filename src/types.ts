@@ -15,6 +15,12 @@ import {
 } from './modules/QueryBuilder'
 import XMLParser from './modules/XMLParser'
 
+export interface MasterLocale {
+  country: string
+  language: string
+  identifier: string
+}
+
 export interface CaaSApi_Template {
   fsType: 'PageTemplate' | 'SectionTemplate' | 'LinkTemplate'
   name: string
@@ -428,6 +434,9 @@ export interface CaaSApi_ProjectProperties {
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   metaFormData: CaaSApi_DataEntries
+  projectConfiguration?: {
+    masterLocale: MasterLocale
+  }
 }
 
 export interface CaaSApi_Page {
@@ -631,6 +640,7 @@ export interface ProjectProperties {
   data: DataEntries
   meta: DataEntries
   remoteProjectId?: string
+  masterLocale?: MasterLocale
 }
 
 export interface Content2Section {

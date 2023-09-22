@@ -110,7 +110,7 @@ describe('FSXAProxyAPI', () => {
         parsedRes._etag.$oid
       )
     })
-    it('fetch project props returns project pros', async () => {
+    it('fetch project props returns project props', async () => {
       const projectProperties = createProjectProperties(projectPropsId)
       projectProperties._id = 'projectSettings' // this was found in real data
       await caasClient.addItemsToCollection([projectProperties], locale)
@@ -118,6 +118,24 @@ describe('FSXAProxyAPI', () => {
         locale: locale.identifier,
       })
       expect(res!.id).toEqual(projectProperties.identifier)
+    })
+    it('fetch project props returns project props with master locale', async () => {
+      const projectProperties = createProjectProperties(projectPropsId)
+      projectProperties._id = 'projectSettings' // this was found in real data
+      projectProperties.projectConfiguration = {
+        masterLocale: {
+          identifier: 'en_GB',
+          country: 'GB',
+          language: 'en',
+        },
+      }
+      await caasClient.addItemsToCollection([projectProperties], locale)
+      const res = await proxyAPI.fetchProjectProperties({
+        locale: locale.identifier,
+      })
+      expect(res!.masterLocale).toEqual(
+        projectProperties.projectConfiguration.masterLocale
+      )
     })
     it('nested refs in project props get resolved', async () => {
       const projectProperties = createProjectProperties(projectPropsId)
