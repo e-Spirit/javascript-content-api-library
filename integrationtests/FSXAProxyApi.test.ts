@@ -110,7 +110,7 @@ describe('FSXAProxyAPI', () => {
         parsedRes._etag.$oid
       )
     })
-    it('fetch project props returns project pros', async () => {
+    it('fetch project props returns project props', async () => {
       const projectProperties = createProjectProperties(projectPropsId)
       projectProperties._id = 'projectSettings' // this was found in real data
       await caasClient.addItemsToCollection([projectProperties], locale)
@@ -119,7 +119,7 @@ describe('FSXAProxyAPI', () => {
       })
       expect(res!.id).toEqual(projectProperties.identifier)
     })
-    it('fetch project props returns project pros with master locale', async () => {
+    it('fetch project props returns project props with master locale', async () => {
       const projectProperties = createProjectProperties(projectPropsId)
       projectProperties._id = 'projectSettings' // this was found in real data
       projectProperties.projectConfiguration = {
