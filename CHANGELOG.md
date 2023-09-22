@@ -1,3 +1,10 @@
+# [10.17.0](https://github.com/e-Spirit/fsxa-api/compare/v10.16.3...v10.17.0) (2023-09-22)
+
+
+### Features
+
+* **projectproperties:** add master locale to project properties ([#184](https://github.com/e-Spirit/fsxa-api/issues/184)) ([99761b4](https://github.com/e-Spirit/fsxa-api/commit/99761b4cb455c132ed963941399feea08beffd03))
+
 ## [10.16.3](https://github.com/e-Spirit/fsxa-api/compare/v10.16.2...v10.16.3) (2023-09-22)
 
 
