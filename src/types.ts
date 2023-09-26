@@ -388,6 +388,7 @@ export interface CaaSApi_Section {
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   displayed?: boolean
+  lifespan?: SectionLifespanType
 }
 
 export interface CaaSApi_SectionReference {
@@ -398,6 +399,7 @@ export interface CaaSApi_SectionReference {
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   displayed?: boolean
+  lifespan?: SectionLifespanType
 }
 
 export interface CaaSApi_Body {
@@ -668,6 +670,7 @@ export interface Section {
   sectionType: string
   data: DataEntries
   displayed?: boolean
+  lifespan?: SectionLifespanType
   children: Section[]
 }
 
@@ -1079,4 +1082,9 @@ export interface NormalizedFetchResponse extends FetchResponseBase {
   items: (MappedCaasItem | CaasApi_Item)[] // Mapped Items without resolved refs --> has no circles
   resolvedReferences?: ResolvedReferencesInfo
   referenceMap?: ReferencedItemsInfo
+}
+
+export type SectionLifespanType = {
+  start?: string
+  end?: string
 }

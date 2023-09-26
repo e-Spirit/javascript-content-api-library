@@ -552,6 +552,7 @@ export class CaaSMapper {
         remoteProjectId
       ),
       displayed: section.displayed,
+      lifespan: section.lifespan,
       children: [],
     }
   }
