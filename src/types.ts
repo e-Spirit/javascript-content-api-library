@@ -21,6 +21,16 @@ export interface MasterLocale {
   identifier: string
 }
 
+export interface CaaSApi_Lifespan {
+  start: string
+  end?: string
+}
+
+export interface Lifespan {
+  start: Date
+  end?: Date
+}
+
 export interface CaaSApi_Template {
   fsType: 'PageTemplate' | 'SectionTemplate' | 'LinkTemplate'
   name: string
@@ -388,7 +398,7 @@ export interface CaaSApi_Section {
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   displayed?: boolean
-  lifespan?: SectionLifespanType
+  lifespan?: CaaSApi_Lifespan
 }
 
 export interface CaaSApi_SectionReference {
@@ -399,7 +409,7 @@ export interface CaaSApi_SectionReference {
   template: CaaSApi_Template
   formData: CaaSApi_DataEntries
   displayed?: boolean
-  lifespan?: SectionLifespanType
+  lifespan?: CaaSApi_Lifespan
 }
 
 export interface CaaSApi_Body {
@@ -670,7 +680,7 @@ export interface Section {
   sectionType: string
   data: DataEntries
   displayed?: boolean
-  lifespan?: SectionLifespanType
+  lifespan?: Lifespan
   children: Section[]
 }
 
@@ -1082,9 +1092,4 @@ export interface NormalizedFetchResponse extends FetchResponseBase {
   items: (MappedCaasItem | CaasApi_Item)[] // Mapped Items without resolved refs --> has no circles
   resolvedReferences?: ResolvedReferencesInfo
   referenceMap?: ReferencedItemsInfo
-}
-
-export type SectionLifespanType = {
-  start?: string
-  end?: string
 }

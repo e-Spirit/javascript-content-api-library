@@ -1223,21 +1223,14 @@ describe('CaaSMapper', () => {
       const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
       const section: CaaSApi_Section = createSection()
       const lifespan = {
-        start: new Date().toISOString(),
-        end: new Date().toISOString(),
+        start: '2022-09-25T12:43:56.000Z',
+        end: '2024-09-24T12:49:59.000Z',
       }
       section.lifespan = lifespan
-      await expect(mapper.mapSection(section, createPath())).resolves.toEqual({
-        id: section.identifier,
-        type: 'Section',
-        sectionType: section.template.uid,
-        previewId: expect.any(String),
-        data: {
-          v1: (section.formData.v1 as CaaSApi_CMSInputNumber).value,
-          v2: (section.formData.v2 as CaaSApi_CMSInputNumber).value,
-        },
-        children: [],
-        lifespan: lifespan,
+      const res = await mapper.mapSection(section, createPath())
+      expect(res.lifespan).toEqual({
+        start: new Date(lifespan.start),
+        end: new Date(lifespan.end),
       })
     })
   })
