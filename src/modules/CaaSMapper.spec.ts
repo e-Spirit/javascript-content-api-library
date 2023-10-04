@@ -1219,6 +1219,20 @@ describe('CaaSMapper', () => {
         displayed: true,
       })
     })
+    it('should map lifespan property', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const section: CaaSApi_Section = createSection()
+      const lifespan = {
+        start: '2022-09-25T12:43:56.000Z',
+        end: '2024-09-24T12:49:59.000Z',
+      }
+      section.lifespan = lifespan
+      const res = await mapper.mapSection(section, createPath())
+      expect(res.lifespan).toEqual({
+        start: new Date(lifespan.start),
+        end: new Date(lifespan.end),
+      })
+    })
   })
 
   describe('mapBodyContent', () => {
