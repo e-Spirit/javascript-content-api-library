@@ -1,3 +1,10 @@
+# [10.18.0](https://github.com/e-Spirit/fsxa-api/compare/v10.17.0...v10.18.0) (2023-10-04)
+
+
+### Features
+
+* **caasmapper:** add lifespan property to section ([#187](https://github.com/e-Spirit/fsxa-api/issues/187)) ([591dda7](https://github.com/e-Spirit/fsxa-api/commit/591dda71905f5b718ca9d5511f6cdb0ef7c5e2dc))
+
 # [10.17.0](https://github.com/e-Spirit/fsxa-api/compare/v10.16.3...v10.17.0) (2023-09-22)
 
 
