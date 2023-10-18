@@ -1,3 +1,10 @@
+## [10.18.1](https://github.com/e-Spirit/fsxa-api/compare/v10.18.0...v10.18.1) (2023-10-18)
+
+
+### Bug Fixes
+
+* **content-filter:** Pass keys usage to filter ([#165](https://github.com/e-Spirit/fsxa-api/issues/165)) ([46b15e4](https://github.com/e-Spirit/fsxa-api/commit/46b15e46e3e352d2cbac70f91f2f342222add49d))
+
 # [10.18.0](https://github.com/e-Spirit/fsxa-api/compare/v10.17.0...v10.18.0) (2023-10-04)
 
 

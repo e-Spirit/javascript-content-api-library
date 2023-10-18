@@ -1,6 +1,6 @@
 {
   "name": "fsxa-api",
-  "version": "10.18.0",
+  "version": "10.18.1",
   "description": "The JavaScript Content API Library a.k.a Content API is an interface handling data coming from the FirstSpirit CaaS and the Navigation Service.",
   "keywords": [],
   "main": "dist/fsxa-api.cjs.js",
