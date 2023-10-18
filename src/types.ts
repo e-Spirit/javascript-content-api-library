@@ -990,7 +990,9 @@ export type RemoteProjectConfigurationEntry =
 
 export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType
+  isKeysSet: boolean
 }
+
 export type CaasItemFilter<FilterContextType = unknown> = (
   params: CaasItemFilterParams<FilterContextType>
 ) => Promise<MapResponse> | MapResponse

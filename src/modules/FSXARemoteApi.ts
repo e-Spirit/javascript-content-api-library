@@ -646,7 +646,8 @@ export class FSXARemoteApi implements FSXAApi {
           mappedItems,
           referenceMap,
           resolvedReferences,
-          filterContext
+          filterContext,
+          !!additionalParams?.keys
         ))
     }
 
@@ -671,7 +672,8 @@ export class FSXARemoteApi implements FSXAApi {
     mappedItems: (CaasApi_Item | MappedCaasItem)[],
     referenceMap: ReferencedItemsInfo,
     resolvedReferences: ResolvedReferencesInfo,
-    filterContext: unknown
+    filterContext: unknown,
+    isKeysSet: boolean
   ) {
     this._logger.debug(
       'fetchByFilter',
@@ -689,6 +691,7 @@ export class FSXARemoteApi implements FSXAApi {
       referenceMap,
       resolvedReferences,
       filterContext,
+      isKeysSet,
     })
   }
 
