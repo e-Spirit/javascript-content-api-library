@@ -1036,7 +1036,7 @@ export class CaaSMapper {
 
     // find resolved refs and puzzle them back together
     const mappedItems = findResolvedReferencesByIds(
-      items.map((item) => getItemId(item)),
+      items.map((item) => getItemId(item, remoteProjectId)),
       this.resolvedReferences
     )
 

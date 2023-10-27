@@ -13,7 +13,7 @@ describe('FSXAProxyAPI', () => {
   beforeEach(() => {
     fetchMock.resetMocks()
     id = Faker.datatype.uuid()
-    locale = Faker.locale
+    locale = `${Faker.locale}_${Faker.locale.toUpperCase()}`
   })
   describe('The initialization', () => {
     it('should throw an error if the BASEURL is empty', () => {

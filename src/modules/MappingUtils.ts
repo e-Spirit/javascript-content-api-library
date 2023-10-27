@@ -72,7 +72,8 @@ const imageMapForceResolution = ({
 const denormalizeResolvedReferences = (
   mappedItems: (CaasApi_Item | MappedCaasItem)[],
   referenceMap: ReferencedItemsInfo,
-  resolvedReferences: ResolvedReferencesInfo
+  resolvedReferences: ResolvedReferencesInfo,
+  remoteProjectId?: string
 ) => {
   if (!referenceMap || Object.keys(referenceMap).length === 0)
     return mappedItems
@@ -104,7 +105,7 @@ const denormalizeResolvedReferences = (
   // update mappedItems
   const queriedIds = mappedItems
     .filter((item) => !!item)
-    .map((item) => getItemId(item))
+    .map((item) => getItemId(item, remoteProjectId))
 
   return findResolvedReferencesByIds(queriedIds, resolvedReferences)
 }

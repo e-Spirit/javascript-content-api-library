@@ -148,7 +148,8 @@ export class FSXAProxyApi implements FSXAApi {
     mappedItems = denormalizeResolvedReferences(
       mappedItems,
       referenceMap,
-      resolvedReferences
+      resolvedReferences,
+      remoteProject
     )
 
     return mappedItems[0] as unknown as T
@@ -251,7 +252,8 @@ export class FSXAProxyApi implements FSXAApi {
     items = denormalizeResolvedReferences(
       items as (CaasApi_Item | MappedCaasItem)[],
       referenceMap!,
-      resolvedReferences!
+      resolvedReferences!,
+      remoteProject
     )
 
     return { page, pagesize, totalPages, size, items } as FetchResponse
