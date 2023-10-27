@@ -460,6 +460,11 @@ export class FSXARemoteApi implements FSXAApi {
       remoteProject && this.remotes
         ? this.remotes[remoteProject]?.locale
         : locale
+
+    const remoteProjectId = remoteProject
+      ? this.remotes[remoteProject]?.id
+      : undefined
+
     const {
       items,
       referenceMap = {},
@@ -473,7 +478,7 @@ export class FSXARemoteApi implements FSXAApi {
         },
       ],
       additionalParams,
-      remoteProject,
+      remoteProject: remoteProjectId,
       fetchOptions,
       filterContext,
       normalized: true,
@@ -489,7 +494,8 @@ export class FSXARemoteApi implements FSXAApi {
       : denormalizeResolvedReferences(
           items as (MappedCaasItem | CaasApi_Item)[],
           referenceMap,
-          resolvedReferences
+          resolvedReferences,
+          remoteProjectId
         )[0]
   }
 
@@ -661,7 +667,8 @@ export class FSXARemoteApi implements FSXAApi {
         : denormalizeResolvedReferences(
             mappedItems,
             referenceMap,
-            resolvedReferences
+            resolvedReferences,
+            remoteProjectId
           ),
       ...(normalized && { referenceMap }),
       ...(normalized && { resolvedReferences }),

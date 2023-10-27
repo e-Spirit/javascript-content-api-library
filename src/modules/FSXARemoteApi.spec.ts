@@ -10,7 +10,12 @@ import {
 import { generateRandomConfig } from '../testutils/generateRandomConfig'
 
 import 'jest-fetch-mock'
-import { createDataEntry } from '../testutils'
+import {
+  createDataEntry,
+  createMediaPicture,
+  createMediaPictureReference,
+} from '../testutils'
+import { getMappedMediaPicture } from '../testutils/getMappedMediaPicture'
 require('jest-fetch-mock').enableFetchMocks()
 
 describe('FSXARemoteAPI', () => {
@@ -556,7 +561,7 @@ describe('FSXARemoteAPI', () => {
   })
   describe('fetchByFilter', () => {
     let remoteApi: FSXARemoteApi
-    let config: any
+    let config: ReturnType<typeof generateRandomConfig>
     let filters: QueryBuilderQuery[]
     let filterValue: string
     let filterField: string
@@ -763,6 +768,55 @@ describe('FSXARemoteAPI', () => {
         size: undefined,
         totalPages: undefined,
         items,
+      })
+    })
+    it('should return items when fetching remote items', async () => {
+      const mainMedia = createMediaPicture(
+        undefined,
+        config.remotes.remote.locale
+      )
+      const referencedMedia = createMediaPicture(
+        undefined,
+        config.remotes.remote.locale
+      )
+
+      mainMedia.metaFormData.fsRef = createMediaPictureReference(
+        referencedMedia._id
+      )
+
+      const firstResponse = { _embedded: { 'rh:doc': [mainMedia] } }
+      const secondResponse = { _embedded: { 'rh:doc': [referencedMedia] } }
+
+      fetchMock
+        .mockResponseOnce(JSON.stringify(firstResponse))
+        .mockResponseOnce(JSON.stringify(secondResponse))
+
+      const actualRequest = await remoteApi.fetchByFilter({
+        filters,
+        locale: 'de_DE',
+        remoteProject: config.remotes.remote.id,
+      })
+
+      const mappedMainMedia = getMappedMediaPicture(
+        mainMedia,
+        config.remotes.remote.locale,
+        config.remotes.remote.id
+      )
+      const mappedReferencedMedia = getMappedMediaPicture(
+        referencedMedia,
+        config.remotes.remote.locale,
+        config.remotes.remote.id
+      )
+
+      mappedMainMedia.meta.fsRef = mappedReferencedMedia
+
+      expect(actualRequest).toBeDefined()
+      expect(actualRequest).toStrictEqual({
+        page: 1,
+        pagesize: 30,
+        size: undefined,
+        totalPages: undefined,
+        items: [mappedMainMedia],
       })
     })
   })
