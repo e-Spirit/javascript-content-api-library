@@ -489,7 +489,7 @@ describe('FSXAProxyAPI', () => {
         remotePageRefReference.value?.remoteProject
       )
     })
-    it.skip('api returns remote element if directly requested', async function () {
+    it('api returns remote element if directly requested', async function () {
       const remoteMedia = createMediaPicture(undefined, "de_DE")
       
       await caasClient.addDocToCollection({
