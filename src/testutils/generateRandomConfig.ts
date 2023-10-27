@@ -12,8 +12,14 @@ export const generateRandomConfig = () => {
     ? FSXAContentMode.PREVIEW
     : FSXAContentMode.RELEASE
   const REMOTES = {
-    remote: { id: Faker.datatype.uuid(), locale: Faker.locale },
-    secondRemote: { id: Faker.datatype.uuid(), locale: Faker.locale },
+    remote: {
+      id: Faker.datatype.uuid(),
+      locale: `${Faker.locale}_${Faker.locale.toUpperCase()}`,
+    },
+    secondRemote: {
+      id: Faker.datatype.uuid(),
+      locale: `${Faker.locale}_${Faker.locale.toUpperCase()}`,
+    },
   }
 
   return {

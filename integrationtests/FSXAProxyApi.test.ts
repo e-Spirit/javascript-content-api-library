@@ -5,6 +5,7 @@ import {
   FSXAContentMode,
   FSXAProxyApi,
   LogLevel,
+  Image,
   Page,
   QueryBuilderQuery,
   Reference,
@@ -487,6 +488,25 @@ describe('FSXAProxyAPI', () => {
       expect(mappedRef.referenceRemoteProject).toEqual(
         remotePageRefReference.value?.remoteProject
       )
+    })
+    it('api returns remote element if directly requested', async function () {
+      const section = createSection()
+      const remoteMedia = createMediaPicture(undefined, "de_DE")
+      
+      await caasClient.addDocToCollection({
+        ...remoteMedia,
+        locale: {
+          identifier: 'de',
+          country: 'DE',
+          language: 'de',
+        },
+      })
+      const res: Image = await proxyAPI.fetchElement({
+        id: remoteMedia.identifier,
+        locale: 'de_DE',
+      })
+      expect(res).toBeDefined
+      expect(res.id).toBe(remoteMedia.identifier)
     })
   })
 
