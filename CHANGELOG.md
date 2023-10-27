@@ -1,3 +1,10 @@
+## [10.18.2](https://github.com/e-Spirit/fsxa-api/compare/v10.18.1...v10.18.2) (2023-10-27)
+
+
+### Bug Fixes
+
+* **remoteitems:** fix direct request of remote items  ([#192](https://github.com/e-Spirit/fsxa-api/issues/192)) ([ac0f0b7](https://github.com/e-Spirit/fsxa-api/commit/ac0f0b7063b7fed08fc956ef7d0c7420681b92df))
+
 ## [10.18.1](https://github.com/e-Spirit/fsxa-api/compare/v10.18.0...v10.18.1) (2023-10-18)
 
 
