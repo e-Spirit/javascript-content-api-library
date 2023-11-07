@@ -676,6 +676,8 @@ export interface Content2Section {
 export interface Section {
   type: 'Section'
   id: string
+  name: string
+  displayName: string
   previewId: string
   sectionType: string
   data: DataEntries
