@@ -1,3 +1,10 @@
+# [10.19.0](https://github.com/e-Spirit/fsxa-api/compare/v10.18.2...v10.19.0) (2023-11-09)
+
+
+### Features
+
+* **section:** add name and displayname fields to section data  ([#195](https://github.com/e-Spirit/fsxa-api/issues/195)) ([cc9e470](https://github.com/e-Spirit/fsxa-api/commit/cc9e470ed3138f51f67d69af0ec0084ebd23f688))
+
 ## [10.18.2](https://github.com/e-Spirit/fsxa-api/compare/v10.18.1...v10.18.2) (2023-10-27)
 
 
