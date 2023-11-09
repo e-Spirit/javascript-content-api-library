@@ -543,6 +543,8 @@ export class CaaSMapper {
     return {
       id: section.identifier,
       type: 'Section',
+      name: section.name,
+      displayName: section.displayName,
       sectionType: section.template.uid,
       previewId: this.buildPreviewId(section.identifier, remoteProjectLocale),
       data: await this.mapDataEntries(
@@ -572,6 +574,8 @@ export class CaaSMapper {
         content2Section.identifier,
         remoteProjectLocale
       ),
+      name: content2Section.name,
+      displayName: content2Section.displayName,
       type: 'Section',
       data: {
         entityType: content2Section.entityType,

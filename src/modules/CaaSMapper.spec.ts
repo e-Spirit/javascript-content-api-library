@@ -1169,6 +1169,8 @@ describe('CaaSMapper', () => {
       jest.spyOn(mapper, 'mapDataEntries')
       await expect(mapper.mapSection(section, path)).resolves.toEqual({
         id: section.identifier,
+        name: section.name,
+        displayName: section.displayName,
         type: 'Section',
         sectionType: section.template.uid,
         previewId: expect.any(String),
@@ -1191,6 +1193,8 @@ describe('CaaSMapper', () => {
       const section: CaaSApi_Section = createSection()
       await expect(mapper.mapSection(section, createPath())).resolves.toEqual({
         id: section.identifier,
+        name: section.name,
+        displayName: section.displayName,
         type: 'Section',
         sectionType: section.template.uid,
         previewId: expect.any(String),
@@ -1208,6 +1212,8 @@ describe('CaaSMapper', () => {
       section.displayed = true
       await expect(mapper.mapSection(section, createPath())).resolves.toEqual({
         id: section.identifier,
+        name: section.name,
+        displayName: section.displayName,
         type: 'Section',
         sectionType: section.template.uid,
         previewId: expect.any(String),
