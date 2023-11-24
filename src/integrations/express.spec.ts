@@ -9,7 +9,7 @@ import {
   MapResponse,
 } from '../modules'
 import getExpressRouter, {
-  ExpressRouterIntegrationErrors,
+  UNKNOWN_ROUTE_ERROR,
   getMappedFilters,
 } from './express'
 import {
@@ -29,6 +29,7 @@ import { FSXAContentMode } from '../enums'
 import Faker from 'faker'
 import faker from 'faker'
 import { createDataset } from '../testutils'
+import { PARAM_VALIDATION_ERROR_TO_MESSAGE } from './fetchWrapper'
 
 const PORT = 3125
 
@@ -213,7 +214,7 @@ describe('Express-Integration', () => {
           await fetch(`http://localhost:${PORT}/navigation`, { method: 'POST' })
         ).json()
       ).toEqual({
-        error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
+        error: PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE_OR_PATH,
       })
     })
 
@@ -356,7 +357,7 @@ describe('Express-Integration', () => {
           await fetch(`http://localhost:${PORT}/foobar`, { method: 'POST' })
         ).json()
       ).toEqual({
-        error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE,
+        error: UNKNOWN_ROUTE_ERROR,
       })
     })
   })

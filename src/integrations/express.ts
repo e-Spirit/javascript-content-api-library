@@ -11,19 +11,44 @@ import {
 } from '../routes'
 import { FSXARemoteApi, Logger, eventStreamHandler } from './../modules'
 import { QueryBuilderQuery } from '../types'
-import { FSXAApiErrors, FSXAProxyRoutes } from '../enums'
+import { FSXAProxyRoutes } from '../enums'
+
+import { FetchWrapperResult, useEndpointUtils } from './fetchWrapper'
 
 export interface GetExpressRouterContext {
   api: FSXARemoteApi
 }
-export enum ExpressRouterIntegrationErrors {
-  MISSING_LOCALE = 'Please specify a locale in the body through: e.g. "locale": "de_DE" ',
-  UNKNOWN_ROUTE = 'Could not map given route and method.',
+
+export const UNKNOWN_ROUTE_ERROR = 'Could not map given route and method.'
+
+const sendWrapperResult = (
+  res: express.Response,
+  result: FetchWrapperResult
+) => {
+  if (result.success) {
+    return res.json(result.data)
+  } else {
+    return res.status(result.error.statusCode).send({
+      error: result.error.message,
+    })
+  }
+}
+
+const sendUnexpectedError = (
+  res: express.Response,
+  req: express.Request,
+  error: any,
+  logger: Logger
+) => {
+  logger.error(`[${req.originalUrl}]`, 'Unexpected error: ', error, req.body)
+  return res.status(500).send({ message: error.message, error: error.message })
 }
 
 function getExpressRouter({ api }: GetExpressRouterContext) {
   const router = express.Router()
   const logger = new Logger(api.logLevel, 'Express-Server')
+  const endpointUtils = useEndpointUtils(api, 'Express-Server')
+
   router.use(express.json())
   router.post(
     [FETCH_ELEMENT_ROUTE, FSXAProxyRoutes.FETCH_ELEMENT_ROUTE],
@@ -31,28 +56,11 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       logger.info('Received POST on route: ', FETCH_ELEMENT_ROUTE)
       logger.debug('POST request body', req.body)
 
-      if (!req.body || req.body.locale == null) {
-        logger.error(FETCH_ELEMENT_ROUTE, 'missing locale', req.body)
-        return res.status(400).json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
-        })
-      }
       try {
-        const response = await api.fetchElement({
-          id: req.body.id,
-          locale: req.body.locale,
-          additionalParams: req.body?.additionalParams,
-          remoteProject: req.body?.remote,
-          filterContext: req.body?.filterContext,
-          normalized: req.body?.normalized,
-        })
-        return res.json(response)
+        const result = await endpointUtils.fetchElementWrapper(req.body)
+        return sendWrapperResult(res, result)
       } catch (err: any) {
-        logger.error('could not fetch element: ', req, err.message)
-        //response object contains error and message properties for backwards compatibility
-        return res
-          .status(err.statusCode)
-          .send({ message: err.message, error: err.message })
+        sendUnexpectedError(res, req, err, logger)
       }
     }
   )
@@ -61,29 +69,15 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     async (req: express.Request<any, any, FetchNavigationRouteBody>, res) => {
       logger.info('Received POST on route', FETCH_NAVIGATION_ROUTE)
       logger.debug('POST request body', req.body)
-
-      if (req.body.locale == null) {
-        logger.error(FETCH_NAVIGATION_ROUTE, 'missing locale', req.body)
-        return res.status(400).json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
-        })
-      }
       try {
-        const response = await api.fetchNavigation({
-          initialPath: req.body.initialPath || '/',
-          locale: req.body.locale,
-          filterContext: req.body.filterContext,
-        })
-        return res.json(response)
+        const result = await endpointUtils.fetchNavigationWrapper(req.body)
+        return sendWrapperResult(res, result)
       } catch (err: any) {
-        logger.error('was not able to fetch Navigation: ' + err.message)
-        //response object contains error and message properties for backwards compatibility
-        return res
-          .status(err.statusCode)
-          .send({ message: err.message, error: err.message })
+        sendUnexpectedError(res, req, err, logger)
       }
     }
   )
+
   router.post(
     [FETCH_BY_FILTER_ROUTE, FSXAProxyRoutes.FETCH_BY_FILTER_ROUTE],
     async (req: express.Request<any, any, FetchByFilterBody>, res) => {
@@ -91,28 +85,14 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       logger.debug('POST request body', req.body)
 
       try {
-        const response = await api.fetchByFilter({
-          filters: req.body.filters || [],
-          locale: req.body.locale,
-          page: req.body.page ? req.body.page : undefined,
-          pagesize: req.body.pagesize ? req.body.pagesize : undefined,
-          sort: req.body.sort ? req.body.sort : [],
-          additionalParams: req.body.additionalParams || {},
-          remoteProject: req.body.remote ? req.body.remote : undefined,
-          filterContext: req.body.filterContext,
-          normalized: req.body?.normalized,
-        })
-        return res.json(response)
+        const result = await endpointUtils.fetchByFilterWrapper(req.body)
+        return sendWrapperResult(res, result)
       } catch (err: any) {
-        logger.error('was not able to fetch by filter: ', err.message)
-        console.log(err)
-        //response object contains error and message properties for backwards compatibility
-        return res
-          .status(err.statusCode)
-          .send({ message: err.message, error: err.message })
+        sendUnexpectedError(res, req, err, logger)
       }
     }
   )
+
   router.post(
     FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
     async (req: express.Request<any, any, FetchProjectPropertiesBody>, res) => {
@@ -120,33 +100,13 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         'Received POST on route',
         FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE
       )
-      logger.debug('POST request body', req.body)
-      if (!req.body || req.body.locale == null) {
-        logger.error(
-          FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
-          'missing locale',
+      try {
+        const result = await endpointUtils.fetchProjectPropertiesWrapper(
           req.body
         )
-        return res.status(400).json({
-          error: ExpressRouterIntegrationErrors.MISSING_LOCALE,
-        })
-      }
-
-      try {
-        const response = await api.fetchProjectProperties({
-          locale: req.body.locale,
-          additionalParams: req.body.additionalParams,
-          resolve: req.body.resolver,
-          filterContext: req.body.filterContext,
-          normalized: req.body?.normalized,
-        })
-        return res.json(response)
+        return sendWrapperResult(res, result)
       } catch (err: any) {
-        logger.error('was not able to fetch project properties', err.message)
-        //response object contains error and message properties for backwards compatibility
-        return res
-          .status(err.statusCode)
-          .send({ message: err.message, error: err.message })
+        sendUnexpectedError(res, req, err, logger)
       }
     }
   )
@@ -161,7 +121,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   router.all('*', (req, res) => {
     logger.info('Requested unknown route', req.route)
     return res.json({
-      error: ExpressRouterIntegrationErrors.UNKNOWN_ROUTE,
+      error: UNKNOWN_ROUTE_ERROR,
     })
   })
   return router

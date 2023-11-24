@@ -931,7 +931,7 @@ export interface RichTextElement {
 }
 
 export type FetchNavigationParams = {
-  locale: string
+  locale?: string
   initialPath?: string
   fetchOptions?: RequestInit
   filterContext?: unknown
