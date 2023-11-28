@@ -38,6 +38,10 @@ type FetchWrapperError = {
   originalError: Error | ParamValidationError
 }
 
+/**
+ * Useful Error Messages for Validation Errors.
+ * Can be used as an Error Message to send to the client
+ */
 export const PARAM_VALIDATION_ERROR_TO_MESSAGE: Record<
   ParamValidationError['reason'],
   string
@@ -50,19 +54,24 @@ export const PARAM_VALIDATION_ERROR_TO_MESSAGE: Record<
   MISSING_FILTERS: 'Please provide non-empty filters array',
 } as const
 
-export function assertIsError(error: unknown): asserts error is Error {
-  // rethrow unknown error if its not an instance of error, since we do not know how to handle that
-  if (!(error instanceof Error)) {
-    throw error
-  }
-}
-
+/**
+ * Provides Wrapper Functions fot the given api.
+ * @param api FSXAApi to wrap
+ * @param loggerName Creates a logger with the given name
+ * @returns
+ */
 export const useEndpointIntegrationWrapper = (
   api: FSXARemoteApi,
   loggerName = 'Endpoint-Utils'
 ) => {
   const logger = new Logger(api.logLevel, loggerName)
 
+  /**
+   * Fetches an Element by Id via {@link FSXARemoteApi}
+   * @param params
+   * @param logContext
+   * @returns A ResultWrapper, that either indicates success and contains the data, or indicates an Error and a Reason
+   */
   const fetchElementWrapper = async (
     params: FetchElementRouteBody,
     logContext: string = '[fetchElement]'
@@ -73,7 +82,7 @@ export const useEndpointIntegrationWrapper = (
       const validationResult = validateParamsFetchElement(params)
 
       if (!validationResult.valid) {
-        return createValidationError(validationResult, params, logContext)
+        return handleValidationError(validationResult, params, logContext)
       }
 
       logger.debug(logContext, 'Params valid, fetching from Api')
@@ -93,10 +102,16 @@ export const useEndpointIntegrationWrapper = (
         data: response,
       }
     } catch (error: unknown) {
-      return createRuntimeError(error, logContext)
+      return handleRuntimeError(error, logContext)
     }
   }
 
+  /**
+   * Fetches Navigation via {@link FSXARemoteApi}
+   * @param params
+   * @param logContext
+   * @returns A ResultWrapper, that either indicates success and contains the data, or indicates an Error and a Reason
+   */
   const fetchNavigationWrapper = async (
     params: FetchNavigationRouteBody,
     logContext: string = '[fetchNavigation]'
@@ -107,7 +122,7 @@ export const useEndpointIntegrationWrapper = (
       const validationResult = validateParamsFetchNavigation(params)
 
       if (!validationResult.valid) {
-        return createValidationError(validationResult, params, logContext)
+        return handleValidationError(validationResult, params, logContext)
       }
       logger.debug(logContext, 'Params valid, fetching from Api')
 
@@ -123,10 +138,16 @@ export const useEndpointIntegrationWrapper = (
         data: response,
       }
     } catch (error: unknown) {
-      return createRuntimeError(error, logContext)
+      return handleRuntimeError(error, logContext)
     }
   }
 
+  /**
+   * Fetches Elements by Filter via {@link FSXARemoteApi}
+   * @param params
+   * @param logContext
+   * @returns A ResultWrapper, that either indicates success and contains the data, or indicates an Error and a Reason
+   */
   const fetchByFilterWrapper = async (
     params: FetchByFilterBody,
     logContext: string = '[fetchByFilter]'
@@ -136,7 +157,7 @@ export const useEndpointIntegrationWrapper = (
     try {
       const validationResult = validateParamsFetchByFilter(params)
       if (!validationResult.valid) {
-        return createValidationError(validationResult, params, logContext)
+        return handleValidationError(validationResult, params, logContext)
       }
 
       logger.debug(logContext, 'Params valid, fetching from Api')
@@ -159,13 +180,19 @@ export const useEndpointIntegrationWrapper = (
         data: response,
       }
     } catch (error: unknown) {
-      return createRuntimeError(error, logContext)
+      return handleRuntimeError(error, logContext)
     }
   }
 
+  /**
+   * Fetches ProjectProperties via {@link FSXARemoteApi}
+   * @param params
+   * @param logContext
+   * @returns A ResultWrapper, that either indicates success and contains the data, or indicates an Error and a Reason
+   */
   const fetchProjectPropertiesWrapper = async (
     params: FetchProjectPropertiesBody,
-    logContext: string = '[fetchByFilter]'
+    logContext: string = '[fetchProjectProperties]'
   ): Promise<
     FetchWrapperResult<
       ProjectProperties | NormalizedProjectPropertyResponse | null
@@ -176,7 +203,7 @@ export const useEndpointIntegrationWrapper = (
     try {
       const validationResult = validateParamsFetchProjectProperties(params)
       if (!validationResult.valid) {
-        return createValidationError(validationResult, params, logContext)
+        return handleValidationError(validationResult, params, logContext)
       }
 
       logger.debug(logContext, 'Params valid, fetching from Api')
@@ -195,11 +222,11 @@ export const useEndpointIntegrationWrapper = (
         data: response,
       }
     } catch (error: unknown) {
-      return createRuntimeError(error, logContext)
+      return handleRuntimeError(error, logContext)
     }
   }
 
-  const createValidationError = (
+  const handleValidationError = (
     validationResult: ParamValidationError,
     params: any,
     logContext: string
@@ -215,7 +242,14 @@ export const useEndpointIntegrationWrapper = (
     }
   }
 
-  const createRuntimeError = (
+  function assertIsError(error: unknown): asserts error is Error {
+    // rethrow unknown error if its not an instance of error, since we do not know how to handle that
+    if (!(error instanceof Error)) {
+      throw error
+    }
+  }
+
+  const handleRuntimeError = (
     error: unknown,
     logContext: string
   ): FetchWrapperError => {

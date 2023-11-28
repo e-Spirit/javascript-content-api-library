@@ -24,6 +24,15 @@ export interface GetExpressRouterContext {
 
 export const UNKNOWN_ROUTE_ERROR = 'Could not map given route and method.'
 
+/**
+ * Handles the resultObject from the wrapper, be it an error or a success.
+ * On Success, it passes the fetched data, on error it uses the indicated
+ * status Code and Error message to send an appropriate response.
+ *
+ * @param res response
+ * @param result Wrapper Result
+ * @returns Sends a response as indicated by the wrapper
+ */
 const sendWrapperResult = (
   res: express.Response,
   result: FetchWrapperResult
@@ -38,6 +47,16 @@ const sendWrapperResult = (
   }
 }
 
+/**
+ * This handles Errors, that have not been accounted for by the wrapper.
+ * Normally, this should not happen and the cause should be investaigated
+ *
+ * @param res response
+ * @param req request
+ * @param error caught error
+ * @param logger logger
+ * @returns sends an 500 internal server Error using the response.
+ */
 const sendUnexpectedError = (
   res: express.Response,
   req: express.Request,

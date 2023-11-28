@@ -13,6 +13,9 @@ export type ParamValidationSuccess = {
   valid: true
 }
 
+/**
+ * All Existing Reasons to reject param Validation
+ */
 export type ParamValidationErrorReason =
   | 'MISSING_PARAM_OBJECT'
   | 'MISSING_LOCALE'
@@ -27,6 +30,11 @@ export type ParamValidationError<
   statusCode: 400
 }>
 
+/**
+ * Creates the correct ValidationError for the given reason.
+ * @param reason
+ * @returns
+ */
 export const createValidationError = <T extends ParamValidationErrorReason>(
   reason: T
 ): ParamValidationError<T> => ({
@@ -35,6 +43,11 @@ export const createValidationError = <T extends ParamValidationErrorReason>(
   statusCode: 400,
 })
 
+/**
+ * Checks for required Parameters
+ * @param params
+ * @returns result object indicating validity, and a reason if not valid.
+ */
 export const validateParamsFetchElement = (
   params: Partial<FetchElementParams> | null | undefined
 ): ParamValidationResult<
@@ -57,6 +70,11 @@ export const validateParamsFetchElement = (
   }
 }
 
+/**
+ * Checks for required Parameters
+ * @param params
+ * @returns result object indicating validity, and a reason if not valid.
+ */
 export const validateParamsFetchNavigation = (
   params: Partial<FetchNavigationParams> | null | undefined
 ): ParamValidationResult<'MISSING_LOCALE' | 'MISSING_PARAM_OBJECT'> => {
@@ -73,6 +91,11 @@ export const validateParamsFetchNavigation = (
   }
 }
 
+/**
+ * Checks for required Parameters
+ * @param params
+ * @returns result object indicating validity, and a reason if not valid.
+ */
 export const validateParamsFetchByFilter = (
   params: Partial<FetchByFilterParams> | null | undefined
 ): ParamValidationResult<'MISSING_PARAM_OBJECT' | 'MISSING_FILTERS'> => {
@@ -93,6 +116,11 @@ export const validateParamsFetchByFilter = (
   }
 }
 
+/**
+ * Checks for required Parameters
+ * @param params
+ * @returns result object indicating validity, and a reason if not valid.
+ */
 export const validateParamsFetchProjectProperties = (
   params: Partial<FetchProjectPropertiesParams> | null | undefined
 ): ParamValidationResult<'MISSING_LOCALE' | 'MISSING_PARAM_OBJECT'> => {
