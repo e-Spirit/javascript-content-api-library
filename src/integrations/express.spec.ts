@@ -215,6 +215,7 @@ describe('Express-Integration', () => {
         ).json()
       ).toEqual({
         error: PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE,
+        message: PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE,
       })
     })
 
