@@ -1,12 +1,11 @@
-import { HttpError } from '../exceptions'
 import {
-  FetchByFilterBody,
-  FetchElementRouteBody,
-  FetchNavigationRouteBody,
-  FetchProjectPropertiesBody,
-} from '../routes'
+  FetchByFilterParams,
+  FetchElementParams,
+  FetchNavigationParams,
+  FetchProjectPropertiesParams,
+} from '../types'
 
-export type ParamValidationResult<T extends ParamValidationErrorReasons> =
+export type ParamValidationResult<T extends ParamValidationErrorReason> =
   | ParamValidationSuccess
   | ParamValidationError<T>
 
@@ -14,46 +13,43 @@ export type ParamValidationSuccess = {
   valid: true
 }
 
-export type ParamValidationErrorReasons =
+export type ParamValidationErrorReason =
   | 'MISSING_PARAM_OBJECT'
   | 'MISSING_LOCALE'
   | 'MISSING_ID'
-  | 'MISSING_LOCALE_OR_PATH'
+  | 'MISSING_FILTERS'
 
 export type ParamValidationError<
-  T extends ParamValidationErrorReasons = ParamValidationErrorReasons
-> = {
+  T extends ParamValidationErrorReason = ParamValidationErrorReason
+> = Readonly<{
   valid: false
   reason: T
   statusCode: 400
-}
+}>
+
+export const createValidationError = <T extends ParamValidationErrorReason>(
+  reason: T
+): ParamValidationError<T> => ({
+  valid: false,
+  reason,
+  statusCode: 400,
+})
 
 export const validateParamsFetchElement = (
-  params: Partial<FetchElementRouteBody> | null | undefined
+  params: Partial<FetchElementParams> | null | undefined
 ): ParamValidationResult<
   'MISSING_ID' | 'MISSING_LOCALE' | 'MISSING_PARAM_OBJECT'
 > => {
   if (!params || typeof params !== 'object') {
-    return {
-      valid: false,
-      reason: 'MISSING_PARAM_OBJECT',
-      statusCode: 400,
-    }
+    return createValidationError('MISSING_PARAM_OBJECT')
   }
 
   if (!params.locale) {
-    return {
-      valid: false,
-      reason: 'MISSING_LOCALE',
-      statusCode: 400,
-    }
+    return createValidationError('MISSING_LOCALE')
   }
+
   if (!params.id) {
-    return {
-      valid: false,
-      reason: 'MISSING_ID',
-      statusCode: 400,
-    }
+    return createValidationError('MISSING_ID')
   }
 
   return {
@@ -62,22 +58,14 @@ export const validateParamsFetchElement = (
 }
 
 export const validateParamsFetchNavigation = (
-  params: Partial<FetchNavigationRouteBody> | null | undefined
-): ParamValidationResult<'MISSING_LOCALE_OR_PATH' | 'MISSING_PARAM_OBJECT'> => {
+  params: Partial<FetchNavigationParams> | null | undefined
+): ParamValidationResult<'MISSING_LOCALE' | 'MISSING_PARAM_OBJECT'> => {
   if (!params || typeof params !== 'object') {
-    return {
-      valid: false,
-      reason: 'MISSING_PARAM_OBJECT',
-      statusCode: 400,
-    }
+    return createValidationError('MISSING_PARAM_OBJECT')
   }
 
-  if (!params.locale && !params.initialPath) {
-    return {
-      valid: false,
-      reason: 'MISSING_LOCALE_OR_PATH',
-      statusCode: 400,
-    }
+  if (!params.locale) {
+    return createValidationError('MISSING_LOCALE')
   }
 
   return {
@@ -85,15 +73,19 @@ export const validateParamsFetchNavigation = (
   }
 }
 
-export const validateParamsFetchFetchByFilter = (
-  params: Partial<FetchByFilterBody> | null | undefined
-): ParamValidationResult<'MISSING_PARAM_OBJECT'> => {
+export const validateParamsFetchByFilter = (
+  params: Partial<FetchByFilterParams> | null | undefined
+): ParamValidationResult<'MISSING_PARAM_OBJECT' | 'MISSING_FILTERS'> => {
   if (!params || typeof params !== 'object') {
-    return {
-      valid: false,
-      reason: 'MISSING_PARAM_OBJECT',
-      statusCode: 400,
-    }
+    return createValidationError('MISSING_PARAM_OBJECT')
+  }
+
+  if (
+    !params.filters ||
+    !Array.isArray(params.filters)
+    //params.filters.length === 0
+  ) {
+    return createValidationError('MISSING_FILTERS')
   }
 
   return {
@@ -102,22 +94,14 @@ export const validateParamsFetchFetchByFilter = (
 }
 
 export const validateParamsFetchProjectProperties = (
-  params: Partial<FetchProjectPropertiesBody> | null | undefined
+  params: Partial<FetchProjectPropertiesParams> | null | undefined
 ): ParamValidationResult<'MISSING_LOCALE' | 'MISSING_PARAM_OBJECT'> => {
   if (!params || typeof params !== 'object') {
-    return {
-      valid: false,
-      reason: 'MISSING_PARAM_OBJECT',
-      statusCode: 400,
-    }
+    return createValidationError('MISSING_PARAM_OBJECT')
   }
 
   if (!params.locale) {
-    return {
-      valid: false,
-      reason: 'MISSING_LOCALE',
-      statusCode: 400,
-    }
+    return createValidationError('MISSING_LOCALE')
   }
 
   return {

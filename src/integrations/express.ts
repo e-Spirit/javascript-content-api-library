@@ -13,7 +13,10 @@ import { FSXARemoteApi, Logger, eventStreamHandler } from './../modules'
 import { QueryBuilderQuery } from '../types'
 import { FSXAProxyRoutes } from '../enums'
 
-import { FetchWrapperResult, useEndpointUtils } from './fetchWrapper'
+import {
+  FetchWrapperResult,
+  useEndpointIntegrationWrapper,
+} from './endpointIntegrationWrapper'
 
 export interface GetExpressRouterContext {
   api: FSXARemoteApi
@@ -29,6 +32,7 @@ const sendWrapperResult = (
     return res.json(result.data)
   } else {
     return res.status(result.error.statusCode).send({
+      message: result.error.message,
       error: result.error.message,
     })
   }
@@ -47,7 +51,7 @@ const sendUnexpectedError = (
 function getExpressRouter({ api }: GetExpressRouterContext) {
   const router = express.Router()
   const logger = new Logger(api.logLevel, 'Express-Server')
-  const endpointUtils = useEndpointUtils(api, 'Express-Server')
+  const wrappers = useEndpointIntegrationWrapper(api, 'Express-Server')
 
   router.use(express.json())
   router.post(
@@ -57,7 +61,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       logger.debug('POST request body', req.body)
 
       try {
-        const result = await endpointUtils.fetchElementWrapper(req.body)
+        const result = await wrappers.fetchElementWrapper(req.body)
         return sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)
@@ -70,7 +74,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       logger.info('Received POST on route', FETCH_NAVIGATION_ROUTE)
       logger.debug('POST request body', req.body)
       try {
-        const result = await endpointUtils.fetchNavigationWrapper(req.body)
+        const result = await wrappers.fetchNavigationWrapper(req.body)
         return sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)
@@ -85,7 +89,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
       logger.debug('POST request body', req.body)
 
       try {
-        const result = await endpointUtils.fetchByFilterWrapper(req.body)
+        const result = await wrappers.fetchByFilterWrapper(req.body)
         return sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)
@@ -101,9 +105,7 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
         FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE
       )
       try {
-        const result = await endpointUtils.fetchProjectPropertiesWrapper(
-          req.body
-        )
+        const result = await wrappers.fetchProjectPropertiesWrapper(req.body)
         return sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)

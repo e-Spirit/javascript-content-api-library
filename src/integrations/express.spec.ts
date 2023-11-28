@@ -29,7 +29,7 @@ import { FSXAContentMode } from '../enums'
 import Faker from 'faker'
 import faker from 'faker'
 import { createDataset } from '../testutils'
-import { PARAM_VALIDATION_ERROR_TO_MESSAGE } from './fetchWrapper'
+import { PARAM_VALIDATION_ERROR_TO_MESSAGE } from './endpointIntegrationWrapper'
 
 const PORT = 3125
 
@@ -214,7 +214,7 @@ describe('Express-Integration', () => {
           await fetch(`http://localhost:${PORT}/navigation`, { method: 'POST' })
         ).json()
       ).toEqual({
-        error: PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE_OR_PATH,
+        error: PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE,
       })
     })
 

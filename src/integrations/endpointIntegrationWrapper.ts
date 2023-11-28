@@ -9,8 +9,9 @@ import {
 import {
   ParamValidationError,
   validateParamsFetchElement,
-  validateParamsFetchFetchByFilter,
+  validateParamsFetchByFilter,
   validateParamsFetchNavigation,
+  validateParamsFetchProjectProperties,
 } from './parameterValidation'
 import {
   FetchResponse,
@@ -43,11 +44,10 @@ export const PARAM_VALIDATION_ERROR_TO_MESSAGE: Record<
 > = {
   MISSING_ID:
     'Please specify a locale in the body through: e.g. "locale": "de_DE" ',
-  MISSING_LOCALE_OR_PATH:
-    'Please specify either a locale (e.g. "de_DE") or an inital Path (e.g. "/home/")',
   MISSING_LOCALE: 'Please Provide an id in the body',
   MISSING_PARAM_OBJECT:
     "Please provide required params in the body. required: 'id', 'locale'",
+  MISSING_FILTERS: 'Please provide non-empty filters array',
 } as const
 
 export function assertIsError(error: unknown): asserts error is Error {
@@ -57,7 +57,7 @@ export function assertIsError(error: unknown): asserts error is Error {
   }
 }
 
-export const useEndpointUtils = (
+export const useEndpointIntegrationWrapper = (
   api: FSXARemoteApi,
   loggerName = 'Endpoint-Utils'
 ) => {
@@ -134,7 +134,7 @@ export const useEndpointUtils = (
     logger.debug(logContext, 'Called')
 
     try {
-      const validationResult = validateParamsFetchFetchByFilter(params)
+      const validationResult = validateParamsFetchByFilter(params)
       if (!validationResult.valid) {
         return createValidationError(validationResult, params, logContext)
       }
@@ -174,7 +174,7 @@ export const useEndpointUtils = (
     logger.debug(logContext, 'Called')
 
     try {
-      const validationResult = validateParamsFetchFetchByFilter(params)
+      const validationResult = validateParamsFetchProjectProperties(params)
       if (!validationResult.valid) {
         return createValidationError(validationResult, params, logContext)
       }
@@ -222,16 +222,10 @@ export const useEndpointUtils = (
     assertIsError(error)
     logger.error(logContext, error)
 
-    const errorObj: FetchWrapperError['error'] =
-      error instanceof HttpError
-        ? {
-            statusCode: error.statusCode,
-            message: error.message,
-          }
-        : {
-            statusCode: 500,
-            message: error.message,
-          }
+    const errorObj: FetchWrapperError['error'] = {
+      statusCode: (error as HttpError).statusCode || 500,
+      message: error.message,
+    }
 
     return {
       success: false,
