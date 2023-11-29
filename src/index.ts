@@ -17,3 +17,5 @@ export * from './helpers/misc'
 export * from './exceptions'
 import * as ROUTES from './routes'
 export { ROUTES }
+export * from './integrations/parameterValidation'
+export * from './integrations/endpointIntegrationWrapper'
