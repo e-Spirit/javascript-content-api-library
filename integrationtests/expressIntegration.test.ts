@@ -3,18 +3,9 @@ import express, { Express } from 'express'
 import cors from 'cors'
 import { Server } from 'http'
 import { CaasTestingClient } from './utils'
-import {
-  FSXAApiErrors,
-  FSXAContentMode,
-  FSXARemoteApi,
-  LogLevel,
-  HttpStatus,
-} from '../src'
+import { FSXAApiErrors, FSXAContentMode, FSXARemoteApi, LogLevel } from '../src'
 import Faker from 'faker'
-import {
-  ExpressRouterIntegrationErrors,
-  default as expressIntegration,
-} from '../src/integrations/express'
+import expressIntegration from '../src/integrations/express'
 import {
   createDataset,
   createDatasetReference,
@@ -25,6 +16,7 @@ import {
   Logger,
   QueryBuilder,
 } from '../src/modules'
+import { PARAM_VALIDATION_ERROR_TO_MESSAGE } from '../src/integrations/endpointIntegrationWrapper'
 
 dotenv.config({ path: './integrationtests/.env' })
 const {
@@ -178,7 +170,7 @@ describe('express integration', () => {
         expect(res.status).toBe(400)
         expect(json).toHaveProperty('error')
         expect(json.error).toContain(
-          ExpressRouterIntegrationErrors.MISSING_LOCALE
+          PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE
         )
       })
       it('should return an error 401 if the remote api responds 401', async () => {
@@ -224,7 +216,7 @@ describe('express integration', () => {
         expect(res.status).toBe(400)
         expect(json).toHaveProperty('error')
         expect(json.error).toContain(
-          ExpressRouterIntegrationErrors.MISSING_LOCALE
+          PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE
         )
       })
       it('should return an error 404 if the remote api responds 404', async () => {
@@ -316,7 +308,7 @@ describe('express integration', () => {
         expect(res.status).toBe(400)
         expect(json).toHaveProperty('error')
         expect(json.error).toContain(
-          ExpressRouterIntegrationErrors.MISSING_LOCALE
+          PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE
         )
       })
       it.skip('should return an error 404 if the remote api responds 404', async () => {
