@@ -1,3 +1,10 @@
+## [10.19.1](https://github.com/e-Spirit/fsxa-api/compare/v10.19.0...v10.19.1) (2023-12-20)
+
+
+### Bug Fixes
+
+* **mapper:** mark items that are being fetched as processed ([#198](https://github.com/e-Spirit/fsxa-api/issues/198)) ([#199](https://github.com/e-Spirit/fsxa-api/issues/199)) ([8cf5eb3](https://github.com/e-Spirit/fsxa-api/commit/8cf5eb3185a19f594234b726d07fc9d14ec073ea))
+
 # [10.19.0](https://github.com/e-Spirit/fsxa-api/compare/v10.18.2...v10.19.0) (2023-11-09)
 
 
