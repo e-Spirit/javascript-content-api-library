@@ -94,6 +94,10 @@ export class CaaSMapper {
   _remoteReferences: {
     [projectId: string]: ReferencedItemsInfo
   } = {}
+  // stores items that are being or have been processed and should not be fetched
+  // Again. They cannot be added to resolvedReferences yet, since the fetch call
+  // just started, when we need to keep track of them.
+  _processedItems: Record<string, true> = {}
 
   constructor(
     api: FSXARemoteApi,
@@ -1114,8 +1118,10 @@ export class CaaSMapper {
     const resolvedIds = new Set(resolvedIdsArray)
 
     const idsToFetchFromCaaS = referencedIds
-      .filter((id) => !resolvedIds.has(id))
+      .filter((id) => !resolvedIds.has(id) && !this._processedItems[id])
       .map((id) => id.substring(id.indexOf('#') + 1, id.indexOf('.')))
+
+    referencedIds.forEach((id) => (this._processedItems[id] = true))
 
     const idChunks = chunk(idsToFetchFromCaaS, REFERENCED_ITEMS_CHUNK_SIZE)
 
