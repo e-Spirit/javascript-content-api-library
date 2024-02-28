@@ -1420,6 +1420,16 @@ describe('CaaSMapper', () => {
         remoteProjectId
       )
     })
+    it('should map route', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const path = createPath()
+      const pageRef = createPageRef()
+
+      const mappedPageRef = await mapper.mapPageRef(pageRef, path)
+
+      expect(mappedPageRef.route).toBeTruthy()
+      expect(mappedPageRef.route).toEqual(pageRef.route)
+    })
   })
 
   describe('mapProjectProperties', () => {

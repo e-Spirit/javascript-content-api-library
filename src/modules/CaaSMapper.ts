@@ -691,6 +691,7 @@ export class CaaSMapper {
         ),
       }),
       remoteProjectId,
+      route: pageRef.route,
     }
   }
 
