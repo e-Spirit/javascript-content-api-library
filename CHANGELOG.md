@@ -1,3 +1,10 @@
+# [10.20.0](https://github.com/e-Spirit/fsxa-api/compare/v10.19.1...v10.20.0) (2024-03-04)
+
+
+### Features
+
+* **pageref route:** add route to mappedPageRef ([#201](https://github.com/e-Spirit/fsxa-api/issues/201)) ([f60ae62](https://github.com/e-Spirit/fsxa-api/commit/f60ae62222dd840773300ff93a9351417ca43141))
+
 ## [10.19.1](https://github.com/e-Spirit/fsxa-api/compare/v10.19.0...v10.19.1) (2023-12-20)
 
 
