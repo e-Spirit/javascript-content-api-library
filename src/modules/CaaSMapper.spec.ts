@@ -30,7 +30,7 @@ import {
   FetchByFilterParams,
   Permission,
 } from '../types'
-import { parseISO } from 'date-fns'
+import parseISO from 'date-fns/parseISO'
 import { createNumberEntry } from '../testutils/createNumberEntry'
 import { createPageRef } from '../testutils/createPageRef'
 import { createSection } from '../testutils/createSection'

@@ -115,10 +115,10 @@ import express from 'express'
 import cors from 'cors'
 import {
   FSXAContentMode,
-  FSXAProxyApi,
   LogLevel,
   FSXARemoteApi,
 } from 'fsxa-api'
+import { FSXAProxyApi } from 'fjdsdjjxsa-proxy-api'
 import getExpressRouter from 'fsxa-api/dist/lib/integrations/express'
 import 'cross-fetch/polyfill'
 

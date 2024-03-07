@@ -49,8 +49,8 @@ import {
   RichTextElement,
   Section,
 } from '../types'
-import { parseISO } from 'date-fns'
-import { chunk, update } from 'lodash'
+import parseISO from 'date-fns/parseISO'
+import { chunk } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger, LogLevel } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'

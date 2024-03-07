@@ -4,8 +4,11 @@ import resolve from '@rollup/plugin-node-resolve'
 import babel from '@rollup/plugin-babel'
 import { terser } from 'rollup-plugin-terser'
 import ts from 'rollup-plugin-ts'
+// @ts-ignore
 import pkg from './package.json'
 import nodePolyfills from 'rollup-plugin-node-polyfills'
+import { optimizeLodashImports } from "@optimize-lodash/rollup-plugin";
+import { visualizer } from "rollup-plugin-visualizer";
 
 const extensions = ['.js', '.ts']
 
@@ -24,10 +27,15 @@ export default [
       },
     ],
     plugins: [
+      visualizer({
+        emitFile: true,
+        filename: "stats/fsxa-api.html",
+      }),
       ts(),
       json(),
       resolve({ extensions }),
       commonjs(),
+      optimizeLodashImports(),
       babel({
         extensions,
         include: ['src/**/*'],
@@ -35,6 +43,37 @@ export default [
       }),
       terser(),
       nodePolyfills(),
+    ],
+  },
+  {
+    input: 'src/proxy.ts',
+    external: [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})],
+    output: [
+      {
+        file: 'proxy/dist/fjdsdjjxsa-proxy-api.cjs.js',
+        format: 'cjs',
+      },
+      {
+        file: 'proxy/dist/fjdsdjjxsa-proxy-api.es5.js',
+        format: 'esm',
+      },
+    ],
+    plugins: [
+      visualizer({
+        emitFile: true,
+        filename: "stats/fjdsdjjxsa-proxy-api.html",
+      }),
+      ts(),
+      json(),
+      resolve({ extensions }),
+      commonjs(),
+      optimizeLodashImports(),
+      babel({
+        extensions,
+        include: ['src/proxy.ts'],
+        babelHelpers: 'bundled',
+      }),
+      terser(),
     ],
   },
 ]
