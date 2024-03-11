@@ -49,7 +49,7 @@ import {
   RichTextElement,
   Section,
 } from '../types'
-import parseISO from 'date-fns/parseISO'
+import { parseISO } from 'date-fns'
 import { chunk } from 'lodash'
 import XMLParser from './XMLParser'
 import { Logger, LogLevel } from './Logger'
