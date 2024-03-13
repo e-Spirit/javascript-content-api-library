@@ -47,7 +47,8 @@
     "prepush": "jest --verbose ./src",
     "commitmsg": "commitlint -E HUSKY_GIT_PARAMS",
     "dts": "./node_modules/.bin/npm-dts generate -e ./src/FSXAApi.ts",
-    "dev": "npx nodemon dev/index.ts --ignore ./**/dist"
+    "dev": "npx nodemon dev/index.ts --ignore ./**/dist",
+    "postpublish": "npm publish --workspace proxy"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
