@@ -1,6 +1,6 @@
 # JavaScript Content API Library
 
-The JavaScript Content API Library a.k.a Content API is an interface handling data coming from the FirstSpirit
+The JavaScript Content API Library a.k.a. Content API is an interface handling data coming from the FirstSpirit
 [CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
 Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
 
@@ -88,7 +88,7 @@ You can also include remote projects if you want to use remote media.
 > **_Attention_**<br>
 > Currently the Content API can only work with the master language of the remote media project.
 > You also require a configured CAAS API key with read permissions to both projects.
-
+>
 > For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
 
 ```typescript
@@ -198,7 +198,7 @@ fsxaApi.fetchElement({
 
 Returns the matching CaaS data entries.
 It maps the given entries to a more frontend-friendly format.
-Unneccessary fields will be omitted and the structure is simpler.
+Unnecessary fields will be omitted and the structure is simpler.
 
 Expects as input parameter an array of filters and a language abbreviation.
 Optionally a page number, page size, sort and additional parameters can be passed.
@@ -236,7 +236,7 @@ fsxaApi.fetchByFilter({
 })
 ```
 
-The default sorting is by the id descending. Multisort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
+The default sorting is by the id descending. MultiSort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
 
 > **_Attention_**<br>
 > The keys names which are passed to the `fetchByFilter` method (e.g. in the filters or the additionalParams) have to match the key names that are present in the CaaS data.

@@ -1,6 +1,6 @@
 {
   "name": "fjdsdjjxsa-proxy-api",
-  "version": "10.20.1-alpha.38",
+  "version": "10.20.1-alpha.41",
   "description": "The JavaScript Content API Library a.k.a Content API is an interface handling data coming from the FirstSpirit CaaS and the Navigation Service.",
   "keywords": [],
   "main": "dist/fjdsdjjxsa-proxy-api.cjs.js",
