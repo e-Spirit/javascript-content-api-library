@@ -118,7 +118,7 @@ import {
   LogLevel,
   FSXARemoteApi,
 } from 'fsxa-api'
-import { FSXAProxyApi } from 'fjdsdjjxsa-proxy-api'
+import { FSXAProxyApi } from 'fsxa-proxy-api'
 import getExpressRouter from 'fsxa-api/dist/lib/integrations/express'
 import 'cross-fetch/polyfill'
 

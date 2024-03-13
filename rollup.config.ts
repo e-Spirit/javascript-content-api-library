@@ -50,18 +50,18 @@ export default [
     external: [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})],
     output: [
       {
-        file: 'proxy/dist/fjdsdjjxsa-proxy-api.cjs.js',
+        file: 'proxy/dist/fsxa-proxy-api.cjs.js',
         format: 'cjs',
       },
       {
-        file: 'proxy/dist/fjdsdjjxsa-proxy-api.es5.js',
+        file: 'proxy/dist/fsxa-proxy-api.es5.js',
         format: 'esm',
       },
     ],
     plugins: [
       visualizer({
         emitFile: true,
-        filename: "stats/fjdsdjjxsa-proxy-api.html",
+        filename: "stats/fsxa-proxy-api.html",
       }),
       ts(),
       json(),

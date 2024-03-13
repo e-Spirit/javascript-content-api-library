@@ -1,16 +1,15 @@
 {
-  "name": "fjdsdjjxsa-proxy-api",
+  "name": "fsxa-proxy-api",
   "version": "10.20.1-alpha.41",
   "description": "The JavaScript Content API Library a.k.a Content API is an interface handling data coming from the FirstSpirit CaaS and the Navigation Service.",
   "keywords": [],
-  "main": "dist/fjdsdjjxsa-proxy-api.cjs.js",
-  "module": "dist/fjdsdjjxsa-proxy-api.es5.js",
+  "main": "dist/fsxa-proxy-api.cjs.js",
+  "module": "dist/fsxa-proxy-api.es5.js",
   "types": "dist/types",
   "author": "Tobias Golbs <golbs@e-spirit.com>",
   "contributors": [
-    "Dominik Barczewski <barczewski@e-spirit.com>",
-    "Nicolai Henczi <henczi@e-spirit.com>",
-    "Jaswin Schütz <jschuetz@e-spirit.com>"
+    "Nicolai McAlley <nicolai.mcalley@crownpeak.com>",
+    "Justin Wiegmann <justin.wiegmann@crownpeak.com>"
   ],
   "files": [
     "dist",

@@ -4,7 +4,7 @@ import express from 'express'
 import cors from 'cors'
 import { FSXAContentMode, FSXARemoteApi } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
-import { FSXAProxyApi, LogLevel } from 'fjdsdjjxsa-proxy-api'
+import { FSXAProxyApi, LogLevel } from 'fsxa-proxy-api'
 require('cross-fetch/polyfill')
 
 dotenv.config({ path: './dev/.env' })

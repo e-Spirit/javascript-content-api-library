@@ -79,7 +79,7 @@ Here is an example of how the `FSXAProxyApi` could be used backend.
 Make sure you have `fsxa-proxy-api` installed.
 
 ```typescript
-import { FSXAProxyApi, LogLevel } from 'fjdsdjjxsa-proxy-api'
+import { FSXAProxyApi, LogLevel } from 'fsxa-proxy-api'
 
 const locale = 'de_DE'
 const proxyAPI = new FSXAProxyApi(
