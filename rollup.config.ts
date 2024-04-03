@@ -4,7 +4,6 @@ import resolve from '@rollup/plugin-node-resolve'
 import babel from '@rollup/plugin-babel'
 import { terser } from 'rollup-plugin-terser'
 import ts from 'rollup-plugin-ts'
-// @ts-ignore
 import pkg from './package.json'
 import nodePolyfills from 'rollup-plugin-node-polyfills'
 import { optimizeLodashImports } from "@optimize-lodash/rollup-plugin";
