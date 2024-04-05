@@ -1,2 +1,3 @@
 export { FSXAProxyApi } from './modules/FSXAProxyApi'
-export { LogLevel } from './modules'
+export { LogLevel } from './modules/Logger'
+export * from './modules/QueryBuilder'
