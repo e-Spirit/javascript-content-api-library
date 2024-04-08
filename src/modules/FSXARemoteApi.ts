@@ -35,6 +35,7 @@ import { LogLevel } from './Logger'
 import { denormalizeResolvedReferences } from './MappingUtils'
 import { ComparisonQueryOperatorEnum, QueryBuilder } from './QueryBuilder'
 import { HttpError } from '../exceptions'
+import { LoggerChalked } from './LoggerChalked'
 
 type buildNavigationServiceURLParams = {
   locale?: string
@@ -113,7 +114,7 @@ export class FSXARemoteApi implements FSXAApi {
     this._maxReferenceDepth = maxReferenceDepth
     this._customMapper = customMapper
     this._logLevel = logLevel
-    this._logger = new Logger(logLevel, 'FSXARemoteApi')
+    this._logger = new LoggerChalked(logLevel, 'FSXARemoteApi')
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationItemFilter = filterOptions?.navigationItemFilter
     this._caasItemFilter = filterOptions?.caasItemFilter

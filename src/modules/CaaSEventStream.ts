@@ -1,8 +1,12 @@
 import { Channel, createChannel, createSession } from 'better-sse'
 import { FSXARemoteApi, Logger } from './'
-import ReconnectingWebSocket, { Options, ErrorEvent } from 'reconnecting-websocket'
+import ReconnectingWebSocket, {
+  Options,
+  ErrorEvent,
+} from 'reconnecting-websocket'
 import WebSocket from 'ws'
 import { Request, Response } from 'express'
+import { LoggerChalked } from './LoggerChalked'
 
 type SocketUrl = () => Promise<string>
 
@@ -16,7 +20,11 @@ class CaaSEventStream {
   channel: Channel
   socket: ReconnectingWebSocket
 
-  constructor(logger: Logger, createSocketUrl: SocketUrl, options: Options = {}) {
+  constructor(
+    logger: Logger,
+    createSocketUrl: SocketUrl,
+    options: Options = {}
+  ) {
     this.logger = logger
     this.createSocketUrl = createSocketUrl
 
@@ -45,7 +53,11 @@ class CaaSEventStream {
       this.socket.readyState === ReconnectingWebSocket.OPEN ||
       this.socket.readyState === ReconnectingWebSocket.CONNECTING
 
-    this.logger.info('onCheckState', 'activeSessions', this.channel.activeSessions.length)
+    this.logger.info(
+      'onCheckState',
+      'activeSessions',
+      this.channel.activeSessions.length
+    )
 
     if (hasSessions && !isSocketOpenOrConnecting) {
       this.socket.reconnect()
@@ -63,8 +75,11 @@ class CaaSEventStream {
 
   // add a new event-stream (session)
   addSession(req: Request, res: Response) {
-    const serializer = (data: any) => (typeof data === 'string' ? data : JSON.stringify(data))
-    createSession(req, res, { serializer }).then((session) => this.channel.register(session))
+    const serializer = (data: any) =>
+      typeof data === 'string' ? data : JSON.stringify(data)
+    createSession(req, res, { serializer }).then((session) =>
+      this.channel.register(session)
+    )
   }
 }
 
@@ -72,7 +87,7 @@ const streams: Record<string, CaaSEventStream> = {}
 
 export const eventStreamHandler = (api: FSXARemoteApi) => {
   return async (req: Request, res: Response) => {
-    const logger = new Logger(api.logLevel, 'CaaSEventStream')
+    const logger = new LoggerChalked(api.logLevel, 'CaaSEventStream')
     logger.info('requesting route: ', req.url, req.query)
 
     let remoteProject
@@ -85,7 +100,10 @@ export const eventStreamHandler = (api: FSXARemoteApi) => {
     if (!(caasUrl in streams)) {
       const createSocketUrl = async () => {
         const token = await api.fetchSecureToken()
-        const socketUrl = `${caasUrl.replace(/^http/, 'ws')}/_streams/crud?securetoken=${token}`
+        const socketUrl = `${caasUrl.replace(
+          /^http/,
+          'ws'
+        )}/_streams/crud?securetoken=${token}`
         logger.info('createSocketUrl', 'socketUrl', socketUrl)
         return socketUrl
       }

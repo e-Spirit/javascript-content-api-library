@@ -1,7 +1,6 @@
 import { MappedFilter, QueryBuilderQuery } from '../types'
 import { Logger } from './Logger'
 import { isValidRegex } from '../utils'
-import { isGeneratorFunction } from 'util/types'
 
 export enum ComparisonQueryOperatorEnum {
   GREATER_THAN_EQUALS = '$gte',

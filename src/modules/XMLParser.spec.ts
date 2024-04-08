@@ -1,8 +1,9 @@
-import { Logger, LogLevel } from './'
+import { LogLevel } from './'
+import { LoggerChalked } from './LoggerChalked'
 import XMLParser from './XMLParser'
 
 describe('XMLParser', () => {
-  const logger = new Logger(LogLevel.ERROR, 'XMLParserTest')
+  const logger = new LoggerChalked(LogLevel.ERROR, 'XMLParserTest')
   const xmlParser = new XMLParser(logger)
 
   it('should log an error on incorrect XML', async () => {
