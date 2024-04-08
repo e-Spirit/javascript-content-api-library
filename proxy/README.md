@@ -4,13 +4,6 @@ The JavaScript Content API Library a.k.a. Content API is an interface handling d
 [CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
 Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
 
-> **_SubPackage_**
-> This package holds the compiled client part of the Content API. It is intended to be shipped in client environments,
-> such as the users' browser. It is optimized to hold only necessary parts needed for execution in a client context.
-> The main functionality is to talk to a backend service, implementing
-> the [FSXARemoteApi](https://github.com/e-Spirit/javascript-content-api-library/blob/master/src/modules/FSXARemoteApi.ts)
-> class.
-
 > **_Attention_**
 > We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. The
 > project is now called "JavaScript Content API Library", but please note that this change solely affects the project's
@@ -21,6 +14,7 @@ Navigation Service. The data is processed and transformed so that it can be used
 > refined purpose and to avoid any confusion regarding its functionality.
 
 - [JavaScript Content API Library](#javascript-content-api-library--dedicated-client-package)
+    - [SubPackage](#subpackage)
     - [Experimental features](#experimental-features)
     - [Legal Notices](#legal-notices)
     - [Methods](#methods)
@@ -38,6 +32,20 @@ Navigation Service. The data is processed and transformed so that it can be used
     - [Type Mapping](#type-mapping)
         - [Input Components](#input-components)
     - [Disclaimer](#disclaimer)
+
+## SubPackage
+
+This package holds the compiled client part of the Content API and is a subset of its functionality. We removed redundant code, to shrink the size of the code sent to the user's client and therefore improve the Time to Interactive (TTI) and overall performance.
+such as the users' browser. It is optimized to hold only necessary parts needed for execution in a client context.
+The main functionality is to talk to a backend service, implemented by
+the [FSXARemoteApi](https://github.com/e-Spirit/javascript-content-api-library/blob/master/src/modules/FSXARemoteApi.ts)
+class.
+
+> **Please Note:**
+>
+> To benefit from this package, you have to carefully split your own codebase into client-side code and SSR / backend code.
+> Client-side related functionality of the Content API can be imported through the `fsxa-proxy-api` package.
+> This package is intended to only enable `FSXAProxyApi` to work and provides necessary exported functionality to use it correctly.
 
 ## Experimental features
 
@@ -75,7 +83,7 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
-Here is an example of how the `FSXAProxyApi` could be used backend.
+Here is an example of how the `FSXAProxyApi` could be used.
 Make sure you have `fsxa-proxy-api` installed.
 
 ```typescript
