@@ -17,6 +17,7 @@ import {
   FetchWrapperResult,
   useEndpointIntegrationWrapper,
 } from './endpointIntegrationWrapper'
+import { LoggerChalked } from '../modules/LoggerChalked'
 
 export interface GetExpressRouterContext {
   api: FSXARemoteApi
@@ -69,7 +70,7 @@ const sendUnexpectedError = (
 
 function getExpressRouter({ api }: GetExpressRouterContext) {
   const router = express.Router()
-  const logger = new Logger(api.logLevel, 'Express-Server')
+  const logger = new LoggerChalked(api.logLevel, 'Express-Server')
   const wrappers = useEndpointIntegrationWrapper(api, 'Express-Server')
 
   router.use(express.json())

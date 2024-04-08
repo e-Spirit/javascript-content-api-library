@@ -5,12 +5,14 @@ import {
   LogicalQueryOperatorEnum,
   EvaluationQueryOperatorEnum,
   QueryBuilderErrors,
-  Logger,
   LogLevel,
 } from '.'
 import { MappedFilter } from '../types'
+import { LoggerChalked } from './LoggerChalked'
 
-const builder = new QueryBuilder(new Logger(LogLevel.NONE, 'Querybuilder'))
+const builder = new QueryBuilder(
+  new LoggerChalked(LogLevel.NONE, 'Querybuilder')
+)
 const foobar = 'foobar'
 
 describe('QueryBuilder', () => {
