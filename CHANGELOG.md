@@ -1,3 +1,10 @@
+# [10.22.0](https://github.com/e-Spirit/fsxa-api/compare/v10.21.0...v10.22.0) (2024-04-09)
+
+
+### Features
+
+* **proxy version:** Fix proxy package release flow ([362045c](https://github.com/e-Spirit/fsxa-api/commit/362045c88a09be2f9a87d4c6fe68caa8d384201b))
+
 # [10.21.0](https://github.com/e-Spirit/fsxa-api/compare/v10.20.0...v10.21.0) (2024-04-09)
 
 
