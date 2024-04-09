@@ -1,32 +1,51 @@
-# JavaScript Content API Library
+# JavaScript Content API Library · Dedicated Client Package
 
 The JavaScript Content API Library a.k.a. Content API is an interface handling data coming from the FirstSpirit
 [CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
 Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
 
 > **_Attention_**
-> We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. The project is now called "JavaScript Content API Library", but please note that this change solely affects the project's name, repository, and associated branding elements. The core code and functionality of the library remain unchanged.
-The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
+> We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. The
+> project is now called "JavaScript Content API Library", but please note that this change solely affects the project's
+> name, repository, and associated branding elements. The core code and functionality of the library remain unchanged.
+> The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. The decision
+> to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other
+> components beyond the fsxa-api are now discontinued. The name change aims to align the project's branding with its
+> refined purpose and to avoid any confusion regarding its functionality.
 
-- [JavaScript Content API Library](#javascript-content-api-library)
-  - [Experimental features](#experimental-features)
-  - [Legal Notices](#legal-notices)
-  - [Methods](#methods)
-    - [Constructor](#constructor)
-    - [buildAuthorizationHeaders](#get-authorizationheader)
-    - [fetchNavigation](#fetchnavigation)
-    - [fetchElement](#fetchelement)
-    - [fetchByFilter](#fetchbyfilter)
-    - [fetchProjectProperties](#fetchprojectproperties)
-  - [Filter](#filter)
-    - [Logical Query Operators](#logical-query-operators)
-    - [Comparison Query Operators](#comparison-query-operators)
-    - [Evaluation Query Operators](#evaluation-query-operators)
-    - [Array Query Operators](#array-query-operators)
-  - [Helpers](#helpers)
-  - [Type Mapping](#type-mapping)
-    - [Input Components](#input-components)
-  - [Disclaimer](#disclaimer)
+- [JavaScript Content API Library](#javascript-content-api-library--dedicated-client-package)
+    - [SubPackage](#subpackage)
+    - [Experimental features](#experimental-features)
+    - [Legal Notices](#legal-notices)
+    - [Methods](#methods)
+        - [Constructor](#constructor)
+        - [fetchNavigation](#fetchnavigation)
+        - [fetchElement](#fetchelement)
+        - [fetchByFilter](#fetchbyfilter)
+        - [fetchProjectProperties](#fetchprojectproperties)
+    - [Filter](#filter)
+        - [Logical Query Operators](#logical-query-operators)
+        - [Comparison Query Operators](#comparison-query-operators)
+        - [Evaluation Query Operators](#evaluation-query-operators)
+        - [Array Query Operators](#array-query-operators)
+    - [Helpers](#helpers)
+    - [Type Mapping](#type-mapping)
+        - [Input Components](#input-components)
+    - [Disclaimer](#disclaimer)
+
+## SubPackage
+
+This package holds the compiled client part of the Content API and is a subset of its functionality. We removed redundant code, to shrink the size of the code sent to the user's client and therefore improve the Time to Interactive (TTI) and overall performance.
+such as the users' browser. It is optimized to hold only necessary parts needed for execution in a client context.
+The main functionality is to talk to a backend service, implemented by
+the [FSXARemoteApi](https://github.com/e-Spirit/javascript-content-api-library/blob/master/src/modules/FSXARemoteApi.ts)
+class.
+
+> **Please Note:**
+>
+> To benefit from this package, you have to carefully split your own codebase into client-side code and SSR / backend code.
+> Client-side related functionality of the Content API can be imported through the `fsxa-proxy-api` package.
+> This package is intended to only enable `FSXAProxyApi` to work and provides necessary exported functionality to use it correctly.
 
 ## Experimental features
 
@@ -42,62 +61,20 @@ The JavaScript Content API Library is subject to the Apache-2.0 license.
 
 In this section all available methods will be explained using examples.
 
-## Requirements
-
-The JavaScript Content API Library requires a `fetch` implementation to run on a Node server environment.
-This dependency can be fulfilled with a cross-fetch polyfill in older Node versions.
-A working example can be found in the chapter _Constructor_.
-
 ### Constructor
 
 To be able to use the Content API, a new object must be created.
-How you create the object depends on how you want to use the Content API.
 
-If you want to use the information provided by the CaaS in your frontend, you can use the `FSXAProxyApi`.
+If you want to use the information provided by the CaaS in your frontend, you can use the `FSXAProxyApi` provided with
+this package.
 It proxies the requested resources to a middleware Rest Api, that does not expose secrets.
-If you want to use it in your server, you can use the `FSXARemoteApi`.
-It can be registered as a Rest Api that can be called from a `FSXAProxyApi` instance.
+If you want to use it in your server, you can use the `FSXARemoteApi`. This is not supported by this package. **You have
+to implement all backend related code with the parent package `fsxa-api`**.
+It then can be registered as a Rest Api that can be called from a `FSXAProxyApi` instance you can implement with this
+package (`fsxa-proxy-api`).
 
-However, to have a fully running application, we recommend using the Content API in your server as well as in your frontend.
-
-The config mode can be `preview` or `release`, depending on the state of the content you want to fetch.
-<br />
-There is an enum to use these modes.
-<br />
-`FSXAContentMode.PREVIEW` for `preview`
-<br />
-`FSXAContentMode.RELEASE` for `release`
-
-If you want to use the `FSXARemoteApi`, you have to specify the following parameters:
-
-```typescript
-const config = {
-  apikey: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'!,
-  caasURL: 'https://your.caas.url',
-  contentMode: FSXAContentMode.PREVIEW,
-  navigationServiceURL: 'https://your.navigation-service.url/navigation',
-  projectID: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-  tenantID: 'your-tenant-id',
-  logLevel: LogLevel.INFO,
-  enableEventStream: true || false,
-}
-```
-
-You can also include remote projects if you want to use remote media.
-
-> **_Attention_**<br>
-> Currently the Content API can only work with the master language of the remote media project.
-> You also require a configured CAAS API key with read permissions to both projects.
->
-> For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
-
-```typescript
-const config = {
-  ...
-  remotes: { media: { id: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', locale: 'en_GB' } },
-  ...
-}
-```
+However, to have a fully running application, we recommend using the Content API in your server as well as in your
+frontend.
 
 The log level can be:
 `0` = Info
@@ -106,74 +83,34 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
-Here is an example of how the `FSXARemoteApi` and `FSXAProxyApi` could be used with an [Express.js](https://expressjs.com/) backend.
-Make sure you have `cross-fetch`, `express`, `cors`, `lodash` and of course `fsxa-api` installed.
+Here is an example of how the `FSXAProxyApi` could be used.
+Make sure you have `fsxa-proxy-api` installed.
 
 ```typescript
-import dotenv from 'dotenv'
-import express from 'express'
-import cors from 'cors'
-import {
-  FSXAContentMode,
-  LogLevel,
-  FSXARemoteApi,
-} from 'fsxa-api'
-import { FSXAProxyApi } from 'fsxa-proxy-api'
-import getExpressRouter from 'fsxa-api/dist/lib/integrations/express'
-import 'cross-fetch/polyfill'
+import { FSXAProxyApi, LogLevel } from 'fsxa-proxy-api'
 
-dotenv.config({ path: '.env' })
-const app = express()
-const remoteApi = new FSXARemoteApi(config)
+const locale = 'de_DE'
+const proxyAPI = new FSXAProxyApi(
+  'http://localhost:3002/api',
+  LogLevel.INFO
+)
 
-app.use(cors())
-app.use('/api', getExpressRouter({ api: remoteApi }))
-
-app.listen(3002, async () => {
-  console.log('Listening at http://localhost:3002')
-  try {
-    const locale = 'de_DE'
-    const proxyAPI = new FSXAProxyApi(
-      'http://localhost:3002/api',
-      LogLevel.INFO
-    )
-    // you can also fetch navigation from proxyAPI
-    const navigationResponse = await proxyAPI.fetchNavigation({
-      locale,
-      initialPath: '/',
-    })
-  } catch (e) {
-    console.log(e)
-  }
+// you can also fetch navigation from proxyAPI
+const navigationResponse = await proxyAPI.fetchNavigation({
+  locale,
+  initialPath: '/'
 })
-```
-
-### get authorizationHeader
-
-Returns the build authorization header in the following format when using `FSXARemoteApi`:
-
-```typescript
-{
-  authorization: 'Bearer xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-}
-```
-
-Example:
-
-```typescript
-const remoteApi = new FSXARemoteApi(config)
-const authorizationHeader = remoteApi.authorizationHeader
-// console.log { authorization: `Bearer ${config.apikey}` }
 ```
 
 ### fetchNavigation
 
-This method fetches the navigation from the configured navigation service. You need to pass a `FetchNavigationParams` object.
+This method fetches the navigation from the configured navigation service. You need to pass a `FetchNavigationParams`
+object.
 
 Example:
 
 ```typescript
-fsxaApi.fetchNavigation({
+proxyAPI.fetchNavigation({
   locale: 'en_EN',
   initialPath: '/',
 })
@@ -181,10 +118,11 @@ fsxaApi.fetchNavigation({
 
 ### fetchElement
 
-This method fetches an element from the configured CaaS. The `FetchElementParams` object defines options to specify your request. Check `FSXARemoteApi.buildCaaSUrl` to know which URL will be used.
+This method fetches an element from the configured CaaS. The `FetchElementParams` object defines options to specify your
+request. Check `FSXARemoteApi.buildCaaSUrl` from the `fsxa-api` package to know which URL will be used.
 
 ```typescript
-fsxaApi.fetchElement({
+proxyAPI.fetchElement({
   id: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
   locale: 'de_DE',
 })
@@ -192,7 +130,8 @@ fsxaApi.fetchElement({
 
 > **_Note_**<br>
 > The 'raw' CaaS data might be helpful when you want to know the key names that you can filter for.
-> It is possible to access that data directly with the authorization header and the CaaS Url.
+> It is possible to access that data directly with the authorization header and the CaaS Url when working with
+> the `fsxa-api` package.
 
 ### fetchByFilter
 
@@ -203,7 +142,8 @@ Unnecessary fields will be omitted and the structure is simpler.
 Expects as input parameter an array of filters and a language abbreviation.
 Optionally a page number, page size, sort and additional parameters can be passed.
 <br />
-Optionally, a remoteProject can be passed. If one is passed, the element will be fetched from this project instead of the default one.
+Optionally, a remoteProject can be passed. If one is passed, the element will be fetched from this project instead of
+the default one.
 
 Several filter objects can be specified in the filter array, the results will then correspond to all specified filters.
 
@@ -217,10 +157,11 @@ One filter object must have a:
 
 [More information to the filters](#filter)
 
-In this example we search for all elements with the `fsType` equals `Example`. We want the `2nd` page with a maximum of `50` entries. The results should be sorted by fsType descending. However, we do not want the `identifier` to appear:
+In this example we search for all elements with the `fsType` equals `Example`. We want the `2nd` page with a maximum
+of `50` entries. The results should be sorted by fsType descending. However, we do not want the `identifier` to appear:
 
 ```typescript
-fsxaApi.fetchByFilter({
+proxyApi.fetchByFilter({
   filters: [
     {
       field: 'fsType',
@@ -236,10 +177,12 @@ fsxaApi.fetchByFilter({
 })
 ```
 
-The default sorting is by the id descending. MultiSort is possible and the first sort param is prioritized over subsequent. The sorting is happening on the raw data.
+The default sorting is by the id descending. MultiSort is possible and the first sort param is prioritized over
+subsequent. The sorting is happening on the raw data.
 
 > **_Attention_**<br>
-> The keys names which are passed to the `fetchByFilter` method (e.g. in the filters or the additionalParams) have to match the key names that are present in the CaaS data.
+> The keys names which are passed to the `fetchByFilter` method (e.g. in the filters or the additionalParams) have to
+> match the key names that are present in the CaaS data.
 
 ### fetchProjectProperties
 
@@ -252,14 +195,15 @@ ATTENTION: Works only with CaaSConnect module version 3 onwards.
 Example:
 
 ```typescript
-fsxaApi.fetchProjectProperties({
+proxyApi.fetchProjectProperties({
   locale: 'de_DE',
 })
 ```
 
 ## Filter
 
-You can customize your queries in the [fetchByFilter](#fetchbyfilter) method with these operations. For more information please refer to the MongoDB documentation. Links are provided in each section.
+You can customize your queries in the [fetchByFilter](#fetchbyfilter) method with these operations. For more information
+please refer to the MongoDB documentation. Links are provided in each section.
 
 ### Helpers
 
@@ -281,92 +225,17 @@ getAvailableLocales({
 })
 ```
 
-This method provides a list of available locales configured in your FirstSpirit project. It is recommended that the configuration matches the ISO format. E.g. ["en_GB", "de_DE"]
+This method provides a list of available locales configured in your FirstSpirit project. It is recommended that the
+configuration matches the ISO format. E.g. ["en_GB", "de_DE"]
 
 ```typescript
   Promise<string[]>
 ```
 
-### 1. Extending the API
-
-#### Introduction
-
-In some scenarios, you might find that the standard methods provided by the JavaScript Content API Library do not fully cover your use case. That's where the flexibility of extending the API comes into play. This guide focuses on extending the API to fetch data from an aggregation in the Content as a Service (CaaS) using the buildCaasUrl function and handling authorization headers. We'll take you through the process step by step.
-
-#### 1.1 Fetching from Aggregation
-
-This guide provided an in-depth overview of sending requests to the CaaS service using the `buildCaasUrl` function and the aggregation URI `/_aggrs/example`. It also covered the crucial aspect of including authorization headers to ensure secure communication. By following these steps, you can effectively retrieve and manage content from the CaaS in your JavaScript projects
-
-#### 1.1.1 Prerequisites
-Before you start extending the API, ensure you have the following:
-- Configuration details such as API keys, CaaS URL, and other required parameters.
-
-#### 1.1.2 Abstract Steps
-Extending the API to fetch data from an aggregation involves the following steps:
-
-1. Use the buildCaasUrl function to construct the URL for the aggregation request.
-2. Include the necessary authorization headers for secure communication.
-3. Make the fetch request to the constructed URL.
-4. Handle the response data or errors accordingly.
-
-#### 1.1.3 Implementation Notes
-It's important to note a few things before proceeding:
-- This approach requires a server-side environment due to security concerns.
-- To access the CaaS service from the server-side, you need to use the FSXARemoteApi.
-- Extending the API in this manner allows you to tailor the data retrieval to your specific requirements.
-
-#### 1.1.4 How to Use the New Function
-Let's dive into the details of extending the API to fetch data from an aggregation.
-
-1. Use `buildCaasUrl` Function
-
-Start by using the buildCaasUrl function to construct the URL for the aggregation request:
-```typescript
-import { FSXARemoteApi } from 'fsxa-api';
-
-const remoteApi = new FSXARemoteApi(config);
-const aggregationUri = '/_aggrs/example';
-const caasUrl = remoteApi.buildCaasUrl();
-const url = `${caasUrl}/${aggregationUri}`
-```
-
-2. Include Authorization Headers
-
-To ensure secure communication, include authorization headers in your request:
-```typescript
-const headers = {
-  ...remoteApi.authorizationHeader,
-  // other headers if needed
-}
-```
-
-3. Make the Fetch Request
-```typescript
-const caasUrl = remote.buildCaaSUrl();
-const aggregationUri = '_aggrs/example';
-const url = `${caasUrl}/${aggregationUri}`;
-const headers = {
-  ...remoteApi.authorizationHeader,
-  // other headers if needed
-}
-
-try {
-  const response = await fetch(url, {
-    headers,
-  });
-
-  const data = await response.json();
-  // Handle the data...
-} catch (error) {
-  console.error('An error occurred:', error);
-  // Handle the error...
-}
-```
-By following these steps, you've successfully extended the API to fetch data from an aggregation in the CaaS service. This approach empowers you to retrieve data tailored to your specific needs, enhancing the capabilities of the JavaScript Content API Library.
-
 ### Logical Query Operators
 
-These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
+These operators can also be found in
+the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
 
 | Enum                         | Operation |
 |------------------------------|-----------|
@@ -377,7 +246,8 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 
 ### Comparison Query Operators
 
-These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
+These operators can also be found in
+the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
 | Enum                                            | Operation |
 |-------------------------------------------------|-----------|
@@ -392,7 +262,8 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 
 ### Evaluation Query Operators
 
-These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-evaluation/)
+These operators can also be found in
+the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-evaluation/)
 
 | Enum                              | Operation |
 |-----------------------------------|-----------|
@@ -400,7 +271,8 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 
 ### Array Query Operators
 
-These operators can also be found in the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
+These operators can also be found in
+the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
 
 | Enum                       | Operation |
 |----------------------------|-----------|
@@ -410,8 +282,10 @@ These operators can also be found in the [MongoDB Documentation](https://docs.mo
 
 ### Input Components
 
-This table gives an overview of the FirstSpirit input components, which can be defined in the "Form" tab of the FirstSpirit templates.
-Each input component has a (Java) data type, which has a representation in the CaaS. Those values are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the Content API.
+This table gives an overview of the FirstSpirit input components, which can be defined in the "Form" tab of the
+FirstSpirit templates.
+Each input component has a (Java) data type, which has a representation in the CaaS. Those values
+are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the Content API.
 
 | <nobr>FirstSpirit Input Component</nobr>                                 | <nobr>CaaS Representation</nobr>                                                                                                                  | <nobr>Content API [Value](src/types.ts)</nobr> |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
@@ -435,43 +309,81 @@ Each input component has a (Java) data type, which has a representation in the C
 | [CMS_INPUT_TOGGLE]<br />[`Boolean`][fs-boolean]                          | <nobr>= `CaaSApi_CMSInputToggle`</nobr><br />= `boolean`&#124;`null`                                                                              | [`boolean`][js-boolean]                        |
 
 [fs_catalog]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/catalog/index.html
+
 [fs-catalog]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/catalog/index.html
+
 [fs-card]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/card/index.html
+
 [cms_input_checkbox]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/checkbox/index.html
+
 [fs-set]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/set/index.html
+
 [fs-option]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/option/index.html
+
 [cms_input_combobox]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/combobox/index.html
+
 [fs_dataset]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/dataset/index.html
+
 [fs-datasetcontainer]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/datasetcontaine/index.html
+
 [cms_input_date]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/date/index.html
+
 [fs-date]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/date/index.html
+
 [js-date]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
+
 [cms_input_dom]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/dom/index.html
+
 [fs-domelement]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/domelement/index.html
+
 [cms_input_domtable]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/domtable/index.html
+
 [fs-table]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/table/index.html
+
 [cms_input_imagemap]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/imagemap/index.html
+
 [fs-mappingmedium]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/mappingmedium/index.html
+
 [fs_index]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/index/index.html
+
 [fs-index]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/index/index.html
+
 [fs-record]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/record/index.html
+
 [cms_input_link]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/link/index.html
+
 [fs-link]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/link/index.html
+
 [cms_input_list]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/list/index.html
+
 [cms_input_number]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/number/index.html
+
 [fs-number]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/number/index.html
+
 [js-number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
+
 [cms_input_permission]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/permission/index.html
+
 [fs-permissions]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/permissions/index.html
+
 [cms_input_radiobutton]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/radiobutton/index.html
+
 [fs_reference]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/reference/index.html
+
 [fs-targetreference]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/targetreference/index.html
+
 [cms_input_text]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/text/index.html
+
 [fs-string]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/string-text/index.html
+
 [js-string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+
 [cms_input_textarea]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/textarea/index.html
+
 [cms_input_toggle]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/toggle/index.html
+
 [fs-boolean]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/boolean/index.html
+
 [js-boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
 ## Disclaimer

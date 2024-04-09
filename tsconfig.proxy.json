@@ -11,10 +11,9 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "outDir": "dist/lib",
-    "declarationDir": "dist/types",
-    "resolveJsonModule": true,
+    "outDir": "./proxy/dist/lib",
+    "declarationDir": "./proxy/dist/types",
     "typeRoots": ["node_modules/@types"]
   },
-  "include": ["src", "integrationtests/**/*.ts"]
+  "include": ["src/proxy.ts"],
 }

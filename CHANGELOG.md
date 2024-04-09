@@ -1,3 +1,16 @@
+# [10.21.0](https://github.com/e-Spirit/fsxa-api/compare/v10.20.0...v10.21.0) (2024-03-13)
+
+
+### Features
+
+* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([ffc5658](https://github.com/e-Spirit/fsxa-api/commit/ffc56582473921f8fa4cb334d64b54ffa8d8642c))
+* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([2aaf2b2](https://github.com/e-Spirit/fsxa-api/commit/2aaf2b216b5c0045cdb167f8c661221cf41333d9))
+* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([c8727a3](https://github.com/e-Spirit/fsxa-api/commit/c8727a3eacb433a9ec53721c6398d0d0dd1b02d6))
+* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([f0ad6ff](https://github.com/e-Spirit/fsxa-api/commit/f0ad6ff99a238a451deadf4ab4ad6b1c605f7d8a))
+* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([646c74f](https://github.com/e-Spirit/fsxa-api/commit/646c74f9b10c483f082944157348d44ae5a69639))
+* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([e63157a](https://github.com/e-Spirit/fsxa-api/commit/e63157a8cca5e218b9e2d3222f86867da271e488))
+* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([dc54689](https://github.com/e-Spirit/fsxa-api/commit/dc546898235665109a683922606047fae4243cf1))
+
 # [10.20.0](https://github.com/e-Spirit/fsxa-api/compare/v10.19.1...v10.20.0) (2024-03-04)
 
 
