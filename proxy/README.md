@@ -4,13 +4,6 @@ The JavaScript Content API Library a.k.a. Content API is an interface handling d
 [CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
 Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
 
-> **_SubPackage_**
-> This package holds the compiled client part of the Content API. It is intended to be shipped in client environments,
-> such as the users' browser. It is optimized to hold only necessary parts needed for execution in a client context.
-> The main functionality is to talk to a backend service, implementing
-> the [FSXARemoteApi](https://github.com/e-Spirit/javascript-content-api-library/blob/master/src/modules/FSXARemoteApi.ts)
-> class.
-
 > **_Attention_**
 > We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. The
 > project is now called "JavaScript Content API Library", but please note that this change solely affects the project's
@@ -21,23 +14,38 @@ Navigation Service. The data is processed and transformed so that it can be used
 > refined purpose and to avoid any confusion regarding its functionality.
 
 - [JavaScript Content API Library](#javascript-content-api-library--dedicated-client-package)
-    - [Experimental features](#experimental-features)
-    - [Legal Notices](#legal-notices)
-    - [Methods](#methods)
-        - [Constructor](#constructor)
-        - [fetchNavigation](#fetchnavigation)
-        - [fetchElement](#fetchelement)
-        - [fetchByFilter](#fetchbyfilter)
-        - [fetchProjectProperties](#fetchprojectproperties)
-    - [Filter](#filter)
-        - [Logical Query Operators](#logical-query-operators)
-        - [Comparison Query Operators](#comparison-query-operators)
-        - [Evaluation Query Operators](#evaluation-query-operators)
-        - [Array Query Operators](#array-query-operators)
-    - [Helpers](#helpers)
-    - [Type Mapping](#type-mapping)
-        - [Input Components](#input-components)
-    - [Disclaimer](#disclaimer)
+  - [SubPackage](#subpackage)
+  - [Experimental features](#experimental-features)
+  - [Legal Notices](#legal-notices)
+  - [Methods](#methods)
+    - [Constructor](#constructor)
+    - [fetchNavigation](#fetchnavigation)
+    - [fetchElement](#fetchelement)
+    - [fetchByFilter](#fetchbyfilter)
+    - [fetchProjectProperties](#fetchprojectproperties)
+  - [Filter](#filter)
+    - [Logical Query Operators](#logical-query-operators)
+    - [Comparison Query Operators](#comparison-query-operators)
+    - [Evaluation Query Operators](#evaluation-query-operators)
+    - [Array Query Operators](#array-query-operators)
+  - [Helpers](#helpers)
+  - [Type Mapping](#type-mapping)
+    - [Input Components](#input-components)
+  - [Disclaimer](#disclaimer)
+
+## SubPackage
+
+This package holds the compiled client part of the Content API and is a subset of its functionality. We removed redundant code, to shrink the size of the code sent to the user's client and therefore improve the Time to Interactive (TTI) and overall performance.
+such as the users' browser. It is optimized to hold only necessary parts needed for execution in a client context.
+The main functionality is to talk to a backend service, implemented by
+the [FSXARemoteApi](https://github.com/e-Spirit/javascript-content-api-library/blob/master/src/modules/FSXARemoteApi.ts)
+class.
+
+> **Please Note:**
+>
+> To benefit from this package, you have to carefully split your own codebase into client-side code and SSR / backend code.
+> Client-side related functionality of the Content API can be imported through the `fsxa-proxy-api` package.
+> This package is intended to only enable `FSXAProxyApi` to work and provides necessary exported functionality to use it correctly.
 
 ## Experimental features
 
@@ -75,22 +83,19 @@ The log level can be:
 `3` = Error
 `4` = None. The default is set to `3`.
 
-Here is an example of how the `FSXAProxyApi` could be used backend.
+Here is an example of how the `FSXAProxyApi` could be used.
 Make sure you have `fsxa-proxy-api` installed.
 
 ```typescript
 import { FSXAProxyApi, LogLevel } from 'fsxa-proxy-api'
 
 const locale = 'de_DE'
-const proxyAPI = new FSXAProxyApi(
-  'http://localhost:3002/api',
-  LogLevel.INFO
-)
+const proxyAPI = new FSXAProxyApi('http://localhost:3002/api', LogLevel.INFO)
 
 // you can also fetch navigation from proxyAPI
 const navigationResponse = await proxyAPI.fetchNavigation({
   locale,
-  initialPath: '/'
+  initialPath: '/',
 })
 ```
 
@@ -230,7 +235,7 @@ These operators can also be found in
 the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-logical/)
 
 | Enum                         | Operation |
-|------------------------------|-----------|
+| ---------------------------- | --------- |
 | LogicalQueryOperatorEnum.AND | \$and     |
 | LogicalQueryOperatorEnum.NOT | \$not     |
 | LogicalQueryOperatorEnum.NOR | \$nor     |
@@ -242,7 +247,7 @@ These operators can also be found in
 the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-comparison/)
 
 | Enum                                            | Operation |
-|-------------------------------------------------|-----------|
+| ----------------------------------------------- | --------- |
 | ComparisonQueryOperatorEnum.GREATER_THAN_EQUALS | \$gte     |
 | ComparisonQueryOperatorEnum.GREATER_THAN        | \$gt      |
 | ComparisonQueryOperatorEnum.EQUALS              | \$eq      |
@@ -258,7 +263,7 @@ These operators can also be found in
 the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-evaluation/)
 
 | Enum                              | Operation |
-|-----------------------------------|-----------|
+| --------------------------------- | --------- |
 | EvaluationQueryOperatorEnum.REGEX | \$regex   |
 
 ### Array Query Operators
@@ -267,7 +272,7 @@ These operators can also be found in
 the [MongoDB Documentation](https://docs.mongodb.com/manual/reference/operator/query-array/)
 
 | Enum                       | Operation |
-|----------------------------|-----------|
+| -------------------------- | --------- |
 | ArrayQueryOperatorEnum.ALL | \$all     |
 
 ## Type Mapping
@@ -280,7 +285,7 @@ Each input component has a (Java) data type, which has a representation in the C
 are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the Content API.
 
 | <nobr>FirstSpirit Input Component</nobr>                                 | <nobr>CaaS Representation</nobr>                                                                                                                  | <nobr>Content API [Value](src/types.ts)</nobr> |
-|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | [FS_CATALOG]<br />[`Catalog`][fs-catalog]`<`[`Catalog$Card`][fs-card]`>` | <nobr>= `CaaSApi_FSCatalog`</nobr><br />= `CaaSApi_Card[]`                                                                                        | `Section[]`                                    |
 | [CMS_INPUT_CHECKBOX]<br />[`Set`][fs-set]`<`[`Option`][fs-option]`>`     | <nobr>= `CaaSApi_CMSInputCheckbox`</nobr><br />= `CaaSApi_Option[]`                                                                               | `Option[]`                                     |
 | [CMS_INPUT_COMBOBOX]<br />[`Option`][fs-option]                          | <nobr>= `CaaSApi_CMSInputCombobox`</nobr><br />= `CaaSApi_Option`&#124;`null`                                                                     | `Option`                                       |
@@ -301,81 +306,43 @@ are [mapped](src/modules/CaaSMapper.ts) to an [interface](src/types.ts) of the C
 | [CMS_INPUT_TOGGLE]<br />[`Boolean`][fs-boolean]                          | <nobr>= `CaaSApi_CMSInputToggle`</nobr><br />= `boolean`&#124;`null`                                                                              | [`boolean`][js-boolean]                        |
 
 [fs_catalog]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/catalog/index.html
-
 [fs-catalog]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/catalog/index.html
-
 [fs-card]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/card/index.html
-
 [cms_input_checkbox]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/checkbox/index.html
-
 [fs-set]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/set/index.html
-
 [fs-option]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/option/index.html
-
 [cms_input_combobox]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/combobox/index.html
-
 [fs_dataset]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/dataset/index.html
-
 [fs-datasetcontainer]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/datasetcontaine/index.html
-
 [cms_input_date]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/date/index.html
-
 [fs-date]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/date/index.html
-
 [js-date]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
-
 [cms_input_dom]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/dom/index.html
-
 [fs-domelement]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/domelement/index.html
-
 [cms_input_domtable]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/domtable/index.html
-
 [fs-table]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/table/index.html
-
 [cms_input_imagemap]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/imagemap/index.html
-
 [fs-mappingmedium]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/mappingmedium/index.html
-
 [fs_index]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/index/index.html
-
 [fs-index]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/index/index.html
-
 [fs-record]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/record/index.html
-
 [cms_input_link]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/link/index.html
-
 [fs-link]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/link/index.html
-
 [cms_input_list]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/list/index.html
-
 [cms_input_number]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/number/index.html
-
 [fs-number]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/number/index.html
-
 [js-number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number
-
 [cms_input_permission]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/permission/index.html
-
 [fs-permissions]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/permissions/index.html
-
 [cms_input_radiobutton]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/radiobutton/index.html
-
 [fs_reference]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/reference/index.html
-
 [fs-targetreference]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/targetreference/index.html
-
 [cms_input_text]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/text/index.html
-
 [fs-string]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/string-text/index.html
-
 [js-string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
-
 [cms_input_textarea]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/textarea/index.html
-
 [cms_input_toggle]: https://docs.e-spirit.com/odfs/template-develo/forms/input-component/toggle/index.html
-
 [fs-boolean]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/boolean/index.html
-
 [js-boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
 ## Disclaimer

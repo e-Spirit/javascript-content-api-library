@@ -1,84 +1,80 @@
-# [10.21.0](https://github.com/e-Spirit/fsxa-api/compare/v10.20.0...v10.21.0) (2024-03-13)
-
+# [10.21.0](https://github.com/e-Spirit/fsxa-api/compare/v10.20.0...v10.21.0) (2024-04-09)
 
 ### Features
 
-* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([ffc5658](https://github.com/e-Spirit/fsxa-api/commit/ffc56582473921f8fa4cb334d64b54ffa8d8642c))
-* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([2aaf2b2](https://github.com/e-Spirit/fsxa-api/commit/2aaf2b216b5c0045cdb167f8c661221cf41333d9))
-* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([c8727a3](https://github.com/e-Spirit/fsxa-api/commit/c8727a3eacb433a9ec53721c6398d0d0dd1b02d6))
-* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([f0ad6ff](https://github.com/e-Spirit/fsxa-api/commit/f0ad6ff99a238a451deadf4ab4ad6b1c605f7d8a))
-* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([646c74f](https://github.com/e-Spirit/fsxa-api/commit/646c74f9b10c483f082944157348d44ae5a69639))
-* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([e63157a](https://github.com/e-Spirit/fsxa-api/commit/e63157a8cca5e218b9e2d3222f86867da271e488))
-* **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([dc54689](https://github.com/e-Spirit/fsxa-api/commit/dc546898235665109a683922606047fae4243cf1))
+- **content-api:** introduce separate proxy-api package ([#203](https://github.com/e-Spirit/fsxa-api/issues/203)) ([a70c41c](https://github.com/e-Spirit/fsxa-api/commit/a70c41cd3492c818bdbd24c202c624718cf7a7bb))
+
+# [10.21.0](https://github.com/e-Spirit/fsxa-api/compare/v10.20.0...v10.21.0) (2024-03-13)
+
+### Features
+
+- **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([ffc5658](https://github.com/e-Spirit/fsxa-api/commit/ffc56582473921f8fa4cb334d64b54ffa8d8642c))
+- **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([2aaf2b2](https://github.com/e-Spirit/fsxa-api/commit/2aaf2b216b5c0045cdb167f8c661221cf41333d9))
+- **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([c8727a3](https://github.com/e-Spirit/fsxa-api/commit/c8727a3eacb433a9ec53721c6398d0d0dd1b02d6))
+- **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([f0ad6ff](https://github.com/e-Spirit/fsxa-api/commit/f0ad6ff99a238a451deadf4ab4ad6b1c605f7d8a))
+- **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([646c74f](https://github.com/e-Spirit/fsxa-api/commit/646c74f9b10c483f082944157348d44ae5a69639))
+- **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([e63157a](https://github.com/e-Spirit/fsxa-api/commit/e63157a8cca5e218b9e2d3222f86867da271e488))
+- **shrink proxy:** bundles in fsxa-api are large which causes performance problems ([dc54689](https://github.com/e-Spirit/fsxa-api/commit/dc546898235665109a683922606047fae4243cf1))
 
 # [10.20.0](https://github.com/e-Spirit/fsxa-api/compare/v10.19.1...v10.20.0) (2024-03-04)
 
-
 ### Features
 
-* **pageref route:** add route to mappedPageRef ([#201](https://github.com/e-Spirit/fsxa-api/issues/201)) ([f60ae62](https://github.com/e-Spirit/fsxa-api/commit/f60ae62222dd840773300ff93a9351417ca43141))
+- **pageref route:** add route to mappedPageRef ([#201](https://github.com/e-Spirit/fsxa-api/issues/201)) ([f60ae62](https://github.com/e-Spirit/fsxa-api/commit/f60ae62222dd840773300ff93a9351417ca43141))
 
 ## [10.19.1](https://github.com/e-Spirit/fsxa-api/compare/v10.19.0...v10.19.1) (2023-12-20)
 
-
 ### Bug Fixes
 
-* **mapper:** mark items that are being fetched as processed ([#198](https://github.com/e-Spirit/fsxa-api/issues/198)) ([#199](https://github.com/e-Spirit/fsxa-api/issues/199)) ([8cf5eb3](https://github.com/e-Spirit/fsxa-api/commit/8cf5eb3185a19f594234b726d07fc9d14ec073ea))
+- **mapper:** mark items that are being fetched as processed ([#198](https://github.com/e-Spirit/fsxa-api/issues/198)) ([#199](https://github.com/e-Spirit/fsxa-api/issues/199)) ([8cf5eb3](https://github.com/e-Spirit/fsxa-api/commit/8cf5eb3185a19f594234b726d07fc9d14ec073ea))
 
 # [10.19.0](https://github.com/e-Spirit/fsxa-api/compare/v10.18.2...v10.19.0) (2023-11-09)
 
-
 ### Features
 
-* **section:** add name and displayname fields to section data  ([#195](https://github.com/e-Spirit/fsxa-api/issues/195)) ([cc9e470](https://github.com/e-Spirit/fsxa-api/commit/cc9e470ed3138f51f67d69af0ec0084ebd23f688))
+- **section:** add name and displayname fields to section data ([#195](https://github.com/e-Spirit/fsxa-api/issues/195)) ([cc9e470](https://github.com/e-Spirit/fsxa-api/commit/cc9e470ed3138f51f67d69af0ec0084ebd23f688))
 
 ## [10.18.2](https://github.com/e-Spirit/fsxa-api/compare/v10.18.1...v10.18.2) (2023-10-27)
 
-
 ### Bug Fixes
 
-* **remoteitems:** fix direct request of remote items  ([#192](https://github.com/e-Spirit/fsxa-api/issues/192)) ([ac0f0b7](https://github.com/e-Spirit/fsxa-api/commit/ac0f0b7063b7fed08fc956ef7d0c7420681b92df))
+- **remoteitems:** fix direct request of remote items ([#192](https://github.com/e-Spirit/fsxa-api/issues/192)) ([ac0f0b7](https://github.com/e-Spirit/fsxa-api/commit/ac0f0b7063b7fed08fc956ef7d0c7420681b92df))
 
 ## [10.18.1](https://github.com/e-Spirit/fsxa-api/compare/v10.18.0...v10.18.1) (2023-10-18)
 
-
 ### Bug Fixes
 
-* **content-filter:** Pass keys usage to filter ([#165](https://github.com/e-Spirit/fsxa-api/issues/165)) ([46b15e4](https://github.com/e-Spirit/fsxa-api/commit/46b15e46e3e352d2cbac70f91f2f342222add49d))
+- **content-filter:** Pass keys usage to filter ([#165](https://github.com/e-Spirit/fsxa-api/issues/165)) ([46b15e4](https://github.com/e-Spirit/fsxa-api/commit/46b15e46e3e352d2cbac70f91f2f342222add49d))
 
 # [10.18.0](https://github.com/e-Spirit/fsxa-api/compare/v10.17.0...v10.18.0) (2023-10-04)
 
-
 ### Features
 
-* **caasmapper:** add lifespan property to section ([#187](https://github.com/e-Spirit/fsxa-api/issues/187)) ([591dda7](https://github.com/e-Spirit/fsxa-api/commit/591dda71905f5b718ca9d5511f6cdb0ef7c5e2dc))
+- **caasmapper:** add lifespan property to section ([#187](https://github.com/e-Spirit/fsxa-api/issues/187)) ([591dda7](https://github.com/e-Spirit/fsxa-api/commit/591dda71905f5b718ca9d5511f6cdb0ef7c5e2dc))
 
 # [10.17.0](https://github.com/e-Spirit/fsxa-api/compare/v10.16.3...v10.17.0) (2023-09-22)
 
-
 ### Features
 
-* **projectproperties:** add master locale to project properties ([#184](https://github.com/e-Spirit/fsxa-api/issues/184)) ([99761b4](https://github.com/e-Spirit/fsxa-api/commit/99761b4cb455c132ed963941399feea08beffd03))
+- **projectproperties:** add master locale to project properties ([#184](https://github.com/e-Spirit/fsxa-api/issues/184)) ([99761b4](https://github.com/e-Spirit/fsxa-api/commit/99761b4cb455c132ed963941399feea08beffd03))
 
 ## [10.16.3](https://github.com/e-Spirit/fsxa-api/compare/v10.16.2...v10.16.3) (2023-09-22)
 
-
 ### Bug Fixes
 
-* **release:** fix broken release v10.16.3 ([#186](https://github.com/e-Spirit/fsxa-api/issues/186)) ([e5ebe05](https://github.com/e-Spirit/fsxa-api/commit/e5ebe0508bfd3dae43cf0f5d671ecb9f9ae3e5a2))
+- **release:** fix broken release v10.16.3 ([#186](https://github.com/e-Spirit/fsxa-api/issues/186)) ([e5ebe05](https://github.com/e-Spirit/fsxa-api/commit/e5ebe0508bfd3dae43cf0f5d671ecb9f9ae3e5a2))
 
 ## [10.16.3](https://github.com/e-Spirit/javascript-content-api-library/compare/v10.16.2...v10.16.3) (2023-09-22)
 
 ### Bug fixes
 
-* Export missing HttpError class
+- Export missing HttpError class
 
 ## [10.16.2](https://github.com/e-Spirit/fsxa-api/compare/v10.16.1...v10.16.2) (2023-08-16)
 
-
 ### Bug Fixes
 
-* **expressintegration:** rename filter to filters ([#180](https://github.com/e-Spirit/fsxa-api/issues/180)) ([5274f4c](https://github.com/e-Spirit/fsxa-api/commit/5274f4c846c10bdb280b10b45048787576575525))
+- **expressintegration:** rename filter to filters ([#180](https://github.com/e-Spirit/fsxa-api/issues/180)) ([5274f4c](https://github.com/e-Spirit/fsxa-api/commit/5274f4c846c10bdb280b10b45048787576575525))
 
 ### UPDATE NOTICE
 
@@ -86,297 +82,256 @@ We made changes in the request body of calls sent to the remote-API. Specificall
 
 ## [10.16.1](https://github.com/e-Spirit/fsxa-api/compare/v10.16.0...v10.16.1) (2023-07-31)
 
-
 ### Bug Fixes
 
-* **navigationservice:** add a warning when empty locale is provided ([#179](https://github.com/e-Spirit/fsxa-api/issues/179)) ([bcd9f72](https://github.com/e-Spirit/fsxa-api/commit/bcd9f72c1dfb02b1c915fa6bef81b36721302244))
+- **navigationservice:** add a warning when empty locale is provided ([#179](https://github.com/e-Spirit/fsxa-api/issues/179)) ([bcd9f72](https://github.com/e-Spirit/fsxa-api/commit/bcd9f72c1dfb02b1c915fa6bef81b36721302244))
 
 # [10.16.0](https://github.com/e-Spirit/fsxa-api/compare/v10.15.1...v10.16.0) (2023-06-22)
 
-
 ### Features
 
-* **querybuilder:** allow comparison with null values ([#172](https://github.com/e-Spirit/fsxa-api/issues/172)) ([364b9ea](https://github.com/e-Spirit/fsxa-api/commit/364b9ea2ef20eddb6272b2c62909e7fe4056a784))
+- **querybuilder:** allow comparison with null values ([#172](https://github.com/e-Spirit/fsxa-api/issues/172)) ([364b9ea](https://github.com/e-Spirit/fsxa-api/commit/364b9ea2ef20eddb6272b2c62909e7fe4056a784))
 
 ## [10.15.1](https://github.com/e-Spirit/fsxa-api/compare/v10.15.0...v10.15.1) (2023-06-21)
 
-
 ### Bug Fixes
 
-* **filtercontext:** remove filtercontext from debug log ([#173](https://github.com/e-Spirit/fsxa-api/issues/173)) ([ea5802d](https://github.com/e-Spirit/fsxa-api/commit/ea5802d20b2b744d8d1ccea70fb6ed3a91eafa22))
+- **filtercontext:** remove filtercontext from debug log ([#173](https://github.com/e-Spirit/fsxa-api/issues/173)) ([ea5802d](https://github.com/e-Spirit/fsxa-api/commit/ea5802d20b2b744d8d1ccea70fb6ed3a91eafa22))
 
 # [10.15.0](https://github.com/e-Spirit/fsxa-api/compare/v10.14.1...v10.15.0) (2023-06-16)
 
-
 ### Features
 
-* **fsxaapisingleton:** update singleton to instatiate many instances ([#166](https://github.com/e-Spirit/fsxa-api/issues/166)) ([7241cd5](https://github.com/e-Spirit/fsxa-api/commit/7241cd5a030ec7220790945e772beafad7b18461))
+- **fsxaapisingleton:** update singleton to instatiate many instances ([#166](https://github.com/e-Spirit/fsxa-api/issues/166)) ([7241cd5](https://github.com/e-Spirit/fsxa-api/commit/7241cd5a030ec7220790945e772beafad7b18461))
 
 ## [10.14.1](https://github.com/e-Spirit/fsxa-api/compare/v10.14.0...v10.14.1) (2023-06-14)
 
-
 ### Bug Fixes
 
-* **repository:** rename FSXA-API to JavaScript Content API Library ([#171](https://github.com/e-Spirit/fsxa-api/issues/171)) ([30f6fcc](https://github.com/e-Spirit/fsxa-api/commit/30f6fccc7b19cb848227da205f2f6639dd311f5c))
+- **repository:** rename FSXA-API to JavaScript Content API Library ([#171](https://github.com/e-Spirit/fsxa-api/issues/171)) ([30f6fcc](https://github.com/e-Spirit/fsxa-api/commit/30f6fccc7b19cb848227da205f2f6639dd311f5c))
 
 ### UPDATE NOTICE
 
-We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. 
-The project is now called "JavaScript Content API Library", but please note that this change solely affects the project's name, repository, and associated branding elements. 
-The core code and functionality of the library remain unchanged. The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. 
-The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. 
+We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change.
+The project is now called "JavaScript Content API Library", but please note that this change solely affects the project's name, repository, and associated branding elements.
+The core code and functionality of the library remain unchanged. The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent.
+The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued.
 The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
 
 # [10.14.0](https://github.com/e-Spirit/fsxa-api/compare/v10.13.1...v10.14.0) (2023-06-13)
 
-
 ### Features
 
-* **localevalidation:** validate locale ([#170](https://github.com/e-Spirit/fsxa-api/issues/170)) ([1fa7870](https://github.com/e-Spirit/fsxa-api/commit/1fa7870ca2e59a6fb87342d47f9ea9e79f434608))
+- **localevalidation:** validate locale ([#170](https://github.com/e-Spirit/fsxa-api/issues/170)) ([1fa7870](https://github.com/e-Spirit/fsxa-api/commit/1fa7870ca2e59a6fb87342d47f9ea9e79f434608))
 
 ## [10.13.1](https://github.com/e-Spirit/fsxa-api/compare/v10.13.0...v10.13.1) (2023-06-12)
 
-
 ### Bug Fixes
 
-* **caasmapper:** fix wrong preview id ([#167](https://github.com/e-Spirit/fsxa-api/issues/167)) ([20fc8c2](https://github.com/e-Spirit/fsxa-api/commit/20fc8c23233ffd3c5097570a94d16d4bed7a9840))
+- **caasmapper:** fix wrong preview id ([#167](https://github.com/e-Spirit/fsxa-api/issues/167)) ([20fc8c2](https://github.com/e-Spirit/fsxa-api/commit/20fc8c23233ffd3c5097570a94d16d4bed7a9840))
 
 # [10.13.0](https://github.com/e-Spirit/fsxa-api/compare/v10.12.0...v10.13.0) (2023-06-07)
 
-
 ### Features
 
-* **logger:** export Logger class ([#168](https://github.com/e-Spirit/fsxa-api/issues/168)) ([b58dbbb](https://github.com/e-Spirit/fsxa-api/commit/b58dbbb89b44764ae8da1c2f8067a86c6a1a2d4a))
+- **logger:** export Logger class ([#168](https://github.com/e-Spirit/fsxa-api/issues/168)) ([b58dbbb](https://github.com/e-Spirit/fsxa-api/commit/b58dbbb89b44764ae8da1c2f8067a86c6a1a2d4a))
 
 # [10.12.0](https://github.com/e-Spirit/fsxa-api/compare/v10.11.3...v10.12.0) (2023-05-15)
 
-
 ### Features
 
-* **helpers:** add method to fetch available locales ([#163](https://github.com/e-Spirit/fsxa-api/issues/163)) ([3a01920](https://github.com/e-Spirit/fsxa-api/commit/3a01920857117b6da38e86f472e56cfe6c0db10d))
+- **helpers:** add method to fetch available locales ([#163](https://github.com/e-Spirit/fsxa-api/issues/163)) ([3a01920](https://github.com/e-Spirit/fsxa-api/commit/3a01920857117b6da38e86f472e56cfe6c0db10d))
 
 ## [10.11.3](https://github.com/e-Spirit/fsxa-api/compare/v10.11.2...v10.11.3) (2023-05-09)
 
-
 ### Bug Fixes
 
-* **dependencies:** remove CVEs ([#161](https://github.com/e-Spirit/fsxa-api/issues/161)) ([3408821](https://github.com/e-Spirit/fsxa-api/commit/34088212e65d62b9e031d96380a40500bebb8461))
+- **dependencies:** remove CVEs ([#161](https://github.com/e-Spirit/fsxa-api/issues/161)) ([3408821](https://github.com/e-Spirit/fsxa-api/commit/34088212e65d62b9e031d96380a40500bebb8461))
 
 ## [10.11.2](https://github.com/e-Spirit/fsxa-api/compare/v10.11.1...v10.11.2) (2023-04-14)
 
-
 ### Bug Fixes
 
-* **xmlparser:** fix parsing nested elements in richtext ([#159](https://github.com/e-Spirit/fsxa-api/issues/159)) ([c7e74bb](https://github.com/e-Spirit/fsxa-api/commit/c7e74bb6a83b4640af7a9defeb94cc48ae22ed45))
+- **xmlparser:** fix parsing nested elements in richtext ([#159](https://github.com/e-Spirit/fsxa-api/issues/159)) ([c7e74bb](https://github.com/e-Spirit/fsxa-api/commit/c7e74bb6a83b4640af7a9defeb94cc48ae22ed45))
 
 ## [10.11.1](https://github.com/e-Spirit/fsxa-api/compare/v10.11.0...v10.11.1) (2023-03-21)
 
-
 ### Bug Fixes
 
-* **caasmapper:** fix context of remoteReference resolving ([#156](https://github.com/e-Spirit/fsxa-api/issues/156)) ([7ea9b56](https://github.com/e-Spirit/fsxa-api/commit/7ea9b56c29ad6b563a72424e987a8a35eba7ad4c))
+- **caasmapper:** fix context of remoteReference resolving ([#156](https://github.com/e-Spirit/fsxa-api/issues/156)) ([7ea9b56](https://github.com/e-Spirit/fsxa-api/commit/7ea9b56c29ad6b563a72424e987a8a35eba7ad4c))
 
 # [10.11.0](https://github.com/e-Spirit/fsxa-api/compare/v10.10.3...v10.11.0) (2023-03-20)
 
-
 ### Features
 
-* **authorization:** update header format for apikeys ([#155](https://github.com/e-Spirit/fsxa-api/issues/155)) ([027ca26](https://github.com/e-Spirit/fsxa-api/commit/027ca26eb5e67a2185307f280d3e689507a71d15))
+- **authorization:** update header format for apikeys ([#155](https://github.com/e-Spirit/fsxa-api/issues/155)) ([027ca26](https://github.com/e-Spirit/fsxa-api/commit/027ca26eb5e67a2185307f280d3e689507a71d15))
 
 ## [10.10.3](https://github.com/e-Spirit/fsxa-api/compare/v10.10.2...v10.10.3) (2023-03-17)
 
-
 ### Bug Fixes
 
-* **imagemap:** remove side effects for images when resolving ([#154](https://github.com/e-Spirit/fsxa-api/issues/154)) ([23e452e](https://github.com/e-Spirit/fsxa-api/commit/23e452e416a2dd3597738bf19a966201038a46ef))
+- **imagemap:** remove side effects for images when resolving ([#154](https://github.com/e-Spirit/fsxa-api/issues/154)) ([23e452e](https://github.com/e-Spirit/fsxa-api/commit/23e452e416a2dd3597738bf19a966201038a46ef))
 
 ## [10.10.2](https://github.com/e-Spirit/fsxa-api/compare/v10.10.1...v10.10.2) (2023-03-09)
 
-
 ### Bug Fixes
 
-* **remoteapi:** improve error handling in reference resolving ([801a0ed](https://github.com/e-Spirit/fsxa-api/commit/801a0ed4d5597f75bb2e3d3d52c9d3f448a2d181))
+- **remoteapi:** improve error handling in reference resolving ([801a0ed](https://github.com/e-Spirit/fsxa-api/commit/801a0ed4d5597f75bb2e3d3d52c9d3f448a2d181))
 
 ## [10.10.1](https://github.com/e-Spirit/fsxa-api/compare/v10.10.0...v10.10.1) (2023-02-28)
 
-
 ### Bug Fixes
 
-* **logger:** fix circularReplacer usage ([#153](https://github.com/e-Spirit/fsxa-api/issues/153)) ([ebe5cdc](https://github.com/e-Spirit/fsxa-api/commit/ebe5cdc8d7943c27e554ff5effe50a8f064bb089))
+- **logger:** fix circularReplacer usage ([#153](https://github.com/e-Spirit/fsxa-api/issues/153)) ([ebe5cdc](https://github.com/e-Spirit/fsxa-api/commit/ebe5cdc8d7943c27e554ff5effe50a8f064bb089))
 
 # [10.10.0](https://github.com/e-Spirit/fsxa-api/compare/v10.9.0...v10.10.0) (2023-02-14)
 
-
 ### Features
 
-* **updatenode:** update node to 18 ([#148](https://github.com/e-Spirit/fsxa-api/issues/148)) ([29647a4](https://github.com/e-Spirit/fsxa-api/commit/29647a48134c80495eb17d49fb2a5f871aafc3cc))
+- **updatenode:** update node to 18 ([#148](https://github.com/e-Spirit/fsxa-api/issues/148)) ([29647a4](https://github.com/e-Spirit/fsxa-api/commit/29647a48134c80495eb17d49fb2a5f871aafc3cc))
 
 # [10.9.0](https://github.com/e-Spirit/fsxa-api/compare/v10.8.1...v10.9.0) (2023-02-02)
 
-
 ### Features
 
-* **querybuilder:** comparison operators should support string value types ([#146](https://github.com/e-Spirit/fsxa-api/issues/146)) ([94c6781](https://github.com/e-Spirit/fsxa-api/commit/94c67814b5980a4be37220173bd1b7c35536e120))
+- **querybuilder:** comparison operators should support string value types ([#146](https://github.com/e-Spirit/fsxa-api/issues/146)) ([94c6781](https://github.com/e-Spirit/fsxa-api/commit/94c67814b5980a4be37220173bd1b7c35536e120))
 
 ## [10.8.1](https://github.com/e-Spirit/fsxa-api/compare/v10.8.0...v10.8.1) (2023-02-01)
 
-
 ### Bug Fixes
 
-* **remote references:** fix handling of remote references ([#139](https://github.com/e-Spirit/fsxa-api/issues/139)) ([23a40f0](https://github.com/e-Spirit/fsxa-api/commit/23a40f049c4a749cd325058737be9329df524618))
+- **remote references:** fix handling of remote references ([#139](https://github.com/e-Spirit/fsxa-api/issues/139)) ([23a40f0](https://github.com/e-Spirit/fsxa-api/commit/23a40f049c4a749cd325058737be9329df524618))
 
 # [10.8.0](https://github.com/e-Spirit/fsxa-api/compare/v10.7.0...v10.8.0) (2023-01-24)
 
-
 ### Features
 
-* **caasmapper:** map the 'displayed' property of sections ([#138](https://github.com/e-Spirit/fsxa-api/issues/138)) ([6c5a9f4](https://github.com/e-Spirit/fsxa-api/commit/6c5a9f4dc487c2ae08d79c003e255198f3ca2319))
+- **caasmapper:** map the 'displayed' property of sections ([#138](https://github.com/e-Spirit/fsxa-api/issues/138)) ([6c5a9f4](https://github.com/e-Spirit/fsxa-api/commit/6c5a9f4dc487c2ae08d79c003e255198f3ca2319))
 
 # [10.7.0](https://github.com/e-Spirit/fsxa-api/compare/v10.6.7...v10.7.0) (2022-12-14)
 
-
 ### Features
 
-* **fetchbyfilter:** make locale parameter of fetchByFilter function optional ([#140](https://github.com/e-Spirit/fsxa-api/issues/140)) ([f658c9d](https://github.com/e-Spirit/fsxa-api/commit/f658c9d32f11cb8676a1938d37377ff19bfe5dcd))
+- **fetchbyfilter:** make locale parameter of fetchByFilter function optional ([#140](https://github.com/e-Spirit/fsxa-api/issues/140)) ([f658c9d](https://github.com/e-Spirit/fsxa-api/commit/f658c9d32f11cb8676a1938d37377ff19bfe5dcd))
 
 ## [10.6.7](https://github.com/e-Spirit/fsxa-api/compare/v10.6.6...v10.6.7) (2022-11-14)
 
-
 ### Bug Fixes
 
-* **projectproperties:** handle circular references in project properties ([#136](https://github.com/e-Spirit/fsxa-api/issues/136)) ([d034563](https://github.com/e-Spirit/fsxa-api/commit/d03456304b4f1f68d179aed6c89b497654834181))
+- **projectproperties:** handle circular references in project properties ([#136](https://github.com/e-Spirit/fsxa-api/issues/136)) ([d034563](https://github.com/e-Spirit/fsxa-api/commit/d03456304b4f1f68d179aed6c89b497654834181))
 
 ## [10.6.6](https://github.com/e-Spirit/fsxa-api/compare/v10.6.5...v10.6.6) (2022-11-04)
 
-
 ### Bug Fixes
 
-* **remote references:** fix resolving of remote references ([#135](https://github.com/e-Spirit/fsxa-api/issues/135)) ([6d4aada](https://github.com/e-Spirit/fsxa-api/commit/6d4aada67bf066180ea4e5d3dc0380063dfb414f))
+- **remote references:** fix resolving of remote references ([#135](https://github.com/e-Spirit/fsxa-api/issues/135)) ([6d4aada](https://github.com/e-Spirit/fsxa-api/commit/6d4aada67bf066180ea4e5d3dc0380063dfb414f))
 
 ## [10.6.5](https://github.com/e-Spirit/fsxa-api/compare/v10.6.4...v10.6.5) (2022-10-27)
 
-
 ### Bug Fixes
 
-* **radiobutton mapping:** extend mapped value for radiobutton to include correct Option keys ([#100](https://github.com/e-Spirit/fsxa-api/issues/100)) ([d50039a](https://github.com/e-Spirit/fsxa-api/commit/d50039a02d03b382675e9c838ebd4704a1b5cd50))
+- **radiobutton mapping:** extend mapped value for radiobutton to include correct Option keys ([#100](https://github.com/e-Spirit/fsxa-api/issues/100)) ([d50039a](https://github.com/e-Spirit/fsxa-api/commit/d50039a02d03b382675e9c838ebd4704a1b5cd50))
 
 ## [10.6.4](https://github.com/e-Spirit/fsxa-api/compare/v10.6.3...v10.6.4) (2022-10-21)
 
-
 ### Bug Fixes
 
-* **fsxaremoteapi:** fix caasitemsfilter method ([0f2fd26](https://github.com/e-Spirit/fsxa-api/commit/0f2fd2603bd510af9e47255cb7ee0ac7f49138eb))
+- **fsxaremoteapi:** fix caasitemsfilter method ([0f2fd26](https://github.com/e-Spirit/fsxa-api/commit/0f2fd2603bd510af9e47255cb7ee0ac7f49138eb))
 
 ## [10.6.3](https://github.com/e-Spirit/fsxa-api/compare/v10.6.2...v10.6.3) (2022-10-20)
 
-
 ### Bug Fixes
 
-* **caasmapper:** improve reference resolving ([#131](https://github.com/e-Spirit/fsxa-api/issues/131)) ([856d1d2](https://github.com/e-Spirit/fsxa-api/commit/856d1d21dc2fdbe84585f01058099d4d6bac765f))
+- **caasmapper:** improve reference resolving ([#131](https://github.com/e-Spirit/fsxa-api/issues/131)) ([856d1d2](https://github.com/e-Spirit/fsxa-api/commit/856d1d21dc2fdbe84585f01058099d4d6bac765f))
 
 ## [10.6.2](https://github.com/e-Spirit/fsxa-api/compare/v10.6.1...v10.6.2) (2022-09-27)
 
-
 ### Bug Fixes
 
-* **xmlparser:** handle &nbsp; in tables ([#130](https://github.com/e-Spirit/fsxa-api/issues/130)) ([7ad02e4](https://github.com/e-Spirit/fsxa-api/commit/7ad02e49e076d5acae68788902af2b8c40538e80))
+- **xmlparser:** handle &nbsp; in tables ([#130](https://github.com/e-Spirit/fsxa-api/issues/130)) ([7ad02e4](https://github.com/e-Spirit/fsxa-api/commit/7ad02e49e076d5acae68788902af2b8c40538e80))
 
 ## [10.6.1](https://github.com/e-Spirit/fsxa-api/compare/v10.6.0...v10.6.1) (2022-09-22)
 
-
 ### Bug Fixes
 
-* **logger:** change console.debug to console.info to ensure output ([#112](https://github.com/e-Spirit/fsxa-api/issues/112)) ([84dfbdb](https://github.com/e-Spirit/fsxa-api/commit/84dfbdb48a2404f7406a2f3218e6f0639542844a))
+- **logger:** change console.debug to console.info to ensure output ([#112](https://github.com/e-Spirit/fsxa-api/issues/112)) ([84dfbdb](https://github.com/e-Spirit/fsxa-api/commit/84dfbdb48a2404f7406a2f3218e6f0639542844a))
 
 # [10.6.0](https://github.com/e-Spirit/fsxa-api/compare/v10.5.1...v10.6.0) (2022-08-26)
 
-
 ### Features
 
-* **remote-references:** provide access to remote project id when present in references ([0dc9765](https://github.com/e-Spirit/fsxa-api/commit/0dc9765c8d2059d41c47b4280a82b69165ee8b86))
+- **remote-references:** provide access to remote project id when present in references ([0dc9765](https://github.com/e-Spirit/fsxa-api/commit/0dc9765c8d2059d41c47b4280a82b69165ee8b86))
 
 ## [10.5.1](https://github.com/e-Spirit/fsxa-api/compare/v10.5.0...v10.5.1) (2022-08-26)
 
-
 ### Bug Fixes
 
-* **ReferenceResolving:** add max resolve depth ([#125](https://github.com/e-Spirit/fsxa-api/issues/125)) ([99e1405](https://github.com/e-Spirit/fsxa-api/commit/99e140597150226b6aef44e7c0ca700f85737776))
+- **ReferenceResolving:** add max resolve depth ([#125](https://github.com/e-Spirit/fsxa-api/issues/125)) ([99e1405](https://github.com/e-Spirit/fsxa-api/commit/99e140597150226b6aef44e7c0ca700f85737776))
 
 # [10.5.0](https://github.com/e-Spirit/fsxa-api/compare/v10.4.0...v10.5.0) (2022-08-11)
 
-
 ### Features
 
-* **types:** accept boolean as filter value ([#122](https://github.com/e-Spirit/fsxa-api/issues/122)) ([c40817c](https://github.com/e-Spirit/fsxa-api/commit/c40817cbc62e3158f36842c18ad1efb273e2c8d7))
+- **types:** accept boolean as filter value ([#122](https://github.com/e-Spirit/fsxa-api/issues/122)) ([c40817c](https://github.com/e-Spirit/fsxa-api/commit/c40817cbc62e3158f36842c18ad1efb273e2c8d7))
 
 # [10.4.0](https://github.com/e-Spirit/fsxa-api/compare/v10.3.2...v10.4.0) (2022-08-11)
 
-
 ### Features
 
-* **querybuilder:** add regex operator to querybuilder ([#119](https://github.com/e-Spirit/fsxa-api/issues/119)) ([1fad61a](https://github.com/e-Spirit/fsxa-api/commit/1fad61afe70a37bac6bacf52a7d7da9df9c73f4b))
+- **querybuilder:** add regex operator to querybuilder ([#119](https://github.com/e-Spirit/fsxa-api/issues/119)) ([1fad61a](https://github.com/e-Spirit/fsxa-api/commit/1fad61afe70a37bac6bacf52a7d7da9df9c73f4b))
 
 ## [10.3.2](https://github.com/e-Spirit/fsxa-api/compare/v10.3.1...v10.3.2) (2022-08-08)
 
-
 ### Bug Fixes
 
-* **fsxaremoteapi:** uri encoding of user input ([#121](https://github.com/e-Spirit/fsxa-api/issues/121)) ([6fc9ca8](https://github.com/e-Spirit/fsxa-api/commit/6fc9ca80bf195f6ec3f9affa4e97a649a3adb2ff))
+- **fsxaremoteapi:** uri encoding of user input ([#121](https://github.com/e-Spirit/fsxa-api/issues/121)) ([6fc9ca8](https://github.com/e-Spirit/fsxa-api/commit/6fc9ca80bf195f6ec3f9affa4e97a649a3adb2ff))
 
 ## [10.3.1](https://github.com/e-Spirit/fsxa-api/compare/v10.3.0...v10.3.1) (2022-08-02)
 
-
 ### Bug Fixes
 
-* **datasetroutes:** add dataset routes to types and mapper ([#114](https://github.com/e-Spirit/fsxa-api/issues/114)) ([3b56a17](https://github.com/e-Spirit/fsxa-api/commit/3b56a1728212375b80cbafbcb0a2aaea3d582acb))
+- **datasetroutes:** add dataset routes to types and mapper ([#114](https://github.com/e-Spirit/fsxa-api/issues/114)) ([3b56a17](https://github.com/e-Spirit/fsxa-api/commit/3b56a1728212375b80cbafbcb0a2aaea3d582acb))
 
 # [10.3.0](https://github.com/e-Spirit/fsxa-api/compare/v10.2.1...v10.3.0) (2022-08-02)
 
-
 ### Features
 
-* **pageref-metadata:** also respond the `PageRef` metadata if exists ([#117](https://github.com/e-Spirit/fsxa-api/issues/117)) ([64ebcf1](https://github.com/e-Spirit/fsxa-api/commit/64ebcf16e474f62d337532f8a5e9a97a20a4b619))
+- **pageref-metadata:** also respond the `PageRef` metadata if exists ([#117](https://github.com/e-Spirit/fsxa-api/issues/117)) ([64ebcf1](https://github.com/e-Spirit/fsxa-api/commit/64ebcf16e474f62d337532f8a5e9a97a20a4b619))
 
 ## [10.2.1](https://github.com/e-Spirit/fsxa-api/compare/v10.2.0...v10.2.1) (2022-07-19)
 
-
 ### Bug Fixes
 
-* **FSXARemoteApi:** fix missing await and length check ([#111](https://github.com/e-Spirit/fsxa-api/issues/111)) ([81cea34](https://github.com/e-Spirit/fsxa-api/commit/81cea3493eae37c9b2d5c6f4f5bda5ff43dc6bdb))
+- **FSXARemoteApi:** fix missing await and length check ([#111](https://github.com/e-Spirit/fsxa-api/issues/111)) ([81cea34](https://github.com/e-Spirit/fsxa-api/commit/81cea3493eae37c9b2d5c6f4f5bda5ff43dc6bdb))
 
 # [10.2.0](https://github.com/e-Spirit/fsxa-api/compare/v10.1.1...v10.2.0) (2022-06-14)
 
-
 ### Features
 
-* **fetchbyfilter:** add sort param to fetchByFilter ([#109](https://github.com/e-Spirit/fsxa-api/issues/109)) ([c3ea102](https://github.com/e-Spirit/fsxa-api/commit/c3ea1020f1da5cc52fb18bc4fa2e12361532ea04))
+- **fetchbyfilter:** add sort param to fetchByFilter ([#109](https://github.com/e-Spirit/fsxa-api/issues/109)) ([c3ea102](https://github.com/e-Spirit/fsxa-api/commit/c3ea1020f1da5cc52fb18bc4fa2e12361532ea04))
 
 ## [10.1.1](https://github.com/e-Spirit/fsxa-api/compare/v10.1.0...v10.1.1) (2022-06-10)
 
-
 ### Bug Fixes
 
-* **references:** suppresses reference loops ([#106](https://github.com/e-Spirit/fsxa-api/issues/106)) ([b24e927](https://github.com/e-Spirit/fsxa-api/commit/b24e927ff35c245d1dc84993f1d3c7229a076798))
+- **references:** suppresses reference loops ([#106](https://github.com/e-Spirit/fsxa-api/issues/106)) ([b24e927](https://github.com/e-Spirit/fsxa-api/commit/b24e927ff35c245d1dc84993f1d3c7229a076798))
 
 # [10.1.0](https://github.com/e-Spirit/fsxa-api/compare/v10.0.0...v10.1.0) (2022-05-23)
 
-
 ### Features
 
-* **filtering:** add support for filtering CaaS and navigation items ([#99](https://github.com/e-Spirit/fsxa-api/issues/99)) ([5e350a7](https://github.com/e-Spirit/fsxa-api/commit/5e350a7bd8ebf369d52b645a569baf1350fb5eca))
+- **filtering:** add support for filtering CaaS and navigation items ([#99](https://github.com/e-Spirit/fsxa-api/issues/99)) ([5e350a7](https://github.com/e-Spirit/fsxa-api/commit/5e350a7bd8ebf369d52b645a569baf1350fb5eca))
 
 # [10.0.0](https://github.com/e-Spirit/fsxa-api/compare/v9.0.2...v10.0.0) (2022-05-17)
 
-
 ### Features
 
-* **caas-mapper:** mapped links in doms ([#104](https://github.com/e-Spirit/fsxa-api/issues/104)) ([39a62eb](https://github.com/e-Spirit/fsxa-api/commit/39a62eb66933956e086adebe80f48ed64070ea75))
-
+- **caas-mapper:** mapped links in doms ([#104](https://github.com/e-Spirit/fsxa-api/issues/104)) ([39a62eb](https://github.com/e-Spirit/fsxa-api/commit/39a62eb66933956e086adebe80f48ed64070ea75))
 
 ### BREAKING CHANGES
 
-* **caas-mapper:** The structure of the CaasMapper output for Links in RichTextElements has been
-updated. Refer the CHANGELOG.md for more details.
+- **caas-mapper:** The structure of the CaasMapper output for Links in RichTextElements has been
+  updated. Refer the CHANGELOG.md for more details.
 
 Links inside of RichtTextElements will now be mapped in the same way as the value of CMS_INPUT_LINK.
 
@@ -385,30 +340,26 @@ Please refer the fsxa-api [type-mapping](https://github.com/e-Spirit/fsxa-api#ty
 
 ## [9.0.2](https://github.com/e-Spirit/fsxa-api/compare/v9.0.1...v9.0.2) (2022-05-06)
 
-
 ### Bug Fixes
 
-* remove prototype pollution in minimist sub-dependency ([be7376a](https://github.com/e-Spirit/fsxa-api/commit/be7376ada2b91219d4898b34dee22ffbdc8d0360))
+- remove prototype pollution in minimist sub-dependency ([be7376a](https://github.com/e-Spirit/fsxa-api/commit/be7376ada2b91219d4898b34dee22ffbdc8d0360))
 
 ## [9.0.1](https://github.com/e-Spirit/fsxa-api/compare/v9.0.0...v9.0.1) (2022-05-02)
 
-
 ### Bug Fixes
 
-* **gcapage mapper:** add processing of children to gcapage mapping ([#97](https://github.com/e-Spirit/fsxa-api/issues/97)) ([a2076db](https://github.com/e-Spirit/fsxa-api/commit/a2076db145159b2881bce28ca0769f9cce3eac0a))
+- **gcapage mapper:** add processing of children to gcapage mapping ([#97](https://github.com/e-Spirit/fsxa-api/issues/97)) ([a2076db](https://github.com/e-Spirit/fsxa-api/commit/a2076db145159b2881bce28ca0769f9cce3eac0a))
 
 # [9.0.0](https://github.com/e-Spirit/fsxa-api/compare/v8.4.0...v9.0.0) (2022-04-21)
 
-
-* Next release (#92) ([bf6c071](https://github.com/e-Spirit/fsxa-api/commit/bf6c071f66c40eaa95d6da29c9f3e9cabfb3f14e)), closes [#92](https://github.com/e-Spirit/fsxa-api/issues/92) [#91](https://github.com/e-Spirit/fsxa-api/issues/91) [#89](https://github.com/e-Spirit/fsxa-api/issues/89) [#95](https://github.com/e-Spirit/fsxa-api/issues/95) [#93](https://github.com/e-Spirit/fsxa-api/issues/93)
-
+- Next release (#92) ([bf6c071](https://github.com/e-Spirit/fsxa-api/commit/bf6c071f66c40eaa95d6da29c9f3e9cabfb3f14e)), closes [#92](https://github.com/e-Spirit/fsxa-api/issues/92) [#91](https://github.com/e-Spirit/fsxa-api/issues/91) [#89](https://github.com/e-Spirit/fsxa-api/issues/89) [#95](https://github.com/e-Spirit/fsxa-api/issues/95) [#93](https://github.com/e-Spirit/fsxa-api/issues/93)
 
 ### BREAKING CHANGES
 
-* The method `fetchProjectProperties` has a new return type and interface `ImageMap` has a
-new structure.
+- The method `fetchProjectProperties` has a new return type and interface `ImageMap` has a
+  new structure.
 
-- **fetchProjectProperties:** The return type of the method has changed. The function no longer returns an array of `ProjectProperties`.
+* **fetchProjectProperties:** The return type of the method has changed. The function no longer returns an array of `ProjectProperties`.
   Instead it now returns only the `ProjectProperties` object if found.
 
 Example:
@@ -649,7 +600,12 @@ To be compliant to the new signature, you can wrap the parameters of your method
 _Example_:
 
 ```typescript
-api.fetchElement(req.body.id, req.body.locale, req.body?.additionalParams, req.body?.remote)
+api.fetchElement(
+  req.body.id,
+  req.body.locale,
+  req.body?.additionalParams,
+  req.body?.remote
+)
 ```
 
 _does not compile_
