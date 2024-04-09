@@ -1,3 +1,10 @@
+# [10.21.0](https://github.com/e-Spirit/fsxa-api/compare/v10.20.0...v10.21.0) (2024-04-09)
+
+
+### Features
+
+* **content-api:** introduce separate proxy-api package ([#203](https://github.com/e-Spirit/fsxa-api/issues/203)) ([a70c41c](https://github.com/e-Spirit/fsxa-api/commit/a70c41cd3492c818bdbd24c202c624718cf7a7bb))
+
 # [10.21.0](https://github.com/e-Spirit/fsxa-api/compare/v10.20.0...v10.21.0) (2024-03-13)
 
 
