@@ -1,7 +1,7 @@
 import faker from 'faker'
 import { CaaSMapper, CaaSMapperErrors } from './CaaSMapper'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import { Logger, LogLevel } from './Logger'
+import { LogLevel } from './Logger'
 import { FSXAContentMode } from '../enums'
 import {
   CaaSApi_Body,
@@ -57,14 +57,14 @@ import {
   Reference,
 } from '..'
 import { createFetchResponse } from '../testutils/createFetchResponse'
-import { createPageRefBody } from '../testutils'
+import { LoggerChalked } from './LoggerChalked'
 
 jest.mock('./FSXARemoteApi')
 jest.mock('date-fns')
 
 describe('CaaSMapper', () => {
   const createPath = () => [faker.random.word(), faker.random.word()]
-  const createLogger = () => new Logger(LogLevel.NONE, 'Querybuilder')
+  const createLogger = () => new LoggerChalked(LogLevel.NONE, 'Querybuilder')
   const createApi = () =>
     jest.mocked<FSXARemoteApi>(new (FSXARemoteApi as any)())
   const createMapper = () =>

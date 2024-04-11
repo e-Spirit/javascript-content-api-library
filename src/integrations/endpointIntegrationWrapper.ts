@@ -1,5 +1,5 @@
 import { HttpError } from '../exceptions'
-import { FSXARemoteApi, Logger } from '../modules'
+import { FSXARemoteApi } from '../modules'
 import {
   FetchByFilterBody,
   FetchElementRouteBody,
@@ -19,6 +19,7 @@ import {
   NormalizedProjectPropertyResponse,
   ProjectProperties,
 } from '../types'
+import { LoggerChalked } from '../modules/LoggerChalked'
 
 export type FetchWrapperResult<T = any> =
   | FetchWrapperSuccess<T>
@@ -64,7 +65,7 @@ export const useEndpointIntegrationWrapper = (
   api: FSXARemoteApi,
   loggerName = 'Endpoint-Utils'
 ) => {
-  const logger = new Logger(api.logLevel, loggerName)
+  const logger = new LoggerChalked(api.logLevel, loggerName)
 
   /**
    * Fetches an Element by Id via {@link FSXARemoteApi}
