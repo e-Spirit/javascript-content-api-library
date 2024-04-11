@@ -1,3 +1,10 @@
+## [10.22.1](https://github.com/e-Spirit/fsxa-api/compare/v10.22.0...v10.22.1) (2024-04-11)
+
+
+### Bug Fixes
+
+* **logger:** remove chalk from proxy api to reduce bundle size ([#208](https://github.com/e-Spirit/fsxa-api/issues/208)) ([5e84078](https://github.com/e-Spirit/fsxa-api/commit/5e8407846872497df70bab212dabe99ce69536cb))
+
 # [10.22.0](https://github.com/e-Spirit/fsxa-api/compare/v10.21.0...v10.22.0) (2024-04-09)
 
 
