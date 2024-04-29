@@ -149,7 +149,8 @@ export class FSXAProxyApi implements FSXAApi {
       mappedItems,
       referenceMap,
       resolvedReferences,
-      remoteProject
+      remoteProject,
+      this._logger
     )
 
     return mappedItems[0] as unknown as T
@@ -253,7 +254,8 @@ export class FSXAProxyApi implements FSXAApi {
       items as (CaasApi_Item | MappedCaasItem)[],
       referenceMap!,
       resolvedReferences!,
-      remoteProject
+      remoteProject,
+      this._logger
     )
 
     return { page, pagesize, totalPages, size, items } as FetchResponse
@@ -377,13 +379,17 @@ export class FSXAProxyApi implements FSXAApi {
     const denormalizedProjectPropertiesArray = denormalizeResolvedReferences(
       [data.projectProperties],
       data.projectPropertiesReferenceMap || {},
-      data.projectPropertiesResolvedReferences || {}
+      data.projectPropertiesResolvedReferences || {},
+      undefined,
+      this._logger
     )
 
     const resolveElements = denormalizeResolvedReferences(
       data.resolveItems,
       data.resolveReferenceMap || {},
-      data.resolveResolvedReferences || {}
+      data.resolveResolvedReferences || {},
+      undefined,
+      this._logger
     )
 
     const denormalizedProjectProperties =
