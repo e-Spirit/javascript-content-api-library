@@ -96,7 +96,7 @@ const denormalizeResolvedReferences = (
         )
       } else {
         logger?.warn(
-          `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization.`
+          `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization for path [${path}].`
         )
       }
     })
