@@ -1,3 +1,10 @@
+## [10.22.2](https://github.com/e-Spirit/fsxa-api/compare/v10.22.1...v10.22.2) (2024-05-03)
+
+
+### Bug Fixes
+
+* **mappingutils:** use correct logger ([#209](https://github.com/e-Spirit/fsxa-api/issues/209)) ([ff2253c](https://github.com/e-Spirit/fsxa-api/commit/ff2253cd4857d0e2cbfa95003e1ebc7e533bc45e))
+
 ## [10.22.1](https://github.com/e-Spirit/fsxa-api/compare/v10.22.0...v10.22.1) (2024-04-11)
 
 
