@@ -1,6 +1,7 @@
 import { set, get } from 'lodash'
 import { CaasApi_Item, Image, MappedCaasItem, NestedPath } from '../types'
 import { ResolvedReferencesInfo, ReferencedItemsInfo } from './CaaSMapper'
+import { Logger } from './Logger'
 
 const IMAGE_MAP_PLACEHOLDER = 'IMAGEMAP'
 const IMAGE_MAP_RESOLUTION_SPLIT_DELIMITER = '___'
@@ -73,7 +74,8 @@ const denormalizeResolvedReferences = (
   mappedItems: (CaasApi_Item | MappedCaasItem)[],
   referenceMap: ReferencedItemsInfo,
   resolvedReferences: ResolvedReferencesInfo,
-  remoteProjectId?: string
+  remoteProjectId?: string,
+  logger?: Logger
 ) => {
   if (!referenceMap || Object.keys(referenceMap).length === 0)
     return mappedItems
@@ -93,10 +95,8 @@ const denormalizeResolvedReferences = (
           resolvedImage || resolvedReferences[referencedId]
         )
       } else {
-        console.warn(
-          `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization. resolvedReferencesKeys: {[${Object.keys(
-            resolvedReferences
-          ).join('],[')}]}`
+        logger?.warn(
+          `[denormalizeResolvedReferences] Unable to find object [${referencedId}] during denormalization for path [${path}].`
         )
       }
     })

@@ -496,7 +496,8 @@ export class FSXARemoteApi implements FSXAApi {
           items as (MappedCaasItem | CaasApi_Item)[],
           referenceMap,
           resolvedReferences,
-          remoteProjectId
+          remoteProjectId,
+          this._logger
         )[0]
   }
 
@@ -669,7 +670,8 @@ export class FSXARemoteApi implements FSXAApi {
             mappedItems,
             referenceMap,
             resolvedReferences,
-            remoteProjectId
+            remoteProjectId,
+            this._logger
           ),
       ...(normalized && { referenceMap }),
       ...(normalized && { resolvedReferences }),
