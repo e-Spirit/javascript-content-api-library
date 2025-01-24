@@ -3,6 +3,7 @@ export {
   ArrayQueryOperatorEnum,
   CaaSMapperErrors,
   ComparisonQueryOperatorEnum,
+  EvaluationQueryOperatorEnum,
   LogicalQueryOperatorEnum,
   QueryBuilderErrors,
   LogLevel,
