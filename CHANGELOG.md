@@ -1,3 +1,10 @@
+## [10.22.3](https://github.com/e-Spirit/fsxa-api/compare/v10.22.2...v10.22.3) (2025-01-28)
+
+
+### Bug Fixes
+
+* **types:** export EvaluationQueryOperatorEnum ([#216](https://github.com/e-Spirit/fsxa-api/issues/216)) ([69196ec](https://github.com/e-Spirit/fsxa-api/commit/69196ecdc7c5bc6bfebedab7980761cbbd5e73fa))
+
 ## [10.22.2](https://github.com/e-Spirit/fsxa-api/compare/v10.22.1...v10.22.2) (2024-05-03)
 
 
