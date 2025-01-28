@@ -4,6 +4,7 @@ export {
   CaaSMapperErrors,
   ComparisonQueryOperatorEnum,
   LogicalQueryOperatorEnum,
+  EvaluationQueryOperatorEnum,
   QueryBuilderErrors,
   LogLevel,
   FSXAProxyApi,
