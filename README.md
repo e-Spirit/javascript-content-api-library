@@ -1,12 +1,12 @@
 # JavaScript Content API Library
 
+> **_Disclaimer_**
+> This document is provided for information purposes only. Crownpeak Technology may change the contents hereof without notice. This document is not warranted to be error-free, nor subject to any other warranties or conditions, whether expressed orally or implied in law, including implied warranties and conditions of merchantability or fitness for a particular purpose. Crownpeak Technology specifically disclaims any liability with respect to this document and no contractual obligations are formed either directly or indirectly by this document. The technologies, functionality, services, and processes described herein are subject to change without notice.
+
 The JavaScript Content API Library a.k.a. Content API is an interface handling data coming from the FirstSpirit
 [CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
 Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
 
-> **_Attention_**
-> We would like to inform you that the project previously known as "FSXA-API" has recently undergone a name change. The project is now called "JavaScript Content API Library", but please note that this change solely affects the project's name, repository, and associated branding elements. The core code and functionality of the library remain unchanged.
-The purpose and scope of the library, as well as its intended usage and compatibility, remain consistent. The decision to change the name was made as the term "fsxa" no longer accurately represents the project's current scope, as other components beyond the fsxa-api are now discontinued. The name change aims to align the project's branding with its refined purpose and to avoid any confusion regarding its functionality.
 
 - [JavaScript Content API Library](#javascript-content-api-library)
   - [Experimental features](#experimental-features)
@@ -474,15 +474,3 @@ Each input component has a (Java) data type, which has a representation in the C
 [fs-boolean]: https://docs.e-spirit.com/odfs/template-develo/template-syntax/data-types/boolean/index.html
 [js-boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-## Disclaimer
-
-This document is provided for information purposes only.
-Crownpeak Technology may change the contents hereof without notice.
-This document is not warranted to be error-free, nor subject to any
-other warranties or conditions, whether expressed orally or
-implied in law, including implied warranties and conditions of
-merchantability or fitness for a particular purpose. Crownpeak Technology
-specifically disclaims any liability with respect to this document
-and no contractual obligations are formed either directly or
-indirectly by this document. The technologies, functionality, services,
-and processes described herein are subject to change without notice.
