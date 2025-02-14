@@ -1,42 +1,29 @@
-# JavaScript Content API Library
+# Legal Notices
+
+JavaScript Content API Library is a product of [Crownpeak Technology GmbH](http://www.crownpeak.com), Dortmund, Germany.
+The JavaScript Content API Library is subject to the Apache-2.0 license.
 
 > **_Disclaimer_**
 > This document is provided for information purposes only. Crownpeak Technology may change the contents hereof without notice. This document is not warranted to be error-free, nor subject to any other warranties or conditions, whether expressed orally or implied in law, including implied warranties and conditions of merchantability or fitness for a particular purpose. Crownpeak Technology specifically disclaims any liability with respect to this document and no contractual obligations are formed either directly or indirectly by this document. The technologies, functionality, services, and processes described herein are subject to change without notice.
 
-The JavaScript Content API Library a.k.a. Content API is an interface handling data coming from the FirstSpirit
-[CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and the
-Navigation Service. The data is processed and transformed so that it can be used in any JavaScript project.
+# JavaScript Content API Library
 
+The JavaScript Content API Library a.k.a. Content API is an interface handling data provided by FirstSpirit
+[CaaS](https://docs.e-spirit.com/module/caas/CaaS_Product_Documentation_EN.html) and 
+[Navigation Service](https://navigationservice.e-spirit.cloud/docs/user/en/documentation.html). 
+The data is processed and transformed so that it can be used in any JavaScript project.
 
-- [JavaScript Content API Library](#javascript-content-api-library)
-  - [Experimental features](#experimental-features)
-  - [Legal Notices](#legal-notices)
-  - [Methods](#methods)
-    - [Constructor](#constructor)
-    - [buildAuthorizationHeaders](#get-authorizationheader)
-    - [fetchNavigation](#fetchnavigation)
-    - [fetchElement](#fetchelement)
-    - [fetchByFilter](#fetchbyfilter)
-    - [fetchProjectProperties](#fetchprojectproperties)
-  - [Filter](#filter)
-    - [Logical Query Operators](#logical-query-operators)
-    - [Comparison Query Operators](#comparison-query-operators)
-    - [Evaluation Query Operators](#evaluation-query-operators)
-    - [Array Query Operators](#array-query-operators)
-  - [Helpers](#helpers)
-  - [Type Mapping](#type-mapping)
-    - [Input Components](#input-components)
-  - [Disclaimer](#disclaimer)
+Head to our [example PWA and project](https://github.com/e-Spirit/crownpeak-pwa-template) to see this API in action.
+
+Please note that while this library provides a comprehensive set of features, it may not implement every feature required for your specific use case. 
+Customers should carefully evaluate and test whether the library meets their performance, compatibility, and security requirements within their own setups. 
+It is the user's responsibility to determine whether additional custom implementations or modifications are required to meet their specific needs.
+Relying solely on the provided code without thorough validation and possible extensions may not guarantee optimal operation in all scenarios.
 
 ## Experimental features
 
 Features marked as experimental are subject to change as long as they remain in the experimental state.
 Breaking changes to experimental features are not reflected in a major version changes.
-
-## Legal Notices
-
-JavaScript Content API Library is a product of [Crownpeak Technology GmbH](http://www.e-spirit.com), Dortmund, Germany.
-The JavaScript Content API Library is subject to the Apache-2.0 license.
 
 ## Methods
 
