@@ -73,7 +73,7 @@ const config = {
 You can also include remote projects if you want to use remote media.
 
 > **_Attention_**<br>
-> Currently the Content API can only work with the master language of the remote media project.
+> Currently the Content API can only work with the configured language of the remote media project.
 > You also require a configured CAAS API key with read permissions to both projects.
 >
 > For this you can add another parameter called `remotes` to the config. This parameter expects an object, which requires a unique name as key and an object as value. This object must have two keys. On the one hand an `id` with the project id as the value and on the other the `locale` with the locale abbreviation. For example:
