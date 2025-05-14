@@ -8,15 +8,29 @@ email, or any other method with the owners of this repository before making a ch
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
 ### Pull Request Process
+To help us review and integrate changes efficiently, please ensure your pull request (PR) meets the following criteria:
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a
-   build.
-2. If needed, update the README.md with details of changes to the interface, this includes new environment
-   variables, exposed ports or useful file locations.
-3. There is no need to increase the projects version numbers in any of the files. We will increase the version numbers
-   when your pull request gets merged into the master branch.
-4. Pull Requests are always reviewed by Crownpeak Technology developers and will also be merged by them. We may contact you during
-   the process to make some changes to your pull request before we merge it into the master branch of the project.
+✅ Technical Requirements
+* The changes are concise and limited in scope (eg affecting the least amount of files necessary)
+* Backward compatibility is maintained
+* New functionality is thoroughly tested
+* Existing tests continue to pass without issues
+* The PR can be merged cleanly without conflicts
+* There is no need to increase the projects version numbers in any of the files. We will increase the version numbers when your pull request gets merged into the master branch.
+
+📚 Code Quality & Documentation
+* Code follows the project's existing style and conventions (e.g., formatting, naming, structure)
+* Commit messages are clear, descriptive, and follow a consistent format (e.g., Conventional Commits)
+* Any new or modified functionality is accompanied by updated documentation (e.g., README, usage examples)
+* The PR includes a clear description of the problem being solved and how the solution addresses it
+* The PR does not include unrelated changes (e.g., refactoring, formatting, or general cleanup)
+
+🛠 Additional Considerations
+* Any new dependencies are well-justified and as lightweight as possible
+* Performance implications have been considered and tested, if relevant
+
+🔁 Review & Merge
+* Pull Requests are always reviewed by Crownpeak Technology developers and will also be merged by them. We may contact you during the process to make some changes to your pull request before we merge it into the master branch of the project.
 
 ### Code of Conduct
 
