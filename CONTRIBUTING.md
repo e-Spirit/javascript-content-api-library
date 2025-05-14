@@ -1,4 +1,4 @@
-# FSXA-API - Contribution guide lines
+# JavaScript Content API Library - Contribution guide lines
 
 ## Contributing
 
