@@ -1,6 +1,6 @@
 # Legal Notices
 
-JavaScript Content API Library is a product of [Crownpeak Technology GmbH](http://www.crownpeak.com), Dortmund, Germany.
+JavaScript Content API Library is a library of [Crownpeak Technology GmbH](http://www.crownpeak.com), Dortmund, Germany.
 The JavaScript Content API Library is subject to the Apache-2.0 license.
 
 > **_Disclaimer_**
