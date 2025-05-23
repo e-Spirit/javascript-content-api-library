@@ -47,9 +47,9 @@ export const PARAM_VALIDATION_ERROR_TO_MESSAGE: Record<
   ParamValidationError['reason'],
   string
 > = {
-  MISSING_ID:
+  MISSING_ID: 'Please Provide an id in the body',
+  MISSING_LOCALE:
     'Please specify a locale in the body through: e.g. "locale": "de_DE" ',
-  MISSING_LOCALE: 'Please Provide an id in the body',
   MISSING_PARAM_OBJECT:
     "Please provide required params in the body. required: 'id', 'locale'",
   MISSING_FILTERS: 'Please provide non-empty filters array',
