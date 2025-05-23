@@ -76,13 +76,13 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   router.use(express.json())
   router.post(
     [FETCH_ELEMENT_ROUTE, FSXAProxyRoutes.FETCH_ELEMENT_ROUTE],
-    async (req: express.Request<any, any, FetchElementRouteBody>, res) => {
+    async (req: express.Request<any, any, FetchElementRouteBody>, res: express.Response) => {
       logger.info('Received POST on route: ', FETCH_ELEMENT_ROUTE)
       logger.debug('POST request body', req.body)
 
       try {
         const result = await wrappers.fetchElementWrapper(req.body)
-        return sendWrapperResult(res, result)
+        sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)
       }
@@ -90,12 +90,12 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
   )
   router.post(
     [FETCH_NAVIGATION_ROUTE, FSXAProxyRoutes.FETCH_NAVIGATION_ROUTE],
-    async (req: express.Request<any, any, FetchNavigationRouteBody>, res) => {
+    async (req: express.Request<any, any, FetchNavigationRouteBody>, res: express.Response) => {
       logger.info('Received POST on route', FETCH_NAVIGATION_ROUTE)
       logger.debug('POST request body', req.body)
       try {
         const result = await wrappers.fetchNavigationWrapper(req.body)
-        return sendWrapperResult(res, result)
+        sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)
       }
@@ -104,13 +104,13 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 
   router.post(
     [FETCH_BY_FILTER_ROUTE, FSXAProxyRoutes.FETCH_BY_FILTER_ROUTE],
-    async (req: express.Request<any, any, FetchByFilterBody>, res) => {
+    async (req: express.Request<any, any, FetchByFilterBody>, res: express.Response) => {
       logger.info('Received POST on route', FETCH_BY_FILTER_ROUTE)
       logger.debug('POST request body', req.body)
 
       try {
         const result = await wrappers.fetchByFilterWrapper(req.body)
-        return sendWrapperResult(res, result)
+        sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)
       }
@@ -119,14 +119,14 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
 
   router.post(
     FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE,
-    async (req: express.Request<any, any, FetchProjectPropertiesBody>, res) => {
+    async (req: express.Request<any, any, FetchProjectPropertiesBody>, res: express.Response) => {
       logger.info(
         'Received POST on route',
         FSXAProxyRoutes.FETCH_PROPERTIES_ROUTE
       )
       try {
         const result = await wrappers.fetchProjectPropertiesWrapper(req.body)
-        return sendWrapperResult(res, result)
+        sendWrapperResult(res, result)
       } catch (err: any) {
         sendUnexpectedError(res, req, err, logger)
       }
@@ -140,9 +140,13 @@ function getExpressRouter({ api }: GetExpressRouterContext) {
     )
   }
 
-  router.all('*', (req, res) => {
+  /**
+   * Upgraded to Express.js 5.
+   * @see https://github.com/pillarjs/path-to-regexp?tab=readme-ov-file#errors
+   */
+  router.all('/*catchall', (req, res) => {
     logger.info('Requested unknown route', req.route)
-    return res.json({
+    res.json({
       error: UNKNOWN_ROUTE_ERROR,
     })
   })
