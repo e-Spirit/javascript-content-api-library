@@ -10,15 +10,15 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 20.x
 
       - name: use cache if package-lock has not changed
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             node_modules
