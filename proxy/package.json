@@ -16,7 +16,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/e-Spirit/fsxa-api"
+    "url": "https://github.com/e-Spirit/javascript-content-api-library"
   },
   "license": "Apache-2.0",
   "engines": {
