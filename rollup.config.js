@@ -1,17 +1,17 @@
-import commonjs from '@rollup/plugin-commonjs'
-import json from '@rollup/plugin-json'
-import resolve from '@rollup/plugin-node-resolve'
-import babel from '@rollup/plugin-babel'
-import { terser } from 'rollup-plugin-terser'
-import ts from 'rollup-plugin-ts'
-import pkg from './package.json'
-import nodePolyfills from 'rollup-plugin-node-polyfills'
-import { optimizeLodashImports } from "@optimize-lodash/rollup-plugin";
-import { visualizer } from "rollup-plugin-visualizer";
+const commonjs = require('@rollup/plugin-commonjs')
+const json = require('@rollup/plugin-json')
+const resolve = require('@rollup/plugin-node-resolve')
+const babel = require('@rollup/plugin-babel')
+const terser = require('@rollup/plugin-terser')
+const ts = require('rollup-plugin-ts')
+const pkg = require('./package.json')
+const nodePolyfills = require('rollup-plugin-node-polyfills')
+const { optimizeLodashImports } = require('@optimize-lodash/rollup-plugin')
+const { visualizer } = require('rollup-plugin-visualizer')
 
 const extensions = ['.js', '.ts']
 
-export default [
+module.exports = [
   {
     input: 'src/index.ts',
     external: [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})],

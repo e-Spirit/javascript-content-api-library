@@ -211,7 +211,13 @@ describe('Express-Integration', () => {
     it('should return an error, when locale is not specified', async () => {
       expect(
         await (
-          await fetch(`http://localhost:${PORT}/navigation`, { method: 'POST' })
+          await fetch(`http://localhost:${PORT}/navigation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+          })
         ).json()
       ).toEqual({
         error: PARAM_VALIDATION_ERROR_TO_MESSAGE.MISSING_LOCALE,
