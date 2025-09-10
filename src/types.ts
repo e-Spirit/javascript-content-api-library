@@ -902,6 +902,7 @@ export type EvaluationFilter = {
   field: string
   operator: EvaluationQueryOperatorEnum.REGEX
   value: string
+  validateRegex?: boolean
 }
 
 export type QueryBuilderQuery =
