@@ -831,6 +831,20 @@ describe('QueryBuilder', () => {
           })
         ).toThrow(QueryBuilderErrors.INVALID_REGEX)
       })
+      it('should not throw an error if regex string is invalid if validateRegex is false', () => {
+        expect(
+          builder.build({
+            operator: EvaluationQueryOperatorEnum.REGEX,
+            value: '[',
+            field: foobar,
+            validateRegex: false,
+          })
+        ).toEqual({
+          foobar: {
+            [EvaluationQueryOperatorEnum.REGEX]: '[',
+          },
+        })
+      })
       it('simple test', () => {
         expect(
           builder.build({

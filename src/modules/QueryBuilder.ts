@@ -116,7 +116,7 @@ export class QueryBuilder {
         if (typeof filter.value !== 'string')
           throw new Error(QueryBuilderErrors.NOT_A_STRING)
         // throw error if regex is invalid
-        if (!isValidRegex(filter.value))
+        if (filter.validateRegex !== false && !isValidRegex(filter.value))
           throw new Error(QueryBuilderErrors.INVALID_REGEX)
         return {
           [filter.field]: {
