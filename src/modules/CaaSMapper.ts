@@ -692,6 +692,7 @@ export class CaaSMapper {
       }),
       remoteProjectId,
       route: pageRef.route,
+      translated: pageRef.page.translated
     }
   }
 
