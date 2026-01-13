@@ -2,9 +2,8 @@ import { createFile } from './utils'
 import dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
-import { FSXAContentMode, FSXARemoteApi } from '../src'
+import { FSXAContentMode, FSXAProxyApi, FSXARemoteApi, LogLevel } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
-import { FSXAProxyApi, LogLevel } from 'fsxa-proxy-api'
 require('cross-fetch/polyfill')
 
 dotenv.config({ path: './dev/.env' })
@@ -29,6 +28,7 @@ const remoteApi = new FSXARemoteApi({
   remotes: JSON.parse(API_REMOTES || '{}'),
   logLevel: LogLevel.INFO,
   enableEventStream: !!API_ENABLE_EVENT_STREAM,
+  maxReferenceDepth: 0
 })
 
 app.use(cors())
