@@ -144,21 +144,16 @@ describe('FSXARemoteApi', () => {
     expect(res.items[0].data.dsref.id).toEqual(referencedDataset.identifier)
   })
 
-  it('should use an updated maxReferencedepth when the default is overwritten', async () => {
+  it('should use an updated maxReferenceDepth when the default is overwritten', async () => {
     const dataset1 = createDataset('ds1-id')
     const dataset2 = createDataset('ds2-id')
-    const dataset3 = createDataset('ds3-id')
-    const dataset4 = createDataset('ds4-id')
 
-    const ds2Ref = createDatasetReference('ds2-id')
-    const ds3Ref = createDatasetReference('ds3-id')
-    const ds4Ref = createDatasetReference('ds4-id')
-    dataset1.formData.dsref = ds2Ref
-    dataset2.formData.dsref = ds3Ref
-    dataset3.formData.dsref = ds4Ref
-    await caasClient.addItemsToCollection([dataset1, dataset2, dataset3, dataset4], locale)
+    dataset1.formData.dsref = createDatasetReference('ds2-id')
 
-    const maxReferenceDepth = 2
+    await caasClient.addItemsToCollection([dataset1, dataset2], locale)
+
+    // don't resolve any references by setting maxReferenceDepth to 0
+    const overridesDefaultMaxReferenceDepth = 0
     const myRemoteApi = new FSXARemoteApi({
       apikey: INTEGRATION_TEST_API_KEY!,
       caasURL: INTEGRATION_TEST_CAAS!,
@@ -169,14 +164,13 @@ describe('FSXARemoteApi', () => {
       remotes: {},
       logLevel: LogLevel.INFO,
       enableEventStream: false,
-      maxReferenceDepth,
+      maxReferenceDepth: overridesDefaultMaxReferenceDepth,
     })
     const res = await myRemoteApi.fetchElement({
       id: dataset1.identifier,
       locale: locale.identifier,
     })
-    expect(res.data.dsref.data.dsref.data.dsref).toBe(
-      `[REFERENCED-ITEM-ds4-id.${locale.identifier}]`
-    )
+    let unresolvedReferencePlaceholder = `[REFERENCED-ITEM-ds2-id.${locale.identifier}]`
+    expect(res.data.dsref).toBe(unresolvedReferencePlaceholder)
   })
 })

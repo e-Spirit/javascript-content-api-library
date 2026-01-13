@@ -1079,10 +1079,10 @@ export class CaaSMapper {
    * @returns data
    */
   async resolveAllReferences(filterContext?: unknown): Promise<void> {
-    if (this.referenceDepth > this.maxReferenceDepth) {
+    if (this.referenceDepth >= this.maxReferenceDepth) {
       // hint: handle unresolved references TNG-1169
       this.logger.warn(
-        `Maximum reference depth of ${this.maxReferenceDepth} has been exceeded.`
+        `Maximum reference depth of ${this.maxReferenceDepth} has been reached.`
       )
       return
     }
