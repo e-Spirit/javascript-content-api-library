@@ -50,6 +50,12 @@ import {
   Section,
 } from '../types'
 import { parseISO } from 'date-fns'
+import XMLParser from './XMLParser'
+import { Logger, LogLevel } from './Logger'
+import { FSXARemoteApi } from './FSXARemoteApi'
+import { FSXAContentMode, ImageMapAreaType } from '../enums'
+import { findResolvedReferencesByIds, getItemId } from './MappingUtils'
+
 const chunk = <T>(array: T[], size: number): T[][] => {
   const chunks: T[][] = []
   for (let i = 0; i < array.length; i += size) {
@@ -57,11 +63,6 @@ const chunk = <T>(array: T[], size: number): T[][] => {
   }
   return chunks
 }
-import XMLParser from './XMLParser'
-import { Logger, LogLevel } from './Logger'
-import { FSXARemoteApi } from './FSXARemoteApi'
-import { FSXAContentMode, ImageMapAreaType } from '../enums'
-import { findResolvedReferencesByIds, getItemId } from './MappingUtils'
 
 export enum CaaSMapperErrors {
   UNKNOWN_BODY_CONTENT = 'Unknown BodyContent could not be mapped.',

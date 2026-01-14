@@ -25,56 +25,6 @@ Relying solely on the provided code without thorough validation and possible ext
 Features marked as experimental are subject to change as long as they remain in the experimental state.
 Breaking changes to experimental features are not reflected in a major version changes.
 
-## Migration Guide
-
-### Migrating to v11.0.0
-
-This version contains breaking changes. Please read the following migration guide carefully.
-
-#### 1. CaaSEventStream - Lazy Loading (Breaking Change)
-
-The `CaaSEventStream` export has been changed to use lazy loading to prevent browser bundling issues with the `better-sse` dependency.
-
-**Before (v10.x):**
-```typescript
-import { CaaSEventStream } from 'fsxa-api'
-
-const handler = CaaSEventStream.eventStreamHandler(api)
-```
-
-**After (v11.x):**
-```typescript
-import { CaaSEventStream } from 'fsxa-api'
-
-// Now requires async/await
-const handler = await CaaSEventStream.getEventStreamHandler(api)
-```
-
-**Key Changes:**
-- `CaaSEventStream.eventStreamHandler()` is now `CaaSEventStream.getEventStreamHandler()` and returns a Promise
-- The module is dynamically imported only when called (server-side), preventing `better-sse` from being bundled in browser builds
-- Browser code can safely import `fsxa-api` without errors, as long as `getEventStreamHandler()` is only called on the server
-
-#### 2. Default maxReferenceDepth Changed (Breaking Change)
-
-The default value for `maxReferenceDepth` has been reduced from **10** to **2** for performance optimization.
-
-**Impact:** If your application relies on deeply nested references being resolved automatically, you may need to explicitly set a higher value.
-
-**Migration:**
-```typescript
-const config = {
-  apikey: 'your-api-key',
-  caasURL: 'https://your.caas.url',
-  // ... other config options
-  maxReferenceDepth: 10, // Explicitly set if you need the old behavior
-}
-
-const api = new FSXARemoteApi(config)
-```
-
-**Recommendation:** The new default of 2 is sufficient for most use cases and improves performance. Only increase this value if you specifically need deeper reference resolution.
-
 ## Methods
 
 In this section all available methods will be explained using examples.

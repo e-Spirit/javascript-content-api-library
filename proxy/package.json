@@ -1,15 +1,13 @@
 {
   "name": "fsxa-proxy-api",
-  "version": "10.20.0",
+  "version": "11.0.0",
   "description": "This package represents the proxy version of the JavaScript Content API Library, running on the client side.",
   "main": "dist/fsxa-proxy-api.cjs.js",
   "module": "dist/fsxa-proxy-api.es5.js",
   "types": "dist/types",
-  "author": "Tobias Golbs <golbs@e-spirit.com>",
+  "author": "Justin Wiegmann <justin.wiegmann@crownpeak.com>",
   "contributors": [
-    "Dominik Barczewski <barczewski@e-spirit.com>",
-    "Nicolai Henczi <henczi@e-spirit.com>",
-    "Jaswin Schütz <jschuetz@e-spirit.com>"
+    "Nicolai McAlley <nicolai.mcalley@crownpeak.com>"
   ],
   "files": [
     "dist",

@@ -1,5 +1,9 @@
+import { CaasApi_Item, Image, MappedCaasItem, NestedPath } from '../types'
+import { ResolvedReferencesInfo, ReferencedItemsInfo } from './CaaSMapper'
+import { Logger } from './Logger'
+
 // Native get/set replacement
-const get = (obj: any, path: string | (string | number)[], defaultValue?: any): any => {
+export const get = (obj: any, path: string | (string | number)[], defaultValue?: any): any => {
   const keys = Array.isArray(path) ? path : path.split('.')
   let result = obj
   for (const key of keys) {
@@ -9,7 +13,7 @@ const get = (obj: any, path: string | (string | number)[], defaultValue?: any): 
   return result
 }
 
-const set = (obj: any, path: string | (string | number)[], value: any): any => {
+export const set = (obj: any, path: string | (string | number)[], value: any): any => {
   const keys = Array.isArray(path) ? [...path] : path.split('.')  // Copy array to avoid mutation
   const lastKey = keys.pop()!
   let current = obj
@@ -22,9 +26,6 @@ const set = (obj: any, path: string | (string | number)[], value: any): any => {
   current[lastKey] = value
   return obj
 }
-import { CaasApi_Item, Image, MappedCaasItem, NestedPath } from '../types'
-import { ResolvedReferencesInfo, ReferencedItemsInfo } from './CaaSMapper'
-import { Logger } from './Logger'
 
 const IMAGE_MAP_PLACEHOLDER = 'IMAGEMAP'
 const IMAGE_MAP_RESOLUTION_SPLIT_DELIMITER = '___'
