@@ -22,6 +22,7 @@
       "npm run test"
     ],
     "after:bump": [
+      "node scripts/sync-workspace-versions.js",
       "npm run build"
     ],
     "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
@@ -38,11 +39,8 @@
         "proxy"
       ],
       "publish": true,
-      "additionalManifests": {
-        "versionUpdates": [
-          "proxy/package.json"
-        ]
-      }
+      "skipChecks": true,
+      "publishCommand": "node scripts/publish-workspace.js"
     }
   }
 }
