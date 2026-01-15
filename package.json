@@ -109,7 +109,6 @@
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@faker-js/faker": "^9.3.0",
-    "@release-it-plugins/workspaces": "^5.0.3",
     "@release-it/conventional-changelog": "^10.0.2",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",

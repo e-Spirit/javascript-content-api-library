@@ -25,6 +25,9 @@
       "node scripts/sync-workspace-versions.js",
       "npm run build"
     ],
+    "after:npm:release": [
+      "node scripts/publish-workspace.js"
+    ],
     "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
   },
   "plugins": {
@@ -33,14 +36,6 @@
       "infile": "CHANGELOG.md",
       "header": "# Changelog\n\nAll notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.",
       "ignoreRecommendedBump": false
-    },
-    "@release-it-plugins/workspaces": {
-      "workspaces": [
-        "proxy"
-      ],
-      "publish": true,
-      "skipChecks": true,
-      "publishCommand": "node scripts/publish-workspace.js"
     }
   }
 }
