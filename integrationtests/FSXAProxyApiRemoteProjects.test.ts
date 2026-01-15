@@ -12,7 +12,7 @@ import {
 } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
 import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
-import { CaasTestingClient, closeServer } from './utils'
+import { CaasTestingClient, closeServer, retryAsync, waitUntilPreconditionMet, TEST_TIMEOUTS } from './utils'
 import { Server } from 'http'
 import { faker } from '@faker-js/faker'
 import {
@@ -147,6 +147,19 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     }
 
     await caasClient.addItemsToCollection([pageRef], projectLocale)
+
+    // Wait for CaaS to propagate all data before tests run
+    await waitUntilPreconditionMet(
+      async () => {
+        const res = await caasClient.getItem(pageRef.identifier, 'de_DE')
+        return res.status === 200
+      },
+      {
+        timeoutMs: 10000,
+        pollIntervalMs: 500,
+        errorMessage: 'PageRef not available in CaaS after creation',
+      }
+    )
   }
 
   afterEach(async () => {
@@ -168,84 +181,96 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
   it('local project id != remote project id, local locale != remote locale', async () => {
     await init(randomId2, 'en_GB')
 
-    const res: Page = await proxyAPI.fetchElement({
-      id: pageRef.identifier,
-      locale: 'de_DE',
-    })
-    expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
-    expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(
-      res.data.pt_pictureRemote.description
-    )
-  }, 15000)
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
+      expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
+      expect(remoteMedia.description).toEqual(
+        res.data.pt_pictureRemote.description
+      )
+    }, { maxRetries: 3, delayMs: 2000 })
+  }, TEST_TIMEOUTS.DEFAULT)
 
   it('local project id != remote project id, local locale == remote locale', async () => {
     await init(randomId2, 'de_DE')
 
-    const res: Page = await proxyAPI.fetchElement({
-      id: pageRef.identifier,
-      locale: 'de_DE',
-    })
-    expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
-    expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(
-      res.data.pt_pictureRemote.description
-    )
-  }, 15000)
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
+      expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
+      expect(remoteMedia.description).toEqual(
+        res.data.pt_pictureRemote.description
+      )
+    }, { maxRetries: 3, delayMs: 2000 })
+  }, TEST_TIMEOUTS.DEFAULT)
 
   it('local project id == remote project id, local locale != remote locale', async () => {
     await init(randomId1, 'en_GB')
 
-    const res: Page = await proxyAPI.fetchElement({
-      id: pageRef.identifier,
-      locale: 'de_DE',
-    })
-    expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
-    expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(
-      res.data.pt_pictureRemote.description
-    )
-  }, 15000)
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
+      expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
+      expect(remoteMedia.description).toEqual(
+        res.data.pt_pictureRemote.description
+      )
+    }, { maxRetries: 3, delayMs: 2000 })
+  }, TEST_TIMEOUTS.DEFAULT)
 
   it('local project id == remote project id, local locale == remote locale', async () => {
     await init(randomId1, 'de_DE')
 
-    const res: Page = await proxyAPI.fetchElement({
-      id: pageRef.identifier,
-      locale: 'de_DE',
-    })
-    expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
-    // Since projectId same and Ids the same, we expect the same media
-    expect(res.data.pt_pictureRemote.description).toEqual(
-      res.data.pt_pictureLocal.description
-    )
-  }, 15000)
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_pictureLocal.id).toEqual(res.data.pt_pictureRemote.id)
+      // Since projectId same and Ids the same, we expect the same media
+      expect(res.data.pt_pictureRemote.description).toEqual(
+        res.data.pt_pictureLocal.description
+      )
+    }, { maxRetries: 3, delayMs: 2000 })
+  }, TEST_TIMEOUTS.DEFAULT)
 
   it('local project id == remote project id, local locale == remote locale, different media Ids', async () => {
     await init(randomId1, 'de_DE', true)
 
-    const res: Page = await proxyAPI.fetchElement({
-      id: pageRef.identifier,
-      locale: 'de_DE',
-    })
-    expect(res.data.pt_pictureLocal.id).not.toEqual(
-      res.data.pt_pictureRemote.id
-    )
-    expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
-    expect(remoteMedia.description).toEqual(
-      res.data.pt_pictureRemote.description
-    )
-  }, 15000)
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_pictureLocal.id).not.toEqual(
+        res.data.pt_pictureRemote.id
+      )
+      expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
+      expect(remoteMedia.description).toEqual(
+        res.data.pt_pictureRemote.description
+      )
+    }, { maxRetries: 3, delayMs: 2000 })
+  }, TEST_TIMEOUTS.DEFAULT)
 
   it('Dataset references on metadata of remote media should be fetchable', async () => {
     await init(randomId2, 'en_GB')
 
-    const res: Page = await proxyAPI.fetchElement({
-      id: pageRef.identifier,
-      locale: 'de_DE',
-    })
-    expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(
-      dataset.identifier
-    )
-  }, 15000)
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(
+        dataset.identifier
+      )
+    }, { maxRetries: 3, delayMs: 2000 })
+  }, TEST_TIMEOUTS.DEFAULT)
 })

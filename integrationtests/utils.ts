@@ -3,6 +3,122 @@ import 'cross-fetch/polyfill'
 import { FSXAContentMode } from '../src/enums'
 import { CaasApi_Item } from '../src'
 
+// Default timeouts for integration tests
+export const TEST_TIMEOUTS = {
+  DEFAULT: 30000,
+  LONG: 60000,
+  SHORT: 15000,
+  CAAS_PROPAGATION: 2000
+} as const
+
+/**
+ * Retry configuration for flaky operations
+ */
+export interface RetryOptions {
+  maxRetries?: number
+  delayMs?: number
+  backoffMultiplier?: number
+  onRetry?: (error: Error, attempt: number) => void
+}
+
+/**
+ * Executes an async function with retry logic.
+ * Useful for operations that may fail due to eventual consistency or transient errors.
+ * @param fn The async function to execute
+ * @param options Retry configuration
+ * @returns The result of the function
+ */
+export async function retryAsync<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    delayMs = 1000,
+    backoffMultiplier = 2,
+    onRetry
+  } = options
+
+  let lastError: Error = new Error('No attempts made')
+  let currentDelay = delayMs
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+
+      if (attempt < maxRetries) {
+        onRetry?.(lastError, attempt)
+        await CaasTestingClient.delay(currentDelay)
+        currentDelay *= backoffMultiplier
+      }
+    }
+  }
+
+  throw lastError
+}
+
+/**
+ * Waits until a condition is met or timeout is reached.
+ * Useful for waiting for CaaS data propagation.
+ * @param condition Function that returns true when condition is met
+ * @param options Configuration for polling
+ * @returns true if condition was met, throws if timeout
+ */
+export async function waitUntilPreconditionMet(
+  condition: () => Promise<boolean> | boolean,
+  options: {
+    timeoutMs?: number
+    pollIntervalMs?: number
+    errorMessage?: string
+  } = {}
+): Promise<true> {
+  const {
+    timeoutMs = 10000,
+    pollIntervalMs = 500,
+    errorMessage = 'Condition not met within timeout'
+  } = options
+
+  const startTime = Date.now()
+
+  while (Date.now() - startTime < timeoutMs) {
+    try {
+      const result = await condition()
+      if (result) {
+        return true
+      }
+    } catch {
+      // Condition threw, continue polling
+    }
+    await CaasTestingClient.delay(pollIntervalMs)
+  }
+
+  throw new Error(`${errorMessage} (waited ${timeoutMs}ms)`)
+}
+
+/**
+ * Wraps a test function with retry logic for flaky integration tests.
+ * Use this when a test may fail due to timing issues but should pass on retry.
+ * @param testFn The test function to wrap
+ * @param options Retry configuration
+ * @returns A wrapped test function
+ */
+export function withRetry<T>(
+  testFn: () => Promise<T>,
+  options: RetryOptions = {}
+): () => Promise<T> {
+  return () => retryAsync(testFn, {
+    maxRetries: 3,
+    delayMs: 2000,
+    ...options,
+    onRetry: (error, attempt) => {
+      console.log(`Test attempt ${attempt} failed: ${error.message}. Retrying...`)
+      options.onRetry?.(error, attempt)
+    }
+  })
+}
+
 export enum RequestMethodEnum {
   GET = 'GET',
   POST = 'POST',
@@ -36,7 +152,7 @@ export class CaasTestingClient {
   private constructor(CaaSTestingClientData: CaaSTestingClientData) {
     this.headers = {
       Authorization: `Bearer ${CaaSTestingClientData.apikey}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     }
     this.caasTestingClientData = CaaSTestingClientData
     this.projectId = CaaSTestingClientData.projectID
@@ -62,11 +178,26 @@ export class CaasTestingClient {
    */
   static async init(CaaSTestingClientData: CaaSTestingClientData) {
     const caasClient = new CaasTestingClient(CaaSTestingClientData)
-    await caasClient.createCollection()
-    CaaSTestingClientData.remoteProjectId &&
-      (await caasClient.createRemoteCollection())
 
-    await this.delay(1000)
+    // Retry collection creation in case of transient failures
+    await retryAsync(
+      async () => {
+        await caasClient.createCollection()
+      },
+      { maxRetries: 3, delayMs: 1000 }
+    )
+
+    if (CaaSTestingClientData.remoteProjectId) {
+      await retryAsync(
+        async () => {
+          await caasClient.createRemoteCollection()
+        },
+        { maxRetries: 3, delayMs: 1000 }
+      )
+    }
+
+    // Wait for CaaS to propagate the collections
+    await this.delay(TEST_TIMEOUTS.CAAS_PROPAGATION)
 
     return caasClient
   }
@@ -78,9 +209,10 @@ export class CaasTestingClient {
   async getCollection() {
     return await fetch(this.baseUrl, {
       method: RequestMethodEnum.GET,
-      headers: this.headers,
+      headers: this.headers
     })
   }
+
   /**
    * Get remote collection from integration test database in CaaS
    * @returns Http Response | undefined
@@ -88,9 +220,10 @@ export class CaasTestingClient {
   async getRemoteCollection() {
     return await fetch(this.remoteBaseUrl!, {
       method: RequestMethodEnum.GET,
-      headers: this.headers,
+      headers: this.headers
     })
   }
+
   /**
    * Get item from integration test database in CaaS
    * @param identifier Name of item to get
@@ -100,7 +233,7 @@ export class CaasTestingClient {
   async getItem(identifier: string, locale: string) {
     return await fetch(`${this.baseUrl}/${identifier}.${locale}`, {
       method: RequestMethodEnum.GET,
-      headers: this.headers,
+      headers: this.headers
     })
   }
 
@@ -111,7 +244,7 @@ export class CaasTestingClient {
   async createCollection() {
     return await fetch(this.baseUrl, {
       method: RequestMethodEnum.PUT,
-      headers: this.headers,
+      headers: this.headers
     })
   }
 
@@ -123,7 +256,7 @@ export class CaasTestingClient {
     //TODO
     return await fetch(this.remoteBaseUrl!, {
       method: RequestMethodEnum.PUT,
-      headers: this.headers,
+      headers: this.headers
     })
   }
 
@@ -137,8 +270,8 @@ export class CaasTestingClient {
       method: RequestMethodEnum.DELETE,
       headers: {
         ...this.headers,
-        'If-Match': etag,
-      },
+        'If-Match': etag
+      }
     })
   }
 
@@ -150,12 +283,12 @@ export class CaasTestingClient {
   async removeRemoteCollection(etag: string) {
     return this.remoteBaseUrl
       ? await fetch(this.remoteBaseUrl, {
-          method: RequestMethodEnum.DELETE,
-          headers: {
-            ...this.headers,
-            'If-Match': etag,
-          },
-        })
+        method: RequestMethodEnum.DELETE,
+        headers: {
+          ...this.headers,
+          'If-Match': etag
+        }
+      })
       : undefined
   }
 
@@ -171,8 +304,8 @@ export class CaasTestingClient {
       method: RequestMethodEnum.DELETE,
       headers: {
         ...this.headers,
-        'If-Match': etag,
-      },
+        'If-Match': etag
+      }
     })
   }
 
@@ -192,7 +325,7 @@ export class CaasTestingClient {
     return await fetch(url, {
       method: RequestMethodEnum.PUT,
       headers: this.headers,
-      body: JSON.stringify(docWithLocale) || null,
+      body: JSON.stringify(docWithLocale) || null
     })
   }
 
@@ -211,7 +344,7 @@ export class CaasTestingClient {
     return await fetch(this.baseUrl, {
       method: RequestMethodEnum.POST,
       headers: this.headers,
-      body: JSON.stringify(docsWithLocale) || null,
+      body: JSON.stringify(docsWithLocale) || null
     })
   }
 
@@ -246,7 +379,7 @@ export class CaasTestingClient {
     return await fetch(baseUrl, {
       method: RequestMethodEnum.POST,
       headers: this.headers,
-      body: JSON.stringify(docsWithLocale) || null,
+      body: JSON.stringify(docsWithLocale) || null
     })
   }
 
@@ -272,7 +405,7 @@ export const closeServer = (server: import('http').Server): Promise<void> => {
   return new Promise((resolve, reject) => {
     // Force close all connections by destroying the server socket
     server.closeAllConnections?.()
-    
+
     server.close((err) => {
       if (err) reject(err)
       else resolve()
