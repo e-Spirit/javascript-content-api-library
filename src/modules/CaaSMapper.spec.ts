@@ -101,7 +101,9 @@ describe('CaaSMapper', () => {
       })
     })
     it('should register a remote reference and return its remote reference key', () => {
-      const remotes = { someName: { id: 'remoteId', locale: 'de' } }
+      const remotes = {
+        someName: { id: 'remoteId', locale: 'de', contentMode: undefined },
+      }
       const api = createApi()
       api.remotes = remotes
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
@@ -1659,9 +1661,9 @@ describe('CaaSMapper', () => {
     it('should call resolveReferencesPerProject for all remote projects', async () => {
       const api = createApi()
       api.remotes = {
-        'remote-id1': { id: 'remote-id1', locale: 'de' },
-        'remote-id2': { id: 'remote-id2', locale: 'de' },
-        'remote-id3': { id: 'remote-id3', locale: 'de' },
+        'remote-id1': { id: 'remote-id1', locale: 'de', contentMode: undefined },
+        'remote-id2': { id: 'remote-id2', locale: 'de', contentMode: undefined },
+        'remote-id3': { id: 'remote-id3', locale: 'de', contentMode: undefined },
       }
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       mapper.resolveReferencesPerProject = jest.fn()
@@ -1696,7 +1698,9 @@ describe('CaaSMapper', () => {
     })
     it('should resolve remote media references', async () => {
       const api = createApi()
-      api.remotes = { 'remote-id1': { id: 'remote-id1', locale: 'de' } }
+      api.remotes = {
+        'remote-id1': { id: 'remote-id1', locale: 'de', contentMode: undefined },
+      }
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       const mediaPictures = await Promise.all([
         mapper.mapMediaPicture(createMediaPicture('id1')),

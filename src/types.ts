@@ -987,6 +987,7 @@ export type RemoteProjectConfiguration = {
   [name: string]: {
     id: string
     locale: string
+    contentMode?: 'preview' | 'release'
   }
 }
 

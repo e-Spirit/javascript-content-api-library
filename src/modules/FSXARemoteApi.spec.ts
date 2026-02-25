@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { FSXAApiErrors, HttpStatus } from '../enums'
+import { FSXAApiErrors, FSXAContentMode, HttpStatus } from '../enums'
 import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import {
@@ -116,6 +116,20 @@ describe('FSXARemoteAPI', () => {
         remoteProject: remoteProjectId,
       })
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${remoteProjectId}.${config.contentMode}.content`
+      expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
+    })
+    it('should use the remote contentMode if provided', () => {
+      const config = generateRandomConfig()
+      const remoteProjectId = config.remotes.remote.id
+
+      config.contentMode = FSXAContentMode.RELEASE
+      ;(config.remotes.remote as any).contentMode = FSXAContentMode.PREVIEW
+
+      const remoteApi = new FSXARemoteApi(config)
+      const actualCaaSUrl = remoteApi.buildCaaSUrl({
+        remoteProject: remoteProjectId,
+      })
+      const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${remoteProjectId}.preview.content`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
     it('should return the correct caas url with a locale but no id', () => {
