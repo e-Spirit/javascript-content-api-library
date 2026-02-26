@@ -4,6 +4,12 @@
   "description": "This package represents the proxy version of the JavaScript Content API Library, running on the client side.",
   "main": "dist/fsxa-proxy-api.cjs.js",
   "module": "dist/fsxa-proxy-api.es5.js",
+  "exports": {
+    ".": {
+      "import": "./dist/fsxa-proxy-api.es5.js",
+      "require": "./dist/fsxa-proxy-api.cjs.js"
+    }
+  },
   "types": "dist/types",
   "author": "Justin Wiegmann <justin.wiegmann@crownpeak.com>",
   "contributors": [

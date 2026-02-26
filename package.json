@@ -5,6 +5,12 @@
   "keywords": [],
   "main": "dist/fsxa-api.cjs.js",
   "module": "dist/fsxa-api.es5.js",
+  "exports": {
+    ".": {
+      "import": "./dist/fsxa-api.es5.js",
+      "require": "./dist/fsxa-api.cjs.js"
+    }
+  },
   "types": "dist/types",
   "author": "Tobias Golbs <golbs@e-spirit.com>",
   "contributors": [
