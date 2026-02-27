@@ -13,6 +13,12 @@
     "dist",
     "package.json"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/fsxa-proxy-api.es5.js",
+      "require": "./dist/fsxa-proxy-api.cjs.js"
+    }
+  },
   "scripts": {
     "release": "release-it",
     "release:ci": "release-it --ci"
