@@ -6,6 +6,12 @@
   "main": "dist/fsxa-api.cjs.js",
   "module": "dist/fsxa-api.es5.js",
   "types": "dist/types",
+  "exports": {
+    ".": {
+      "import": "./dist/fsxa-api.es5.js",
+      "require": "./dist/fsxa-api.cjs.js"
+    }
+  },
   "author": "Tobias Golbs <golbs@e-spirit.com>",
   "contributors": [
     "Dominik Barczewski <barczewski@e-spirit.com>",
