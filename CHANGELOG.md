@@ -1,3 +1,13 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## [11.1.0](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.0.0...v11.1.0) (2026-03-03)
+
+### Features
+
+* **package.json:** add esm export ([#241](https://github.com/e-Spirit/javascript-content-api-library/issues/241)) ([edf4c4e](https://github.com/e-Spirit/javascript-content-api-library/commit/edf4c4eb19399d9f8f10aad56b6163964b840394))
+
 ## [11.0.0](https://github.com/e-Spirit/javascript-content-api-library/compare/v10.24.0...v11.0.0) (2026-01-15)
 
 ### Features
