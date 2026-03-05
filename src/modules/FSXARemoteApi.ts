@@ -191,7 +191,13 @@ export class FSXARemoteApi implements FSXAApi {
       projectId = remoteProjectId
     }
 
-    let baseURL = `${this.caasURL}/${this.tenantID}/${projectId}.${this.contentMode}.content`
+    let contentMode = this.contentMode
+    if (remoteProjectId) {
+      const remoteConfig = this.getRemoteConfigById(remoteProjectId)
+      contentMode = remoteConfig.contentMode || contentMode
+    }
+
+    let baseURL = `${this.caasURL}/${this.tenantID}/${projectId}.${contentMode}.content`
     let encodedBaseURL = encodeURI(baseURL)
 
     if (id) {
