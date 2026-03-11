@@ -163,6 +163,20 @@ describe('CaaSMapper', () => {
         `${url}?prev&rev=5593`
       )
     })
+
+    it('should append the revision as a query param if addRevisionToMediaUrlsInRelease is true and content mode is release', () => {
+      const api = createApi()
+      api.contentMode = FSXAContentMode.RELEASE
+      api.addRevisionToMediaUrlsInRelease = true
+      const mapper = new CaaSMapper(api, 'de', {addRevisionToMediaUrlsInRelease: true}, createLogger())
+      const url = 'https://e-spirit.local/some/resource'
+      expect(mapper.buildMediaUrl(url)).toEqual(url)
+      expect(mapper.buildMediaUrl(url, 5593)).toEqual(`${url}?rev=5593`)
+      // check media string construction
+      expect(mapper.buildMediaUrl(`${url}?prev`, 5593)).toEqual(
+        `${url}?prev&rev=5593`
+      )
+    })
   })
 
   describe('mapDataEntry', () => {
