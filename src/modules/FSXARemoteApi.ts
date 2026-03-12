@@ -74,6 +74,7 @@ export class FSXARemoteApi implements FSXAApi {
   private _caasItemFilter?: CaasItemFilter
   private _logLevel: LogLevel
   private _enableEventStream: boolean = false
+  private _addRevisionToMediaUrlsInRelease: boolean = false
 
   /**
    * The constructor of this class initializes the configuration for the api.
@@ -90,6 +91,7 @@ export class FSXARemoteApi implements FSXAApi {
    * @param config.customMapper optional {@link CustomMapper CustomMapper}
    * @param config.filterOptions optional {@link RemoteApiFilterOptions RemoteApiFilterOptions} (EXPERIMENTAL)
    * @param config.logLevel the used {@link LogLevel LogLevel} for the API `(default LogLevel.ERROR)` - optional
+   * @param config.addRevisionToMediaUrlsInRelease sets flag if revision query param should be added to media urls in release.
    */
   constructor({
     apikey,
@@ -103,6 +105,7 @@ export class FSXARemoteApi implements FSXAApi {
     customMapper,
     filterOptions,
     logLevel = LogLevel.ERROR,
+    addRevisionToMediaUrlsInRelease = false
   }: FSXARemoteApiConfig) {
     this.apikey = apikey
     this.caasURL = caasURL
@@ -118,6 +121,7 @@ export class FSXARemoteApi implements FSXAApi {
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationItemFilter = filterOptions?.navigationItemFilter
     this._caasItemFilter = filterOptions?.caasItemFilter
+    this._addRevisionToMediaUrlsInRelease = addRevisionToMediaUrlsInRelease
 
     this._logger.debug('FSXARemoteApi created', {
       caasURL,
@@ -129,6 +133,7 @@ export class FSXARemoteApi implements FSXAApi {
       customMapper: this._customMapper,
       navigationItemFilter: this._navigationItemFilter,
       caasItemFilter: this._caasItemFilter,
+      addRevisionToMediaUrlsInRelease
     })
   }
 
@@ -636,6 +641,7 @@ export class FSXARemoteApi implements FSXAApi {
         {
           customMapper: this._customMapper,
           maxReferenceDepth: this._maxReferenceDepth,
+          addRevisionToMediaUrlsInRelease: this._addRevisionToMediaUrlsInRelease
         },
         new Logger(this._logLevel, 'CaaSMapper')
       )
@@ -1041,6 +1047,20 @@ export class FSXARemoteApi implements FSXAApi {
       throw new Error(FSXAApiErrors.UNKNOWN_CONTENT_MODE)
     }
     this._contentMode = value
+  }
+
+  /**
+   * gets flag, if revision should be added to media urls in release
+   */
+  public get addRevisionToMediaUrlsInRelease() {
+    return this._addRevisionToMediaUrlsInRelease
+  }
+
+  /**
+   * Sets flag, if revision should be added to media urls in release
+   */
+  public set addRevisionToMediaUrlsInRelease(value: boolean) {
+    this._addRevisionToMediaUrlsInRelease = value
   }
 
   /**
