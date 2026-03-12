@@ -144,16 +144,18 @@ describe('CaaSMapper', () => {
   })
 
   describe('buildMediaUrl', () => {
-    it('should return the url as-is in release mode', () => {
+    it('should return the url as-is in release mode when includeRevisionInMediaUrls is false', () => {
       const api = createApi()
       api.contentMode = FSXAContentMode.RELEASE
+      api.includeRevisionInMediaUrls = false
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       const url = 'https://e-spirit.local/some/resource'
       expect(mapper.buildMediaUrl(url)).toEqual(url)
+      expect(mapper.buildMediaUrl(url, 5593)).toEqual(url)
     })
-    it('should append the revision as a query param if given in preview mode', () => {
+    it('should append the revision as a query param if given when includeRevisionInMediaUrls is true', () => {
       const api = createApi()
-      api.contentMode = FSXAContentMode.PREVIEW
+      api.includeRevisionInMediaUrls = true
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       const url = 'https://e-spirit.local/some/resource'
       expect(mapper.buildMediaUrl(url)).toEqual(url)
@@ -164,11 +166,11 @@ describe('CaaSMapper', () => {
       )
     })
 
-    it('should append the revision as a query param if addRevisionToMediaUrlsInRelease is true and content mode is release', () => {
+    it('should append the revision as a query param if includeRevisionInMediaUrls is true and content mode is release', () => {
       const api = createApi()
       api.contentMode = FSXAContentMode.RELEASE
-      api.addRevisionToMediaUrlsInRelease = true
-      const mapper = new CaaSMapper(api, 'de', {addRevisionToMediaUrlsInRelease: true}, createLogger())
+      api.includeRevisionInMediaUrls = true
+      const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       const url = 'https://e-spirit.local/some/resource'
       expect(mapper.buildMediaUrl(url)).toEqual(url)
       expect(mapper.buildMediaUrl(url, 5593)).toEqual(`${url}?rev=5593`)

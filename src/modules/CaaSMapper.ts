@@ -106,9 +106,6 @@ export class CaaSMapper {
   // just started, when we need to keep track of them.
   _processedItems: Record<string, true> = {}
 
-  // Add Revision query param to media urls in release case
-  addRevisionToMediaUrlsInRelease: boolean = false
-
   constructor(
     api: FSXARemoteApi,
     locale: string | undefined,
@@ -116,7 +113,6 @@ export class CaaSMapper {
       customMapper?: CustomMapper
       referenceDepth?: number
       maxReferenceDepth?: number
-      addRevisionToMediaUrlsInRelease?: boolean
     },
     logger: Logger
   ) {
@@ -133,7 +129,6 @@ export class CaaSMapper {
       utils.maxReferenceDepth ?? DEFAULT_MAX_REFERENCE_DEPTH
 
     this.logger.debug('Created new CaaSMapper')
-    this.addRevisionToMediaUrlsInRelease = utils.addRevisionToMediaUrlsInRelease ?? false
   }
 
   addToResolvedReferences(
@@ -236,7 +231,7 @@ export class CaaSMapper {
   }
 
   buildMediaUrl(url: string, rev?: number) {
-    if (rev && (this.api.contentMode === FSXAContentMode.PREVIEW || this.addRevisionToMediaUrlsInRelease)) {
+    if (rev && this.api.includeRevisionInMediaUrls) {
       url += `${url.includes('?') ? '&' : '?'}rev=${rev}`
     }
     return url

@@ -86,6 +86,22 @@ describe('FSXARemoteAPI', () => {
         new FSXARemoteApi(config)
       }).toThrow(FSXAApiErrors.UNKNOWN_CONTENT_MODE)
     })
+    it('should default includeRevisionInMediaUrls to true in preview mode', () => {
+      config.contentMode = 'preview'
+      remoteApi = new FSXARemoteApi(config)
+      expect(remoteApi.includeRevisionInMediaUrls).toBe(true)
+    })
+    it('should default includeRevisionInMediaUrls to false in release mode', () => {
+      config.contentMode = 'release'
+      remoteApi = new FSXARemoteApi(config)
+      expect(remoteApi.includeRevisionInMediaUrls).toBe(false)
+    })
+    it('should allow overriding includeRevisionInMediaUrls in release mode', () => {
+      config.contentMode = 'release'
+      config.includeRevisionInMediaUrls = true
+      remoteApi = new FSXARemoteApi(config)
+      expect(remoteApi.includeRevisionInMediaUrls).toBe(true)
+    })
   })
   describe('buildAuthorizationHeaders', () => {
     it('should return the correct authorization object', () => {
