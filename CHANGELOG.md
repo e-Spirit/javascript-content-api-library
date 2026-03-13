@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.2.0](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.1.0...v11.2.0) (2026-03-13)
+
+### Features
+
+* **mediaurls:** option to add revision query param to media URLs in Release ([#243](https://github.com/e-Spirit/javascript-content-api-library/issues/243))  ([ce48a17](https://github.com/e-Spirit/javascript-content-api-library/commit/ce48a17345720b17d6162335b63a3d88286257e7))
+
 ## [11.1.0](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.0.0...v11.1.0) (2026-03-03)
 
 ### Features
