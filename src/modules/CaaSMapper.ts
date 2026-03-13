@@ -231,7 +231,7 @@ export class CaaSMapper {
   }
 
   buildMediaUrl(url: string, rev?: number) {
-    if (rev && this.api.contentMode === FSXAContentMode.PREVIEW) {
+    if (rev && this.api.includeRevisionInMediaUrls) {
       url += `${url.includes('?') ? '&' : '?'}rev=${rev}`
     }
     return url
