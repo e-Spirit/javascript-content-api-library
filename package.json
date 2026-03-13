@@ -3,13 +3,12 @@
   "version": "11.1.0",
   "description": "The JavaScript Content API Library a.k.a. Content API is an interface handling data coming from the FirstSpirit CaaS and the Navigation Service.",
   "keywords": [],
-  "main": "dist/fsxa-api.cjs.js",
-  "module": "dist/fsxa-api.es5.js",
-  "types": "dist/types",
   "exports": {
     ".": {
-      "import": "./dist/fsxa-api.es5.js",
-      "require": "./dist/fsxa-api.cjs.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/fsxa-api.esm.js",
+      "require": "./dist/fsxa-api.cjs.js",
+      "default": "./dist/fsxa-api.cjs.js"
     }
   },
   "author": "Tobias Golbs <golbs@e-spirit.com>",
