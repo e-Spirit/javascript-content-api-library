@@ -13,7 +13,7 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/fsxa-proxy-api.csm.js",
+      "import": "./dist/fsxa-proxy-api.es5.js",
       "require": "./dist/fsxa-proxy-api.cjs.js",
       "default": "./dist/fsxa-proxy-api.cjs.js"
     }

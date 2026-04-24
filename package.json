@@ -6,7 +6,7 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/fsxa-api.esm.js",
+      "import": "./dist/fsxa-api.es5.js",
       "require": "./dist/fsxa-api.cjs.js",
       "default": "./dist/fsxa-api.cjs.js"
     }
