@@ -76,7 +76,7 @@ await esbuild.build({
   format: 'esm',
   plugins: [
     AnalyzerPlugin({
-        outfile: 'stats/fsxa-api-esm.html',
+        outfile: 'stats/fsxa-api-es5.html',
     })
   ],
 })
@@ -105,7 +105,7 @@ await esbuild.build({
   format: 'esm',
   plugins: [
     AnalyzerPlugin({
-      outfile: 'stats/fsxa-proxy-api-esm.html',
+      outfile: 'stats/fsxa-proxy-api-es5.html',
     })
   ],
 })
@@ -135,7 +135,7 @@ console.log('─'.repeat(60))
 
 console.log('\n✓ Bundle analysis reports generated:')
 console.log('  - stats/fsxa-api-cjs.html')
-console.log('  - stats/fsxa-api-esm.html')
+console.log('  - stats/fsxa-api-es5.html')
 console.log('  - stats/fsxa-proxy-api-cjs.html')
-console.log('  - stats/fsxa-proxy-api-esm.html')
+console.log('  - stats/fsxa-proxy-api-es5.html')
 console.log('\nBuild complete!')
