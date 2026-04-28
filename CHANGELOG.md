@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.2.1](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.2.0...v11.2.1) (2026-04-28)
+
+### Bug Fixes
+
+* **package.json:** Wrong file names on adjusted exports from package.json ([#249](https://github.com/e-Spirit/javascript-content-api-library/issues/249)) ([#250](https://github.com/e-Spirit/javascript-content-api-library/issues/250)) ([fbffe21](https://github.com/e-Spirit/javascript-content-api-library/commit/fbffe217471a7ce7e2c5b22b5c2a68947042fd83))
+
 ## [11.2.0](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.1.0...v11.2.0) (2026-03-13)
 
 ### Features

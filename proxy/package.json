@@ -1,6 +1,6 @@
 {
   "name": "fsxa-proxy-api",
-  "version": "11.2.0",
+  "version": "11.2.1",
   "description": "This package represents the proxy version of the JavaScript Content API Library, running on the client side.",
   "author": "Justin Wiegmann <justin.wiegmann@crownpeak.com>",
   "contributors": [
