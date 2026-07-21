@@ -18,6 +18,7 @@ import {
   CaaSApi_CMSInputTextArea,
   CaaSApi_CMSInputToggle,
   CaaSApi_Content2Section,
+  CaaSApi_DataEntries,
   CaaSApi_FSCatalog,
   CaaSApi_FSDataset,
   CaaSApi_FSIndex,
@@ -701,6 +702,28 @@ describe('CaaSMapper', () => {
         expect(mapper.mapDataEntries).not.toHaveBeenCalled()
         expect(mapper.registerReferencedItem).not.toHaveBeenCalled()
       })
+      it('should return null and not register a reference if the DatasetReference target has a null identifier (broken reference)', async () => {
+        const api = createApi()
+        const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+        mapper.registerReferencedItem = jest.fn()
+        const entry = createDatasetReference()
+        ;(entry.value as any).target.identifier = null
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
+        expect(mapper.registerReferencedItem).not.toHaveBeenCalled()
+      })
+      it('should return null and not register a reference if the DatasetReference target itself is null (broken reference)', async () => {
+        const api = createApi()
+        const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+        mapper.registerReferencedItem = jest.fn()
+        const entry = createDatasetReference()
+        ;(entry.value as any).target = null
+        await expect(
+          mapper.mapDataEntry(entry, createPath())
+        ).resolves.toBeNull()
+        expect(mapper.registerReferencedItem).not.toHaveBeenCalled()
+      })
     })
 
     describe('CMS_INPUT_TOGGLE', () => {
@@ -929,6 +952,30 @@ describe('CaaSMapper', () => {
           entry.value!.remoteProject
         )
       })
+      it('should return null and not register a reference on Media entries with a null identifier (broken reference)', async () => {
+        const api = createApi()
+        const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+        mapper.registerReferencedItem = jest.fn()
+        const path = createPath()
+        const entry: CaaSApi_FSReference = {
+          name: faker.lorem.word(),
+          value: {
+            fsType: 'Media',
+            name: faker.lorem.word(),
+            identifier: null as any,
+            uid: faker.lorem.word(),
+            uidType: 'MEDIASTORE_LEAF',
+            url: faker.lorem.word(),
+            mediaType: 'PICTURE',
+            remoteProject: 'main',
+          } as any,
+          fsType: 'FS_REFERENCE',
+        }
+        await expect(
+          mapper.mapDataEntry(entry, path)
+        ).resolves.toBeNull()
+        expect(mapper.registerReferencedItem).not.toHaveBeenCalled()
+      })
       it('should handle PageRef & GCAPage separately', async () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
@@ -970,6 +1017,27 @@ describe('CaaSMapper', () => {
         await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(
           expectedGCARef
         )
+      })
+      it('should return null on PageRef/GCAPage entries with a null identifier (broken reference)', async () => {
+        const api = createApi()
+        const mapper = new CaaSMapper(api, 'de', {}, createLogger())
+        const path = createPath()
+        const entry: CaaSApi_FSReference = {
+          name: faker.lorem.word(),
+          value: {
+            fsType: 'PageRef',
+            name: faker.lorem.word(),
+            identifier: null as any,
+            uid: faker.lorem.word(),
+            uidType: 'SITESTORE_LEAF',
+            url: faker.lorem.word(),
+            remoteProject: 'remote-project',
+          },
+          fsType: 'FS_REFERENCE',
+        }
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toBeNull()
+        entry.value!.fsType = 'GCAPage'
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toBeNull()
       })
       it('should return corrupted entries as-is', async () => {
         const api = createApi()
@@ -1169,6 +1237,57 @@ describe('CaaSMapper', () => {
       await expect(mapper.mapDataEntries(null!, createPath())).resolves.toEqual(
         {}
       )
+    })
+    // Regression test for CAAS-2680: a single broken Media reference anywhere in
+    // an element used to throw synchronously (unifyId -> null.indexOf) and reject
+    // the whole document. It must now be skipped (mapped to null) while the rest
+    // of the element is returned normally. Uses the real mapper (no mocks) so an
+    // unguarded null identifier would actually throw here.
+    it('should skip a broken/null Media reference and still return the rest of the element', async () => {
+      const mapper = new CaaSMapper(createApi(), 'de', {}, createLogger())
+      const entries = {
+        headline: {
+          fsType: 'CMS_INPUT_TEXT',
+          name: 'headline',
+          value: 'Weihnachtssocken',
+        },
+        brokenImage: {
+          fsType: 'FS_REFERENCE',
+          name: 'brokenImage',
+          value: {
+            fsType: 'Media',
+            name: faker.lorem.word(),
+            identifier: null as any,
+            uid: '01_221021_4f3_weihnachtssocken_stage_b_1',
+            uidType: 'MEDIASTORE_LEAF',
+            url: faker.lorem.word(),
+            mediaType: 'PICTURE',
+            remoteProject: 'main',
+          },
+        },
+        validImage: {
+          fsType: 'FS_REFERENCE',
+          name: 'validImage',
+          value: {
+            fsType: 'Media',
+            name: faker.lorem.word(),
+            identifier: faker.string.uuid(),
+            uid: faker.lorem.word(),
+            uidType: 'MEDIASTORE_LEAF',
+            url: faker.lorem.word(),
+            mediaType: 'PICTURE',
+          },
+        },
+      } as any as CaaSApi_DataEntries
+
+      const result = await mapper.mapDataEntries(entries, createPath())
+
+      // the broken reference is dropped, not thrown
+      expect(result.brokenImage).toBeNull()
+      // the rest of the element survives
+      expect(result.headline).toBe('Weihnachtssocken')
+      expect(result.validImage).not.toBeNull()
+      expect(typeof result.validImage).toBe('string')
     })
   })
 

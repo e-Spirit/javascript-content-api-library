@@ -364,6 +364,13 @@ export class CaaSMapper {
             )
           )
         } else if (entry.value.fsType === 'DatasetReference') {
+          if (!entry.value.target?.identifier) {
+            this.logger.warn(
+              'Skipping DatasetReference with a broken/null identifier',
+              { path: path.join('/') }
+            )
+            return null
+          }
           return this.registerReferencedItem(
             entry.value.target.identifier,
             path,
@@ -413,12 +420,26 @@ export class CaaSMapper {
       case 'FS_REFERENCE':
         if (!entry.value) return null
         if (entry.value.fsType === 'Media') {
+          if (!entry.value.identifier) {
+            this.logger.warn(
+              'Skipping Media reference with a broken/null identifier',
+              { path: path.join('/') }
+            )
+            return null
+          }
           return this.registerReferencedItem(
             entry.value.identifier,
             path,
             entry.value.remoteProject || remoteProjectId
           )
         } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
+          if (!entry.value.identifier) {
+            this.logger.warn(
+              'Skipping PageRef/GCAPage reference with a broken/null identifier',
+              { path: path.join('/') }
+            )
+            return null
+          }
           const reference: Reference = {
             type: 'Reference',
             referenceId: entry.value.identifier,
@@ -437,7 +458,13 @@ export class CaaSMapper {
             .map((record, index) => {
               const identifier: string | undefined =
                 record?.value?.target?.identifier
-              if (!identifier) return null
+              if (!identifier) {
+                this.logger.warn(
+                  'Skipping FS_INDEX record with a broken/null identifier',
+                  { path: [...path, index].join('/') }
+                )
+                return null
+              }
               return this.registerReferencedItem(
                 identifier,
                 [...path, index],
