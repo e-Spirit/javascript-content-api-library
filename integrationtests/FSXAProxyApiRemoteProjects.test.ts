@@ -130,28 +130,55 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       md_dataset: datasetReference,
     }
 
-    await caasClient.addItemsToCollection([localMedia], projectLocale)
+    const localMediaRes = await caasClient.addItemsToCollection(
+      [localMedia],
+      projectLocale
+    )
+    // DIAGNOSTIC: temporary, remove after root-causing CAAS-2680 flakiness
+    console.log(
+      `[diag] addItemsToCollection(localMedia) -> ${localMediaRes.status} ${await localMediaRes.clone().text()}`
+    )
 
     const [language, country] = remoteProjectLocale.split('_')
 
     // add items to remote project collection
-    await caasClient.addItemsToRemoteCollection([remoteMedia, dataset], {
-      language,
-      country,
-      identifier: remoteProjectLocale,
-    })
+    const remoteMediaRes = await caasClient.addItemsToRemoteCollection(
+      [remoteMedia, dataset],
+      {
+        language,
+        country,
+        identifier: remoteProjectLocale,
+      }
+    )
+    // DIAGNOSTIC: temporary, remove after root-causing CAAS-2680 flakiness
+    console.log(
+      `[diag] addItemsToRemoteCollection(remoteMedia,dataset) -> ${remoteMediaRes?.status} ${await remoteMediaRes?.clone().text()}`
+    )
 
     pageRef.page.formData = {
       pt_pictureLocal: pictureLocal,
       pt_pictureRemote: pictureRemote,
     }
 
-    await caasClient.addItemsToCollection([pageRef], projectLocale)
+    const pageRefRes = await caasClient.addItemsToCollection(
+      [pageRef],
+      projectLocale
+    )
+    // DIAGNOSTIC: temporary, remove after root-causing CAAS-2680 flakiness
+    console.log(
+      `[diag] addItemsToCollection(pageRef) -> ${pageRefRes.status} ${await pageRefRes.clone().text()}`
+    )
 
     // Wait for CaaS to propagate all data before tests run
+    let pollAttempt = 0
     await waitUntilPreconditionMet(
       async () => {
+        pollAttempt++
         const res = await caasClient.getItem(pageRef.identifier, 'de_DE')
+        // DIAGNOSTIC: temporary, remove after root-causing CAAS-2680 flakiness
+        console.log(
+          `[diag] poll #${pollAttempt} getItem(pageRef=${pageRef.identifier}) -> ${res.status}`
+        )
         return res.status === 200
       },
       {
