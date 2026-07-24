@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.2.2](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.2.1...v11.2.2) (2026-07-24)
+
+### Bug Fixes
+
+* **CaaSMapper:** handle broken references  ([#252](https://github.com/e-Spirit/javascript-content-api-library/issues/252)) ([ff67683](https://github.com/e-Spirit/javascript-content-api-library/commit/ff6768381f297ebd7823c1e910efa3bb30be76c6))
+
 ## [11.2.1](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.2.0...v11.2.1) (2026-04-28)
 
 ### Bug Fixes
