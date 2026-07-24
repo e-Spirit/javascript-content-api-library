@@ -155,7 +155,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
         return res.status === 200
       },
       {
-        timeoutMs: 10000,
+        timeoutMs: 20000,
         pollIntervalMs: 500,
         errorMessage: 'PageRef not available in CaaS after creation',
       }
