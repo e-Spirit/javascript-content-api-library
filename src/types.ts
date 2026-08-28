@@ -459,6 +459,7 @@ export interface CaaSApi_Page {
   uid: string
   uidType: string
   template: CaaSApi_Template
+  translated: boolean
   formData: CaaSApi_DataEntries
   metaFormData: CaaSApi_DataEntries
   children: CaaSApi_Body[]
@@ -566,6 +567,7 @@ export interface Page {
   metaPageRef?: DataEntries
   remoteProjectId?: string
   route: string
+  translated: boolean
 }
 
 export interface Reference {
