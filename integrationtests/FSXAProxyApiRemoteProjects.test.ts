@@ -11,7 +11,7 @@ import {
   Page,
 } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
-import { FSXARemoteApi } from '../src/modules/FSXARemoteApi'
+import { FSXARemoteApi } from '../src'
 import { CaasTestingClient, closeServer, retryAsync, waitUntilPreconditionMet, TEST_TIMEOUTS } from './utils'
 import { Server } from 'http'
 import { faker } from '@faker-js/faker'
@@ -58,7 +58,12 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
   async function init(
     remoteProjectId: string,
     remoteProjectLocale: string,
-    differentMediaIds: boolean = false
+    differentMediaIds: boolean = false,
+    configuredRemotes:
+      | { media: { id: string; locale: string } }
+      | Record<string, never> = {
+      media: { id: remoteProjectId, locale: remoteProjectLocale },
+    }
   ) {
     let remoteApi = new FSXARemoteApi({
       apikey: INTEGRATION_TEST_API_KEY!,
@@ -68,9 +73,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
         'https://your-navigationservice.e-spirit.cloud/navigation'!,
       projectID: randomId1,
       tenantID: tenantID,
-      remotes: {
-        media: { id: remoteProjectId, locale: remoteProjectLocale },
-      },
+      remotes: configuredRemotes,
       logLevel: LogLevel.INFO,
       enableEventStream: false,
       maxReferenceDepth: 10,
@@ -116,19 +119,30 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
 
     pageRef = createPageRef([createPageRefBody()])
 
+    const referenceUrlOptions = {
+      baseUrl: INTEGRATION_TEST_CAAS!,
+      tenantId: tenantID,
+      locale: remoteProjectLocale,
+      contentMode: FSXAContentMode.PREVIEW,
+    }
+
     const pictureLocal = createMediaPictureReference(mediaId)
     const pictureRemote = createMediaPictureReference(
       remoteMediaId,
-      remoteProjectId
+      remoteProjectId,
+      referenceUrlOptions
     )
 
-    // create dataset
     const datasetId = faker.string.uuid()
     dataset = createDataset(datasetId)
-    const datasetReference = createDatasetReference(datasetId)
     remoteMedia.metaFormData = {
-      md_dataset: datasetReference,
+      md_dataset: createDatasetReference(datasetId),
     }
+    const remoteDatasetReference = createDatasetReference(
+      datasetId,
+      remoteProjectId,
+      referenceUrlOptions
+    )
 
     await caasClient.addItemsToCollection([localMedia], projectLocale)
 
@@ -144,6 +158,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     pageRef.page.formData = {
       pt_pictureLocal: pictureLocal,
       pt_pictureRemote: pictureRemote,
+      pt_datasetRemote: remoteDatasetReference,
     }
 
     await caasClient.addItemsToCollection([pageRef], projectLocale)
@@ -271,6 +286,66 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       expect(res.data.pt_pictureRemote.meta.md_dataset.id).toEqual(
         dataset.identifier
       )
+    }, { maxRetries: 5, delayMs: 1000 })
+  }, TEST_TIMEOUTS.LONG)
+
+  it('should resolve a remote dataset without any remotes configuration', async () => {
+    await init(randomId2, 'en_GB', false, {})
+
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(res.data.pt_datasetRemote.type).toEqual('Dataset')
+      expect(res.data.pt_datasetRemote.id).toEqual(dataset.identifier)
+    }, { maxRetries: 5, delayMs: 1000 })
+  }, TEST_TIMEOUTS.LONG)
+
+  it('should resolve remote media without any remotes configuration', async () => {
+    await init(randomId2, 'en_GB', true, {})
+
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(remoteMedia.description).toEqual(
+        res.data.pt_pictureRemote.description
+      )
+    }, { maxRetries: 5, delayMs: 1000 })
+  }, TEST_TIMEOUTS.LONG)
+
+  it('should prefer the locale from the reference url over the configured one', async () => {
+    // the remote project holds the documents in en_GB, but remotes claims de_DE.
+    // the url wins, so the en_GB documents are resolved.
+    await init(randomId2, 'en_GB', true, {
+      media: { id: randomId2, locale: 'de_DE' },
+    })
+
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(remoteMedia.description).toEqual(
+        res.data.pt_pictureRemote.description
+      )
+      expect(res.data.pt_datasetRemote.id).toEqual(dataset.identifier)
+    }, { maxRetries: 5, delayMs: 1000 })
+  }, TEST_TIMEOUTS.LONG)
+
+  it('Dataset references on a local page should be resolved from the remote project', async () => {
+    await init(randomId2, 'en_GB')
+
+    await retryAsync(async () => {
+      const res: Page = await proxyAPI.fetchElement({
+        id: pageRef.identifier,
+        locale: 'de_DE',
+      })
+      expect(typeof res.data.pt_datasetRemote).toEqual('object')
+      expect(res.data.pt_datasetRemote.type).toEqual('Dataset')
+      expect(res.data.pt_datasetRemote.id).toEqual(dataset.identifier)
     }, { maxRetries: 5, delayMs: 1000 })
   }, TEST_TIMEOUTS.LONG)
 })

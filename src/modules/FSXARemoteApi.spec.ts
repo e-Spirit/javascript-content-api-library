@@ -2,20 +2,14 @@ import { faker } from '@faker-js/faker'
 import { FSXAApiErrors, HttpStatus } from '../enums'
 import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import {
-  ArrayQueryOperatorEnum,
-  ComparisonQueryOperatorEnum,
-} from './QueryBuilder'
+import { ArrayQueryOperatorEnum, ComparisonQueryOperatorEnum } from './QueryBuilder'
 
 import { generateRandomConfig } from '../testutils/generateRandomConfig'
 
 import 'jest-fetch-mock'
-import {
-  createDataEntry,
-  createMediaPicture,
-  createMediaPictureReference,
-} from '../testutils'
+import { createDataEntry, createMediaPicture, createMediaPictureReference } from '../testutils'
 import { getMappedMediaPicture } from '../testutils/getMappedMediaPicture'
+
 require('jest-fetch-mock').enableFetchMocks()
 
 describe('FSXARemoteAPI', () => {
@@ -116,6 +110,66 @@ describe('FSXARemoteAPI', () => {
       )
     })
   })
+  describe('isTrustedReferenceUrl', () => {
+    const buildParsed = (overrides: Record<string, string> = {}) => ({
+      baseUrl: 'https://caas.example.com',
+      tenantId: 'my-tenant',
+      collectionId: 'some-project.preview.content',
+      projectId: 'some-project',
+      contentMode: 'preview',
+      documentId: 'some-doc',
+      locale: 'en_GB',
+      ...overrides,
+    })
+
+    const createApiWith = (caasURL: string, tenantID: string) =>
+      new FSXARemoteApi({
+        ...generateRandomConfig(),
+        caasURL,
+        tenantID,
+      })
+
+    it('should trust a url with the configured base url and tenant', () => {
+      const api = createApiWith('https://caas.example.com', 'my-tenant')
+      expect(api.isTrustedReferenceUrl(buildParsed())).toBe(true)
+    })
+
+    it('should trust a url whose collection and locale differ', () => {
+      const api = createApiWith('https://caas.example.com', 'my-tenant')
+      expect(
+        api.isTrustedReferenceUrl(
+          buildParsed({
+            collectionId: 'other-project.release.content',
+            projectId: 'other-project',
+            contentMode: 'release',
+            locale: 'de_DE',
+          })
+        )
+      ).toBe(true)
+    })
+
+    it('should ignore a trailing slash and a path on the configured base url', () => {
+      const api = createApiWith('https://caas.example.com/', 'my-tenant')
+      expect(api.isTrustedReferenceUrl(buildParsed())).toBe(true)
+    })
+
+    it('should not trust a different host', () => {
+      const api = createApiWith('https://caas.example.com', 'my-tenant')
+      expect(
+        api.isTrustedReferenceUrl(
+          buildParsed({ baseUrl: 'https://evil.example.com' })
+        )
+      ).toBe(false)
+    })
+
+    it('should not trust a different tenant', () => {
+      const api = createApiWith('https://caas.example.com', 'my-tenant')
+      expect(
+        api.isTrustedReferenceUrl(buildParsed({ tenantId: 'other-tenant' }))
+      ).toBe(false)
+    })
+  })
+
   describe('buildCaaSUrl', () => {
     it('should return the correct caas url', () => {
       const config = generateRandomConfig()
@@ -304,16 +358,15 @@ describe('FSXARemoteAPI', () => {
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${pagesizeQuery}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
-    it('should throw an error for an invalid remote project', () => {
+    it('should build a url for a project that is not configured as a remote, and warn', () => {
       const config = generateRandomConfig()
       const remoteApi = new FSXARemoteApi(config)
+      const warn = jest.spyOn((remoteApi as any)._logger, 'warn')
 
-      try {
-        remoteApi.buildCaaSUrl({ remoteProject: 'unknown project' })
-      } catch (error: any) {
-        expect(error.message).toBe(FSXAApiErrors.UNKNOWN_REMOTE)
-        expect(error.statusCode).toBe(HttpStatus.NOT_FOUND)
-      }
+      const url = remoteApi.buildCaaSUrl({ remoteProject: 'unconfigured' })
+
+      expect(url).toContain(`/unconfigured.${config.contentMode}.content`)
+      expect(warn).toHaveBeenCalled()
     })
     it('should return the correct caas url when special chars are used in id, locale, page or pagesize', () => {
       const specialChars = "*_'();:@&=+$,?%#[]_*'();:@&=+$,?%#[]"
@@ -786,6 +839,22 @@ describe('FSXARemoteAPI', () => {
         items,
       })
     })
+    it('should not throw when fetching from a project that is not configured as a remote', async () => {
+      const unconfigured = generateRandomConfig()
+      unconfigured.remotes = {} as any
+      const remoteApi = new FSXARemoteApi(unconfigured)
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ _embedded: { 'rh:doc': [] } })
+      )
+
+      await expect(
+        remoteApi.fetchByFilter({
+          filters: [],
+          locale: 'en_GB',
+          remoteProject: 'unconfigured-project',
+        })
+      ).resolves.toBeDefined()
+    })
     it('should return items when fetching remote items', async () => {
       const mainMedia = createMediaPicture(
         undefined,
@@ -807,9 +876,11 @@ describe('FSXARemoteAPI', () => {
         .mockResponseOnce(JSON.stringify(firstResponse))
         .mockResponseOnce(JSON.stringify(secondResponse))
 
+      // the caller states the locale a remote project is read in; the locale
+      // configured in 'remotes' is no longer consulted
       const actualRequest = await remoteApi.fetchByFilter({
         filters,
-        locale: 'de_DE',
+        locale: config.remotes.remote.locale,
         remoteProject: config.remotes.remote.id,
       })
 
@@ -818,13 +889,11 @@ describe('FSXARemoteAPI', () => {
         config.remotes.remote.locale,
         config.remotes.remote.id
       )
-      const mappedReferencedMedia = getMappedMediaPicture(
+      mappedMainMedia.meta.fsRef = getMappedMediaPicture(
         referencedMedia,
         config.remotes.remote.locale,
         config.remotes.remote.id
       )
-
-      mappedMainMedia.meta.fsRef = mappedReferencedMedia
 
       expect(actualRequest).toBeDefined()
       expect(actualRequest).toStrictEqual({

@@ -1,6 +1,5 @@
 import { FSXAContentMode, ImageMapAreaType } from './enums'
 import {
-  FSXAProxyApi,
   FSXARemoteApi,
   LogLevel,
   MapResponse,
@@ -12,7 +11,7 @@ import {
   ComparisonQueryOperatorEnum,
   EvaluationQueryOperatorEnum,
   LogicalQueryOperatorEnum,
-} from './modules/QueryBuilder'
+} from './modules'
 import XMLParser from './modules/XMLParser'
 
 export interface MasterLocale {
@@ -196,21 +195,21 @@ export interface CaaSApi_CMSImageMap {
   }
 }
 
+export interface CaaSApi_DatasetReference {
+  fsType: 'DatasetReference'
+  target: {
+    fsType: 'Dataset'
+    schema: string
+    entityType: string
+    identifier: string
+  }
+  url?: string
+}
+
 export interface CaaSApi_FSDataset {
   fsType: 'FS_DATASET'
   name: string
-  value:
-    | {
-        fsType: 'DatasetReference'
-        target: {
-          fsType: 'Dataset'
-          schema: string
-          entityType: string
-          identifier: string
-        }
-      }
-    | CaaSApi_DataEntry[]
-    | null
+  value: CaaSApi_DatasetReference | CaaSApi_DataEntry[] | null
 }
 
 export interface CaaSApi_FSButton {
@@ -761,7 +760,7 @@ export type CustomMapper = (
       identifier: string,
       path: NestedPath,
       remoteProjectId?: string
-    ) => string
+    ) => string | null
     buildPreviewId: (identifier: string, remoteProjectLocale?: string) => string
     buildMediaUrl: (url: string, rev?: number) => string
     mapDataEntries: (
@@ -795,6 +794,10 @@ export interface FSXAConfiguration {
   tenantId: string
   contentMode?: 'preview' | 'release'
   customMapper?: CustomMapper
+  /**
+   * @deprecated no longer required for resolving references. See the README
+   * section "Resolving references across projects".
+   */
   remotes?: RemoteProjectConfiguration
   enableEventStream?: boolean
 }
@@ -983,6 +986,14 @@ export interface AppContext<T = unknown> {
   fsxaApi?: FSXAApi
 }
 
+/**
+ * @deprecated since references carry the project and locale of their target in
+ * their CaaS document url, this configuration is no longer required to resolve
+ * them. It still applies to the explicit `remoteProject` parameter of
+ * `fetchElement` and to references that carry no usable url. It will be
+ * removed in a future major release. See the README section
+ * "Resolving references across projects".
+ */
 export type RemoteProjectConfiguration = {
   [name: string]: {
     id: string
@@ -1027,6 +1038,10 @@ export type FSXARemoteApiConfig = {
   tenantID: string
   projectID: string
   contentMode: FSXAContentMode
+  /**
+   * @deprecated no longer required for resolving references. See the README
+   * section "Resolving references across projects".
+   */
   remotes?: RemoteProjectConfiguration
   logLevel?: LogLevel
   maxReferenceDepth?: number

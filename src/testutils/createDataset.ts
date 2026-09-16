@@ -1,6 +1,10 @@
 import { faker } from '@faker-js/faker'
 import { CaaSApi_Dataset, CaaSApi_FSDataset } from '../types'
 import { createDataEntry } from './createDataEntry'
+import {
+  createReferenceUrl,
+  ReferenceUrlOptions,
+} from './createReferenceUrl'
 
 export const createDataset = (id?: string): CaaSApi_Dataset => {
   const base = createDataEntry(id)
@@ -30,7 +34,11 @@ export const createDataset = (id?: string): CaaSApi_Dataset => {
   }
 }
 
-export const createDatasetReference = (id?: string): CaaSApi_FSDataset => {
+export const createDatasetReference = (
+  id?: string,
+  remoteProjectId?: string,
+  urlOptions: Omit<ReferenceUrlOptions, 'projectId' | 'documentId'> = {}
+): CaaSApi_FSDataset => {
   const base = createDataEntry(id)
   return {
     name: faker.lorem.word(),
@@ -42,6 +50,15 @@ export const createDatasetReference = (id?: string): CaaSApi_FSDataset => {
         identifier: base.identifier,
         entityType: `${base.uid}-schema`,
       },
+      ...(remoteProjectId
+        ? {
+            url: createReferenceUrl({
+              ...urlOptions,
+              projectId: remoteProjectId,
+              documentId: base.identifier,
+            }),
+          }
+        : {}),
     },
     fsType: 'FS_DATASET',
   }
