@@ -30,6 +30,7 @@ import {
   RichTextElement,
   FetchByFilterParams,
   Permission,
+  RemoteProjectConfiguration,
 } from '../types'
 import { createNumberEntry } from '../testutils'
 import { createPageRef } from '../testutils'
@@ -43,10 +44,7 @@ import {
 } from '../testutils'
 import { createProjectProperties } from '../testutils'
 import { createGCAPage } from '../testutils'
-import {
-  createDataset,
-  createDatasetReference,
-} from '../testutils'
+import { createDataset, createDatasetReference } from '../testutils'
 import { createMediaPicture } from '../testutils'
 import { createMediaFile } from '../testutils'
 import { createImageMap } from '../testutils'
@@ -66,9 +64,16 @@ jest.mock('./FSXARemoteApi')
 describe('CaaSMapper', () => {
   const createPath = () => [faker.lorem.word(), faker.lorem.word()]
   const createLogger = () => new LoggerChalked(LogLevel.NONE, 'Querybuilder')
-  const createApi = () => {
+  const createApi = (
+    remotes: RemoteProjectConfiguration = {},
+    projectID = 'local-project'
+  ) => {
     const api = jest.mocked<FSXARemoteApi>(new (FSXARemoteApi as any)())
-    api.isTrustedReferenceUrl = jest.fn().mockReturnValue(true)
+    Object.defineProperty(api, 'projectID', { value: projectID })
+    Object.defineProperty(api, 'remotes', { value: remotes })
+    Object.defineProperty(api, 'getRemoteConfigById', {
+      value: (id: string) => Object.values(remotes).find((e) => e.id === id),
+    })
     return api
   }
   const createMapper = () =>
@@ -147,9 +152,8 @@ describe('CaaSMapper', () => {
       ])
     })
 
-    it('should not require the project to be configured as a remote', () => {
+    it('should register into any project it is given, without consulting the configuration', () => {
       const api = createApi()
-      api.remotes = {}
       const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
       const refId = faker.lorem.word()
 
@@ -212,164 +216,196 @@ describe('CaaSMapper', () => {
     })
   })
 
-  describe('deriveReferenceTarget', () => {
-    const createTrustingApi = (projectID = 'local-project') => {
-      const api = createApi()
-      Object.defineProperty(api, 'projectID', { value: projectID })
-      return api
-    }
-
-    it('should take project and locale from the url', () => {
-      const mapper = new CaaSMapper(
-        createTrustingApi(),
-        'de_DE',
-        {},
-        createLogger()
-      )
+  describe('resolveReferenceTarget', () => {
+    it('should use the configured locale, not the one in the url', () => {
+      const api = createApi({
+        media: { id: 'remote-project', locale: 'de_DE' },
+      })
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
       const url = createReferenceUrl({
         projectId: 'remote-project',
         locale: 'en_GB',
       })
-      expect(mapper.deriveReferenceTarget(url)).toEqual({
-        kind: 'target',
+
+      expect(mapper.resolveReferenceTarget(url, undefined, undefined)).toEqual({
+        kind: 'remote',
+        projectId: 'remote-project',
+        locale: 'de_DE',
+      })
+    })
+
+    it('should use the source locale when useSourceLocale is configured', () => {
+      const api = createApi({
+        data: { id: 'remote-project', useSourceLocale: true },
+      })
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+      const url = createReferenceUrl({
+        projectId: 'remote-project',
+        locale: 'de_DE',
+      })
+
+      expect(mapper.resolveReferenceTarget(url, undefined, undefined)).toEqual({
+        kind: 'remote',
         projectId: 'remote-project',
         locale: 'en_GB',
       })
     })
 
-    it('should treat the own project in the own locale as local', () => {
-      const mapper = new CaaSMapper(
-        createTrustingApi(),
-        'de_DE',
-        {},
-        createLogger()
-      )
+    it('should keep the source locale when the mapped item locale changed', () => {
+      const api = createApi({
+        data: { id: 'remote-project', useSourceLocale: true },
+      })
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+      mapper.locale = 'fr_FR'
+      const url = createReferenceUrl({ projectId: 'remote-project' })
+
+      expect(mapper.resolveReferenceTarget(url, undefined, undefined)).toEqual({
+        kind: 'remote',
+        projectId: 'remote-project',
+        locale: 'en_GB',
+      })
+    })
+
+    it('should treat the own project as local whatever the url locale says', () => {
+      const mapper = new CaaSMapper(createApi(), 'en_GB', {}, createLogger())
       const url = createReferenceUrl({
         projectId: 'local-project',
         locale: 'de_DE',
       })
-      expect(mapper.deriveReferenceTarget(url)).toEqual({ kind: 'target' })
+
+      expect(mapper.resolveReferenceTarget(url, undefined, undefined)).toEqual({
+        kind: 'local',
+      })
     })
 
-    it('should treat the own project in another locale as a target', () => {
-      const mapper = new CaaSMapper(
-        createTrustingApi(),
-        'de_DE',
-        {},
-        createLogger()
-      )
-      const url = createReferenceUrl({
+    it('should honour a remotes entry configured for the own project', () => {
+      const api = createApi({ self: { id: 'local-project', locale: 'de_DE' } })
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+      const url = createReferenceUrl({ projectId: 'local-project' })
+
+      expect(mapper.resolveReferenceTarget(url, undefined, undefined)).toEqual({
+        kind: 'remote',
         projectId: 'local-project',
-        locale: 'en_GB',
-      })
-      expect(mapper.deriveReferenceTarget(url)).toEqual({
-        kind: 'target',
-        projectId: 'local-project',
-        locale: 'en_GB',
+        locale: 'de_DE',
       })
     })
 
-    it('should ignore the remotes configuration entirely', () => {
-      const api = createTrustingApi()
-      api.remotes = { data: { id: 'remote-project', locale: 'fr_FR' } }
-      const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
-      const url = createReferenceUrl({
-        projectId: 'remote-project',
-        locale: 'en_GB',
+    it('should report a project that is not configured', () => {
+      const api = createApi({
+        media: { id: 'configured-project', locale: 'de_DE' },
       })
-      expect(mapper.deriveReferenceTarget(url)).toEqual({
-        kind: 'target',
-        projectId: 'remote-project',
-        locale: 'en_GB',
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+      const url = createReferenceUrl({ projectId: 'other-project' })
+
+      expect(mapper.resolveReferenceTarget(url, undefined, undefined)).toEqual({
+        kind: 'unresolvable',
+        projectId: 'other-project',
       })
     })
 
-    it('should inherit when there is no usable url', () => {
-      const mapper = new CaaSMapper(
-        createTrustingApi(),
-        'de_DE',
-        {},
-        createLogger()
-      )
-      expect(mapper.deriveReferenceTarget(undefined)).toEqual({
-        kind: 'inherit',
+    it('should fall back to the remoteProject field and then to the surrounding document', () => {
+      const api = createApi({
+        media: { id: 'field-project', locale: 'de_DE' },
+        data: { id: 'inherited-project', locale: 'fr_FR' },
       })
-      expect(mapper.deriveReferenceTarget('some-media-url')).toEqual({
-        kind: 'inherit',
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+
+      expect(
+        mapper.resolveReferenceTarget(
+          undefined,
+          'field-project',
+          'inherited-project'
+        )
+      ).toEqual({
+        kind: 'remote',
+        projectId: 'field-project',
+        locale: 'de_DE',
       })
-    })
-
-    it('should report an untrusted url', () => {
-      const api = createTrustingApi()
-      api.isTrustedReferenceUrl = jest.fn().mockReturnValue(false)
-      const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
-      const url = createReferenceUrl({ projectId: 'remote-project' })
-      expect(mapper.deriveReferenceTarget(url)).toEqual({ kind: 'untrusted' })
-    })
-  })
-
-  describe('registerReferenceFromUrl', () => {
-    const createTrustingApi = () => {
-      const api = createApi()
-      Object.defineProperty(api, 'projectID', { value: 'local-project' })
-      return api
-    }
-
-    it('should register with the project and locale from the url', () => {
-      const mapper = new CaaSMapper(
-        createTrustingApi(),
-        'de_DE',
-        {},
-        createLogger()
-      )
-      const url = createReferenceUrl({
-        projectId: 'remote-project',
-        locale: 'en_GB',
-      })
-
-      mapper.registerReferenceFromUrl('some-uuid', ['a'], url, {})
-
-      expect(mapper._remoteReferences['remote-project#en_GB']).toEqual({
-        projectId: 'remote-project',
-        locale: 'en_GB',
-        references: { 'remote-project#some-uuid.en_GB': [['a']] },
-      })
-    })
-
-    it('should fall back to the inherited target without a usable url', () => {
-      const mapper = new CaaSMapper(
-        createTrustingApi(),
-        'de_DE',
-        {},
-        createLogger()
-      )
-
-      mapper.registerReferenceFromUrl('some-uuid', ['a'], undefined, {
+      expect(
+        mapper.resolveReferenceTarget(undefined, undefined, 'inherited-project')
+      ).toEqual({
+        kind: 'remote',
         projectId: 'inherited-project',
         locale: 'fr_FR',
       })
+      expect(
+        mapper.resolveReferenceTarget('not-a-caas-url', undefined, undefined)
+      ).toEqual({ kind: 'local' })
+    })
+  })
 
-      expect(mapper._remoteReferences['inherited-project#fr_FR']).toBeDefined()
+  describe('registerReference', () => {
+    it('should register a remote reference under the configured locale', () => {
+      const api = createApi({
+        media: { id: 'remote-project', locale: 'de_DE' },
+      })
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+      const url = createReferenceUrl({
+        projectId: 'remote-project',
+        locale: 'en_GB',
+      })
+
+      const placeholder = mapper.registerReference('some-uuid', ['a'], url, {})
+
+      expect(mapper._remoteReferences).toEqual({
+        'remote-project#de_DE': {
+          projectId: 'remote-project',
+          locale: 'de_DE',
+          references: { 'remote-project#some-uuid.de_DE': [['a']] },
+        },
+      })
+      expect(placeholder).toEqual(
+        '[REFERENCED-REMOTE-ITEM-remote-project#some-uuid.de_DE]'
+      )
     })
 
-    it('should drop an untrusted reference and log why', () => {
-      const api = createTrustingApi()
-      api.isTrustedReferenceUrl = jest.fn().mockReturnValue(false)
-      const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
+    it('should register a reference into the own project locally', () => {
+      const mapper = new CaaSMapper(createApi(), 'en_GB', {}, createLogger())
+      const url = createReferenceUrl({
+        projectId: 'local-project',
+        locale: 'de_DE',
+      })
+
+      const placeholder = mapper.registerReference('some-uuid', ['a'], url, {})
+
+      expect(mapper._remoteReferences).toEqual({})
+      expect(mapper._referencedItems).toEqual({ 'some-uuid.en_GB': [['a']] })
+      expect(placeholder).toEqual('[REFERENCED-ITEM-some-uuid.en_GB]')
+    })
+
+    it('should leave a reference into an unconfigured project unresolved and name the project', () => {
+      const api = createApi({
+        media: { id: 'configured-project', locale: 'de_DE' },
+      })
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
       const warn = jest.spyOn(mapper.logger, 'warn')
-      const url = createReferenceUrl({ projectId: 'remote-project' })
+      const url = createReferenceUrl({ projectId: 'other-project' })
 
-      const result = mapper.registerReferenceFromUrl(
-        'some-uuid',
-        ['a'],
-        url,
-        {}
+      const placeholder = mapper.registerReference('some-uuid', ['a'], url, {})
+
+      expect(placeholder).toEqual(
+        '[REFERENCED-REMOTE-ITEM-other-project#some-uuid.en_GB]'
       )
-
-      expect(result).toBeNull()
       expect(mapper._remoteReferences).toEqual({})
       expect(mapper._referencedItems).toEqual({})
-      expect(warn).toHaveBeenCalled()
+      expect(warn.mock.calls[0][0]).toContain('other-project')
+      expect(warn.mock.calls[0][0]).toContain('remotes')
+    })
+
+    it('should keep the image map resolution in an unresolved placeholder', () => {
+      const mapper = new CaaSMapper(createApi(), 'en_GB', {}, createLogger())
+
+      const placeholder = mapper.registerReference(
+        'some-uuid',
+        ['a'],
+        createReferenceUrl({ projectId: 'other-project' }),
+        {},
+        { imageMapResolution: 'RES' }
+      )
+
+      expect(placeholder).toEqual(
+        'IMAGEMAP___RES___other-project#some-uuid.en_GB'
+      )
     })
   })
 
@@ -796,9 +832,8 @@ describe('CaaSMapper', () => {
       })
       it('should register the background medium against the project named in its url', async () => {
         const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
         const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
-        mapper.registerReferenceFromUrl = jest.fn().mockReturnValue('[REF]')
+        mapper.registerReference = jest.fn().mockReturnValue('[REF]')
         const imageMap = createImageMap()
         imageMap.value.media.url = createReferenceUrl({
           projectId: 'remote-project',
@@ -808,12 +843,15 @@ describe('CaaSMapper', () => {
 
         await mapper.mapImageMap(imageMap, path)
 
-        expect(mapper.registerReferenceFromUrl).toHaveBeenCalledWith(
+        expect(mapper.registerReference).toHaveBeenCalledWith(
           imageMap.value.media.identifier,
           [...path, 'media'],
           imageMap.value.media.url,
-          { projectId: undefined, locale: undefined },
-          imageMap.value.resolution.uid
+          { projectId: undefined },
+          {
+            referencedProject: imageMap.value.media.remoteProject,
+            imageMapResolution: imageMap.value.resolution.uid,
+          }
         )
       })
       it('should work with nested formData image maps', async () => {
@@ -900,77 +938,92 @@ describe('CaaSMapper', () => {
       })
       it('should register a local DatasetReference without a remote project', async () => {
         const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
         const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
-        mapper.registerReferenceFromUrl = jest.fn().mockReturnValue('[REF]')
+        mapper.registerReference = jest.fn().mockReturnValue('[REF]')
         const entry = createDatasetReference()
         const path = createPath()
 
         await expect(mapper.mapDataEntry(entry, path)).resolves.toBe('[REF]')
-        expect(mapper.registerReferenceFromUrl).toHaveBeenCalledWith(
+        expect(mapper.registerReference).toHaveBeenCalledWith(
           (entry.value as any).target.identifier,
           path,
           undefined,
-          { projectId: undefined, locale: undefined }
+          { projectId: undefined }
         )
       })
 
-      it('should register a DatasetReference against the project named in its url', async () => {
-        const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
-        const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
-        const entry = createDatasetReference(undefined, 'remote-project')
+      it('should register a DatasetReference in the locale configured for its project', async () => {
+        const api = createApi({
+          data: { id: 'remote-project', locale: 'de_DE' },
+        })
+        const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+        const entry = createDatasetReference(undefined, 'remote-project', {
+          locale: 'fr_FR',
+        })
         const identifier = (entry.value as any).target.identifier
         const path = createPath()
 
-        await mapper.mapDataEntry(entry, path)
-
-        expect(mapper._remoteReferences['remote-project#en_GB']).toEqual({
-          projectId: 'remote-project',
-          locale: 'en_GB',
-          references: { [`remote-project#${identifier}.en_GB`]: [path] },
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(
+          `[REFERENCED-REMOTE-ITEM-remote-project#${identifier}.de_DE]`
+        )
+        expect(mapper._remoteReferences).toEqual({
+          'remote-project#de_DE': {
+            projectId: 'remote-project',
+            locale: 'de_DE',
+            references: { [`remote-project#${identifier}.de_DE`]: [path] },
+          },
         })
       })
 
-      it('should prefer the url over the inherited project and locale', async () => {
-        const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
-        const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
+      it('should prefer the project from the url over the surrounding document', async () => {
+        const api = createApi({
+          data: { id: 'remote-project', locale: 'de_DE' },
+          inherited: { id: 'inherited-project', locale: 'fr_FR' },
+        })
+        const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
         const entry = createDatasetReference(undefined, 'remote-project')
-        const path = createPath()
 
-        await mapper.mapDataEntry(entry, path, 'fr_FR', 'inherited-project')
+        await mapper.mapDataEntry(
+          entry,
+          createPath(),
+          'fr_FR',
+          'inherited-project'
+        )
 
-        expect(
-          Object.keys(mapper._remoteReferences)
-        ).toEqual(['remote-project#en_GB'])
+        expect(Object.keys(mapper._remoteReferences)).toEqual([
+          'remote-project#de_DE',
+        ])
       })
 
-      it('should fall back to the inherited project and locale when the url is unusable', async () => {
-        const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
-        const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
+      it('should fall back to the surrounding document when the url is unusable', async () => {
+        const api = createApi({
+          inherited: { id: 'inherited-project', locale: 'fr_FR' },
+        })
+        const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
         const entry = createDatasetReference()
         ;(entry.value as any).url = 'not-a-caas-url'
-        const path = createPath()
 
-        await mapper.mapDataEntry(entry, path, 'fr_FR', 'inherited-project')
+        await mapper.mapDataEntry(
+          entry,
+          createPath(),
+          'fr_FR',
+          'inherited-project'
+        )
 
-        expect(
-          Object.keys(mapper._remoteReferences)
-        ).toEqual(['inherited-project#fr_FR'])
+        expect(Object.keys(mapper._remoteReferences)).toEqual([
+          'inherited-project#fr_FR',
+        ])
       })
 
-      it('should drop a DatasetReference whose url is not trusted', async () => {
+      it('should leave a DatasetReference into an unconfigured project unresolved', async () => {
         const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
-        api.isTrustedReferenceUrl = jest.fn().mockReturnValue(false)
-        const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
-        const entry = createDatasetReference(undefined, 'remote-project')
+        const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+        const entry = createDatasetReference(undefined, 'other-project')
+        const identifier = (entry.value as any).target.identifier
 
-        await expect(
-          mapper.mapDataEntry(entry, createPath())
-        ).resolves.toBeNull()
+        await expect(mapper.mapDataEntry(entry, createPath())).resolves.toEqual(
+          `[REFERENCED-REMOTE-ITEM-other-project#${identifier}.en_GB]`
+        )
         expect(mapper._remoteReferences).toEqual({})
         expect(mapper._referencedItems).toEqual({})
       })
@@ -1217,52 +1270,74 @@ describe('CaaSMapper', () => {
       })
       it('should register a local Media reference without a remote project', async () => {
         const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
         const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
-        mapper.registerReferenceFromUrl = jest.fn().mockReturnValue('[REF]')
+        mapper.registerReference = jest.fn().mockReturnValue('[REF]')
         const path = createPath()
         const entry = createMediaPictureReference()
 
         await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual('[REF]')
-        expect(mapper.registerReferenceFromUrl).toHaveBeenCalledWith(
+        expect(mapper.registerReference).toHaveBeenCalledWith(
           entry.value!.identifier,
           path,
           entry.value!.url,
-          { projectId: undefined, locale: undefined }
+          { projectId: undefined },
+          { referencedProject: undefined }
         )
       })
 
-      it('should register a Media reference against the project and locale named in its url', async () => {
-        const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
-        const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
+      it('should register a Media reference in the locale configured for the project named in its url', async () => {
+        const api = createApi({
+          media: { id: 'remote-project', locale: 'de_DE' },
+        })
+        const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
         const path = createPath()
-        const entry = createMediaPictureReference(undefined, 'remote-project')
+        const entry = createMediaPictureReference(undefined, 'remote-project', {
+          locale: 'fr_FR',
+        })
 
         await mapper.mapDataEntry(entry, path)
 
-        expect(mapper._remoteReferences['remote-project#en_GB']).toEqual({
+        expect(mapper._remoteReferences['remote-project#de_DE']).toEqual({
           projectId: 'remote-project',
-          locale: 'en_GB',
+          locale: 'de_DE',
           references: {
-            [`remote-project#${entry.value!.identifier}.en_GB`]: [path],
+            [`remote-project#${entry.value!.identifier}.de_DE`]: [path],
           },
         })
       })
 
-      it('should ignore a remoteProject field on a Media reference', async () => {
-        const api = createApi()
-        Object.defineProperty(api, 'projectID', { value: 'local-project' })
-        const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
+      it('should use the remoteProject field when the reference has no CaaS document url', async () => {
+        const api = createApi({
+          media: { id: 'field-project', locale: 'de_DE' },
+        })
+        const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
         const path = createPath()
         const entry = createMediaPictureReference()
-        entry.value!.remoteProject = 'legacy-project'
+        entry.value!.remoteProject = 'field-project'
 
-        await mapper.mapDataEntry(entry, path)
+        await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual(
+          `[REFERENCED-REMOTE-ITEM-field-project#${
+            entry.value!.identifier
+          }.de_DE]`
+        )
+        expect(Object.keys(mapper._remoteReferences)).toEqual([
+          'field-project#de_DE',
+        ])
+      })
 
-        expect(mapper._remoteReferences).toEqual({})
-        expect(Object.keys(mapper._referencedItems)).toEqual([
-          `${entry.value!.identifier}.de_DE`,
+      it('should prefer the project from the url over the remoteProject field', async () => {
+        const api = createApi({
+          url: { id: 'url-project', locale: 'de_DE' },
+          field: { id: 'field-project', locale: 'fr_FR' },
+        })
+        const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+        const entry = createMediaPictureReference(undefined, 'url-project')
+        entry.value!.remoteProject = 'field-project'
+
+        await mapper.mapDataEntry(entry, createPath())
+
+        expect(Object.keys(mapper._remoteReferences)).toEqual([
+          'url-project#de_DE',
         ])
       })
       it('should return null and not register a reference on Media entries with a null identifier (broken reference)', async () => {
@@ -1369,7 +1444,7 @@ describe('CaaSMapper', () => {
         const api = createApi()
         const mapper = new CaaSMapper(api, 'de', {}, createLogger())
         const path = createPath()
-        mapper.registerReferenceFromUrl = jest
+        mapper.registerReference = jest
           .fn()
           .mockImplementation(($) => `REF-${$}`)
         const entry: CaaSApi_FSIndex = {
@@ -1392,12 +1467,12 @@ describe('CaaSMapper', () => {
         await expect(mapper.mapDataEntry(entry, path)).resolves.toEqual([
           'REF-target-id',
         ])
-        expect(mapper.registerReferenceFromUrl).toHaveBeenCalledTimes(1)
-        expect(mapper.registerReferenceFromUrl).toHaveBeenCalledWith(
+        expect(mapper.registerReference).toHaveBeenCalledTimes(1)
+        expect(mapper.registerReference).toHaveBeenCalledWith(
           'target-id',
           [...path, 0],
           undefined,
-          { projectId: undefined, locale: undefined }
+          { projectId: undefined }
         )
       })
       it('should register each record against the project named in its own url', async () => {
@@ -1405,7 +1480,7 @@ describe('CaaSMapper', () => {
         Object.defineProperty(api, 'projectID', { value: 'local-project' })
         const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
         const path = createPath()
-        mapper.registerReferenceFromUrl = jest
+        mapper.registerReference = jest
           .fn()
           .mockImplementation(($) => `REF-${$}`)
         const entry: CaaSApi_FSIndex = {
@@ -1438,19 +1513,19 @@ describe('CaaSMapper', () => {
           'REF-remote-target-id',
           'REF-local-target-id',
         ])
-        expect(mapper.registerReferenceFromUrl).toHaveBeenNthCalledWith(
+        expect(mapper.registerReference).toHaveBeenNthCalledWith(
           1,
           'remote-target-id',
           [...path, 0],
           (entry.value as any)[0].value.url,
-          { projectId: undefined, locale: undefined }
+          { projectId: undefined }
         )
-        expect(mapper.registerReferenceFromUrl).toHaveBeenNthCalledWith(
+        expect(mapper.registerReference).toHaveBeenNthCalledWith(
           2,
           'local-target-id',
           [...path, 1],
           (entry.value as any)[1].value.url,
-          { projectId: undefined, locale: undefined }
+          { projectId: undefined }
         )
       })
       it("should return entries which are not of dapType 'DatasetDataAccessPlugin' as-is", async () => {
@@ -2186,8 +2261,9 @@ describe('CaaSMapper', () => {
       expect(api.fetchByFilter).toHaveBeenCalled()
     })
     it('should resolve remote media references', async () => {
-      const api = createApi()
-      api.remotes = { 'remote-id1': { id: 'remote-id1', locale: 'de' } }
+      const api = createApi({
+        'remote-id1': { id: 'remote-id1', locale: 'de' },
+      })
       const mapper = new CaaSMapper(api, 'de', {}, createLogger())
       const mediaPictures = await Promise.all([
         mapper.mapMediaPicture(createMediaPicture('id1')),
@@ -2200,14 +2276,9 @@ describe('CaaSMapper', () => {
         .fn()
         .mockImplementation(
           async ({
-            filters,
-            locale,
-            page,
-            pagesize,
-            additionalParams,
-            remoteProject,
-            fetchOptions,
-          }: FetchByFilterParams) => {
+                   locale,
+                   remoteProject,
+                 }: FetchByFilterParams) => {
             // Unfortunately jest doesn't support mocking a func call with specific parmaters
             if (remoteProject !== 'remote-id1') return createFetchResponse([])
             if (locale !== 'de') return createFetchResponse([])
@@ -2252,13 +2323,16 @@ describe('CaaSMapper', () => {
   })
 
   describe('reference batching across projects', () => {
-    it('should create one batch per project and request a shared reference only once', async () => {
-      const api = createApi()
-      Object.defineProperty(api, 'projectID', { value: 'local-project' })
+    it('should create one batch per configured project and skip unconfigured ones', async () => {
+      const api = createApi({
+        media: { id: 'media-project', locale: 'de_DE' },
+        datasets: { id: 'dataset-project', locale: 'en_US' },
+        source: { id: 'index-project-a', useSourceLocale: true },
+      })
       api.fetchByFilter = jest
         .fn()
         .mockImplementation(async () => createFetchResponse([]))
-      const mapper = new CaaSMapper(api, 'de_DE', {}, createLogger())
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
 
       const localDatasetId = 'local-dataset-id'
       const remoteDatasetId = 'remote-dataset-id'
@@ -2303,7 +2377,8 @@ describe('CaaSMapper', () => {
         pt_datasetLocal: createDatasetReference(localDatasetId),
         pt_datasetRemote: createDatasetReference(
           remoteDatasetId,
-          'dataset-project'
+          'dataset-project',
+          { locale: 'fr_FR' }
         ),
         pt_image: sharedImage(),
       }
@@ -2320,41 +2395,30 @@ describe('CaaSMapper', () => {
         })
       )
 
-      // one batch for the local project plus one per referenced remote project
-      expect(batches).toHaveLength(5)
+      expect(batches).toHaveLength(4)
       expect(batches).toEqual(
         expect.arrayContaining([
-          {
-            remoteProject: undefined,
-            locale: 'de_DE',
-            ids: [localDatasetId],
-          },
+          { remoteProject: undefined, locale: 'en_GB', ids: [localDatasetId] },
           {
             remoteProject: 'dataset-project',
-            locale: 'en_GB',
+            locale: 'en_US',
             ids: [remoteDatasetId],
           },
-          {
-            remoteProject: 'media-project',
-            locale: 'en_GB',
-            ids: [mediaId],
-          },
+          { remoteProject: 'media-project', locale: 'de_DE', ids: [mediaId] },
           {
             remoteProject: 'index-project-a',
             locale: 'en_GB',
             ids: [indexDatasetIdA],
           },
-          {
-            remoteProject: 'index-project-b',
-            locale: 'en_GB',
-            ids: [indexDatasetIdB],
-          },
         ])
       )
+      expect(
+        batches.some(({ remoteProject }) => remoteProject === 'index-project-b')
+      ).toBe(false)
 
       // the medium is registered at two paths but requested exactly once
-      const mediaGroup = mapper._remoteReferences['media-project#en_GB']
-      const mediaPaths = mediaGroup.references[`media-project#${mediaId}.en_GB`]
+      const mediaGroup = mapper._remoteReferences['media-project#de_DE']
+      const mediaPaths = mediaGroup.references[`media-project#${mediaId}.de_DE`]
       expect(mediaPaths).toHaveLength(2)
       expect(mediaPaths).toEqual(
         expect.arrayContaining([
@@ -2362,10 +2426,22 @@ describe('CaaSMapper', () => {
           ['children', 0, 'children', 0, 'data', 'st_image'],
         ])
       )
-      expect(
-        batches.filter((batch) => batch.remoteProject === 'media-project')
-      ).toHaveLength(1)
+    })
+
+    it('should keep the local group on the requested locale when mapped items change it', async () => {
+      const api = createApi()
+      api.fetchByFilter = jest
+        .fn()
+        .mockImplementation(async () => createFetchResponse([]))
+      const mapper = new CaaSMapper(api, 'en_GB', {}, createLogger())
+
+      mapper.registerReference('local-id', ['a'], undefined, {})
+      mapper.locale = 'fr_FR'
+      await mapper.resolveAllReferences()
+
+      const [params] = (api.fetchByFilter as jest.Mock).mock.calls[0]
+      expect(params.locale).toEqual('en_GB')
+      expect(mapper._referencedItems).toEqual({ 'local-id.en_GB': [['a']] })
     })
   })
-
 })

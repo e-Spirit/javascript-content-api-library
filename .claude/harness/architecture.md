@@ -28,7 +28,7 @@ Because it is a library, its exported surface is the product. See "Public API su
 
 Both implement the same `FSXAApi` interface (`src/types.ts`) and expose `fetchElement`, `fetchByFilter`, `fetchNavigation`, `fetchProjectProperties`:
 
-- **`FSXARemoteApi`** (`src/modules/FSXARemoteApi.ts`) — talks to CaaS and the Navigation Service directly. It holds the API key, so it only ever runs server-side. It owns URL construction (`buildCaaSUrl`, `buildNavigationServiceUrl`), the trust check for reference URLs (`isTrustedReferenceUrl`), and the config: `apikey`, `caasURL`, `navigationServiceURL`, `tenantID`, `projectID`, `contentMode`, `remotes` (deprecated), `maxReferenceDepth`, `customMapper`, `navigationItemFilter`, `caasItemFilter`.
+- **`FSXARemoteApi`** (`src/modules/FSXARemoteApi.ts`) — talks to CaaS and the Navigation Service directly. It holds the API key, so it only ever runs server-side. It owns URL construction (`buildCaaSUrl`, `buildNavigationServiceUrl`), the remote project lookup (`getRemoteConfigById`, `verifyRemoteProjectExists`), and the config: `apikey`, `caasURL`, `navigationServiceURL`, `tenantID`, `projectID`, `contentMode`, `remotes`, `maxReferenceDepth`, `customMapper`, `navigationItemFilter`, `caasItemFilter`.
 - **`FSXAProxyApi`** (`src/modules/FSXAProxyApi.ts`) — same interface, but forwards each call as an HTTP POST to a backend that hosts an `FSXARemoteApi`. It carries no secrets and is the client-side implementation.
 
 `FSXAApiSingleton` holds one process-wide instance. The proxy backend is built with `src/integrations/express.ts` (`getExpressRouter`) or, for other frameworks, `useEndpointIntegrationWrapper` in `src/integrations/endpointIntegrationWrapper.ts`. The routes and body shapes both sides agree on live in `src/routes.ts`.
@@ -41,17 +41,17 @@ Both implement the same `FSXAApi` interface (`src/types.ts`) and expose `fetchEl
 
 Reference resolution is **two-phase**, and understanding this is a prerequisite for editing the mapper:
 
-1. **Register.** While mapping, a reference is not fetched. `registerReferenceFromUrl` / `registerReferencedItem` record the referenced id together with the path in the output object where the resolved item must later be placed, and mapping returns a placeholder string. One id can be registered at many paths.
+1. **Register.** While mapping, a reference is not fetched. `registerReference` / `registerReferencedItem` record the referenced id together with the path in the output object where the resolved item must later be placed, and mapping returns a placeholder string. One id can be registered at many paths.
 2. **Resolve.** `resolveAllReferences` walks the registered groups and calls `resolveReferencesForGroup` per group, which chunks ids (`REFERENCED_ITEMS_CHUNK_SIZE = 30`) and fetches them via `fetchByFilter`.
 3. **Denormalize.** `MappingUtils.denormalizeResolvedReferences` writes each fetched item into every path registered for it — or, in normalized mode, the caller receives `items` plus a flat `referenceMap` instead.
 
 Grouping is keyed by **(projectId, locale)** — `buildGroupKey` — because one CaaS filter query carries exactly one locale and one collection. Each disjoint pair therefore costs at least one request. `unifyId` namespaces ids as `projectId#uuid.locale` so items from different projects cannot collide in the cache or the reference map.
 
-Which project and locale a reference belongs to is derived from the reference's own CaaS document URL by `deriveReferenceTarget`, using `src/modules/ReferenceUrlParser.ts`. `FSXARemoteApi.isTrustedReferenceUrl` gates this: a reference URL is only followed when its origin and tenant match the configured `caasURL`/`tenantID`. The `remotes` configuration is deprecated and no longer consulted for resolution — see the README section "Resolving references across projects".
+`resolveReferenceTarget` decides where a reference is resolved. The **project** comes from the reference's own CaaS document URL (`src/modules/ReferenceUrlParser.ts`), falling back to the `remoteProject` field of a media reference and then to the surrounding document. The **locale** comes from the `remotes` entry configured for that project, or — with `useSourceLocale` — from `CaaSMapper.sourceLocale`, the locale the request was made in. The configuration is consulted before the own project id, so an entry naming the own project reads its references in another locale. A project that is neither the own one nor in `remotes` is not fetched: `registerUnresolvableReference` logs a warning and leaves the placeholder in the payload. See the README section "Resolving references across projects".
 
 Two guards bound the recursion: `maxReferenceDepth` (default `DEFAULT_MAX_REFERENCE_DEPTH = 2`) and `_processedItems`, which prevents re-fetching an id already handled.
 
-**Sharp edge:** `setLocaleFromCaasItem` mutates `this.locale` per mapped item, and `unifyId` falls back to `this.locale`. For a reference that carries no URL, the resulting group key therefore depends on which item was mapped last. Do not rely on `this.locale` being stable across a `mapFilterResponse` call.
+**Sharp edge:** `setLocaleFromCaasItem` mutates `this.locale` per mapped item, so it is only safe for `buildPreviewId`. Everything that keys or groups references uses the immutable `sourceLocale` instead. Do not reintroduce `this.locale` into `unifyId` or `resolveReferencesForGroup`.
 
 ## Request flow (remote mode)
 

@@ -70,61 +70,58 @@ const config = {
 }
 ```
 
-Media and datasets from other projects work out of the box — see [Resolving references across projects](#resolving-references-across-projects) for how the target project and its locale are determined. You need a CAAS API key with read permissions for every project you reference.
-
-> **_Deprecated_**<br>
-> The `remotes` parameter used to be required for this and is no longer needed. It still exists for the explicit `remoteProject` parameter and will be removed in a future major release. It expects an object with a unique name as key and an object as value, holding an `id` with the project id and a `locale` with the locale abbreviation:
+Media and datasets from other projects are resolved through the `remotes` configuration. It maps a free name to the project's `id` and to the locale that project's content is read in. You need a CAAS API key with read permissions for every project you reference — the same key is sent with every request, there is no per-project key.
 
 ```typescript
 const config = {
   ...
-  remotes: { media: { id: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', locale: 'en_GB' } },
+  remotes: {
+    media1: { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', locale: 'en_GB' },
+    media2: { id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', locale: 'de_DE' },
+    datasets1: { id: 'cccccccc-cccc-cccc-cccc-cccccccccccc', locale: 'en_US' },
+    datasets2: { id: 'dddddddd-dddd-dddd-dddd-dddddddddddd', useSourceLocale: true }
+  },
   ...
 }
 ```
 
 ### Resolving references across projects
 
-Every reference in the CaaS carries the URL of the document it points at. That URL is structured as
+A reference in the CaaS carries the URL of the document it points at. The Content API reads the **project** from that URL and looks it up in your `remotes` configuration. The **locale** never comes from the URL.
 
-```
-<base URL> / <tenant ID> / <collection ID> / <document ID>
-```
+That split is deliberate. An editor cannot express which language of a referenced dataset or medium should be delivered, and the URLs FirstSpirit writes are not consistent about it: a project maintained only in `de_DE` is referenced from an `en_GB` page with URLs that sometimes say `de_DE` and sometimes `en_GB`. Which language a remote project is read in is therefore an application decision, and the application states it in `remotes`.
 
-where the collection ID is `<project UUID>.<content mode>.content` and the document ID is `<document UUID>.<locale>`. For example:
+#### Which locale a reference resolves in
 
-```
-https://caas.example.com/my-tenant/3bb083df-446f-4cdd-af7e-514886c4dc20.preview.content/21f3109e-63b2-47e8-9728-5680c2decb02.en_US
-```
+| Target project | Locale used |
+|---|---|
+| Your own project, not configured in `remotes` | the locale of the requested element |
+| A configured remote | the `locale` configured for it |
+| A configured remote with `useSourceLocale: true` | the locale of the requested element |
+| Anything else | the reference is not resolved |
 
-The Content API reads **both the target project and its locale** from that URL. This applies to media references (`FS_REFERENCE`, `CMS_INPUT_IMAGEMAP`) and to dataset references (`FS_DATASET`, and `FS_INDEX` with the dataset data access plugin).
+`useSourceLocale: true` makes the configured `locale` irrelevant and may be used without one. It fits a remote project maintained in the same languages as your own: a page requested in `en_GB` then resolves its references into that project in `en_GB` too.
 
-#### Resolution order
+"The locale of the requested element" is the locale you passed to `fetchElement` or `fetchByFilter`. It stays the same for the whole resolution tree, including references found inside an already resolved remote dataset.
 
-1. If the reference carries a usable CaaS document URL, its project and locale are used. The `remotes` configuration is **not** consulted in this case.
-2. If it does not, the project and locale of the surrounding document apply — a reference inside a remote document is read from that same remote project.
+This applies to media references (`FS_REFERENCE`, `CMS_INPUT_IMAGEMAP`) and to dataset references (`FS_DATASET`, and `FS_INDEX` with the dataset data access plugin) alike.
 
-#### Trust
+#### Projects that are not configured
 
-A reference URL is only used when its base URL and tenant ID match the `caasURL` and `tenantID` of your API configuration. The collection and the locale may differ freely, which is what makes cross-project references work. A reference whose URL points at a different CaaS instance or a different tenant is dropped and logged as a warning, so content data can never direct a request at a foreign host.
+A reference into a project that is neither your own nor configured is **not fetched**. Its placeholder stays in the payload and the Content API logs a warning naming the project id. Add the project to `remotes` to resolve those references.
 
-The content mode always comes from your configuration and never from the URL, so a release delivery cannot serve preview content.
+A reference whose URL points at a different CaaS instance or tenant takes the same path: its project is not configured, so it is not fetched. Requests are always built from your `caasURL`, `tenantID` and content mode — a URL in your content can never direct a request at another host, and a release delivery cannot serve preview content.
 
-Your API key needs read access to every project you reference.
+#### Configuration rules
+
+- Every entry needs an `id`. Two entries must not share one.
+- Every entry needs either a `locale` or `useSourceLocale: true`.
+- An entry may name your own project. References into it then resolve in that configured locale instead of the locale of the requested element.
+- The name (the key) is what you pass as the `remoteProject` parameter of `fetchElement` and as the `remote` query parameter of the endpoint integration.
 
 #### Batching
 
-References are fetched per distinct project/locale pair. A CaaS query can only carry one locale, so each pair costs at least one request, and more when a pair holds more references than fit into a single batch. Referencing a different locale of your own project is therefore supported and behaves like any other cross-project reference.
-
-#### `remotes` is deprecated
-
-Because references carry their own project and locale, the `remotes` configuration is no longer needed to resolve them. It is deprecated and will be removed in a future major release. It keeps working for now:
-
-- the explicit `remoteProject` parameter of `fetchElement` and the `remote` query parameter of the endpoint integration still resolve through it
-- references that carry no usable URL still fall back to the surrounding document
-
-> **_Behaviour change_**<br>
-> If you configured a `locale` in `remotes` that differs from the locale in the reference URLs of your content, the Content API now resolves the locale from the URL and ignores the configured one. The same applies to `fetchByFilter`: the locale you pass is used as-is for a remote project instead of being replaced by the configured one. Check your `remotes` locales against the content you reference before upgrading.
+References are fetched per distinct project/locale pair: one CaaS request per pair, and more only when a pair holds more references than fit into a single batch of 30. Since a project resolves in exactly one locale, that is at most one batch per referenced project per 30 references.
 
 Datasets selected by a `Content2Section` are queried rather than referenced and expose no identifier to resolve, so cross-project datasets are not supported there.
 

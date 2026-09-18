@@ -29,18 +29,18 @@ If a behavior change is unavoidable even while the old API keeps compiling (a va
 
 ## Content data must never decide where a request goes
 
-**Rule:** No value read from a CaaS document may determine the host, tenant, or content mode of an outbound request that carries the API key. Host and tenant come from configuration; a URL found in content may only be *checked against* configuration, never used in its place.
+**Rule:** No value read from a CaaS document may determine the host, tenant, content mode, or locale of an outbound request that carries the API key. A URL found in content may supply one thing: the id of the project a reference points at — and only after that id has been found in the `remotes` configuration.
 
-`FSXARemoteApi` holds the CaaS API key and runs server-side. A URL inside a document is editor-controlled data. If it selected the target host, a crafted document would make the server send its API key to an attacker's endpoint — a textbook SSRF with credential leak. `isTrustedReferenceUrl` exists exactly for this: origin and tenant must equal the configured `caasURL` origin and `tenantID`; only collection (project) and locale may differ.
+`FSXARemoteApi` holds the CaaS API key and runs server-side. A URL inside a document is editor-controlled data. If it selected the target host, a crafted document would make the server send its API key to an attacker's endpoint — a textbook SSRF with credential leak. The `remotes` allowlist is what prevents that: every request url is assembled from `caasURL`, `tenantID`, the configured project id and the configured content mode. The locale is excluded for a different reason — an editor cannot control which locale a reference url carries, so following it produces requests for documents that do not exist.
 
-**Smell:** `fetch(reference.url, { headers: { Authorization: apikey } })`, or passing a parsed `baseUrl` into `buildCaaSUrl` instead of comparing it to the configured one.
+**Smell:** `fetch(reference.url, { headers: { Authorization: apikey } })`, passing a parsed `baseUrl` into `buildCaaSUrl`, or reading `ParsedReferenceUrl.locale` to decide what to fetch.
 
 ### Checklist when adding anything URL-derived
 
 1. Parse with `ReferenceUrlParser` — do not hand-roll string splitting on CaaS URLs, and do not duplicate the layout knowledge it owns.
-2. Run the parse result through `isTrustedReferenceUrl` before acting on it.
-3. Use only the project id and locale from it. Content mode stays configuration-derived.
-4. On an untrusted or unparsable URL, log a warning and skip the reference. Do not fall back to "try it anyway".
+2. Take the project id from it and nothing else. Locale comes from `remotes`, content mode and host from the api configuration.
+3. Look the project id up with `getRemoteConfigById` before anything is fetched.
+4. On a project that is not configured, or an unparsable URL, log a warning and leave the reference unresolved — its placeholder stays in the payload. Do not fall back to "try it anyway".
 
 ## Mirror the change across parallel siblings
 
@@ -70,8 +70,8 @@ The two-phase design is what makes reference loading batched: one request per (p
 
 ### Checklist when adding a new referencing component type
 
-1. Add the branch to `mapDataEntry` and register via `registerReferenceFromUrl` with the reference's own CaaS URL, so project and locale are derived, not guessed.
-2. Return the value `registerReferencedItem` gives you — and handle `null` (untrusted or unresolvable), which means the reference is dropped.
+1. Add the branch to `mapDataEntry` and register via `registerReference` with the reference's own CaaS URL, so the project is derived, not guessed.
+2. Return the placeholder `registerReference` gives you. It always returns one, including for a project that is not configured — that reference is deliberately left unresolved rather than dropped.
 3. Confirm the new id ends up in the right group: assert on the group key and on the resulting `fetchByFilter` calls, not just on the mapped output.
 4. Add the raw shape to `src/types.ts` and a factory to `src/testutils/`.
 

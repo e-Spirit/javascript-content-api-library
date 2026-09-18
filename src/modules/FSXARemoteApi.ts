@@ -1,7 +1,6 @@
 import { stringify } from 'qs'
 import { CaaSMapper, Logger, ReferencedItemsInfo, ResolvedReferencesInfo } from '.'
 import { FetchResponse, ProjectProperties } from '..'
-import { ParsedReferenceUrl } from './ReferenceUrlParser'
 import {
   CaasApi_Item,
   CaasItemFilter,
@@ -18,6 +17,7 @@ import {
   NormalizedProjectPropertyResponse,
   QueryBuilderQuery,
   RemoteProjectConfiguration,
+  RemoteProjectConfigurationEntry,
   SortParams
 } from '../types'
 import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
@@ -124,7 +124,7 @@ export class FSXARemoteApi implements FSXAApi {
       customMapper: this._customMapper,
       navigationItemFilter: this._navigationItemFilter,
       caasItemFilter: this._caasItemFilter,
-      includeRevisionInMediaUrls: this._includeRevisionInMediaUrls
+      includeRevisionInMediaUrls: this._includeRevisionInMediaUrls,
     })
   }
 
@@ -138,32 +138,21 @@ export class FSXARemoteApi implements FSXAApi {
     }
   }
 
-  private hasConfiguredRemote(remoteProjectId: string) {
-    return Object.values(this._remotes).some(
-      (config) => config.id === remoteProjectId
-    )
+  private verifyRemoteProjectExists(remoteProjectId: string) {
+    if (!this.getRemoteConfigById(remoteProjectId)) {
+      throw new HttpError(FSXAApiErrors.UNKNOWN_REMOTE, HttpStatus.NOT_FOUND)
+    }
   }
 
   /**
-   * Decides whether a url found on a reference may be used to resolve that
-   * reference. A reference may point at any collection and any locale, but only within
-   * the CaaS instance and tenant this api is configured for.
-   *
-   * @param parsed a reference url that was successfully parsed
-   * @returns true if the url's origin and tenant match the configuration
+   * @param projectId the uuid of a project, as it appears on a reference url
+   * @returns the entry configured for that project, or undefined
    */
-  public isTrustedReferenceUrl(parsed: ParsedReferenceUrl): boolean {
-    let configuredOrigin: string
-    try {
-      configuredOrigin = new URL(this.caasURL).origin
-    } catch {
-      this._logger.warn(
-        `[isTrustedReferenceUrl] configured caasURL '${this.caasURL}' is not a valid url, no reference url can be trusted.`
-      )
-      return false
-    }
-    return (
-      parsed.baseUrl === configuredOrigin && parsed.tenantId === this.tenantID
+  public getRemoteConfigById(
+    projectId: string
+  ): RemoteProjectConfigurationEntry | undefined {
+    return Object.values(this._remotes).find(
+      (config) => config.id === projectId
     )
   }
 
@@ -191,11 +180,7 @@ export class FSXARemoteApi implements FSXAApi {
   }: buildCaaSUrlParams = {}) {
     let projectId = this.projectID
     if (remoteProjectId) {
-      if (!this.hasConfiguredRemote(remoteProjectId)) {
-        this._logger.warn(
-          `[buildCaaSUrl] project '${remoteProjectId}' is not part of the 'remotes' configuration. Building the url anyway - since references carry their own project, 'remotes' is no longer required for this. The CaaS rejects the request if the api key has no access.`
-        )
-      }
+      this.verifyRemoteProjectExists(remoteProjectId)
       projectId = remoteProjectId
     }
 
@@ -464,17 +449,15 @@ export class FSXARemoteApi implements FSXAApi {
     filterContext,
     normalized = false,
   }: FetchElementParams): Promise<any> {
-    if (remoteProject && !this.remotes[remoteProject]) {
+    const remoteConfig = remoteProject ? this.remotes[remoteProject] : undefined
+    if (remoteProject && !remoteConfig) {
       throw new HttpError(FSXAApiErrors.UNKNOWN_REMOTE, HttpStatus.NOT_FOUND)
     }
-    locale =
-      remoteProject && this.remotes
-        ? this.remotes[remoteProject]?.locale
-        : locale
+    if (remoteConfig?.locale && !remoteConfig.useSourceLocale) {
+      locale = remoteConfig.locale
+    }
 
-    const remoteProjectId = remoteProject
-      ? this.remotes[remoteProject]?.id
-      : undefined
+    const remoteProjectId = remoteConfig?.id
 
     const {
       items,
@@ -571,6 +554,14 @@ export class FSXARemoteApi implements FSXAApi {
       page = 1
     }
 
+    const remoteConfig = remoteProjectId
+      ? this.getRemoteConfigById(remoteProjectId)
+      : undefined
+    const effectiveLocale =
+      remoteConfig?.locale && !remoteConfig.useSourceLocale
+        ? remoteConfig.locale
+        : locale
+
     const url = this.buildCaaSUrl({
       filters,
       additionalParams: {
@@ -578,7 +569,7 @@ export class FSXARemoteApi implements FSXAApi {
         rep: 'hal',
       },
       remoteProject: remoteProjectId,
-      locale,
+      locale: effectiveLocale,
       page,
       pagesize,
       sort,
@@ -628,11 +619,9 @@ export class FSXARemoteApi implements FSXAApi {
       }
     }
 
-    // the caller decides which locale a remote project is read in - for
-    // references that is the locale from the reference url
-    const remoteProjectLocale = remoteProjectId ? locale : undefined
+    const remoteProjectLocale = remoteProjectId ? effectiveLocale : undefined
 
-    let mapperLocale = locale
+    let mapperLocale = effectiveLocale
 
     if (!mapperLocale && unmappedItems[0].locale) {
       mapperLocale =
@@ -646,7 +635,7 @@ export class FSXARemoteApi implements FSXAApi {
         mapperLocale,
         {
           customMapper: this._customMapper,
-          maxReferenceDepth: this._maxReferenceDepth
+          maxReferenceDepth: this._maxReferenceDepth,
         },
         new Logger(this._logLevel, 'CaaSMapper')
       )
@@ -1000,8 +989,6 @@ export class FSXARemoteApi implements FSXAApi {
   }
 
   /**
-   * @deprecated no longer required for resolving references. See the README
-   * section "Resolving references across projects".
    * @returns the configured remote project configuration
    */
   public get remotes(): RemoteProjectConfiguration {
@@ -1021,20 +1008,20 @@ export class FSXARemoteApi implements FSXAApi {
     }
    ```
    */
-  /**
-   * @deprecated no longer required for resolving references. See the README
-   * section "Resolving references across projects".
-   */
   public set remotes(value: RemoteProjectConfiguration) {
-    const keys = Object.keys(value)
-    keys.forEach((key) => {
-      const { id, locale } = value[key]
+    const seenIds = new Set<string>()
+    Object.keys(value).forEach((key) => {
+      const { id, locale, useSourceLocale } = value[key]
       if (!id) {
         throw new Error(FSXAApiErrors.MISSING_REMOTE_ID)
       }
-      if (!locale) {
+      if (!locale && !useSourceLocale) {
         throw new Error(FSXAApiErrors.MISSING_REMOTE_LOCALE)
       }
+      if (seenIds.has(id)) {
+        throw new Error(FSXAApiErrors.DUPLICATE_REMOTE_ID)
+      }
+      seenIds.add(id)
     })
 
     this._remotes = value

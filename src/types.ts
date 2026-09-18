@@ -164,17 +164,16 @@ export interface CaaSApi_ImageMapAreaPoly extends CaaSApi_ImageMapArea {
   points: Point2D[]
 }
 
-export interface CaaSApi_ImageMapMedia
-  extends Pick<
-    CaaSApi_Media,
-    | 'fsType'
-    | 'name'
-    | 'displayName'
-    | 'identifier'
-    | 'uid'
-    | 'uidType'
-    | 'mediaType'
-  > {
+export interface CaaSApi_ImageMapMedia extends Pick<
+  CaaSApi_Media,
+  | 'fsType'
+  | 'name'
+  | 'displayName'
+  | 'identifier'
+  | 'uid'
+  | 'uidType'
+  | 'mediaType'
+> {
   url: string
   pictureMetaData: Omit<CaaSApi_Media_Picture_Resolution_MetaData, 'url'>
 }
@@ -794,10 +793,6 @@ export interface FSXAConfiguration {
   tenantId: string
   contentMode?: 'preview' | 'release'
   customMapper?: CustomMapper
-  /**
-   * @deprecated no longer required for resolving references. See the README
-   * section "Resolving references across projects".
-   */
   remotes?: RemoteProjectConfiguration
   enableEventStream?: boolean
 }
@@ -987,22 +982,28 @@ export interface AppContext<T = unknown> {
 }
 
 /**
- * @deprecated since references carry the project and locale of their target in
- * their CaaS document url, this configuration is no longer required to resolve
- * them. It still applies to the explicit `remoteProject` parameter of
- * `fetchElement` and to references that carry no usable url. It will be
- * removed in a future major release. See the README section
- * "Resolving references across projects".
+ * Configures which other FirstSpirit projects this application resolves
+ * references into, and in which locale. The key is a free name, used by the
+ * `remoteProject` parameter of `fetchElement`; `id` is the project's uuid.
+ * See the README section "Resolving references across projects".
  */
 export type RemoteProjectConfiguration = {
-  [name: string]: {
-    id: string
-    locale: string
-  }
+  [name: string]: RemoteProjectConfigurationEntry
 }
 
-export type RemoteProjectConfigurationEntry =
-  RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
+export type RemoteProjectConfigurationEntry = {
+  id: string
+  /**
+   * every reference into this project is resolved in this locale. Required
+   * unless `useSourceLocale` is set.
+   */
+  locale?: string
+  /**
+   * resolve references into this project in the locale of the requested
+   * element, ignoring `locale`. Defaults to false.
+   */
+  useSourceLocale?: boolean
+}
 
 export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType
@@ -1038,10 +1039,6 @@ export type FSXARemoteApiConfig = {
   tenantID: string
   projectID: string
   contentMode: FSXAContentMode
-  /**
-   * @deprecated no longer required for resolving references. See the README
-   * section "Resolving references across projects".
-   */
   remotes?: RemoteProjectConfiguration
   logLevel?: LogLevel
   maxReferenceDepth?: number

@@ -9,6 +9,7 @@ import {
   FSXAProxyApi,
   LogLevel,
   Page,
+  RemoteProjectConfiguration,
 } from '../src'
 import { default as expressIntegration } from '../src/integrations/express'
 import { FSXARemoteApi } from '../src'
@@ -59,11 +60,10 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     remoteProjectId: string,
     remoteProjectLocale: string,
     differentMediaIds: boolean = false,
-    configuredRemotes:
-      | { media: { id: string; locale: string } }
-      | Record<string, never> = {
+    configuredRemotes: RemoteProjectConfiguration = {
       media: { id: remoteProjectId, locale: remoteProjectLocale },
-    }
+    },
+    referenceUrlLocale: string = remoteProjectLocale
   ) {
     let remoteApi = new FSXARemoteApi({
       apikey: INTEGRATION_TEST_API_KEY!,
@@ -98,14 +98,16 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     await prepareDataInCaas(
       remoteProjectId,
       remoteProjectLocale,
-      differentMediaIds
+      differentMediaIds,
+      referenceUrlLocale
     )
   }
 
   async function prepareDataInCaas(
     remoteProjectId: string,
     remoteProjectLocale: string,
-    differentMediaIds: boolean
+    differentMediaIds: boolean,
+    referenceUrlLocale: string
   ) {
     const mediaId = faker.string.uuid()
 
@@ -122,7 +124,7 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     const referenceUrlOptions = {
       baseUrl: INTEGRATION_TEST_CAAS!,
       tenantId: tenantID,
-      locale: remoteProjectLocale,
+      locale: referenceUrlLocale,
       contentMode: FSXAContentMode.PREVIEW,
     }
 
@@ -289,21 +291,26 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
     }, { maxRetries: 5, delayMs: 1000 })
   }, TEST_TIMEOUTS.LONG)
 
-  it('should resolve a remote dataset without any remotes configuration', async () => {
-    await init(randomId2, 'en_GB', false, {})
+  it('should leave references into an unconfigured project unresolved and still deliver the page', async () => {
+    await init(randomId2, 'en_GB', true, {})
 
     await retryAsync(async () => {
       const res: Page = await proxyAPI.fetchElement({
         id: pageRef.identifier,
         locale: 'de_DE',
       })
-      expect(res.data.pt_datasetRemote.type).toEqual('Dataset')
-      expect(res.data.pt_datasetRemote.id).toEqual(dataset.identifier)
+      expect(typeof res.data.pt_datasetRemote).toEqual('string')
+      expect(res.data.pt_datasetRemote).toContain('REFERENCED-REMOTE-ITEM')
+      expect(typeof res.data.pt_pictureRemote).toEqual('string')
+      expect(res.data.pt_pictureRemote).toContain('REFERENCED-REMOTE-ITEM')
+      expect(localMedia.description).toEqual(res.data.pt_pictureLocal.description)
     }, { maxRetries: 5, delayMs: 1000 })
   }, TEST_TIMEOUTS.LONG)
 
-  it('should resolve remote media without any remotes configuration', async () => {
-    await init(randomId2, 'en_GB', true, {})
+  it('should use the configured locale even when the reference url names another one', async () => {
+    // the remote project holds its documents in de_DE while the reference urls
+    // claim en_GB - the configuration wins
+    await init(randomId2, 'de_DE', true, { media: { id: randomId2, locale: 'de_DE' } }, 'en_GB')
 
     await retryAsync(async () => {
       const res: Page = await proxyAPI.fetchElement({
@@ -313,15 +320,12 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       expect(remoteMedia.description).toEqual(
         res.data.pt_pictureRemote.description
       )
+      expect(res.data.pt_datasetRemote.id).toEqual(dataset.identifier)
     }, { maxRetries: 5, delayMs: 1000 })
   }, TEST_TIMEOUTS.LONG)
 
-  it('should prefer the locale from the reference url over the configured one', async () => {
-    // the remote project holds the documents in en_GB, but remotes claims de_DE.
-    // the url wins, so the en_GB documents are resolved.
-    await init(randomId2, 'en_GB', true, {
-      media: { id: randomId2, locale: 'de_DE' },
-    })
+  it('should resolve a useSourceLocale project in the locale of the requested element', async () => {
+    await init(randomId2, 'de_DE', true, { media: { id: randomId2, useSourceLocale: true } }, 'en_GB')
 
     await retryAsync(async () => {
       const res: Page = await proxyAPI.fetchElement({

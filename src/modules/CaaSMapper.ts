@@ -78,15 +78,13 @@ export interface ReferencedItemsInfo {
 }
 
 /**
- * Outcome of looking at the url on a reference.
- * - `inherit`: no usable url, use the project/locale of the surrounding document
- * - `target`: trusted url; a missing projectId means the own project in the own locale
- * - `untrusted`: the url points outside the configured CaaS instance or tenant
+ * Where a reference is resolved, once its project is known and the
+ * configuration has supplied the locale.
  */
-export type ReferenceTargetResolution =
-  | { kind: 'inherit' }
-  | { kind: 'target'; projectId?: string; locale?: string }
-  | { kind: 'untrusted' }
+export type ReferenceTarget =
+  | { kind: 'local' }
+  | { kind: 'remote'; projectId: string; locale?: string }
+  | { kind: 'unresolvable'; projectId: string }
 
 export interface RemoteReferenceGroup {
   projectId: string
@@ -108,6 +106,12 @@ export class CaaSMapper {
   public logger: Logger
   api: FSXARemoteApi
   locale: string | undefined
+  /**
+   * The locale of the requested element. Constant for the whole resolution
+   * tree, unlike `locale`, which `setLocaleFromCaasItem` moves to the locale of
+   * each mapped item.
+   */
+  readonly sourceLocale: string | undefined
   xmlParser: XMLParser
   customMapper?: CustomMapper
   referenceDepth: number
@@ -135,6 +139,7 @@ export class CaaSMapper {
   ) {
     this.api = api
     this.locale = locale
+    this.sourceLocale = locale
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
     this.logger = logger
@@ -182,72 +187,104 @@ export class CaaSMapper {
         : id
     } else {
       // id has form {id}. transform to {id}.{locale}
-      idWithLocale = `${id}.${remoteLocale || this.locale}`
+      idWithLocale = `${id}.${remoteLocale || this.sourceLocale}`
     }
     return remoteProjectId ? `${remoteProjectId}#${idWithLocale}` : idWithLocale
   }
 
   /**
-   * Reads the project and the locale of a referenced item from the CaaS
-   * document url that FirstSpirit writes onto the reference. The url is
-   * authoritative: where it yields a target, the remotes configuration is not
-   * consulted at all.
+   * Decides where a reference is resolved. The url identifies the project; the
+   * locale always comes from the `remotes` configuration or from the requested
+   * element, never from the url, because an editor cannot control which locale
+   * a reference url carries. A project that is not configured is not fetched,
+   * which is what keeps content data from steering a request.
    *
    * @param url the url on the reference, may be missing or arbitrary
+   * @param referencedProject the `remoteProject` field, on media references
+   * @param inheritedProjectId the project of the surrounding document
    */
-  deriveReferenceTarget(url?: string): ReferenceTargetResolution {
+  resolveReferenceTarget(
+    url: string | undefined,
+    referencedProject: string | undefined,
+    inheritedProjectId: string | undefined
+  ): ReferenceTarget {
     const parsed = parseReferenceUrl(url)
-    if (!parsed) return { kind: 'inherit' }
-    if (!this.api.isTrustedReferenceUrl(parsed)) return { kind: 'untrusted' }
+    const projectId =
+      parsed?.projectId ?? referencedProject ?? inheritedProjectId
 
-    const isOwnProject = parsed.projectId === this.api.projectID
-    const isOwnLocale = !parsed.locale || parsed.locale === this.locale
-    if (isOwnProject && isOwnLocale) return { kind: 'target' }
+    if (!projectId) {
+      return { kind: 'local' }
+    }
+
+    // an entry may name the own project, to read its references in another
+    // locale than the requested one
+    const remote = this.api.getRemoteConfigById(projectId)
+    if (!remote) {
+      return projectId === this.api.projectID
+        ? { kind: 'local' }
+        : { kind: 'unresolvable', projectId }
+    }
 
     return {
-      kind: 'target',
-      projectId: parsed.projectId,
-      locale: parsed.locale,
+      kind: 'remote',
+      projectId,
+      locale: remote.useSourceLocale ? this.sourceLocale : remote.locale,
     }
   }
 
   /**
-   * Registers a reference, taking its project and locale from the reference url
-   * where possible and from the surrounding document otherwise. Untrusted urls
-   * are dropped so that content data can never point a request at a foreign
-   * CaaS instance or tenant.
+   * Registers a reference so that `resolveAllReferences` can fetch it in a
+   * batch. A reference into a project that is not configured is not registered;
+   * its placeholder stays in the payload.
    *
-   * @returns placeholder string, or null if the reference was dropped
+   * @returns the placeholder string to put into the mapped output
    */
-  registerReferenceFromUrl(
+  registerReference(
     identifier: string,
     path: NestedPath,
     url: string | undefined,
-    inherited: { projectId?: string; locale?: string },
-    imageMapResolution?: string
-  ): string | null {
-    const resolution = this.deriveReferenceTarget(url)
+    inherited: { projectId?: string },
+    options: { referencedProject?: string; imageMapResolution?: string } = {}
+  ): string {
+    const target = this.resolveReferenceTarget(
+      url,
+      options.referencedProject,
+      inherited.projectId
+    )
 
-    if (resolution.kind === 'untrusted') {
-      this.logger.warn(
-        `Reference with identifier '${identifier}' carries a url outside the configured CaaS instance or tenant. The reference is dropped.`,
-        { path: path.join('/') }
+    if (target.kind === 'unresolvable') {
+      return this.registerUnresolvableReference(
+        identifier,
+        path,
+        target.projectId,
+        options.imageMapResolution
       )
-      return null
     }
-
-    const target =
-      resolution.kind === 'target'
-        ? { projectId: resolution.projectId, locale: resolution.locale }
-        : inherited
 
     return this.registerReferencedItem(
       identifier,
       path,
-      target.projectId,
-      imageMapResolution,
-      target.locale
+      target.kind === 'remote' ? target.projectId : undefined,
+      options.imageMapResolution,
+      target.kind === 'remote' ? target.locale : undefined
     )
+  }
+
+  private registerUnresolvableReference(
+    identifier: string,
+    path: NestedPath,
+    projectId: string,
+    imageMapResolution?: string
+  ): string {
+    this.logger.warn(
+      `Reference with identifier '${identifier}' points at project '${projectId}', which is not part of the 'remotes' configuration. The reference is left unresolved - add the project to 'remotes' to resolve it.`,
+      { path: path.join('/') }
+    )
+
+    const unifiedId = this.unifyId(identifier, projectId, this.sourceLocale)
+    return imageMapResolution
+      ? `IMAGEMAP___${imageMapResolution}___${unifiedId}`
+      : `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
   }
 
   /**
@@ -266,7 +303,7 @@ export class CaaSMapper {
     remoteProjectId?: string,
     imageMapResolution?: string,
     remoteProjectLocale?: string
-  ): string | null {
+  ): string {
     const unifiedId = this.unifyId(
       identifier,
       remoteProjectId,
@@ -447,11 +484,11 @@ export class CaaSMapper {
             )
             return null
           }
-          return this.registerReferenceFromUrl(
+          return this.registerReference(
             entry.value.target.identifier,
             path,
             entry.value.url,
-            { projectId: remoteProjectId, locale: remoteProjectLocale }
+            { projectId: remoteProjectId }
           )
         }
         return null
@@ -504,11 +541,12 @@ export class CaaSMapper {
             )
             return null
           }
-          return this.registerReferenceFromUrl(
+          return this.registerReference(
             entry.value.identifier,
             path,
             entry.value.url,
-            { projectId: remoteProjectId, locale: remoteProjectLocale }
+            { projectId: remoteProjectId },
+            { referencedProject: entry.value.remoteProject }
           )
         } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
           if (!entry.value.identifier) {
@@ -546,11 +584,11 @@ export class CaaSMapper {
                 )
                 return null
               }
-              return this.registerReferenceFromUrl(
+              return this.registerReference(
                 identifier,
                 [...path, index],
                 reference?.url,
-                { projectId: remoteProjectId, locale: remoteProjectLocale }
+                { projectId: remoteProjectId }
               )
             })
             .filter(Boolean)
@@ -592,7 +630,7 @@ export class CaaSMapper {
     await Promise.all(
       richTextElements.map(async (richTextElement, index) => {
         if (richTextElement.type === 'link') {
-          const link = {
+          richTextElement.data = {
             type: 'Link',
             template: richTextElement.data.type as string,
             data: await this.mapDataEntries(
@@ -603,7 +641,6 @@ export class CaaSMapper {
             ),
             meta: {},
           }
-          richTextElement.data = link
         }
         if (Array.isArray(richTextElement.content)) {
           richTextElement.content = await this.mapLinksInRichTextElements(
@@ -909,12 +946,15 @@ export class CaaSMapper {
 
     let image = null
     if (media) {
-      image = this.registerReferenceFromUrl(
+      image = this.registerReference(
         media.identifier,
         [...path, 'media'],
         media.url,
-        { projectId: remoteProjectId, locale: remoteProjectLocale },
-        resolution.uid
+        { projectId: remoteProjectId },
+        {
+          referencedProject: media.remoteProject,
+          imageMapResolution: resolution.uid,
+        }
       )
     }
 
@@ -1225,7 +1265,7 @@ export class CaaSMapper {
     // the group carries the locale its items are fetched in
     const remoteProjectId = group?.projectId
     const remoteProjectLocale = group?.locale
-    const locale = remoteProjectLocale || this.locale
+    const locale = remoteProjectLocale || this.sourceLocale
 
     const referencedIds = Object.keys(referencedItems)
 
@@ -1279,5 +1319,4 @@ export class CaaSMapper {
       )
     }
   }
-
 }

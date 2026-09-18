@@ -13,6 +13,7 @@ export enum FSXAApiErrors {
   NOT_FOUND = 'Resource could not be found',
   MISSING_REMOTE_LOCALE = 'The specified remote project did not include a locale',
   MISSING_REMOTE_ID = 'The specified remote project did not include an id',
+  DUPLICATE_REMOTE_ID = 'Each remote project must be configured with a distinct id. [remotes]',
   INVALID_LOCALE = 'The specified locale is not valid, locale needs to be a string of format "xx_YY"',
 }
 
