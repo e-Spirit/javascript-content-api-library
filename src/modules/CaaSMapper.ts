@@ -856,6 +856,7 @@ export class CaaSMapper {
       id: gcaPage.identifier,
       previewId: this.buildPreviewId(gcaPage.identifier, remoteProjectLocale),
       name: gcaPage.name,
+      displayName: gcaPage.displayName,
       layout: gcaPage.template.uid,
       children: await Promise.all(
         gcaPage.children.map((child, index) =>
