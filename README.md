@@ -123,7 +123,9 @@ Only the project id is taken from a reference URL; its host, tenant and content 
 
 References are fetched per distinct project/locale pair: one CaaS request per pair, and more only when a pair holds more references than fit into a single batch of 30. Since a project resolves in exactly one locale, that is at most one batch per referenced project per 30 references.
 
-Datasets selected by a `Content2Section` are queried rather than referenced and expose no identifier to resolve, so cross-project datasets are not supported there.
+#### Content projections
+
+The Content API does not load the datasets of a `Content2Section`; the mapped section only carries the projection's configuration in `data`. To load them from a remote project, configure it in `remotes` and call `fetchByFilter` with filters built from that configuration and the project's id as `remoteProject`.
 
 The log level can be:
 `0` = Info
