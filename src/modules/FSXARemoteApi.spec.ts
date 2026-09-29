@@ -1,6 +1,12 @@
 import { faker } from '@faker-js/faker'
 import { FSXAApiErrors, HttpStatus } from '../enums'
-import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
+import {
+  CaaSApi_DatasetReference,
+  CaaSApi_FSDataset,
+  FetchResponse,
+  QueryBuilderQuery,
+  SortParams,
+} from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
 import { LoggerChalked } from './LoggerChalked'
 import {
@@ -13,7 +19,10 @@ import { generateRandomConfig } from '../testutils/generateRandomConfig'
 import 'jest-fetch-mock'
 import {
   createDataEntry,
+  createDataset,
+  createDatasetReference,
   createMediaPicture,
+  createReferenceUrl,
   createMediaPictureReference,
 } from '../testutils'
 import { getMappedMediaPicture } from '../testutils/getMappedMediaPicture'
@@ -990,6 +999,110 @@ describe('FSXARemoteAPI', () => {
         totalPages: undefined,
         items: [mappedMainMedia],
       })
+    })
+  })
+  describe('fetchByFilter with an unresolvable reference in a batch', () => {
+    const BATCH_SIZE = 5
+    const referenceTo = (id: string, projectId?: string) => {
+      const reference = createDatasetReference(id, projectId)
+      if (!projectId) {
+        // a local reference carries a url into the own project
+        ;(reference.value as CaaSApi_DatasetReference).url = createReferenceUrl(
+          { projectId: 'own-project', documentId: id }
+        )
+      }
+      return reference
+    }
+    const createGermanDataset = (id: string) => ({
+      ...createDataset(id),
+      _id: `${id}.de_DE`,
+    })
+    const createBatch = (brokenReference: CaaSApi_FSDataset) =>
+      Array.from({ length: BATCH_SIZE }, (_, index) => {
+        const document = createGermanDataset(`document-${index}`)
+        document.formData = {
+          tt_local: referenceTo(`target-${index}`),
+          ...(index === 0 && { tt_broken: brokenReference }),
+        }
+        return document
+      })
+    const createTargets = () =>
+      Array.from({ length: BATCH_SIZE }, (_, index) =>
+        createGermanDataset(`target-${index}`)
+      )
+    const createApi = () =>
+      new FSXARemoteApi({
+        ...generateRandomConfig(),
+        projectID: 'own-project',
+        remotes: {},
+      })
+
+    it('should assemble every document when one points into an unconfigured project', async () => {
+      const api = createApi()
+      fetchMock
+        .mockResponseOnce(
+          JSON.stringify({
+            _embedded: {
+              'rh:doc': createBatch(
+                referenceTo('foreign-id', 'unconfigured-project')
+              ),
+            },
+          })
+        )
+        .mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': createTargets() } })
+        )
+
+      const { items } = await api.fetchByFilter({
+        filters: [],
+        locale: 'de_DE',
+      })
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(items).toHaveLength(BATCH_SIZE)
+      expect(
+        items.map((item: any) => [item.id, item.data.tt_local?.id])
+      ).toEqual(
+        Array.from({ length: BATCH_SIZE }, (_, index) => [
+          `document-${index}`,
+          `target-${index}`,
+        ])
+      )
+      expect((items[0] as any).data.tt_broken).toEqual(
+        '[REFERENCED-REMOTE-ITEM-unconfigured-project#foreign-id.de_DE]'
+      )
+    })
+
+    it('should assemble every document when one references a dataset that does not exist', async () => {
+      const api = createApi()
+      fetchMock
+        .mockResponseOnce(
+          JSON.stringify({
+            _embedded: { 'rh:doc': createBatch(referenceTo('missing-id')) },
+          })
+        )
+        .mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': createTargets() } })
+        )
+
+      const { items } = await api.fetchByFilter({
+        filters: [],
+        locale: 'de_DE',
+      })
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(items).toHaveLength(BATCH_SIZE)
+      expect(
+        items.map((item: any) => [item.id, item.data.tt_local?.id])
+      ).toEqual(
+        Array.from({ length: BATCH_SIZE }, (_, index) => [
+          `document-${index}`,
+          `target-${index}`,
+        ])
+      )
+      expect((items[0] as any).data.tt_broken).toEqual(
+        '[REFERENCED-ITEM-missing-id.de_DE]'
+      )
     })
   })
   describe('fetchNavigation', () => {
