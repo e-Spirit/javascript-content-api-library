@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker'
 import { FSXAApiErrors, HttpStatus } from '../enums'
 import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
+import { LoggerChalked } from './LoggerChalked'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
@@ -74,6 +75,27 @@ describe('FSXARemoteAPI', () => {
       expect(() => {
         new FSXARemoteApi(config)
       }).toThrow(FSXAApiErrors.MISSING_REMOTE_LOCALE)
+    })
+    it('should accept two remotes with the same id and warn about it', () => {
+      const warn = jest.spyOn(LoggerChalked.prototype, 'warn')
+
+      remoteApi = new FSXARemoteApi({
+        ...config,
+        remotes: {
+          mediaEn: { id: 'media-project', locale: 'en_GB' },
+          mediaDe: { id: 'media-project', locale: 'de_DE' },
+        },
+      })
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn).toHaveBeenCalledWith(
+        "Remote project 'media-project' is configured as both 'mediaEn' and 'mediaDe'. References into it are resolved with the entry 'mediaEn'; 'mediaDe' is only used by fetchElement."
+      )
+      expect(remoteApi.getRemoteConfigById('media-project')).toEqual({
+        id: 'media-project',
+        locale: 'en_GB',
+      })
+      warn.mockRestore()
     })
     it('should throw an error if contentMode is not set', () => {
       delete config.contentMode
@@ -422,6 +444,22 @@ describe('FSXARemoteAPI', () => {
         expect(error.message).toBe(FSXAApiErrors.INVALID_LOCALE)
         expect(error.statusCode).toBe(HttpStatus.BAD_REQUEST)
       }
+    })
+  })
+  describe('buildCaaSUrl with a locale that is not a string', () => {
+    it('should throw an invalid locale error instead of a type error', () => {
+      const remoteApi = new FSXARemoteApi(generateRandomConfig())
+      const filters: QueryBuilderQuery[] = [
+        {
+          value: faker.lorem.word(),
+          field: faker.lorem.word(),
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+        },
+      ]
+
+      expect(() =>
+        remoteApi.buildCaaSUrl({ filters, locale: 42 as unknown as string })
+      ).toThrow(FSXAApiErrors.INVALID_LOCALE)
     })
   })
   describe('buildNavigationServiceUrl', () => {
@@ -816,6 +854,55 @@ describe('FSXARemoteAPI', () => {
       expect(url).toContain('{"locale.language":{"$eq":"de"}}')
       expect(url).toContain('{"locale.country":{"$eq":"DE"}}')
     })
+    describe('with a project configured under two names', () => {
+      const createApiWithDuplicateRemote = () =>
+        new FSXARemoteApi({
+          ...generateRandomConfig(),
+          remotes: {
+            mediaEn: { id: 'media-project', locale: 'en_GB' },
+            mediaDe: { id: 'media-project', locale: 'de_DE' },
+          },
+        })
+      const fetchedLocale = () => {
+        const url = decodeURIComponent(fetchMock.mock.calls[0][0] as string)
+        return {
+          language: /"locale.language":\{"\$eq":"(\w+)"\}/.exec(url)?.[1],
+          country: /"locale.country":\{"\$eq":"(\w+)"\}/.exec(url)?.[1],
+        }
+      }
+
+      it('should fetch an element of the second name in its own locale', async () => {
+        const remoteApi = createApiWithDuplicateRemote()
+        fetchMock.mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': [] } })
+        )
+
+        await expect(
+          remoteApi.fetchElement({
+            id: 'some-id',
+            locale: 'fr_FR',
+            remoteProject: 'mediaDe',
+          })
+        ).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+
+        expect(fetchedLocale()).toEqual({ language: 'de', country: 'DE' })
+      })
+
+      it('should replace a locale no entry configures with the one of the first entry', async () => {
+        const remoteApi = createApiWithDuplicateRemote()
+        fetchMock.mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': [] } })
+        )
+
+        await remoteApi.fetchByFilter({
+          filters: [],
+          locale: 'fr_FR',
+          remoteProject: 'media-project',
+        })
+
+        expect(fetchedLocale()).toEqual({ language: 'en', country: 'GB' })
+      })
+    })
     it('should fetch a useSourceLocale project in the requested locale', async () => {
       const remoteApi = new FSXARemoteApi({
         ...generateRandomConfig(),
@@ -878,8 +965,6 @@ describe('FSXARemoteAPI', () => {
         .mockResponseOnce(JSON.stringify(firstResponse))
         .mockResponseOnce(JSON.stringify(secondResponse))
 
-      // the caller states the locale a remote project is read in; the locale
-      // configured in 'remotes' is no longer consulted
       const actualRequest = await remoteApi.fetchByFilter({
         filters,
         locale: config.remotes.remote.locale,

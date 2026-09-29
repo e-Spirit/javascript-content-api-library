@@ -759,7 +759,7 @@ export type CustomMapper = (
       identifier: string,
       path: NestedPath,
       remoteProjectId?: string
-    ) => string | null
+    ) => string
     buildPreviewId: (identifier: string, remoteProjectLocale?: string) => string
     buildMediaUrl: (url: string, rev?: number) => string
     mapDataEntries: (

@@ -1,5 +1,10 @@
 import { stringify } from 'qs'
-import { CaaSMapper, Logger, ReferencedItemsInfo, ResolvedReferencesInfo } from '.'
+import {
+  CaaSMapper,
+  Logger,
+  ReferencedItemsInfo,
+  ResolvedReferencesInfo,
+} from '.'
 import { FetchResponse, ProjectProperties } from '..'
 import {
   CaasApi_Item,
@@ -18,9 +23,13 @@ import {
   QueryBuilderQuery,
   RemoteProjectConfiguration,
   RemoteProjectConfigurationEntry,
-  SortParams
+  SortParams,
 } from '../types'
-import { removeFromIdMap, removeFromSeoRouteMap, removeFromStructure } from '../utils'
+import {
+  removeFromIdMap,
+  removeFromSeoRouteMap,
+  removeFromStructure,
+} from '../utils'
 import { FSXAApiErrors, FSXAContentMode, HttpStatus } from '../enums'
 import { LogLevel } from './Logger'
 import { denormalizeResolvedReferences } from './MappingUtils'
@@ -103,12 +112,13 @@ export class FSXARemoteApi implements FSXAApi {
     this.navigationServiceURL = navigationServiceURL
     this.tenantID = tenantID
     this.projectID = projectID
+    // the remotes setter warns, so the logger has to exist first
+    this._logLevel = logLevel
+    this._logger = new LoggerChalked(logLevel, 'FSXARemoteApi')
     this.remotes = remotes || {}
     this.contentMode = contentMode
     this._maxReferenceDepth = maxReferenceDepth
     this._customMapper = customMapper
-    this._logLevel = logLevel
-    this._logger = new LoggerChalked(logLevel, 'FSXARemoteApi')
     this._queryBuilder = new QueryBuilder(this._logger)
     this._navigationItemFilter = filterOptions?.navigationItemFilter
     this._caasItemFilter = filterOptions?.caasItemFilter
@@ -145,8 +155,33 @@ export class FSXARemoteApi implements FSXAApi {
   }
 
   /**
+   * A project may be configured under several names, each with its own locale.
+   * A requested locale that one of those entries allows is kept, so that
+   * `fetchElement` can address each of them by name; any other locale is
+   * replaced by the one of the first entry.
+   */
+  private resolveRemoteLocale(
+    remoteProjectId: string | undefined,
+    locale: string | undefined
+  ): string | undefined {
+    if (!remoteProjectId) return locale
+    const entries = Object.values(this._remotes).filter(
+      (config) => config.id === remoteProjectId
+    )
+    if (
+      entries.length === 0 ||
+      entries.some(
+        (config) => config.useSourceLocale || config.locale === locale
+      )
+    ) {
+      return locale
+    }
+    return entries[0].locale
+  }
+
+  /**
    * @param projectId the uuid of a project, as it appears on a reference url
-   * @returns the entry configured for that project, or undefined
+   * @returns the first entry configured for that project, or undefined
    */
   public getRemoteConfigById(
     projectId: string
@@ -204,7 +239,7 @@ export class FSXARemoteApi implements FSXAApi {
     if (filters) {
       let localeFilter: QueryBuilderQuery[] = []
       if (locale) {
-        if (!locale.includes('_')) {
+        if (typeof locale !== 'string' || !locale.includes('_')) {
           this._logger.error(
             '[buildNavigationServiceUrl]',
             `Invalid locale format. Expected format: 'xx_YY' but got '${locale.toString()}'`
@@ -554,13 +589,7 @@ export class FSXARemoteApi implements FSXAApi {
       page = 1
     }
 
-    const remoteConfig = remoteProjectId
-      ? this.getRemoteConfigById(remoteProjectId)
-      : undefined
-    const effectiveLocale =
-      remoteConfig?.locale && !remoteConfig.useSourceLocale
-        ? remoteConfig.locale
-        : locale
+    const effectiveLocale = this.resolveRemoteLocale(remoteProjectId, locale)
 
     const url = this.buildCaaSUrl({
       filters,
@@ -1009,7 +1038,7 @@ export class FSXARemoteApi implements FSXAApi {
    ```
    */
   public set remotes(value: RemoteProjectConfiguration) {
-    const seenIds = new Set<string>()
+    const firstNameById = new Map<string, string>()
     Object.keys(value).forEach((key) => {
       const { id, locale, useSourceLocale } = value[key]
       if (!id) {
@@ -1018,10 +1047,14 @@ export class FSXARemoteApi implements FSXAApi {
       if (!locale && !useSourceLocale) {
         throw new Error(FSXAApiErrors.MISSING_REMOTE_LOCALE)
       }
-      if (seenIds.has(id)) {
-        throw new Error(FSXAApiErrors.DUPLICATE_REMOTE_ID)
+      const firstName = firstNameById.get(id)
+      if (firstName) {
+        this._logger.warn(
+          `Remote project '${id}' is configured as both '${firstName}' and '${key}'. References into it are resolved with the entry '${firstName}'; '${key}' is only used by fetchElement.`
+        )
+      } else {
+        firstNameById.set(id, key)
       }
-      seenIds.add(id)
     })
 
     this._remotes = value

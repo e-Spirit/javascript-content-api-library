@@ -72,6 +72,7 @@ export enum CaaSMapperErrors {
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
 export const DEFAULT_MAX_REFERENCE_DEPTH = 2
+const MAX_UNPARSABLE_URL_WARNINGS = 5
 
 export interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
@@ -126,6 +127,10 @@ export class CaaSMapper {
   // Again. They cannot be added to resolvedReferences yet, since the fetch call
   // just started, when we need to keep track of them.
   _processedItems: Record<string, true> = {}
+  private _unparsableUrlCount = 0
+  // nested fetches reuse this mapper; the summary is logged when the
+  // outermost mapFilterResponse finishes
+  private _mapFilterResponseDepth = 0
 
   constructor(
     api: FSXARemoteApi,
@@ -209,6 +214,9 @@ export class CaaSMapper {
     inheritedProjectId: string | undefined
   ): ReferenceTarget {
     const parsed = parseReferenceUrl(url)
+    if (url && !parsed) {
+      this.warnUnparsableReferenceUrl(url)
+    }
     const projectId =
       parsed?.projectId ?? referencedProject ?? inheritedProjectId
 
@@ -230,6 +238,25 @@ export class CaaSMapper {
       projectId,
       locale: remote.useSourceLocale ? this.sourceLocale : remote.locale,
     }
+  }
+
+  private warnUnparsableReferenceUrl(url: string) {
+    this._unparsableUrlCount++
+    if (this._unparsableUrlCount <= MAX_UNPARSABLE_URL_WARNINGS) {
+      this.logger.warn(
+        `Reference url '${url}' does not match the CaaS document url layout. Its project cannot be read from it, so the reference falls back to its 'remoteProject' field or to the project of the surrounding document.`
+      )
+    }
+  }
+
+  private flushUnparsableUrlWarnings() {
+    const omitted = this._unparsableUrlCount - MAX_UNPARSABLE_URL_WARNINGS
+    if (omitted > 0) {
+      this.logger.warn(
+        `${omitted} further warnings about reference urls that do not match the CaaS document url layout were omitted.`
+      )
+    }
+    this._unparsableUrlCount = 0
   }
 
   /**
@@ -365,7 +392,14 @@ export class CaaSMapper {
       const result = await this.customMapper(entry, path, {
         api: this.api as any,
         xmlParser: this.xmlParser,
-        registerReferencedItem: this.registerReferencedItem.bind(this),
+        registerReferencedItem: (
+          identifier: string,
+          path: NestedPath,
+          remoteProjectId?: string
+        ) =>
+          this.registerReference(identifier, path, undefined, {
+            projectId: remoteProjectId,
+          }),
         buildPreviewId: this.buildPreviewId.bind(this),
         buildMediaUrl: this.buildMediaUrl.bind(this),
         mapDataEntries: this.mapDataEntries.bind(this),
@@ -570,28 +604,33 @@ export class CaaSMapper {
         return entry
       case 'FS_INDEX':
         if (entry.dapType === 'DatasetDataAccessPlugin') {
+          // broken records are dropped before registering, so that the
+          // registered paths match the indices of the returned array
           return entry.value
             .map((record, index) => {
               const reference = record?.value as
                 | CaaSApi_DatasetReference
                 | undefined
-              const identifier: string | undefined =
-                reference?.target?.identifier
-              if (!identifier) {
+              if (!reference?.target?.identifier) {
                 this.logger.warn(
                   'Skipping FS_INDEX record with a broken/null identifier',
                   { path: [...path, index].join('/') }
                 )
                 return null
               }
-              return this.registerReference(
-                identifier,
+              return reference
+            })
+            .filter((reference): reference is CaaSApi_DatasetReference =>
+              Boolean(reference)
+            )
+            .map((reference, index) =>
+              this.registerReference(
+                reference.target.identifier,
                 [...path, index],
-                reference?.url,
+                reference.url,
                 { projectId: remoteProjectId }
               )
-            })
-            .filter(Boolean)
+            )
         }
         return entry
       case 'Option':
@@ -933,15 +972,21 @@ export class CaaSMapper {
     } = imageMap
 
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
+    // unknown area types are dropped before mapping, so that references in
+    // their links are not registered and the registered paths match the
+    // indices of the returned array
+    const knownAreaTypes: string[] = Object.values(ImageMapAreaType)
     const mappedAreas = await Promise.all(
-      areas.map(async (area, index) =>
-        this.mapImageMapArea(
-          area,
-          [...path, 'areas', index],
-          remoteProjectLocale,
-          remoteProjectId
+      areas
+        .filter((area) => knownAreaTypes.includes(area.areaType))
+        .map(async (area, index) =>
+          this.mapImageMapArea(
+            area,
+            [...path, 'areas', index],
+            remoteProjectLocale,
+            remoteProjectId
+          )
         )
-      )
     )
 
     let image = null
@@ -1130,6 +1175,30 @@ export class CaaSMapper {
   }
 
   async mapFilterResponse(
+    unmappedItems: (CaasApi_Item | any)[],
+    additionalParams?: Record<string, any>,
+    filterContext?: unknown,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<MapResponse> {
+    this._mapFilterResponseDepth++
+    try {
+      return await this.mapFilterResponseItems(
+        unmappedItems,
+        additionalParams,
+        filterContext,
+        remoteProjectLocale,
+        remoteProjectId
+      )
+    } finally {
+      this._mapFilterResponseDepth--
+      if (this._mapFilterResponseDepth === 0) {
+        this.flushUnparsableUrlWarnings()
+      }
+    }
+  }
+
+  private async mapFilterResponseItems(
     unmappedItems: (CaasApi_Item | any)[],
     additionalParams?: Record<string, any>,
     filterContext?: unknown,

@@ -110,11 +110,11 @@ This applies to media references (`FS_REFERENCE`, `CMS_INPUT_IMAGEMAP`) and to d
 
 A reference into a project that is neither your own nor configured is **not fetched**. Its placeholder stays in the payload and the Content API logs a warning naming the project id. Add the project to `remotes` to resolve those references.
 
-A reference whose URL points at a different CaaS instance or tenant takes the same path: its project is not configured, so it is not fetched. Requests are always built from your `caasURL`, `tenantID` and content mode — a URL in your content can never direct a request at another host, and a release delivery cannot serve preview content.
+Only the project id is taken from a reference URL; its host, tenant and content mode are ignored. Requests are always built from your `caasURL`, `tenantID` and content mode — a URL in your content can never direct a request at another host, and a release delivery cannot serve preview content. A reference whose URL points at a different CaaS instance or tenant is therefore treated like any other reference: if its project id is neither your own nor configured, it is not fetched; if it is, the document is fetched from your own `caasURL` and `tenantID`.
 
 #### Configuration rules
 
-- Every entry needs an `id`. Two entries must not share one.
+- Every entry needs an `id`. Two entries may share one, for example to fetch the same project in two locales with `fetchElement`. References into that project are then resolved with the first of those entries, and the Content API logs a warning.
 - Every entry needs either a `locale` or `useSourceLocale: true`.
 - An entry may name your own project. References into it then resolve in that configured locale instead of the locale of the requested element.
 - The name (the key) is what you pass as the `remoteProject` parameter of `fetchElement` and as the `remote` query parameter of the endpoint integration.
