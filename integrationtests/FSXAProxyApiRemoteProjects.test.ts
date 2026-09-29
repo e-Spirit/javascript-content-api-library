@@ -38,14 +38,14 @@ const startSever = (app: Express) =>
   })
 
 describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
-  const randomId1 = faker.string.uuid()
   const projectLocale = {
     identifier: 'de_DE',
     country: 'DE',
     language: 'de',
   }
   const tenantID = INTEGRATION_TEST_TENANT_ID || 'fsxa-api-integration-test'
-  const randomId2 = faker.string.uuid()
+  let randomId1: string
+  let randomId2: string
 
   let proxyAPI: FSXAProxyApi
   let server: Server
@@ -178,6 +178,11 @@ describe('FSXAProxyAPIRemoteProjects should resolve references', () => {
       }
     )
   }
+
+  beforeEach(() => {
+    randomId1 = faker.string.uuid()
+    randomId2 = faker.string.uuid()
+  })
 
   afterEach(async () => {
     try {

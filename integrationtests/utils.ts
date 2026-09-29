@@ -136,6 +136,15 @@ interface CaaSTestingClientData {
   remoteProjectId?: string
 }
 
+const ensureOk = async (response: Response, action: string) => {
+  if (!response.ok) {
+    throw new Error(
+      `${action} failed with status ${response.status}: ${await response.text()}`
+    )
+  }
+  return response
+}
+
 /**
  * The CaaSTestingClient is used as a helper to quickly add and remove testing data directly to the CaaS
  */
@@ -182,15 +191,24 @@ export class CaasTestingClient {
     // Retry collection creation in case of transient failures
     await retryAsync(
       async () => {
-        await caasClient.createCollection()
+        await ensureOk(
+          await caasClient.createCollection(),
+          'Creating the collection'
+        )
       },
       { maxRetries: 3, delayMs: 1000 }
     )
 
-    if (CaaSTestingClientData.remoteProjectId) {
+    if (
+      caasClient.remoteBaseUrl &&
+      caasClient.remoteBaseUrl !== caasClient.baseUrl
+    ) {
       await retryAsync(
         async () => {
-          await caasClient.createRemoteCollection()
+          await ensureOk(
+            await caasClient.createRemoteCollection(),
+            'Creating the remote collection'
+          )
         },
         { maxRetries: 3, delayMs: 1000 }
       )
@@ -376,11 +394,14 @@ export class CaasTestingClient {
         doc.identifier + `.${locale.language}_${locale.country}`
       return docWithLocale
     })
-    return await fetch(baseUrl, {
-      method: RequestMethodEnum.POST,
-      headers: this.headers,
-      body: JSON.stringify(docsWithLocale) || null
-    })
+    return ensureOk(
+      await fetch(baseUrl, {
+        method: RequestMethodEnum.POST,
+        headers: this.headers,
+        body: JSON.stringify(docsWithLocale) || null
+      }),
+      `Adding documents to ${baseUrl}`
+    )
   }
 
   /*
