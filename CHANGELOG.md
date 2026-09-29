@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.3.0](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.2.2...v11.3.0) (2026-09-29)
+
+### Features
+
+* **references:** add support for remote datasets ([#253](https://github.com/e-Spirit/javascript-content-api-library/issues/253)) ([6f91e7a](https://github.com/e-Spirit/javascript-content-api-library/commit/6f91e7a60f3b1e76e76383980a93c609e8636b70))
+
 ## [11.2.2](https://github.com/e-Spirit/javascript-content-api-library/compare/v11.2.1...v11.2.2) (2026-07-24)
 
 ### Bug Fixes
