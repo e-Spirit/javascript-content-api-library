@@ -1,6 +1,5 @@
 import { FSXAContentMode, ImageMapAreaType } from './enums'
 import {
-  FSXAProxyApi,
   FSXARemoteApi,
   LogLevel,
   MapResponse,
@@ -12,7 +11,7 @@ import {
   ComparisonQueryOperatorEnum,
   EvaluationQueryOperatorEnum,
   LogicalQueryOperatorEnum,
-} from './modules/QueryBuilder'
+} from './modules'
 import XMLParser from './modules/XMLParser'
 
 export interface MasterLocale {
@@ -165,17 +164,16 @@ export interface CaaSApi_ImageMapAreaPoly extends CaaSApi_ImageMapArea {
   points: Point2D[]
 }
 
-export interface CaaSApi_ImageMapMedia
-  extends Pick<
-    CaaSApi_Media,
-    | 'fsType'
-    | 'name'
-    | 'displayName'
-    | 'identifier'
-    | 'uid'
-    | 'uidType'
-    | 'mediaType'
-  > {
+export interface CaaSApi_ImageMapMedia extends Pick<
+  CaaSApi_Media,
+  | 'fsType'
+  | 'name'
+  | 'displayName'
+  | 'identifier'
+  | 'uid'
+  | 'uidType'
+  | 'mediaType'
+> {
   url: string
   pictureMetaData: Omit<CaaSApi_Media_Picture_Resolution_MetaData, 'url'>
 }
@@ -196,21 +194,21 @@ export interface CaaSApi_CMSImageMap {
   }
 }
 
+export interface CaaSApi_DatasetReference {
+  fsType: 'DatasetReference'
+  target: {
+    fsType: 'Dataset'
+    schema: string
+    entityType: string
+    identifier: string
+  }
+  url?: string
+}
+
 export interface CaaSApi_FSDataset {
   fsType: 'FS_DATASET'
   name: string
-  value:
-    | {
-        fsType: 'DatasetReference'
-        target: {
-          fsType: 'Dataset'
-          schema: string
-          entityType: string
-          identifier: string
-        }
-      }
-    | CaaSApi_DataEntry[]
-    | null
+  value: CaaSApi_DatasetReference | CaaSApi_DataEntry[] | null
 }
 
 export interface CaaSApi_FSButton {
@@ -983,15 +981,29 @@ export interface AppContext<T = unknown> {
   fsxaApi?: FSXAApi
 }
 
+/**
+ * Configures which other FirstSpirit projects this application resolves
+ * references into, and in which locale. The key is a free name, used by the
+ * `remoteProject` parameter of `fetchElement`; `id` is the project's uuid.
+ * See the README section "Resolving references across projects".
+ */
 export type RemoteProjectConfiguration = {
-  [name: string]: {
-    id: string
-    locale: string
-  }
+  [name: string]: RemoteProjectConfigurationEntry
 }
 
-export type RemoteProjectConfigurationEntry =
-  RemoteProjectConfiguration[keyof RemoteProjectConfiguration]
+export type RemoteProjectConfigurationEntry = {
+  id: string
+  /**
+   * every reference into this project is resolved in this locale. Required
+   * unless `useSourceLocale` is set.
+   */
+  locale?: string
+  /**
+   * resolve references into this project in the locale of the requested
+   * element, ignoring `locale`. Defaults to false.
+   */
+  useSourceLocale?: boolean
+}
 
 export interface CaasItemFilterParams<FilterContextType> extends MapResponse {
   filterContext?: FilterContextType

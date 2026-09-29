@@ -6,6 +6,7 @@ import {
   CaaSApi_DataEntries,
   CaaSApi_DataEntry,
   CaaSApi_Dataset,
+  CaaSApi_DatasetReference,
   CaaSApi_GCAPage,
   CaaSApi_ImageMapArea,
   CaaSApi_ImageMapAreaCircle,
@@ -45,16 +46,16 @@ import {
   PermissionGroup,
   ProjectProperties,
   Reference,
-  RemoteProjectConfigurationEntry,
   RichTextElement,
-  Section,
+  Section
 } from '../types'
 import { parseISO } from 'date-fns'
 import XMLParser from './XMLParser'
 import { Logger, LogLevel } from './Logger'
 import { FSXARemoteApi } from './FSXARemoteApi'
-import { FSXAContentMode, ImageMapAreaType } from '../enums'
+import { ImageMapAreaType } from '../enums'
 import { findResolvedReferencesByIds, getItemId } from './MappingUtils'
+import { parseReferenceUrl } from './ReferenceUrlParser'
 
 const chunk = <T>(array: T[], size: number): T[][] => {
   const chunks: T[][] = []
@@ -71,9 +72,25 @@ export enum CaaSMapperErrors {
 
 const REFERENCED_ITEMS_CHUNK_SIZE = 30
 export const DEFAULT_MAX_REFERENCE_DEPTH = 2
+const MAX_UNPARSABLE_URL_WARNINGS = 5
 
 export interface ReferencedItemsInfo {
   [identifier: string]: NestedPath[]
+}
+
+/**
+ * Where a reference is resolved, once its project is known and the
+ * configuration has supplied the locale.
+ */
+export type ReferenceTarget =
+  | { kind: 'local' }
+  | { kind: 'remote'; projectId: string; locale?: string }
+  | { kind: 'unresolvable'; projectId: string }
+
+export interface RemoteReferenceGroup {
+  projectId: string
+  locale?: string
+  references: ReferencedItemsInfo
 }
 
 export interface ResolvedReferencesInfo {
@@ -90,6 +107,12 @@ export class CaaSMapper {
   public logger: Logger
   api: FSXARemoteApi
   locale: string | undefined
+  /**
+   * The locale of the requested element. Constant for the whole resolution
+   * tree, unlike `locale`, which `setLocaleFromCaasItem` moves to the locale of
+   * each mapped item.
+   */
+  readonly sourceLocale: string | undefined
   xmlParser: XMLParser
   customMapper?: CustomMapper
   referenceDepth: number
@@ -97,14 +120,17 @@ export class CaaSMapper {
   resolvedReferences: ResolvedReferencesInfo = {}
   // stores references to items of current Project
   _referencedItems: ReferencedItemsInfo = {}
-  // stores References to remote Items
   _remoteReferences: {
-    [projectId: string]: ReferencedItemsInfo
+    [groupKey: string]: RemoteReferenceGroup
   } = {}
   // stores items that are being or have been processed and should not be fetched
   // Again. They cannot be added to resolvedReferences yet, since the fetch call
   // just started, when we need to keep track of them.
   _processedItems: Record<string, true> = {}
+  private _unparsableUrlCount = 0
+  // nested fetches reuse this mapper; the summary is logged when the
+  // outermost mapFilterResponse finishes
+  private _mapFilterResponseDepth = 0
 
   constructor(
     api: FSXARemoteApi,
@@ -118,11 +144,9 @@ export class CaaSMapper {
   ) {
     this.api = api
     this.locale = locale
+    this.sourceLocale = locale
     this.customMapper = utils.customMapper
     this.xmlParser = new XMLParser(logger)
-    Object.values(this.api.remotes || {}).forEach(
-      (entry) => (this._remoteReferences[entry.id] = {})
-    )
     this.logger = logger
     this.referenceDepth = utils.referenceDepth ?? 0
     this.maxReferenceDepth =
@@ -145,20 +169,21 @@ export class CaaSMapper {
     }
   }
 
+  private buildGroupKey(projectId: string, locale?: string) {
+    return `${projectId}#${locale ?? ''}`
+  }
+
   /**
    * unifies the two different id formats {id}.{locale} and {id} to {id}.{locale}
-   * if remoteProjectConfiguration is passed, prefix with project id to avoid uuid clashes
+   * if a remoteProjectId is passed, prefix with it to avoid uuid clashes
    *
    * @param id uuid, may be of form {id}.{locale} or {id}
-   * @param remoteProjectConfiguration remoteProjectConfig
+   * @param remoteProjectId project the item lives in, if it is not the own one
+   * @param remoteLocale locale the item is fetched in, if it is not the own one
    * @returns uuid of form {id}.{locale} or {remoteProjectId}#{id}.{locale}
    */
-  unifyId(
-    id: string,
-    remoteProjectConfiguration?: RemoteProjectConfigurationEntry
-  ) {
+  unifyId(id: string, remoteProjectId?: string, remoteLocale?: string) {
     const indexOfSeparator = id.indexOf('.')
-    const remoteLocale = remoteProjectConfiguration?.locale
     let idWithLocale
     if (indexOfSeparator > 0) {
       // id has form {id}.{locale}. Override Locale if set
@@ -167,11 +192,126 @@ export class CaaSMapper {
         : id
     } else {
       // id has form {id}. transform to {id}.{locale}
-      idWithLocale = `${id}.${remoteLocale || this.locale}`
+      idWithLocale = `${id}.${remoteLocale || this.sourceLocale}`
     }
-    return remoteProjectConfiguration
-      ? `${remoteProjectConfiguration.id}#${idWithLocale}`
-      : idWithLocale
+    return remoteProjectId ? `${remoteProjectId}#${idWithLocale}` : idWithLocale
+  }
+
+  /**
+   * Decides where a reference is resolved. The url identifies the project; the
+   * locale always comes from the `remotes` configuration or from the requested
+   * element, never from the url, because an editor cannot control which locale
+   * a reference url carries. A project that is not configured is not fetched,
+   * which is what keeps content data from steering a request.
+   *
+   * @param url the url on the reference, may be missing or arbitrary
+   * @param referencedProject the `remoteProject` field, on media references
+   * @param inheritedProjectId the project of the surrounding document
+   */
+  resolveReferenceTarget(
+    url: string | undefined,
+    referencedProject: string | undefined,
+    inheritedProjectId: string | undefined
+  ): ReferenceTarget {
+    const parsed = parseReferenceUrl(url)
+    if (url && !parsed) {
+      this.warnUnparsableReferenceUrl(url)
+    }
+    const projectId =
+      parsed?.projectId ?? referencedProject ?? inheritedProjectId
+
+    if (!projectId) {
+      return { kind: 'local' }
+    }
+
+    // an entry may name the own project, to read its references in another
+    // locale than the requested one
+    const remote = this.api.getRemoteConfigById(projectId)
+    if (!remote) {
+      return projectId === this.api.projectID
+        ? { kind: 'local' }
+        : { kind: 'unresolvable', projectId }
+    }
+
+    return {
+      kind: 'remote',
+      projectId,
+      locale: remote.useSourceLocale ? this.sourceLocale : remote.locale,
+    }
+  }
+
+  private warnUnparsableReferenceUrl(url: string) {
+    this._unparsableUrlCount++
+    if (this._unparsableUrlCount <= MAX_UNPARSABLE_URL_WARNINGS) {
+      this.logger.warn(
+        `Reference url '${url}' does not match the CaaS document url layout. Its project cannot be read from it, so the reference falls back to its 'remoteProject' field or to the project of the surrounding document.`
+      )
+    }
+  }
+
+  private flushUnparsableUrlWarnings() {
+    const omitted = this._unparsableUrlCount - MAX_UNPARSABLE_URL_WARNINGS
+    if (omitted > 0) {
+      this.logger.warn(
+        `${omitted} further warnings about reference urls that do not match the CaaS document url layout were omitted.`
+      )
+    }
+    this._unparsableUrlCount = 0
+  }
+
+  /**
+   * Registers a reference so that `resolveAllReferences` can fetch it in a
+   * batch. A reference into a project that is not configured is not registered;
+   * its placeholder stays in the payload.
+   *
+   * @returns the placeholder string to put into the mapped output
+   */
+  registerReference(
+    identifier: string,
+    path: NestedPath,
+    url: string | undefined,
+    inherited: { projectId?: string },
+    options: { referencedProject?: string; imageMapResolution?: string } = {}
+  ): string {
+    const target = this.resolveReferenceTarget(
+      url,
+      options.referencedProject,
+      inherited.projectId
+    )
+
+    if (target.kind === 'unresolvable') {
+      return this.registerUnresolvableReference(
+        identifier,
+        path,
+        target.projectId,
+        options.imageMapResolution
+      )
+    }
+
+    return this.registerReferencedItem(
+      identifier,
+      path,
+      target.kind === 'remote' ? target.projectId : undefined,
+      options.imageMapResolution,
+      target.kind === 'remote' ? target.locale : undefined
+    )
+  }
+
+  private registerUnresolvableReference(
+    identifier: string,
+    path: NestedPath,
+    projectId: string,
+    imageMapResolution?: string
+  ): string {
+    this.logger.warn(
+      `Reference with identifier '${identifier}' points at project '${projectId}', which is not part of the 'remotes' configuration. The reference is left unresolved - add the project to 'remotes' to resolve it.`,
+      { path: path.join('/') }
+    )
+
+    const unifiedId = this.unifyId(identifier, projectId, this.sourceLocale)
+    return imageMapResolution
+      ? `IMAGEMAP___${imageMapResolution}___${unifiedId}`
+      : `[REFERENCED-REMOTE-ITEM-${unifiedId}]`
   }
 
   /**
@@ -180,36 +320,41 @@ export class CaaSMapper {
    * @param identifier item identifier
    * @param path after fetch, items are inserted at all registered paths
    * @param remoteProjectId optional. If passed, the item will be fetched from the specified project
+   * @param imageMapResolution
+   * @param remoteProjectLocale optional. Locale the item is fetched in, if it differs from the own one
    * @returns placeholder string
    */
   registerReferencedItem(
     identifier: string,
     path: NestedPath,
     remoteProjectId?: string,
-    imageMapResolution?: string
+    imageMapResolution?: string,
+    remoteProjectLocale?: string
   ): string {
-    const remoteData = this.getRemoteConfigForProject(remoteProjectId)
-    const remoteProjectKey = remoteData?.id
-
-    if (remoteProjectId && !remoteProjectKey) {
-      this.logger.warn(
-        `Item with identifier '${identifier}' was tried to register from remoteProject '${remoteProjectId}' but no remote key was found in the config.`
-      )
-    }
-
-    const unifiedId = this.unifyId(identifier, remoteData)
+    const unifiedId = this.unifyId(
+      identifier,
+      remoteProjectId,
+      remoteProjectLocale
+    )
 
     // Preflight check to avoid costly operations in non debug mode
     this.logger.logLevel === LogLevel.DEBUG &&
       this.logger.debug('Registering Referenced Item ', {
-        remoteProjectKey,
+        remoteProjectId,
+        remoteProjectLocale,
         identifier,
         path: path.join('/'),
       })
 
-    if (remoteProjectKey) {
-      this._remoteReferences[remoteProjectKey][unifiedId] = [
-        ...(this._remoteReferences[remoteProjectKey][unifiedId] || []),
+    if (remoteProjectId) {
+      const groupKey = this.buildGroupKey(remoteProjectId, remoteProjectLocale)
+      const group = (this._remoteReferences[groupKey] ??= {
+        projectId: remoteProjectId,
+        locale: remoteProjectLocale,
+        references: {},
+      })
+      group.references[unifiedId] = [
+        ...(group.references[unifiedId] || []),
         path,
       ]
       return imageMapResolution
@@ -247,7 +392,14 @@ export class CaaSMapper {
       const result = await this.customMapper(entry, path, {
         api: this.api as any,
         xmlParser: this.xmlParser,
-        registerReferencedItem: this.registerReferencedItem.bind(this),
+        registerReferencedItem: (
+          identifier: string,
+          path: NestedPath,
+          remoteProjectId?: string
+        ) =>
+          this.registerReference(identifier, path, undefined, {
+            projectId: remoteProjectId,
+          }),
         buildPreviewId: this.buildPreviewId.bind(this),
         buildMediaUrl: this.buildMediaUrl.bind(this),
         mapDataEntries: this.mapDataEntries.bind(this),
@@ -256,14 +408,13 @@ export class CaaSMapper {
     }
     switch (entry.fsType) {
       case 'CMS_INPUT_COMBOBOX':
-        const comboboxOption: Option | null = entry.value
+        return entry.value
           ? {
-              type: 'Option',
-              key: entry.value.identifier,
-              value: entry.value.label,
-            }
+            type: 'Option',
+            key: entry.value.identifier,
+            value: entry.value.label,
+          }
           : null
-        return comboboxOption
       case 'CMS_INPUT_DOM':
       case 'CMS_INPUT_DOMTABLE':
         const richTextElements: RichTextElement[] = entry.value
@@ -278,44 +429,40 @@ export class CaaSMapper {
       case 'CMS_INPUT_NUMBER':
       case 'CMS_INPUT_TEXT':
       case 'CMS_INPUT_TEXTAREA':
-        const simpleValue: string | number = entry.value
-        return simpleValue
+        return entry.value
       case 'CMS_INPUT_RADIOBUTTON':
-        const radiobuttonOption: Option | null = entry.value
+        return entry.value
           ? {
-              type: 'Option',
-              key: entry.value.identifier,
-              value: entry.value.label,
-              // TODO: Remove this spread with next major release (Breaking Change!)
-              ...entry.value,
-            }
+            type: 'Option',
+            key: entry.value.identifier,
+            value: entry.value.label,
+            // TODO: Remove this spread with next major release (Breaking Change!)
+            ...entry.value,
+          }
           : null
-        return radiobuttonOption
       case 'CMS_INPUT_DATE':
-        const dateValue: Date | null = entry.value
+        return entry.value
           ? parseISO(entry.value)
           : null
-        return dateValue
       case 'CMS_INPUT_LINK':
-        const link: Link | null = entry.value
+        return entry.value
           ? {
-              type: 'Link',
-              template: entry.value.template.uid,
-              data: await this.mapDataEntries(
-                entry.value.formData,
-                [...path, 'data'],
-                remoteProjectLocale,
-                remoteProjectId
-              ),
-              meta: await this.mapDataEntries(
-                entry.value.metaFormData,
-                [...path, 'meta'],
-                remoteProjectLocale,
-                remoteProjectId
-              ),
-            }
+            type: 'Link',
+            template: entry.value.template.uid,
+            data: await this.mapDataEntries(
+              entry.value.formData,
+              [...path, 'data'],
+              remoteProjectLocale,
+              remoteProjectId
+            ),
+            meta: await this.mapDataEntries(
+              entry.value.metaFormData,
+              [...path, 'meta'],
+              remoteProjectLocale,
+              remoteProjectId
+            ),
+          }
           : null
-        return link
       case 'CMS_INPUT_LIST':
         if (!entry.value) return []
         return Promise.all(
@@ -371,10 +518,11 @@ export class CaaSMapper {
             )
             return null
           }
-          return this.registerReferencedItem(
+          return this.registerReference(
             entry.value.target.identifier,
             path,
-            remoteProjectId
+            entry.value.url,
+            { projectId: remoteProjectId }
           )
         }
         return null
@@ -427,10 +575,12 @@ export class CaaSMapper {
             )
             return null
           }
-          return this.registerReferencedItem(
+          return this.registerReference(
             entry.value.identifier,
             path,
-            entry.value.remoteProject || remoteProjectId
+            entry.value.url,
+            { projectId: remoteProjectId },
+            { referencedProject: entry.value.remoteProject }
           )
         } else if (['PageRef', 'GCAPage'].includes(entry.value.fsType)) {
           if (!entry.value.identifier) {
@@ -454,35 +604,43 @@ export class CaaSMapper {
         return entry
       case 'FS_INDEX':
         if (entry.dapType === 'DatasetDataAccessPlugin') {
+          // broken records are dropped before registering, so that the
+          // registered paths match the indices of the returned array
           return entry.value
             .map((record, index) => {
-              const identifier: string | undefined =
-                record?.value?.target?.identifier
-              if (!identifier) {
+              const reference = record?.value as
+                | CaaSApi_DatasetReference
+                | undefined
+              if (!reference?.target?.identifier) {
                 this.logger.warn(
                   'Skipping FS_INDEX record with a broken/null identifier',
                   { path: [...path, index].join('/') }
                 )
                 return null
               }
-              return this.registerReferencedItem(
-                identifier,
-                [...path, index],
-                remoteProjectId
-              )
+              return reference
             })
-            .filter(Boolean)
+            .filter((reference): reference is CaaSApi_DatasetReference =>
+              Boolean(reference)
+            )
+            .map((reference, index) =>
+              this.registerReference(
+                reference.target.identifier,
+                [...path, index],
+                reference.url,
+                { projectId: remoteProjectId }
+              )
+            )
         }
         return entry
       case 'Option':
-        const option: Option = {
+        return {
           type: 'Option',
           key: entry.identifier,
           value: entry.label,
         }
-        return option
       case 'CMS_INPUT_PERMISSION':
-        const permission: Permission = {
+        return {
           type: 'Permission',
           fsType: entry.fsType,
           name: entry.name,
@@ -497,7 +655,6 @@ export class CaaSMapper {
             } as PermissionActivity
           }),
         }
-        return permission
       default:
         return entry
     }
@@ -512,7 +669,7 @@ export class CaaSMapper {
     await Promise.all(
       richTextElements.map(async (richTextElement, index) => {
         if (richTextElement.type === 'link') {
-          const link = {
+          richTextElement.data = {
             type: 'Link',
             template: richTextElement.data.type as string,
             data: await this.mapDataEntries(
@@ -523,7 +680,6 @@ export class CaaSMapper {
             ),
             meta: {},
           }
-          richTextElement.data = link
         }
         if (Array.isArray(richTextElement.content)) {
           richTextElement.content = await this.mapLinksInRichTextElements(
@@ -816,24 +972,34 @@ export class CaaSMapper {
     } = imageMap
 
     this.logger.debug('CaaSMapper.mapImageMap - imageMap', imageMap)
+    // unknown area types are dropped before mapping, so that references in
+    // their links are not registered and the registered paths match the
+    // indices of the returned array
+    const knownAreaTypes: string[] = Object.values(ImageMapAreaType)
     const mappedAreas = await Promise.all(
-      areas.map(async (area, index) =>
-        this.mapImageMapArea(
-          area,
-          [...path, 'areas', index],
-          remoteProjectLocale,
-          remoteProjectId
+      areas
+        .filter((area) => knownAreaTypes.includes(area.areaType))
+        .map(async (area, index) =>
+          this.mapImageMapArea(
+            area,
+            [...path, 'areas', index],
+            remoteProjectLocale,
+            remoteProjectId
+          )
         )
-      )
     )
 
     let image = null
     if (media) {
-      image = this.registerReferencedItem(
+      image = this.registerReference(
         media.identifier,
         [...path, 'media'],
-        media.remoteProject,
-        resolution.uid
+        media.url,
+        { projectId: remoteProjectId },
+        {
+          referencedProject: media.remoteProject,
+          imageMapResolution: resolution.uid,
+        }
       )
     }
 
@@ -1015,6 +1181,30 @@ export class CaaSMapper {
     remoteProjectLocale?: string,
     remoteProjectId?: string
   ): Promise<MapResponse> {
+    this._mapFilterResponseDepth++
+    try {
+      return await this.mapFilterResponseItems(
+        unmappedItems,
+        additionalParams,
+        filterContext,
+        remoteProjectLocale,
+        remoteProjectId
+      )
+    } finally {
+      this._mapFilterResponseDepth--
+      if (this._mapFilterResponseDepth === 0) {
+        this.flushUnparsableUrlWarnings()
+      }
+    }
+  }
+
+  private async mapFilterResponseItems(
+    unmappedItems: (CaasApi_Item | any)[],
+    additionalParams?: Record<string, any>,
+    filterContext?: unknown,
+    remoteProjectLocale?: string,
+    remoteProjectId?: string
+  ): Promise<MapResponse> {
     let items: (MappedCaasItem | CaasApi_Item)[] = additionalParams?.keys
       ? unmappedItems // don't map data, if additional params have been set
       : (
@@ -1083,14 +1273,13 @@ export class CaaSMapper {
       this.resolvedReferences
     )
 
-    // merge all remote references into one object
-    const remoteReferencesValues = Object.values(this._remoteReferences)
-    const remoteReferencesMerged =
-      remoteReferencesValues.length > 0
-        ? remoteReferencesValues.reduce((result, current) =>
-            Object.assign(result, current)
-          )
-        : {}
+    // merge the references of all groups into one object
+    const remoteReferencesMerged = Object.values(
+      this._remoteReferences
+    ).reduce<ReferencedItemsInfo>(
+      (result, group) => Object.assign(result, group.references),
+      {}
+    )
 
     // return
     return {
@@ -1103,8 +1292,8 @@ export class CaaSMapper {
   /**
    * Calls ResolveReferences for currentProject and each RemoteProject
    *
-   * @param data
    * @returns data
+   * @param filterContext
    */
   async resolveAllReferences(filterContext?: unknown): Promise<void> {
     if (this.referenceDepth >= this.maxReferenceDepth) {
@@ -1115,37 +1304,37 @@ export class CaaSMapper {
       return
     }
     this.referenceDepth++
-    const remoteIds = Object.keys(this._remoteReferences)
-    this.logger.debug('CaaSMapper.resolveAllReferences', { remoteIds })
+    const groupKeys = Object.keys(this._remoteReferences)
+    this.logger.debug('CaaSMapper.resolveAllReferences', { groupKeys })
 
     await Promise.all([
-      this.resolveReferencesPerProject(undefined, filterContext),
-      ...remoteIds.map((remoteId) =>
-        this.resolveReferencesPerProject(remoteId, filterContext)
+      this.resolveReferencesForGroup(undefined, filterContext),
+      ...groupKeys.map((groupKey) =>
+        this.resolveReferencesForGroup(groupKey, filterContext)
       ),
     ])
   }
 
   /**
-   * This method will create a filter for all referenced items that are registered inside of the referencedItems
-   * and fetch them in a single CaaS-Request. If remoteProjectId is set, referenced Items from the remoteProject are fetched
-   * After a successful fetch all references in the json structure will be replaced with the fetched and mapped item
+   * This method will create a filter for all referenced items of one group and
+   * fetch them in a single CaaS-Request per chunk. A group is one distinct
+   * project/locale pair, or the local project when no groupKey is given.
+   * After a successful fetch all references in the json structure will be
+   * replaced with the fetched and mapped item
    */
-  async resolveReferencesPerProject(
-    remoteProjectId?: string,
-    filterContext?: unknown
-  ) {
-    this.logger.debug('CaaSMapper.resolveReferencesPerProject', {
-      remoteProjectId,
+  async resolveReferencesForGroup(groupKey?: string, filterContext?: unknown) {
+    const group = groupKey ? this._remoteReferences[groupKey] : undefined
+    this.logger.debug('CaaSMapper.resolveReferencesForGroup', {
+      groupKey,
+      projectId: group?.projectId,
+      locale: group?.locale,
     })
-    const referencedItems = remoteProjectId
-      ? this._remoteReferences[remoteProjectId]
-      : this._referencedItems
+    const referencedItems = group ? group.references : this._referencedItems
 
-    // use remoteProjectLocale if provided. normal locale as standard
-    const remoteProjectData = this.getRemoteConfigForProject(remoteProjectId)
-    const remoteProjectLocale = remoteProjectData?.locale
-    const locale = remoteProjectLocale || this.locale
+    // the group carries the locale its items are fetched in
+    const remoteProjectId = group?.projectId
+    const remoteProjectLocale = group?.locale
+    const locale = remoteProjectLocale || this.sourceLocale
 
     const referencedIds = Object.keys(referencedItems)
 
@@ -1162,8 +1351,8 @@ export class CaaSMapper {
 
     // skip stringification if logLevel is higher than debug
     this.logger.logLevel === LogLevel.DEBUG &&
-      this.logger.debug('CaaSMapper.resolveReferencesPerProject: Id data', {
-        project: remoteProjectId || 'localProject',
+      this.logger.debug('CaaSMapper.resolveReferencesForGroup: Id data', {
+        group: groupKey || 'localProject',
         resolvedIdsArray,
         referencedIds,
         idsToFetchFromCaaS,
@@ -1195,18 +1384,8 @@ export class CaaSMapper {
       )
     } else {
       this.logger.debug(
-        'CaaSMapper.resolveReferencesPerProject: Nothing to fetch'
+        'CaaSMapper.resolveReferencesForGroup: Nothing to fetch'
       )
     }
-  }
-
-  private getRemoteConfigForProject(
-    projectId?: string
-  ): RemoteProjectConfigurationEntry | undefined {
-    return projectId
-      ? Object.values(this.api.remotes || {}).find(
-          (entry) => entry.id === projectId
-        )
-      : undefined
   }
 }

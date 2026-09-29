@@ -1,7 +1,14 @@
 import { faker } from '@faker-js/faker'
 import { FSXAApiErrors, HttpStatus } from '../enums'
-import { FetchResponse, QueryBuilderQuery, SortParams } from '../types'
+import {
+  CaaSApi_DatasetReference,
+  CaaSApi_FSDataset,
+  FetchResponse,
+  QueryBuilderQuery,
+  SortParams,
+} from '../types'
 import { FSXARemoteApi } from './FSXARemoteApi'
+import { LoggerChalked } from './LoggerChalked'
 import {
   ArrayQueryOperatorEnum,
   ComparisonQueryOperatorEnum,
@@ -12,10 +19,14 @@ import { generateRandomConfig } from '../testutils/generateRandomConfig'
 import 'jest-fetch-mock'
 import {
   createDataEntry,
+  createDataset,
+  createDatasetReference,
   createMediaPicture,
+  createReferenceUrl,
   createMediaPictureReference,
 } from '../testutils'
 import { getMappedMediaPicture } from '../testutils/getMappedMediaPicture'
+
 require('jest-fetch-mock').enableFetchMocks()
 
 describe('FSXARemoteAPI', () => {
@@ -73,6 +84,27 @@ describe('FSXARemoteAPI', () => {
       expect(() => {
         new FSXARemoteApi(config)
       }).toThrow(FSXAApiErrors.MISSING_REMOTE_LOCALE)
+    })
+    it('should accept two remotes with the same id and warn about it', () => {
+      const warn = jest.spyOn(LoggerChalked.prototype, 'warn')
+
+      remoteApi = new FSXARemoteApi({
+        ...config,
+        remotes: {
+          mediaEn: { id: 'media-project', locale: 'en_GB' },
+          mediaDe: { id: 'media-project', locale: 'de_DE' },
+        },
+      })
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn).toHaveBeenCalledWith(
+        "Remote project 'media-project' is configured as both 'mediaEn' and 'mediaDe'. References into it are resolved with the entry 'mediaEn'; 'mediaDe' is only used by fetchElement."
+      )
+      expect(remoteApi.getRemoteConfigById('media-project')).toEqual({
+        id: 'media-project',
+        locale: 'en_GB',
+      })
+      warn.mockRestore()
     })
     it('should throw an error if contentMode is not set', () => {
       delete config.contentMode
@@ -304,16 +336,12 @@ describe('FSXARemoteAPI', () => {
       const expectedCaaSUrl = `${config.caasURL}/${config.tenantID}/${config.projectID}.${config.contentMode}.content?${pagesizeQuery}`
       expect(actualCaaSUrl).toStrictEqual(expectedCaaSUrl)
     })
-    it('should throw an error for an invalid remote project', () => {
-      const config = generateRandomConfig()
-      const remoteApi = new FSXARemoteApi(config)
+    it('should throw when building a url for a project that is not configured as a remote', () => {
+      const remoteApi = new FSXARemoteApi(generateRandomConfig())
 
-      try {
-        remoteApi.buildCaaSUrl({ remoteProject: 'unknown project' })
-      } catch (error: any) {
-        expect(error.message).toBe(FSXAApiErrors.UNKNOWN_REMOTE)
-        expect(error.statusCode).toBe(HttpStatus.NOT_FOUND)
-      }
+      expect(() =>
+        remoteApi.buildCaaSUrl({ remoteProject: 'unconfigured' })
+      ).toThrow(FSXAApiErrors.UNKNOWN_REMOTE)
     })
     it('should return the correct caas url when special chars are used in id, locale, page or pagesize', () => {
       const specialChars = "*_'();:@&=+$,?%#[]_*'();:@&=+$,?%#[]"
@@ -425,6 +453,22 @@ describe('FSXARemoteAPI', () => {
         expect(error.message).toBe(FSXAApiErrors.INVALID_LOCALE)
         expect(error.statusCode).toBe(HttpStatus.BAD_REQUEST)
       }
+    })
+  })
+  describe('buildCaaSUrl with a locale that is not a string', () => {
+    it('should throw an invalid locale error instead of a type error', () => {
+      const remoteApi = new FSXARemoteApi(generateRandomConfig())
+      const filters: QueryBuilderQuery[] = [
+        {
+          value: faker.lorem.word(),
+          field: faker.lorem.word(),
+          operator: ComparisonQueryOperatorEnum.EQUALS,
+        },
+      ]
+
+      expect(() =>
+        remoteApi.buildCaaSUrl({ filters, locale: 42 as unknown as string })
+      ).toThrow(FSXAApiErrors.INVALID_LOCALE)
     })
   })
   describe('buildNavigationServiceUrl', () => {
@@ -786,6 +830,129 @@ describe('FSXARemoteAPI', () => {
         items,
       })
     })
+    it('should throw when fetching from a project that is not configured as a remote', async () => {
+      const unconfigured = generateRandomConfig()
+      unconfigured.remotes = {} as any
+      const remoteApi = new FSXARemoteApi(unconfigured)
+
+      await expect(
+        remoteApi.fetchByFilter({
+          filters: [],
+          locale: 'en_GB',
+          remoteProject: 'unconfigured-project',
+        })
+      ).rejects.toThrow(FSXAApiErrors.UNKNOWN_REMOTE)
+    })
+    it('should fetch a configured remote project in its configured locale', async () => {
+      const remoteApi = new FSXARemoteApi({
+        ...generateRandomConfig(),
+        remotes: { media: { id: 'media-project', locale: 'de_DE' } },
+      })
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ _embedded: { 'rh:doc': [] } })
+      )
+
+      await remoteApi.fetchByFilter({
+        filters: [],
+        locale: 'en_GB',
+        remoteProject: 'media-project',
+      })
+
+      const url = decodeURIComponent(fetchMock.mock.calls[0][0] as string)
+      expect(url).toContain('/media-project.')
+      expect(url).toContain('{"locale.language":{"$eq":"de"}}')
+      expect(url).toContain('{"locale.country":{"$eq":"DE"}}')
+    })
+    describe('with a project configured under two names', () => {
+      const createApiWithDuplicateRemote = () =>
+        new FSXARemoteApi({
+          ...generateRandomConfig(),
+          remotes: {
+            mediaEn: { id: 'media-project', locale: 'en_GB' },
+            mediaDe: { id: 'media-project', locale: 'de_DE' },
+          },
+        })
+      const fetchedLocale = () => {
+        const url = decodeURIComponent(fetchMock.mock.calls[0][0] as string)
+        return {
+          language: /"locale.language":\{"\$eq":"(\w+)"\}/.exec(url)?.[1],
+          country: /"locale.country":\{"\$eq":"(\w+)"\}/.exec(url)?.[1],
+        }
+      }
+
+      it('should fetch an element of the second name in its own locale', async () => {
+        const remoteApi = createApiWithDuplicateRemote()
+        fetchMock.mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': [] } })
+        )
+
+        await expect(
+          remoteApi.fetchElement({
+            id: 'some-id',
+            locale: 'fr_FR',
+            remoteProject: 'mediaDe',
+          })
+        ).rejects.toThrow(FSXAApiErrors.NOT_FOUND)
+
+        expect(fetchedLocale()).toEqual({ language: 'de', country: 'DE' })
+      })
+
+      it('should replace a locale no entry configures with the one of the first entry', async () => {
+        const remoteApi = createApiWithDuplicateRemote()
+        fetchMock.mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': [] } })
+        )
+
+        await remoteApi.fetchByFilter({
+          filters: [],
+          locale: 'fr_FR',
+          remoteProject: 'media-project',
+        })
+
+        expect(fetchedLocale()).toEqual({ language: 'en', country: 'GB' })
+      })
+    })
+    it('should fetch a useSourceLocale project in the requested locale', async () => {
+      const remoteApi = new FSXARemoteApi({
+        ...generateRandomConfig(),
+        remotes: { data: { id: 'data-project', useSourceLocale: true } },
+      })
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ _embedded: { 'rh:doc': [] } })
+      )
+
+      await remoteApi.fetchByFilter({
+        filters: [],
+        locale: 'en_GB',
+        remoteProject: 'data-project',
+      })
+
+      const url = decodeURIComponent(fetchMock.mock.calls[0][0] as string)
+      expect(url).toContain('{"locale.language":{"$eq":"en"}}')
+      expect(url).toContain('{"locale.country":{"$eq":"GB"}}')
+    })
+    it('should keep the requested locale in fetchElement for a useSourceLocale project', async () => {
+      const remoteApi = new FSXARemoteApi({
+        ...generateRandomConfig(),
+        remotes: { data: { id: 'data-project', useSourceLocale: true } },
+      })
+      const fetchByFilter = jest
+        .spyOn(remoteApi, 'fetchByFilter')
+        .mockResolvedValue({ page: 1, pagesize: 30, items: [{}] } as any)
+
+      await remoteApi.fetchElement({
+        id: 'some-id',
+        locale: 'en_GB',
+        remoteProject: 'data',
+      })
+
+      expect(fetchByFilter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'en_GB',
+          remoteProject: 'data-project',
+        })
+      )
+    })
     it('should return items when fetching remote items', async () => {
       const mainMedia = createMediaPicture(
         undefined,
@@ -809,7 +976,7 @@ describe('FSXARemoteAPI', () => {
 
       const actualRequest = await remoteApi.fetchByFilter({
         filters,
-        locale: 'de_DE',
+        locale: config.remotes.remote.locale,
         remoteProject: config.remotes.remote.id,
       })
 
@@ -818,13 +985,11 @@ describe('FSXARemoteAPI', () => {
         config.remotes.remote.locale,
         config.remotes.remote.id
       )
-      const mappedReferencedMedia = getMappedMediaPicture(
+      mappedMainMedia.meta.fsRef = getMappedMediaPicture(
         referencedMedia,
         config.remotes.remote.locale,
         config.remotes.remote.id
       )
-
-      mappedMainMedia.meta.fsRef = mappedReferencedMedia
 
       expect(actualRequest).toBeDefined()
       expect(actualRequest).toStrictEqual({
@@ -836,6 +1001,110 @@ describe('FSXARemoteAPI', () => {
       })
     })
   })
+  describe('fetchByFilter with an unresolvable reference in a batch', () => {
+    const BATCH_SIZE = 5
+    const referenceTo = (id: string, projectId?: string) => {
+      const reference = createDatasetReference(id, projectId)
+      if (!projectId) {
+        // a local reference carries a url into the own project
+        ;(reference.value as CaaSApi_DatasetReference).url = createReferenceUrl(
+          { projectId: 'own-project', documentId: id }
+        )
+      }
+      return reference
+    }
+    const createGermanDataset = (id: string) => ({
+      ...createDataset(id),
+      _id: `${id}.de_DE`,
+    })
+    const createBatch = (brokenReference: CaaSApi_FSDataset) =>
+      Array.from({ length: BATCH_SIZE }, (_, index) => {
+        const document = createGermanDataset(`document-${index}`)
+        document.formData = {
+          tt_local: referenceTo(`target-${index}`),
+          ...(index === 0 && { tt_broken: brokenReference }),
+        }
+        return document
+      })
+    const createTargets = () =>
+      Array.from({ length: BATCH_SIZE }, (_, index) =>
+        createGermanDataset(`target-${index}`)
+      )
+    const createApi = () =>
+      new FSXARemoteApi({
+        ...generateRandomConfig(),
+        projectID: 'own-project',
+        remotes: {},
+      })
+
+    it('should assemble every document when one points into an unconfigured project', async () => {
+      const api = createApi()
+      fetchMock
+        .mockResponseOnce(
+          JSON.stringify({
+            _embedded: {
+              'rh:doc': createBatch(
+                referenceTo('foreign-id', 'unconfigured-project')
+              ),
+            },
+          })
+        )
+        .mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': createTargets() } })
+        )
+
+      const { items } = await api.fetchByFilter({
+        filters: [],
+        locale: 'de_DE',
+      })
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(items).toHaveLength(BATCH_SIZE)
+      expect(
+        items.map((item: any) => [item.id, item.data.tt_local?.id])
+      ).toEqual(
+        Array.from({ length: BATCH_SIZE }, (_, index) => [
+          `document-${index}`,
+          `target-${index}`,
+        ])
+      )
+      expect((items[0] as any).data.tt_broken).toEqual(
+        '[REFERENCED-REMOTE-ITEM-unconfigured-project#foreign-id.de_DE]'
+      )
+    })
+
+    it('should assemble every document when one references a dataset that does not exist', async () => {
+      const api = createApi()
+      fetchMock
+        .mockResponseOnce(
+          JSON.stringify({
+            _embedded: { 'rh:doc': createBatch(referenceTo('missing-id')) },
+          })
+        )
+        .mockResponseOnce(
+          JSON.stringify({ _embedded: { 'rh:doc': createTargets() } })
+        )
+
+      const { items } = await api.fetchByFilter({
+        filters: [],
+        locale: 'de_DE',
+      })
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(items).toHaveLength(BATCH_SIZE)
+      expect(
+        items.map((item: any) => [item.id, item.data.tt_local?.id])
+      ).toEqual(
+        Array.from({ length: BATCH_SIZE }, (_, index) => [
+          `document-${index}`,
+          `target-${index}`,
+        ])
+      )
+      expect((items[0] as any).data.tt_broken).toEqual(
+        '[REFERENCED-ITEM-missing-id.de_DE]'
+      )
+    })
+  })
   describe('fetchNavigation', () => {
     let remoteApi: FSXARemoteApi
     let config: any
@@ -844,7 +1113,9 @@ describe('FSXARemoteAPI', () => {
       remoteApi = new FSXARemoteApi(config)
     })
     it('should trigger the fetch method with locale', () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const locale = `${faker.location.countryCode().toLowerCase()}_${faker.location.countryCode().toLowerCase()}`
       const initialPath = '/'
       remoteApi.fetchNavigation({ initialPath, locale })
@@ -855,7 +1126,9 @@ describe('FSXARemoteAPI', () => {
       expect(actualURL).toBe(expectedURL)
     })
     it('should trigger the fetch method with initialPath = /', () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const locale = `${faker.location.countryCode().toLowerCase()}_${faker.location.countryCode().toLowerCase()}`
       remoteApi.fetchNavigation({ locale })
 
@@ -865,7 +1138,9 @@ describe('FSXARemoteAPI', () => {
       expect(actualURL).toBe(expectedURL)
     })
     it('should trigger the fetch method with initialPath', () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const locale = `${faker.location.countryCode().toLowerCase()}_${faker.location.countryCode().toLowerCase()}`
       const initialPath = faker.lorem.words(3).split(' ').join('/')
 
@@ -897,14 +1172,18 @@ describe('FSXARemoteAPI', () => {
       }
     })
     it('should return the response', async () => {
-      const expectedResponse = JSON.stringify(faker.helpers.fake("{{lorem.word}}"))
+      const expectedResponse = JSON.stringify(
+        faker.helpers.fake('{{lorem.word}}')
+      )
       fetchMock.mockResponseOnce(JSON.stringify(expectedResponse))
       const locale = `${faker.location.countryCode().toLowerCase()}_${faker.location.countryCode().toLowerCase()}`
       const actualResponse = await remoteApi.fetchNavigation({ locale })
       expect(actualResponse).toEqual(expectedResponse)
     })
     it('should throw an unknown error when ? is used in initial path', async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const locale = `${faker.location.countryCode().toLowerCase()}_${faker.location.countryCode().toLowerCase()}`
       const initialPath = faker.lorem.words(3).split(' ').join('/') + '?'
       try {
@@ -915,7 +1194,9 @@ describe('FSXARemoteAPI', () => {
       }
     })
     it('should throw an unknown error when # is used in initial path', async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const locale = `${faker.location.countryCode().toLowerCase()}_${faker.location.countryCode().toLowerCase()}`
       const initialPath = faker.lorem.words(3).split(' ').join('/') + '#'
       try {
@@ -926,7 +1207,9 @@ describe('FSXARemoteAPI', () => {
       }
     })
     it('should trigger the fetch method with encoded params when special chars are used in locale or initial path', () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const locale = "*_'();:@&=+$,?%#[]_*'();:@&=+$,?%#[]"
       const initialPath = "*_'();:@&=+$,%[]"
       remoteApi.fetchNavigation({ initialPath, locale })
@@ -944,7 +1227,9 @@ describe('FSXARemoteAPI', () => {
       remoteApi = new FSXARemoteApi(config)
     })
     it('should trigger fetchByFilter with correct params', () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const localeLanguage = faker.lorem.word(2).toLowerCase()
       const localeCountry = faker.lorem.word(2).toUpperCase()
       const locale = localeLanguage + '_' + localeCountry
@@ -963,7 +1248,9 @@ describe('FSXARemoteAPI', () => {
       expect(actualURL).toBe(expectedURL)
     })
     it('should trigger fetchByFilter with encoded params when special chars in locale are used', () => {
-      fetchMock.mockResponseOnce(JSON.stringify(faker.helpers.fake("{{lorem.word}}")))
+      fetchMock.mockResponseOnce(
+        JSON.stringify(faker.helpers.fake('{{lorem.word}}'))
+      )
       const localeLanguage = "*'();:@&=+$,?%#[]"
       const localeCountry = "*'();:@&=+$,?%#[]"
       const locale = localeLanguage + '_' + localeCountry

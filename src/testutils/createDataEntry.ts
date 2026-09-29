@@ -1,11 +1,14 @@
 import { faker } from '@faker-js/faker'
-import { CaaSApi_CMSInputPermission } from '..'
 import {
   CaaSApi_FSReference,
   CaaSApi_MediaRef,
   CaaSAPI_PermissionActivity,
   CaaSAPI_PermissionGroup,
 } from '../types'
+import {
+  createReferenceUrl,
+  ReferenceUrlOptions,
+} from './createReferenceUrl'
 
 export function createDataEntry(
   id = faker.string.uuid(),
@@ -26,7 +29,8 @@ export function createDataEntry(
 
 export function createMediaPictureReferenceValue(
   id = faker.string.uuid(),
-  remoteProject?: string
+  remoteProjectId?: string,
+  urlOptions: Omit<ReferenceUrlOptions, 'projectId' | 'documentId'> = {}
 ): CaaSApi_MediaRef {
   return {
     fsType: 'Media',
@@ -35,19 +39,25 @@ export function createMediaPictureReferenceValue(
     uid: id,
     uidType: 'MEDIASTORE_LEAF',
     mediaType: 'PICTURE',
-    url: `${id}-url`,
-    remoteProject,
+    url: remoteProjectId
+      ? createReferenceUrl({
+          ...urlOptions,
+          projectId: remoteProjectId,
+          documentId: id,
+        })
+      : `${id}-url`,
   }
 }
 
 export function createMediaPictureReference(
   id = faker.string.uuid(),
-  remoteProject?: string
+  remoteProjectId?: string,
+  urlOptions: Omit<ReferenceUrlOptions, 'projectId' | 'documentId'> = {}
 ): CaaSApi_FSReference {
   return {
     fsType: 'FS_REFERENCE',
     name: faker.lorem.word(),
-    value: createMediaPictureReferenceValue(id, remoteProject),
+    value: createMediaPictureReferenceValue(id, remoteProjectId, urlOptions),
   }
 }
 
